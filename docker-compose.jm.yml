@@ -1,0 +1,99 @@
+version: "3.8"
+
+services:
+  flowo-db:
+    image: hub.miaodocker.space:8443/library/postgres:15-alpine
+    container_name: flowo-db
+    environment:
+      POSTGRES_DB: snakemake_logs
+      POSTGRES_USER: snakemake
+      POSTGRES_PASSWORD: snakemake_password
+      TZ: ${TZ:-Asia/Shanghai}
+    ports:
+      - "6666:5432"
+    volumes:
+      - flowo_local_data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U snakemake -d snakemake_logs" ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+    networks:
+      - flowo-local
+
+  #Alembic migrations service - runs once after PostgreSQL is ready
+  # alembic-migrations:
+  #   build:
+  #     context: ./snakemake_logger_plugin_postgresql
+  #     dockerfile: Dockerfile
+  #   container_name: snakemake-alembic-local
+  #   environment:
+  #     POSTGRES_DB: snakemake_logs
+  #     POSTGRES_USER: snakemake
+  #     POSTGRES_PASSWORD: snakemake_password
+  #     POSTGRES_HOST: postgresql
+  #     POSTGRES_PORT: 5432
+  #     TZ: Asia/Shanghai
+  #   depends_on:
+  #     postgresql:
+  #       condition: service_healthy
+
+  #   working_dir: /app/snakemake_logger_plugin_postgresql
+  #   command: >
+  #     sh -c "
+  #       echo '1. Running Alembic migrations to create tables...' &&
+  #       uv run alembic upgrade head &&
+  #       echo '✅ Tables created successfully!' &&
+  #       echo '2. Running init-db scripts to create triggers and functions...' &&
+  #       psql postgresql://\$${POSTGRES_USER}:\$${POSTGRES_PASSWORD}@\$${POSTGRES_HOST}:\$${POSTGRES_PORT}/\$${POSTGRES_DB} -f scripts/01-triggers-functions.sql &&
+  #       echo '✅ Triggers and functions created successfully!' &&
+  #       echo '🎉 Database setup completed!'
+  #     "
+  #   restart: "no"
+  #   networks:
+  #     - flowo-local
+
+  flowo-backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: flowo-backend
+    environment:
+      # Database connection - will be built from individual components
+      POSTGRES_DB: ${POSTGRES_DB:-snakemake_logs}
+      POSTGRES_USER: ${POSTGRES_USER:-snakemake}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-snakemake_password}
+      POSTGRES_HOST: flowo-db
+      POSTGRES_PORT: 5432
+      FLOWO_WORKING_PATH: ${FLOWO_WORKING_PATH:-}
+      # Or use direct DATABASE_URL if provided
+      DATABASE_URL: ${DATABASE_URL:-}
+      # Application settings
+      REPO_PATH: ${REPO_PATH:-/workspace}
+      BACKEND_PORT: ${BACKEND_PORT:-8000}
+      SNAKEMAKE_CORES: ${SNAKEMAKE_CORES:-4}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      TZ: ${TZ:-Asia/Shanghai}
+    volumes:
+      - ${FLOWO_WORKING_PATH:-}:/work_dir
+      - ./backend/app:/app/app
+    ports:
+      - "${BACKEND_PORT:-8000}:8000"
+    # depends_on:
+    #   alembic-migrations:
+    #     condition: service_completed_successfully
+    networks:
+      - flowo-local
+    restart: unless-stopped
+    command: sleep infinity
+
+volumes:
+  flowo_local_data:
+    driver: local
+  # pgadmin_local_data:
+  #   driver: local
+
+networks:
+  flowo-local:
+    driver: bridge

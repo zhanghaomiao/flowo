@@ -1,0 +1,84 @@
+version: "3.8"
+
+services:
+  postgresql:
+    image: hub.miaodocker.space:8443/library/postgres:15-alpine
+    container_name: snakemake-postgres-local
+    environment:
+      POSTGRES_DB: snakemake_logs
+      POSTGRES_USER: snakemake
+      POSTGRES_PASSWORD: snakemake_password
+      TZ: Asia/Shanghai
+    ports:
+      - "5432:5432"
+    volumes:
+      - flowo_local_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U snakemake -d snakemake_logs"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+    networks:
+      - flowo-local
+
+  # Alembic migrations service - runs once after PostgreSQL is ready
+  alembic-migrations:
+    build:
+      context: ./snakemake_logger_plugin_postgresql
+      dockerfile: Dockerfile
+    container_name: snakemake-alembic-local
+    environment:
+      POSTGRES_DB: snakemake_logs
+      POSTGRES_USER: snakemake
+      POSTGRES_PASSWORD: snakemake_password
+      POSTGRES_HOST: postgresql
+      POSTGRES_PORT: 5432
+      TZ: Asia/Shanghai
+    depends_on:
+      postgresql:
+        condition: service_healthy
+
+    working_dir: /app/snakemake_logger_plugin_postgresql
+    command: >
+      sh -c "
+        echo '1. Running Alembic migrations to create tables...' &&
+        uv run alembic upgrade head &&
+        echo '✅ Tables created successfully!' &&
+        echo '2. Running init-db scripts to create triggers and functions...' &&
+        psql postgresql://\$${POSTGRES_USER}:\$${POSTGRES_PASSWORD}@\$${POSTGRES_HOST}:\$${POSTGRES_PORT}/\$${POSTGRES_DB} -f scripts/01-triggers-functions.sql &&
+        echo '✅ Triggers and functions created successfully!' &&
+        echo '🎉 Database setup completed!'
+      "
+    restart: "no"
+    networks:
+      - flowo-local
+
+  # Optional: PostgreSQL Admin interface
+  pgadmin:
+    image: hub.miaodocker.space:8443/dpage/pgadmin4:latest
+    container_name: snakemake-pgadmin-local
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@example.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+      TZ: Asia/Shanghai
+    ports:
+      - "8081:80"
+    depends_on:
+      postgresql:
+        condition: service_healthy
+    volumes:
+      - pgadmin_local_data:/var/lib/pgadmin
+    restart: unless-stopped
+    networks:
+      - flowo-local
+
+volumes:
+  flowo_local_data:
+    driver: local
+  pgadmin_local_data:
+    driver: local
+
+networks:
+  flowo-local:
+    driver: bridge

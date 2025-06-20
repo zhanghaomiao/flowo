@@ -1,0 +1,104 @@
+version: '3.8'
+
+services:
+  postgresql:
+    image: hub.miaodocker.space:8443/library/postgres:15-alpine
+    container_name: snakemake-postgres
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-snakemake_logs}
+      POSTGRES_USER: ${POSTGRES_USER:-snakemake}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-snakemake_password}
+      POSTGRES_HOST_AUTH_METHOD: trust
+      TZ: ${TZ:-Asia/Shanghai}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - snakemake-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-snakemake} -d ${POSTGRES_DB:-snakemake_logs}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # Alembic database migrations
+  alembic-migrations:
+    build:
+      context: ./snakemake_logger_plugin_postgresql
+      dockerfile: Dockerfile
+    container_name: snakemake-migrations
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-snakemake_logs}
+      POSTGRES_USER: ${POSTGRES_USER:-snakemake}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-snakemake_password}
+      POSTGRES_HOST: postgresql
+      POSTGRES_PORT: 5432
+      DATABASE_URL: ${DATABASE_URL:-}
+      PYTHONPATH: /app
+      PYTHONUNBUFFERED: 1
+      TZ: ${TZ:-Asia/Shanghai}
+    depends_on:
+      postgresql:
+        condition: service_healthy
+    networks:
+      - snakemake-network
+    working_dir: /app/snakemake_logger_plugin_postgresql
+    command: >
+      sh -c "
+        echo '1. Running Alembic migrations to create tables...' &&
+        uv run alembic upgrade head &&
+        echo '✅ Tables created successfully!' &&
+        echo '2. Running init-db scripts to create triggers and functions...' &&
+        cd /app &&
+        psql postgresql://\$${POSTGRES_USER}:\$${POSTGRES_PASSWORD}@\$${POSTGRES_HOST}:\$${POSTGRES_PORT}/\$${POSTGRES_DB} -f snakemake_logger_plugin_postgresql/scripts/01-triggers-functions.sql &&
+        echo '✅ Triggers and functions created successfully!' &&
+        echo '🎉 Database setup completed!'
+      "
+    restart: "no"
+
+  snakemake-backend:
+    build:
+      context: ./snakemake_logger_plugin_postgresql
+      dockerfile: Dockerfile
+    container_name: snakemake-backend
+    environment:
+      # Database connection - will be built from individual components
+      POSTGRES_DB: ${POSTGRES_DB:-snakemake_logs}
+      POSTGRES_USER: ${POSTGRES_USER:-snakemake}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-snakemake_password}
+      POSTGRES_HOST: postgresql
+      POSTGRES_PORT: 5432
+      # Or use direct DATABASE_URL if provided
+      DATABASE_URL: ${DATABASE_URL:-}
+      # Application settings
+      REPO_PATH: ${REPO_PATH:-/workspace}
+      BACKEND_PORT: ${BACKEND_PORT:-8000}
+      SNAKEMAKE_CORES: ${SNAKEMAKE_CORES:-4}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      ENABLE_DB_MONITORING: ${ENABLE_DB_MONITORING:-true}
+      PYTHONPATH: /app
+      PYTHONUNBUFFERED: 1
+      TZ: ${TZ:-Asia/Shanghai}
+    volumes:
+      - ${REPO_PATH:-./}:/workspace
+      - ./logs:/app/logs
+    ports:
+      - "${BACKEND_PORT:-8000}:8000"
+    depends_on:
+      alembic-migrations:
+        condition: service_completed_successfully
+    networks:
+      - snakemake-network
+    restart: unless-stopped
+    command: sleep infinity
+
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  snakemake-network:
+    driver: bridge 

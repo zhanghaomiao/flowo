@@ -1,0 +1,11 @@
+from fastapi import APIRouter, Depends, Query, HTTPException
+from app.core.session import get_db
+from sqlalchemy.orm import Session
+from app.services import WorkflowService
+
+router = APIRouter()
+
+
+@router.get("/tags", response_model=list[str])
+def get_all_tags(db: Session = Depends(get_db)):
+    return WorkflowService(db).get_all_tags()
