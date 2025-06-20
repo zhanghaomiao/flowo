@@ -1,0 +1,97 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Modern font stack for better readability */
+:root {
+  font-family: 
+    /* 中文字体 */
+    "PingFang SC",
+    "Hiragino Sans GB",
+    "Heiti SC",
+    "Microsoft YaHei",
+    "WenQuanYi Micro Hei",
+    /* 英文字体 */ -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    Roboto,
+    "Helvetica Neue",
+    Arial,
+    /* 无衬线字体回退 */ "Noto Sans",
+    sans-serif,
+    /* Emoji 字体 */ "Apple Color Emoji",
+    "Segoe UI Emoji",
+    "Segoe UI Symbol",
+    "Noto Color Emoji";
+
+  line-height: 1.5;
+  font-weight: 400;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Improved text rendering */
+body {
+  margin: 0;
+  font-family: inherit;
+  color: #1f2937;
+  background-color: #ffffff;
+}
+
+/* Code and monospace text */
+code,
+pre,
+.ant-typography-code {
+  font-family:
+    "SF Mono", "Monaco", "Inconsolata", "Roboto Mono", "Consolas",
+    "Liberation Mono", "Menlo", "Courier New", monospace;
+}
+
+/* Ant Design customizations */
+.ant-typography {
+  font-family: inherit;
+}
+
+/* Enhanced readability for tables */
+.ant-table {
+  font-family: inherit;
+}
+
+.ant-table-tbody > tr > td {
+  font-family: inherit;
+}
+
+/* Better button text */
+.ant-btn {
+  font-family: inherit;
+  font-weight: 500;
+}
+
+/* Improved form inputs */
+.ant-input,
+.ant-select-selection-item {
+  font-family: inherit;
+}
+
+#root {
+  max-width: 100%;
+  min-width: 100%;
+  margin: 0 auto;
+  text-align: center;
+}
+
+a {
+  font-weight: 500;
+  color: #646cff;
+  text-decoration: inherit;
+}
+a:hover {
+  color: #535bf2;
+}
+
+h1 {
+  font-size: 3.2em;
+  line-height: 1.1;
+}

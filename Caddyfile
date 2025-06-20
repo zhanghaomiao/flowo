@@ -1,0 +1,104 @@
+# Caddyfile for flowo Logger Plugin PostgreSQL
+# 
+# This configuration provides:
+# 1. Reverse proxy for /api/v1/* requests to the backend service
+# 2. Static file server for /work_dir with caching for images, PDFs, and HTML files
+
+# Default site configuration
+:80 {
+    # Enable access logs
+    log {
+        output stdout
+        format console
+    }
+
+    # Handle API requests - proxy to backend
+    handle /api/v1/* {
+        reverse_proxy flowo-backend
+    }
+
+    handle /docs* {
+        reverse_proxy flowo-backend
+    }
+
+    # Handle static file serving for work directory
+    handle_path /files/* {
+        root * /work_dir
+        file_server browse {
+            # Enable directory browsing
+            hide .git
+        }
+        
+        # Set caching headers for different file types
+        @images {
+            path *.jpg *.jpeg *.png *.gif *.bmp *.svg *.webp *.ico
+        }
+        header @images {
+            Cache-Control "public, max-age=86400"  # 1 day cache
+            Vary "Accept-Encoding"
+        }
+
+        @pdfs {
+            path *.pdf
+        }
+        header @pdfs {
+            Cache-Control "public, max-age=3600"   # 1 hour cache
+            Content-Type "application/pdf"
+        }
+
+        @html {
+            path *.html *.htm
+        }
+        header @html {
+            Cache-Control "public, max-age=1800"   # 30 minutes cache
+            Content-Type "text/html; charset=utf-8"
+        }
+
+        @text {
+            path *.txt *.log *.md
+        }
+        header @text {
+            Cache-Control "public, max-age=300"    # 5 minutes cache
+            Content-Type "text/plain; charset=utf-8"
+        }
+
+        @json {
+            path *.json
+        }
+        header @json {
+            Cache-Control "public, max-age=300"    # 5 minutes cache
+            Content-Type "application/json; charset=utf-8"
+        }
+    }
+
+    # Handle frontend application - proxy to frontend service
+    handle {
+        reverse_proxy flowo-frontend:80
+    }
+
+    # Security headers
+    header {
+        # Remove server identification
+        -Server
+        # Add security headers
+        X-Frame-Options "SAMEORIGIN"
+        X-Content-Type-Options "nosniff"
+        Referrer-Policy "strict-origin-when-cross-origin"
+    }
+
+    # Enable compression
+    encode gzip zstd
+
+    # Custom error pages
+    handle_errors {
+        @404 {
+            expression {http.error.status_code} == 404
+        }
+        respond @404 "File not found" 404
+        
+        @5xx {
+            expression {http.error.status_code} >= 500
+        }
+        respond @5xx "Server error" {http.error.status_code}
+    }
+} 
