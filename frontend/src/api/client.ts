@@ -39,13 +39,11 @@ export const getApiBasePath = (): string => {
   const envApiBasePath = (import.meta as any).env?.VITE_API_BASE_PATH;
 
   if (envApiBasePath) {
-    console.log('Using custom API base path from VITE_API_BASE_PATH:', envApiBasePath);
     return envApiBasePath;
   }
 
   // Use current origin for proxy setup (default behavior)
   const defaultPath = window.location.origin;
-  console.log('Using API base path (current origin):', defaultPath);
   return defaultPath;
 };
 

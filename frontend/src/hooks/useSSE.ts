@@ -19,6 +19,10 @@ export interface DatabaseChangeData {
   timestamp: number;
   formatted_timestamp: string;
   channel: string;
+  record_id?: string;
+  old_status?: string;
+  new_status?: string;
+  status_changed?: boolean;
   [key: string]: unknown;
 }
 
@@ -136,7 +140,7 @@ export const useSSE = ({
             "❌ Failed to parse SSE data:",
             parseError,
             "Raw data:",
-            event.data,
+            event.data
           );
           const sseEvent: SSEEvent = {
             id: event.lastEventId || undefined,
@@ -169,7 +173,7 @@ export const useSSE = ({
             setStatus("disconnected");
             if (currentRetryCount >= sseSettings.maxRetries) {
               setError(
-                `Max retry attempts (${sseSettings.maxRetries}) exceeded`,
+                `Max retry attempts (${sseSettings.maxRetries}) exceeded`
               );
             }
             return currentRetryCount;
@@ -223,7 +227,7 @@ export const useSSE = ({
           } catch (parseError) {
             console.error(
               `❌ Failed to parse ${jobEventType} data:`,
-              parseError,
+              parseError
             );
           }
         });
@@ -235,7 +239,7 @@ export const useSSE = ({
             const parsedData = JSON.parse(event.data) as DatabaseChangeData;
             console.log(
               `🔄 Workflow event for workflow ${workflowId}:`,
-              parsedData,
+              parsedData
             );
 
             const sseEvent: SSEEvent = {
@@ -253,7 +257,7 @@ export const useSSE = ({
           } catch (parseError) {
             console.error(
               `❌ Failed to parse ${workflowEventType} data:`,
-              parseError,
+              parseError
             );
           }
         });
@@ -313,7 +317,7 @@ export const useLogSSE = (
     reconnectInterval?: number;
     maxRetries?: number;
     onLogLine?: (logLine: string) => void;
-  } = {},
+  } = {}
 ) => {
   const {
     enabled = true,
@@ -370,7 +374,7 @@ export const useLogSSE = (
         setError(null);
         setRetryCount(0);
         console.log(
-          `✅ Logs SSE connected successfully for workflow: ${workflowId}`,
+          `✅ Logs SSE connected successfully for workflow: ${workflowId}`
         );
       };
 
@@ -398,7 +402,7 @@ export const useLogSSE = (
             setStatus("disconnected");
             if (currentRetryCount >= sseSettings.maxRetries) {
               setError(
-                `Max retry attempts (${sseSettings.maxRetries}) exceeded`,
+                `Max retry attempts (${sseSettings.maxRetries}) exceeded`
               );
             }
             return currentRetryCount;

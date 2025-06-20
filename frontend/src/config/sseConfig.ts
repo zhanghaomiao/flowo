@@ -32,7 +32,6 @@ const getSSEConfig = (): SSEConfig => {
     reconnectInterval: parseInt(env?.VITE_SSE_RECONNECT_INTERVAL || "3000"),
     maxRetries: parseInt(env?.VITE_SSE_MAX_RETRIES || "5"),
   };
-
 };
 
 export const sseConfig = getSSEConfig();

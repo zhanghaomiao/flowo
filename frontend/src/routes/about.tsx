@@ -8,9 +8,7 @@ function About() {
   return (
     <div>
       <h2>About FlowO</h2>
-      <p>
-        This is a frontend application for monitoring workflow executions.
-      </p>
+      <p>This is a frontend application for monitoring workflow executions.</p>
       <ul>
         <li>View workflow execution history</li>
         <li>Monitor job statuses and details</li>

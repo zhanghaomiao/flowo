@@ -15,19 +15,42 @@
     # Handle API requests - proxy to backend
     handle /api/v1/* {
         reverse_proxy flowo-backend
+        
+        # Apply security headers to API routes
+        header {
+            -Server
+            X-Content-Type-Options "nosniff"
+            Referrer-Policy "strict-origin-when-cross-origin"
+        }
     }
 
     handle /docs* {
         reverse_proxy flowo-backend
+        
+        # Apply security headers to docs routes
+        header {
+            -Server
+            X-Content-Type-Options "nosniff"
+            Referrer-Policy "strict-origin-when-cross-origin"
+        }
     }
 
     # Handle static file serving for work directory
     handle_path /files/* {
-        root * /work_dir
-        file_server browse {
-            # Enable directory browsing
-            hide .git
+        # Handle CORS preflight requests
+        @options {
+            method OPTIONS
         }
+        header @options {
+            Access-Control-Allow-Origin "*"
+            Access-Control-Allow-Methods "GET, HEAD, OPTIONS"
+            Access-Control-Allow-Headers "Origin, X-Requested-With, Content-Type, Accept, Authorization, Cache-Control"
+            Access-Control-Max-Age "86400"
+        }
+        respond @options 200
+        
+        root * /work_dir
+        file_server
         
         # Set caching headers for different file types
         @images {
@@ -36,6 +59,10 @@
         header @images {
             Cache-Control "public, max-age=86400"  # 1 day cache
             Vary "Accept-Encoding"
+            # CORS headers for image files
+            Access-Control-Allow-Origin "*"
+            Access-Control-Allow-Methods "GET, HEAD, OPTIONS"
+            Access-Control-Allow-Headers "Origin, X-Requested-With, Content-Type, Accept, Authorization, Cache-Control"
         }
 
         @pdfs {
@@ -44,6 +71,14 @@
         header @pdfs {
             Cache-Control "public, max-age=3600"   # 1 hour cache
             Content-Type "application/pdf"
+            # Allow PDFs to be embedded in iframes for preview
+            -X-Frame-Options
+            # Disable range requests for PDF files to ensure full content delivery
+            Accept-Ranges "none"
+            # CORS headers for PDF files
+            Access-Control-Allow-Origin "*"
+            Access-Control-Allow-Methods "GET, HEAD, OPTIONS"
+            Access-Control-Allow-Headers "Origin, X-Requested-With, Content-Type, Accept, Authorization, Cache-Control"
         }
 
         @html {
@@ -52,6 +87,14 @@
         header @html {
             Cache-Control "public, max-age=1800"   # 30 minutes cache
             Content-Type "text/html; charset=utf-8"
+            # Allow HTML files to be embedded in iframes for preview
+            -X-Frame-Options
+            # Disable range requests for HTML files to ensure full content delivery
+            Accept-Ranges "none"
+            # CORS headers for HTML files
+            Access-Control-Allow-Origin "*"
+            Access-Control-Allow-Methods "GET, HEAD, OPTIONS"
+            Access-Control-Allow-Headers "Origin, X-Requested-With, Content-Type, Accept, Authorization, Cache-Control"
         }
 
         @text {
@@ -60,6 +103,10 @@
         header @text {
             Cache-Control "public, max-age=300"    # 5 minutes cache
             Content-Type "text/plain; charset=utf-8"
+            # CORS headers for text files
+            Access-Control-Allow-Origin "*"
+            Access-Control-Allow-Methods "GET, HEAD, OPTIONS"
+            Access-Control-Allow-Headers "Origin, X-Requested-With, Content-Type, Accept, Authorization, Cache-Control"
         }
 
         @json {
@@ -68,22 +115,44 @@
         header @json {
             Cache-Control "public, max-age=300"    # 5 minutes cache
             Content-Type "application/json; charset=utf-8"
+            # CORS headers for JSON files
+            Access-Control-Allow-Origin "*"
+            Access-Control-Allow-Methods "GET, HEAD, OPTIONS"
+            Access-Control-Allow-Headers "Origin, X-Requested-With, Content-Type, Accept, Authorization, Cache-Control"
+        }
+
+        # Remove X-Frame-Options for all files to allow iframe embedding
+        # Add CORS headers for cross-origin file access
+        header {
+            -X-Frame-Options
+            Access-Control-Allow-Origin "*"
+            Access-Control-Allow-Methods "GET, HEAD, OPTIONS"
+            Access-Control-Allow-Headers "Origin, X-Requested-With, Content-Type, Accept, Authorization, Cache-Control"
+            Access-Control-Max-Age "86400"
+        }
+
+        # Force download for files when 'download' query parameter is present
+        @download {
+            query download=*
+        }
+        header @download {
+            Content-Disposition "attachment"
         }
     }
 
     # Handle frontend application - proxy to frontend service
     handle {
         reverse_proxy flowo-frontend:80
-    }
-
-    # Security headers
-    header {
-        # Remove server identification
-        -Server
-        # Add security headers
-        X-Frame-Options "SAMEORIGIN"
-        X-Content-Type-Options "nosniff"
-        Referrer-Policy "strict-origin-when-cross-origin"
+        
+        # Apply security headers only to frontend routes
+        header {
+            # Remove server identification
+            -Server
+            # Add security headers
+            X-Frame-Options "SAMEORIGIN"
+            X-Content-Type-Options "nosniff"
+            Referrer-Policy "strict-origin-when-cross-origin"
+        }
     }
 
     # Enable compression
