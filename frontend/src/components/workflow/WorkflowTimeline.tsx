@@ -153,16 +153,18 @@ const WorkflowTimeline: React.FC<WorkflowTimelineProps> = ({
       ];
     }
 
-    const data: Array<Array<string | Date | number | null>> = [
+    // ignore the type error, it's a workaround to make the chart work
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const data: Array<Array<any>> = [
       [
-        "Task ID",
-        "Task Name",
-        "Resource",
-        "Start Date",
-        "End Date",
-        "Duration",
-        "Percent Complete",
-        "Dependencies",
+        { type: "string", label: "Task ID" },
+        { type: "string", label: "Task Name" },
+        { type: "string", label: "Resource" },
+        { type: "date", label: "Start Date" },
+        { type: "date", label: "End Date" },
+        { type: "number", label: "Duration" },
+        { type: "number", label: "Percent Complete" },
+        { type: "string", label: "Dependencies" },
       ],
     ];
 
@@ -179,8 +181,8 @@ const WorkflowTimeline: React.FC<WorkflowTimelineProps> = ({
       jobDatas.forEach((jobData: JobResponse, jobIndex: number) => {
         const [jobId, startTime, endTime, status] = jobData as [
           string,
-          string,
-          string,
+          Date,
+          Date,
           string,
         ];
 
