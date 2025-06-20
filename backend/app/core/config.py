@@ -3,13 +3,13 @@ from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
-    PROJECT_NAME: str = "Snakemake Workflow Manager"
+    PROJECT_NAME: str = "flowo"
     API_V1_STR: str = "/api/v1"
 
     # Database settings
-    POSTGRES_DB: str = "snakemake_logs"
-    POSTGRES_USER: str = "snakemake"
-    POSTGRES_PASSWORD: str = "snakemake_password"
+    POSTGRES_DB: str = "flowo_logs"
+    POSTGRES_USER: str = "flowo"
+    POSTGRES_PASSWORD: str = "flowo_password"
     POSTGRES_HOST: str = "localhost"
     POSTGRES_PORT: int = 5432
 
