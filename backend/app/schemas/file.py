@@ -1,5 +1,5 @@
+
 from pydantic import BaseModel, ConfigDict
-from typing import List, Optional
 
 
 class FileResponse(BaseModel):
@@ -13,6 +13,6 @@ class FileResponse(BaseModel):
 class TreeDataNode(BaseModel):
     title: str
     key: str
-    icon: Optional[str] = None
-    children: Optional[List["TreeDataNode"]] = None
-    isLeaf: Optional[bool] = None
+    icon: str | None = None
+    children: list["TreeDataNode"] | None = None
+    isLeaf: bool | None = None

@@ -1,15 +1,11 @@
-from fastapi import APIRouter, Depends, Query
-from typing import List, Optional
+from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
-import uuid
 
-from app.services import JobService
+from app.core.session import get_db
 from app.schemas import (
-    JobResponse,
-    FileResponse,
     JobDetailResponse,
 )
-from app.core.session import get_db
+from app.services import JobService
 
 router = APIRouter()
 

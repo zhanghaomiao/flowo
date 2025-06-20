@@ -2,19 +2,18 @@ import asyncio
 import json
 import uuid
 from datetime import datetime
-from typing import Optional, Set
 
-from fastapi import APIRouter, Request, Query
+from fastapi import APIRouter, Query, Request
 from fastapi.responses import StreamingResponse
 
+from app.core.logger import logger
 from app.core.sse_connection_manager import (
     SSEConnectionManager,
 )
-from app.core.logger import logger
 
 router = APIRouter()
 
-_sse_manager_instance: Optional[SSEConnectionManager] = None
+_sse_manager_instance: SSEConnectionManager | None = None
 
 
 async def get_sse_manager() -> SSEConnectionManager:
@@ -27,11 +26,11 @@ async def get_sse_manager() -> SSEConnectionManager:
 @router.get("/events")
 async def stream_events(
     request: Request,
-    filters: Optional[str] = Query(
+    filters: str | None = Query(
         None,
         description="Comma-separated list of table names to filter (e.g., 'workflows,jobs'). Use 'all' for all tables.",
     ),
-    workflow_id: Optional[str] = Query(
+    workflow_id: str | None = Query(
         None, description="Workflow ID to filter events for a specific workflow."
     ),
 ):
@@ -73,7 +72,7 @@ async def stream_events(
                     message = await asyncio.wait_for(client_queue.get(), timeout=30.0)
                     yield f"event: {message['type']}\ndata: {json.dumps(message['data'])}\n\n"
 
-                except asyncio.TimeoutError:
+                except TimeoutError:
                     heartbeat = {
                         "type": "heartbeat",
                         "timestamp": datetime.now().isoformat(),
@@ -233,16 +232,16 @@ async def cleanup_connections():
                     "psql",
                     "-c",
                     """
-                SELECT pg_terminate_backend(pid) 
-                FROM pg_stat_activity 
-                WHERE usename = 'snakemake' 
+                SELECT pg_terminate_backend(pid)
+                FROM pg_stat_activity
+                WHERE usename = 'snakemake'
                   AND query LIKE 'LISTEN%'
                   AND pid != (
-                    SELECT pid 
-                    FROM pg_stat_activity 
-                    WHERE usename = 'snakemake' 
+                    SELECT pid
+                    FROM pg_stat_activity
+                    WHERE usename = 'snakemake'
                       AND query LIKE 'LISTEN%'
-                    ORDER BY backend_start DESC 
+                    ORDER BY backend_start DESC
                     LIMIT 1
                   );
                 """,

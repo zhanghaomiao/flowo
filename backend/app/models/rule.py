@@ -7,9 +7,9 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from .base import Base
 
 if TYPE_CHECKING:
+    from .error import Error
     from .job import Job
     from .workflow import Workflow
-    from .error import Error
 
 
 class Rule(Base):

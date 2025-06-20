@@ -1,11 +1,12 @@
 from fastapi import APIRouter
+
 from app.api.endpoints import (
-    workflows,
     jobs,
-    sse,
     logs,
-    utils,
     outputs,
+    sse,
+    utils,
+    workflows,
 )
 
 api_router = APIRouter()

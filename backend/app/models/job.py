@@ -1,13 +1,12 @@
 import uuid
-from datetime import datetime, timezone
-from typing import TYPE_CHECKING, Any, Optional
+from datetime import UTC, datetime
+from typing import TYPE_CHECKING, Any
 
-from sqlalchemy import ForeignKey, Enum
+from sqlalchemy import Enum, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .base import Base
 from .enums import Status
-
 
 if TYPE_CHECKING:
     from .file import File
@@ -44,17 +43,17 @@ class Job(Base):
     snakemake_id: Mapped[int]
     workflow_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("workflows.id"))
     rule_id: Mapped[int] = mapped_column(ForeignKey("rules.id"), nullable=True)
-    message: Mapped[Optional[str]]
-    wildcards: Mapped[Optional[dict[str, Any]]]
-    reason: Mapped[Optional[str]]
-    resources: Mapped[Optional[dict[str, Any]]]
-    shellcmd: Mapped[Optional[str]]
-    threads: Mapped[Optional[int]]
-    priority: Mapped[Optional[int]]
+    message: Mapped[str | None]
+    wildcards: Mapped[dict[str, Any] | None]
+    reason: Mapped[str | None]
+    resources: Mapped[dict[str, Any] | None]
+    shellcmd: Mapped[str | None]
+    threads: Mapped[int | None]
+    priority: Mapped[int | None]
     status: Mapped[Status] = mapped_column(Enum(Status), default="WAITING")
-    started_at: Mapped[datetime] = mapped_column(default=datetime.now(timezone.utc))
-    end_time: Mapped[Optional[datetime]]
-    group_id: Mapped[Optional[int]]
+    started_at: Mapped[datetime] = mapped_column(default=datetime.now(UTC))
+    end_time: Mapped[datetime | None]
+    group_id: Mapped[int | None]
 
     workflow: Mapped["Workflow"] = relationship("Workflow")
     rule: Mapped["Rule"] = relationship("Rule", back_populates="jobs")

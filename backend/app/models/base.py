@@ -1,6 +1,7 @@
+from typing import Any
+
 from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy.types import JSON
-from typing import Any
 
 
 class Base(DeclarativeBase):

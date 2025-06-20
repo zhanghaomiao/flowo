@@ -1,7 +1,7 @@
-from typing import Optional, Dict, List
-from pydantic import BaseModel, ConfigDict
-from datetime import datetime
 import uuid
+from datetime import datetime
+
+from pydantic import BaseModel, ConfigDict
 
 
 class WorkflowResponse(BaseModel):
@@ -9,19 +9,19 @@ class WorkflowResponse(BaseModel):
 
     id: uuid.UUID
     snakefile: bool
-    started_at: Optional[datetime] = None
-    end_time: Optional[datetime] = None
+    started_at: datetime | None = None
+    end_time: datetime | None = None
     status: str
     # command_line: Optional[str] = None
     # dryrun: bool
     # run_info: Optional[Dict[str, int]] = None
-    user: Optional[str] = None
-    name: Optional[str] = None
+    user: str | None = None
+    name: str | None = None
     configfiles: bool
     # directory: Optional[str] = None
     # logfile: Optional[str] = None
-    tags: Optional[List[str]] = None
-    progress: Optional[float] = None
+    tags: list[str] | None = None
+    progress: float | None = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -29,7 +29,7 @@ class WorkflowResponse(BaseModel):
 class WorkflowListResponse(BaseModel):
     """Schema for workflow list response"""
 
-    workflows: List[WorkflowResponse]
+    workflows: list[WorkflowResponse]
     total: int
     limit: int
     offset: int
@@ -37,19 +37,19 @@ class WorkflowListResponse(BaseModel):
 
 class WorkflowDetialResponse(BaseModel):
     workflow_id: uuid.UUID
-    name: Optional[str] = None
-    user: Optional[str] = None
-    tags: Optional[List[str]] = None
+    name: str | None = None
+    user: str | None = None
+    tags: list[str] | None = None
 
-    started_at: Optional[datetime]
-    end_time: Optional[datetime]
+    started_at: datetime | None
+    end_time: datetime | None
     status: str
-    progress: Optional[float] = None
+    progress: float | None = None
 
     config: dict | None = None
-    snakefile: Optional[str]
-    directory: Optional[str] = None
-    configfiles: Optional[List[str]] = None
+    snakefile: str | None
+    directory: str | None = None
+    configfiles: list[str] | None = None
 
 
 class RuleStatusResponse(BaseModel):

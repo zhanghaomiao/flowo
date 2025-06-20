@@ -1,19 +1,16 @@
-from typing import List, Optional
 import uuid
+
+from sqlalchemy import and_, func, select
 from sqlalchemy.orm import Session
-from sqlalchemy import select, and_, func
-from pathlib import Path
-from ..models import Job, Rule, File, Status
+
+from ..models import File, Job, Rule, Status
 from ..schemas import (
-    JobResponse,
     FileResponse,
-    JobListResponse,
-    Message,
     JobDetailResponse,
+    JobListResponse,
+    JobResponse,
 )
-from fastapi import HTTPException
 from .workflow import WorkflowService
-import logging
 
 
 class JobService:
@@ -23,8 +20,8 @@ class JobService:
         self.db_session = db_session
 
     def get_all_jobs(
-        self, limit: Optional[int] = None, offset: Optional[int] = 0
-    ) -> List[JobResponse]:
+        self, limit: int | None = None, offset: int | None = 0
+    ) -> list[JobResponse]:
         """Get all jobs"""
         query = select(Job)
         if limit:
@@ -34,7 +31,7 @@ class JobService:
         jobs = list(self.db_session.execute(query).scalars())
         return [JobResponse.model_validate(job) for job in jobs]
 
-    def get_job_rule_name_by_job_id(self, job_id: int) -> Optional[str]:
+    def get_job_rule_name_by_job_id(self, job_id: int) -> str | None:
         result = (
             self.db_session.query(Rule.name).join(Job).filter(Job.id == job_id).first()
         )
@@ -43,12 +40,12 @@ class JobService:
     def get_jobs_by_workflow_id(
         self,
         workflow_id: uuid.UUID,
-        limit: Optional[int] = None,
-        offset: Optional[int] = 0,
+        limit: int | None = None,
+        offset: int | None = 0,
         order_by_started: bool = True,
         descending: bool = True,
-        rule_name: Optional[str] = None,
-        status: Optional[Status] = None,
+        rule_name: str | None = None,
+        status: Status | None = None,
     ) -> JobListResponse:
         """
         Get jobs for a specific workflow with optional filtering by rule name
@@ -175,16 +172,19 @@ class JobService:
 
         results = {}
         for file in files:
-
             if not wf.flowo_working_path or not wf.directory:
-                return {file: "logs not found, please set flowo_working_path and directory"}
+                return {
+                    file: "logs not found, please set flowo_working_path and directory"
+                }
 
             file_path = (
-                wf.directory.replace(wf.flowo_working_path, "/work_dir/") + "/" + file.path
+                wf.directory.replace(wf.flowo_working_path, "/work_dir/")
+                + "/"
+                + file.path
             )
 
             try:
-                with open(file_path, "r") as f:
+                with open(file_path) as f:
                     results[file.path] = f.read()
             except Exception as e:
                 results[file.path] = f"Failed to oepn file: {str(e)}"

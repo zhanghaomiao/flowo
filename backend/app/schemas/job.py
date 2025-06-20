@@ -1,8 +1,8 @@
-from typing import Optional, Dict, Any, List
-from pydantic import BaseModel, ConfigDict
-from datetime import datetime
 import uuid
-from sqlalchemy.orm import Mapped
+from datetime import datetime
+from typing import Any
+
+from pydantic import BaseModel, ConfigDict
 
 
 class JobResponse(BaseModel):
@@ -13,15 +13,15 @@ class JobResponse(BaseModel):
     rule_name: str = None
     workflow_id: uuid.UUID = None
     status: str = None
-    started_at: Optional[datetime] = None
-    end_time: Optional[datetime] = None
-    threads: Optional[int] = None
-    priority: Optional[int] = None
-    message: Optional[str] = None
-    shellcmd: Optional[str] = None
-    wildcards: Optional[Dict[str, Any]] = None
-    reason: Optional[str] = None
-    resources: Optional[Dict[str, Any]] = None
+    started_at: datetime | None = None
+    end_time: datetime | None = None
+    threads: int | None = None
+    priority: int | None = None
+    message: str | None = None
+    shellcmd: str | None = None
+    wildcards: dict[str, Any] | None = None
+    reason: str | None = None
+    resources: dict[str, Any] | None = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -29,7 +29,7 @@ class JobResponse(BaseModel):
 class JobListResponse(BaseModel):
     """Schema for job list response"""
 
-    jobs: List[JobResponse]
+    jobs: list[JobResponse]
     total: int
     limit: int
     offset: int
@@ -39,14 +39,14 @@ class JobDetailResponse(BaseModel):
     rule_name: str
     workflow_id: uuid.UUID = None
     status: str = None
-    started_at: Optional[datetime] = None
-    end_time: Optional[datetime] = None
-    message: Optional[str] = None
-    shellcmd: Optional[str] = None
-    wildcards: Optional[Dict[str, Any]] = None
-    reason: Optional[str] = None
-    resources: Optional[Dict[str, Any]] = None
-    directory: Optional[str] = None
+    started_at: datetime | None = None
+    end_time: datetime | None = None
+    message: str | None = None
+    shellcmd: str | None = None
+    wildcards: dict[str, Any] | None = None
+    reason: str | None = None
+    resources: dict[str, Any] | None = None
+    directory: str | None = None
     input: list[str] = None
     output: list[str]
     log: list[str] = None

@@ -1,10 +1,13 @@
 from contextlib import asynccontextmanager
+
+import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-import uvicorn
+
 from app.api import api_router
-from app.core.config import settings
 from app.api.endpoints.sse import get_sse_manager
+from app.core.config import settings
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -14,9 +17,9 @@ async def lifespan(app: FastAPI):
         print("SSE service initialized successfully")
     except Exception as e:
         print(f"Failed to initialize SSE service: {e}")
-    
+
     yield
-    
+
     try:
         sse_manager = await get_sse_manager()
         await sse_manager.disconnect_from_database()
@@ -24,10 +27,11 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         print(f"Error shutting down SSE service: {e}")
 
+
 app = FastAPI(
     title=settings.PROJECT_NAME,
     openapi_url=f"{settings.API_V1_STR}/openapi.json",
-    lifespan=lifespan
+    lifespan=lifespan,
 )
 
 app.add_middleware(

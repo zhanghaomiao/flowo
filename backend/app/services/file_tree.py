@@ -1,7 +1,8 @@
-from ..schemas import TreeDataNode
-from anytree import Node, RenderTree
-from typing import List
 from pathlib import Path
+
+from anytree import Node, RenderTree
+
+from ..schemas import TreeDataNode
 
 TreeDataNode.model_rebuild()
 
@@ -20,7 +21,7 @@ def has_valid_file(path: Path) -> bool:
 
 def build_tree_with_anytree(
     directory_path: str, max_depth: int = 2, visualize: bool = False
-) -> List[TreeDataNode]:
+) -> list[TreeDataNode]:
     path = Path(directory_path)
     if not path.exists():
         raise FileNotFoundError(f"Directory '{directory_path}' does not exist")

@@ -1,27 +1,24 @@
-import uuid
-from fastapi import HTTPException
-from itertools import chain
-from pathlib import Path
-from sqlalchemy.orm import Session
-from sqlalchemy import select, func, case
-from typing import List, Optional, Dict, Any
 import os
+import uuid
+from collections import Counter, defaultdict
+from datetime import datetime
+from itertools import chain, groupby
+from operator import itemgetter
+from typing import Any
+
+from fastapi import HTTPException
 from fastapi.responses import JSONResponse
-from sqlalchemy import and_
-from ..models import Job, Status, Workflow, Error
+from sqlalchemy import and_, case, func, select
+from sqlalchemy.orm import Session
+
+from ..models import Error, Job, Status, Workflow
 from ..schemas import (
-    WorkflowResponse,
-    WorkflowListResponse,
-    WorkflowDetialResponse,
     RuleStatusResponse,
     TreeDataNode,
+    WorkflowDetialResponse,
+    WorkflowListResponse,
+    WorkflowResponse,
 )
-from datetime import datetime
-from operator import itemgetter
-from itertools import groupby
-from collections import defaultdict, Counter
-from ..core.config import settings
-import logging
 from ..services.file_tree import build_tree_with_anytree
 
 
@@ -62,18 +59,17 @@ class WorkflowService:
 
     def list_all_workflows_dev(
         self,
-        limit: Optional[int] = None,
-        offset: Optional[int] = 0,
+        limit: int | None = None,
+        offset: int | None = 0,
         order_by_started: bool = True,
         descending: bool = True,
-        user: Optional[str] = None,
-        status: Optional[Status] = None,
-        tags: Optional[str] = None,
-        name: Optional[str] = None,
-        start_at: Optional[str] = None,
-        end_at: Optional[str] = None,
+        user: str | None = None,
+        status: Status | None = None,
+        tags: str | None = None,
+        name: str | None = None,
+        start_at: str | None = None,
+        end_at: str | None = None,
     ) -> WorkflowListResponse:
-
         base_query = select(Workflow)
         filters = []
 
@@ -245,7 +241,7 @@ class WorkflowService:
 
         if os.path.exists(snakefile):
             try:
-                with open(snakefile, "r") as f:
+                with open(snakefile) as f:
                     file_content = f.read()
                 return file_content
             except Exception as e:
@@ -274,8 +270,10 @@ class WorkflowService:
         data = {}
         for configfile in wf.configfiles:
             try:
-                configfile_path = str(configfile).replace(wf.flowo_working_path, "/work_dir/")
-                with open(configfile_path, "r") as f:
+                configfile_path = str(configfile).replace(
+                    wf.flowo_working_path, "/work_dir/"
+                )
+                with open(configfile_path) as f:
                     data[configfile] = f.read()
             except Exception as e:
                 data[configfile] = f"Failed to open file: {str(e)}"
@@ -302,7 +300,6 @@ class WorkflowService:
         }
 
     def _get_progress(self, workflow_id: uuid.UUID):
-
         success = self.db_session.scalar(
             select(func.count(Job.id)).where(
                 Job.workflow_id == workflow_id, Job.status == Status.SUCCESS
@@ -315,7 +312,7 @@ class WorkflowService:
             total = self.get_workflow_run_info(workflow_id=workflow_id).get("total")
             return round((success / total) * 100) if total else 0
 
-    def get_workflow_rule_graph_data(self, workflow_id: uuid.UUID) -> Dict[str, Any]:
+    def get_workflow_rule_graph_data(self, workflow_id: uuid.UUID) -> dict[str, Any]:
         """
         Get the rule graph for a workflow
         """
@@ -329,7 +326,7 @@ class WorkflowService:
 
         return workflow.rulegraph_data
 
-    def get_workflow_run_info(self, workflow_id: uuid.UUID) -> Dict[str, Any]:
+    def get_workflow_run_info(self, workflow_id: uuid.UUID) -> dict[str, Any]:
         """
         Get the run information for a workflow
         """
@@ -438,7 +435,9 @@ class WorkflowService:
         if not workflow.flowo_working_path or not workflow.directory:
             pass
 
-        directory = workflow.directory.replace(workflow.flowo_working_path, "/work_dir/")
+        directory = workflow.directory.replace(
+            workflow.flowo_working_path, "/work_dir/"
+        )
         return build_tree_with_anytree(directory, max_depth=max_depth)
 
     def delete_workflow(self, workflow_id: uuid.UUID):

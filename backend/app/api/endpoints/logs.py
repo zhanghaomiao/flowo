@@ -1,14 +1,13 @@
 import asyncio
-import subprocess
+from collections.abc import AsyncGenerator
 from pathlib import Path
-from typing import AsyncGenerator
 
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import StreamingResponse
 
+from app.core.logger import logger
 from app.core.session import get_db
 from app.models.workflow import Workflow
-from app.core.logger import logger
 
 router = APIRouter()
 
@@ -23,7 +22,11 @@ async def get_workflow_logs(workflow_id: str):
                 status_code=404, detail=f"Workflow {workflow_id} not found"
             )
 
-        if not workflow.logfile or not workflow.directory or not workflow.flowo_working_path:
+        if (
+            not workflow.logfile
+            or not workflow.directory
+            or not workflow.flowo_working_path
+        ):
             # raise HTTPException(
             #     status_code=404,
             #     detail=f"No log file configured for workflow {workflow_id}",
@@ -39,7 +42,7 @@ async def get_workflow_logs(workflow_id: str):
         logfile = workflow.logfile.replace(workflow.flowo_working_path, "/work_dir/")
 
         # read the log file
-        with open(logfile, "r", encoding="utf-8") as f:
+        with open(logfile, encoding="utf-8") as f:
             content = f.read()
 
         return {
@@ -117,7 +120,7 @@ async def stream_workflow_logs_sse(workflow_id: str):
                     process.terminate()
                     await process.wait()
                     logger.info(f"Terminated SSE tail process for {log_file_path}")
-                except:
+                except Exception:
                     pass
 
     return StreamingResponse(

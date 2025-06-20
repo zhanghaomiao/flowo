@@ -1,11 +1,9 @@
-from .enums import Status, FileType
-
-from .workflow import Workflow
-from .rule import Rule
-from .job import Job
-from .file import File
+from .enums import FileType, Status
 from .error import Error
-from .enums import Status
+from .file import File
+from .job import Job
+from .rule import Rule
+from .workflow import Workflow
 
 __all__ = [
     "Status",
