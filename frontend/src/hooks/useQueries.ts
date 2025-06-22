@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import type { JobDetailResponse, TreeDataNode } from "../api/api";
-import { Status } from "../api/api";
+import { Status, WorkflowDetialResponse } from "../api/api";
 import {
   jobsApi,
   logsApi,
@@ -9,6 +9,12 @@ import {
   utilsApi,
   workflowApi,
 } from "../api/client";
+import { constructApiUrl } from "../api/client";
+
+// Extended TreeDataNode interface with fileSize for Caddy server
+interface CaddyTreeDataNode extends TreeDataNode {
+  fileSize?: number | null;
+}
 
 // Custom hook for fetching workflows with pagination support
 export const useWorkflows = (params?: {
@@ -350,5 +356,143 @@ export const useOutPutsTree = (workflowId: string, depth: number = 2) => {
     },
     staleTime: 30000,
     refetchInterval: 60000,
+  });
+};
+
+export const useWorkflowDetail = (workflowId: string) => {
+  return useQuery<WorkflowDetialResponse>({
+    queryKey: ["workflowDetail", workflowId],
+    queryFn: async () => {
+      const response =
+        await workflowApi.getDetailApiV1WorkflowsWorkflowIdDetailGet(
+          workflowId,
+        );
+      return response.data;
+    },
+    staleTime: 30000,
+    refetchInterval: 60000,
+  });
+};
+
+// New hook for querying Caddy server directory listing
+export const useCaddyDirectoryTree = (directory: string | null) => {
+  return useQuery<Array<CaddyTreeDataNode>>({
+    queryKey: ["caddyDirectoryTree", directory],
+    queryFn: async () => {
+      if (!directory) {
+        return [];
+      }
+
+      // Query the Caddy server for directory listing
+      const VITE_FLOWO_WORKING_PATH = import.meta.env.VITE_FLOWO_WORKING_PATH;
+      // strip the VITE_FLOWO_WORKING_PATH from the directory
+      const directoryWithoutViteFlowoWorkingPath = directory.replace(VITE_FLOWO_WORKING_PATH, '');
+
+      // Include Accept: application/json header to get JSON response from Caddy
+      const response = await fetch(constructApiUrl(`/files/${directoryWithoutViteFlowoWorkingPath}`), {
+        headers: {
+          'Accept': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch directory: ${response.statusText}`);
+      }
+
+      // Parse JSON directory listing from Caddy
+      const jsonData = await response.json();
+      const nodes: CaddyTreeDataNode[] = [];
+
+      if (Array.isArray(jsonData)) {
+        for (const item of jsonData) {
+          // Skip parent directory links
+          if (item.name === '..' || item.name === '.') {
+            continue;
+          }
+
+          const isDirectory = item.is_dir || false;
+
+          nodes.push({
+            title: item.name,
+            key: `${directory}/${item.name}`,
+            icon: isDirectory ? "folder" : "file",
+            children: isDirectory ? [] : undefined,
+            isLeaf: !isDirectory,
+            fileSize: isDirectory ? null : (item.size || null),
+          });
+        }
+      }
+
+      nodes.sort((a, b) => {
+        const aIsDir = !a.isLeaf;
+        const bIsDir = !b.isLeaf;
+        if (aIsDir && !bIsDir) return -1;
+        if (!aIsDir && bIsDir) return 1;
+        return (a.title || '').localeCompare(b.title || '');
+      });
+
+      return nodes;
+    },
+    enabled: !!directory,
+    staleTime: 30000,
+    refetchInterval: 60000,
+  });
+};
+
+// Hook for lazy loading directory contents when expanding a directory
+export const useLazyDirectoryLoad = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (directoryPath: string) => {
+      const VITE_FLOWO_WORKING_PATH = import.meta.env.VITE_FLOWO_WORKING_PATH;
+      const directoryWithoutViteFlowoWorkingPath = directoryPath.replace(VITE_FLOWO_WORKING_PATH, '');
+
+      const response = await fetch(constructApiUrl(`/files/${directoryWithoutViteFlowoWorkingPath}`), {
+        headers: {
+          'Accept': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch directory: ${response.statusText}`);
+      }
+
+      const jsonData = await response.json();
+      const nodes: CaddyTreeDataNode[] = [];
+
+      if (Array.isArray(jsonData)) {
+        for (const item of jsonData) {
+          if (item.name === '..' || item.name === '.') {
+            continue;
+          }
+
+          const isDirectory = item.is_dir || false;
+
+          nodes.push({
+            title: item.name,
+            key: `${directoryPath}/${item.name}`,
+            icon: isDirectory ? "folder" : "file",
+            children: isDirectory ? [] : undefined,
+            isLeaf: !isDirectory,
+            fileSize: isDirectory ? null : (item.size || null),
+          });
+        }
+      }
+
+      nodes.sort((a, b) => {
+        const aIsDir = !a.isLeaf;
+        const bIsDir = !b.isLeaf;
+        if (aIsDir && !bIsDir) return -1;
+        if (!aIsDir && bIsDir) return 1;
+        return (a.title || '').localeCompare(b.title || '');
+      });
+
+      return nodes;
+    },
+    onSuccess: (data, directoryPath) => {
+      // Update the cache with the loaded directory contents
+      queryClient.setQueryData(["caddyDirectoryTree", directoryPath], data);
+    },
   });
 };

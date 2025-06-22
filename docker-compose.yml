@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   postgresql:
     image: hub.miaodocker.space:8443/library/postgres:15-alpine

@@ -50,7 +50,10 @@
         respond @options 200
         
         root * /work_dir
-        file_server
+        file_server {
+            browse
+            hide .snakemake *.smk flowo_logs
+        }
         
         # Set caching headers for different file types
         @images {

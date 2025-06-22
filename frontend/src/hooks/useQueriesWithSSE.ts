@@ -6,13 +6,12 @@ import { Status } from "../api/api";
 import { workflowApi } from "../api/client";
 import { type DatabaseChangeData, useSSE } from "./useSSE";
 
-// 去抖动工具函数 - 防止频繁请求
 const createDebouncer = () => {
   const timeouts = new Map<string, number>();
 
   return (key: string, fn: () => void, delay: number) => {
     console.log(
-      `⏱️ [DEBUG] Debouncer called for key: ${key}, delay: ${delay}ms`
+      `⏱️ [DEBUG] Debouncer called for key: ${key}, delay: ${delay}ms`,
     );
     const existingTimeout = timeouts.get(key);
     if (existingTimeout) {
@@ -40,7 +39,7 @@ class EventAggregator {
     type: string,
     workflowId: string,
     callback: () => void,
-    delay = 1000
+    delay = 1000,
   ) {
     const key = `${type}_${workflowId}`;
 
@@ -67,22 +66,14 @@ class EventAggregator {
 const eventAggregator = new EventAggregator();
 
 const isSignificantChange = (data: DatabaseChangeData): boolean => {
-  console.log("🔍 Checking significance of database change:", data);
-
   if (data.operation === "INSERT" || data.operation === "DELETE") {
-    console.log("✅ Significant change: INSERT/DELETE operation");
     return true;
   }
 
   if (data.operation === "UPDATE") {
-    const isSignificant = data.status_changed === true;
-    console.log(
-      `${isSignificant ? "✅" : "❌"} Update operation - status_changed: ${data.status_changed}`
-    );
-    return isSignificant;
+    return data.status_changed === true;
   }
 
-  console.log("❌ Non-significant change");
   return false;
 };
 
@@ -114,7 +105,7 @@ export const useWorkflowsWithSSE = (params?: {
         params?.tags ?? null,
         params?.name ?? null,
         params?.startAt ?? null,
-        params?.endAt ?? null
+        params?.endAt ?? null,
       );
       return response.data as WorkflowListResponse;
     },
@@ -128,15 +119,14 @@ export const useWorkflowsWithSSE = (params?: {
     onDatabaseChange: (data: DatabaseChangeData) => {
       console.log(
         "📨 [DEBUG] SSE database change received for workflows:",
-        data
+        data,
       );
       const shouldInvalidate = isSignificantChange(data);
       console.log(
-        `🎯 [DEBUG] Should invalidate workflows: ${shouldInvalidate}`
+        `🎯 [DEBUG] Should invalidate workflows: ${shouldInvalidate}`,
       );
 
       if (shouldInvalidate) {
-        console.log("📌 [DEBUG] Triggering workflows debouncer...");
         globalDebouncer(
           "workflows_list",
           () => {
@@ -145,10 +135,10 @@ export const useWorkflowsWithSSE = (params?: {
             queryClient.invalidateQueries({ queryKey: ["workflows"] });
             const endTime = performance.now();
             console.log(
-              `✅ [DEBUG] Workflows query invalidated in ${(endTime - startTime).toFixed(2)}ms`
+              `✅ [DEBUG] Workflows query invalidated in ${(endTime - startTime).toFixed(2)}ms`,
             );
           },
-          1000
+          1000,
         );
       }
     },
@@ -188,7 +178,7 @@ export const useWorkflowJobsWithSSE = (params?: {
         params?.orderByStarted,
         params?.descending,
         params?.ruleName,
-        params?.status
+        params?.status,
       );
       return response.data;
     },
@@ -206,7 +196,7 @@ export const useWorkflowJobsWithSSE = (params?: {
           params?.workflowId || "",
           () => {
             console.log(
-              `🔄 [DEBUG] Invalidating workflow jobs query for workflow: ${params?.workflowId}...`
+              `🔄 [DEBUG] Invalidating workflow jobs query for workflow: ${params?.workflowId}...`,
             );
             const startTime = performance.now();
             queryClient.invalidateQueries({
@@ -214,10 +204,10 @@ export const useWorkflowJobsWithSSE = (params?: {
             });
             const endTime = performance.now();
             console.log(
-              `✅ [DEBUG] Workflow jobs query invalidated in ${(endTime - startTime).toFixed(2)}ms`
+              `✅ [DEBUG] Workflow jobs query invalidated in ${(endTime - startTime).toFixed(2)}ms`,
             );
           },
-          1000
+          1000,
         );
       }
     },
@@ -245,7 +235,7 @@ export const useWorkflowProgressWithSSE = (workflowId: string) => {
     queryFn: async () => {
       const response =
         await workflowApi.getProgressApiV1WorkflowsWorkflowIdProgressGet(
-          workflowId
+          workflowId,
         );
       return response.data;
     },
@@ -273,7 +263,7 @@ export const useWorkflowProgressWithSSE = (workflowId: string) => {
         `progress_${workflowId}`,
         () => {
           console.log(
-            `🔄 [DEBUG] Invalidating workflow progress query for workflow: ${workflowId}...`
+            `🔄 [DEBUG] Invalidating workflow progress query for workflow: ${workflowId}...`,
           );
           const startTime = performance.now();
           lastUpdateTimeRef.current = Date.now();
@@ -282,10 +272,10 @@ export const useWorkflowProgressWithSSE = (workflowId: string) => {
           });
           const endTime = performance.now();
           console.log(
-            `✅ [DEBUG] Workflow progress query invalidated in ${(endTime - startTime).toFixed(2)}ms`
+            `✅ [DEBUG] Workflow progress query invalidated in ${(endTime - startTime).toFixed(2)}ms`,
           );
         },
-        2000
+        2000,
       );
     },
   });
@@ -311,7 +301,7 @@ export const useRuleStatusWithSSE = (workflowId: string) => {
     queryFn: async () => {
       const response =
         await workflowApi.getRuleStatusApiV1WorkflowsWorkflowIdRuleStatusGet(
-          workflowId
+          workflowId,
         );
       return response.data as { [key: string]: RuleStatusResponse };
     },
@@ -328,7 +318,7 @@ export const useRuleStatusWithSSE = (workflowId: string) => {
           `rule_status_${workflowId}`,
           () => {
             console.log(
-              `🔄 [DEBUG] Invalidating rule status query for workflow: ${workflowId}...`
+              `🔄 [DEBUG] Invalidating rule status query for workflow: ${workflowId}...`,
             );
             const startTime = performance.now();
             queryClient.invalidateQueries({
@@ -336,10 +326,10 @@ export const useRuleStatusWithSSE = (workflowId: string) => {
             });
             const endTime = performance.now();
             console.log(
-              `✅ [DEBUG] Rule status query invalidated in ${(endTime - startTime).toFixed(2)}ms`
+              `✅ [DEBUG] Rule status query invalidated in ${(endTime - startTime).toFixed(2)}ms`,
             );
           },
-          1500
+          1500,
         );
       }
     },

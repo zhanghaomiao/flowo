@@ -13,7 +13,7 @@ export const constructApiUrl = (path: string, basePath?: string): string => {
   const apiBasePath = basePath || getApiBasePath();
 
   // If basePath is relative (starts with /), use current origin
-  if (apiBasePath.startsWith('/')) {
+  if (apiBasePath.startsWith("/")) {
     return `${window.location.origin}${path}`;
   }
 
@@ -22,11 +22,13 @@ export const constructApiUrl = (path: string, basePath?: string): string => {
     const url = new URL(path, apiBasePath);
     return url.toString();
   } catch (error) {
-    console.error('Failed to construct URL:', { path, apiBasePath, error });
+    console.error("Failed to construct URL:", { path, apiBasePath, error });
     // Fallback: if apiBasePath looks like a complete URL, append path directly
-    if (apiBasePath.includes('://')) {
-      const cleanBasePath = apiBasePath.endsWith('/') ? apiBasePath.slice(0, -1) : apiBasePath;
-      const cleanPath = path.startsWith('/') ? path : `/${path}`;
+    if (apiBasePath.includes("://")) {
+      const cleanBasePath = apiBasePath.endsWith("/")
+        ? apiBasePath.slice(0, -1)
+        : apiBasePath;
+      const cleanPath = path.startsWith("/") ? path : `/${path}`;
       return `${cleanBasePath}${cleanPath}`;
     }
     // Final fallback to relative URL construction

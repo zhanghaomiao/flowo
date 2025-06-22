@@ -26,10 +26,15 @@ npx @openapitools/openapi-generator-cli generate -i openapi.json -g typescript-a
 ### Basic Usage
 
 ```typescript
-import { workflowApi, jobsApi, sseApi } from './api/client';
+import { workflowApi, jobsApi, sseApi } from "./api/client";
 
 // Get workflows
-const workflows = await workflowApi.listWorkflowsApiV1WorkflowsGet(20, 0, true, true);
+const workflows = await workflowApi.listWorkflowsApiV1WorkflowsGet(
+  20,
+  0,
+  true,
+  true,
+);
 
 // Get jobs
 const jobs = await jobsApi.getJobsApiV1JobsGet(10, 0);
@@ -38,15 +43,17 @@ const jobs = await jobsApi.getJobsApiV1JobsGet(10, 0);
 const job = await jobsApi.getJobApiV1JobsJobIdGet(123);
 
 // Get workflow jobs
-const workflowJobs = await workflowApi.listWorkflowJobsApiV1WorkflowsWorkflowIdJobsGet(
-  'workflow-id', 
-  'running'
-);
+const workflowJobs =
+  await workflowApi.listWorkflowJobsApiV1WorkflowsWorkflowIdJobsGet(
+    "workflow-id",
+    "running",
+  );
 
 // Get workflow rule graph
-const ruleGraph = await workflowApi.getWorkflowRuleGraphApiV1WorkflowsWorkflowIdRuleGraphGet(
-  'workflow-id'
-);
+const ruleGraph =
+  await workflowApi.getWorkflowRuleGraphApiV1WorkflowsWorkflowIdRuleGraphGet(
+    "workflow-id",
+  );
 
 // SSE health check
 const health = await sseApi.sseHealthCheckApiV1SseHealthGet();
@@ -66,14 +73,14 @@ const stats = await sseApi.getSseStatsApiV1SseStatsGet();
 ### Basic SSE Hooks
 
 ```typescript
-import { useSSE, useWorkflowSSE, useJobSSE, useAllSSE } from './hooks/useSSE';
+import { useSSE, useWorkflowSSE, useJobSSE, useAllSSE } from "./hooks/useSSE";
 
 // Connect to all events
 const { data, status, isConnected, reconnect, disconnect } = useSSE({
-  filters: 'all',
+  filters: "all",
   enabled: true,
   reconnectInterval: 3000,
-  maxRetries: 5
+  maxRetries: 5,
 });
 
 // Specific event types
@@ -82,10 +89,10 @@ const jobEvents = useJobSSE({ enabled: true });
 const allEvents = useAllSSE({ enabled: true });
 
 // Custom filters
-const customEvents = useSSE({ 
-  filters: 'workflows,jobs',
-  baseUrl: 'http://localhost:8001',
-  reconnectInterval: 5000
+const customEvents = useSSE({
+  filters: "workflows,jobs",
+  baseUrl: "http://localhost:8001",
+  reconnectInterval: 5000,
 });
 ```
 
@@ -93,20 +100,20 @@ const customEvents = useSSE({
 
 ```typescript
 interface UseSSEReturn {
-  data: SSEEvent | null;           // Latest received event
-  status: SSEConnectionStatus;     // 'connecting' | 'connected' | 'disconnected' | 'error'
-  error: string | null;            // Error message if any
-  isConnected: boolean;            // Connection status
-  reconnect: () => void;           // Manual reconnection
-  disconnect: () => void;          // Manual disconnection
-  retryCount: number;              // Number of retry attempts
+  data: SSEEvent | null; // Latest received event
+  status: SSEConnectionStatus; // 'connecting' | 'connected' | 'disconnected' | 'error'
+  error: string | null; // Error message if any
+  isConnected: boolean; // Connection status
+  reconnect: () => void; // Manual reconnection
+  disconnect: () => void; // Manual disconnection
+  retryCount: number; // Number of retry attempts
 }
 
 interface SSEEvent {
-  id?: string;                     // Event ID
-  event?: string;                  // Event type (e.g., 'workflow_update', 'job_update')
-  data: any;                       // Event payload
-  timestamp?: string;              // When the event was received
+  id?: string; // Event ID
+  event?: string; // Event type (e.g., 'workflow_update', 'job_update')
+  data: any; // Event payload
+  timestamp?: string; // When the event was received
 }
 ```
 
@@ -115,39 +122,39 @@ interface SSEEvent {
 These hooks combine React Query data fetching with SSE real-time updates:
 
 ```typescript
-import { 
-  useWorkflowsWithSSE, 
-  useJobsWithSSE, 
-  useWorkflowJobsWithSSE 
-} from './hooks/useQueries';
+import {
+  useWorkflowsWithSSE,
+  useJobsWithSSE,
+  useWorkflowJobsWithSSE,
+} from "./hooks/useQueries";
 
 // Workflows with automatic SSE updates
 const {
-  data,                    // Workflow data from React Query
-  isLoading,              // Loading state
-  error,                  // Query error
-  sseStatus,              // SSE connection status
-  isSSEConnected,         // SSE connection boolean
-  sseError,               // SSE error
-  sseRetryCount,          // SSE retry count
-  reconnectSSE,           // Reconnect SSE function
-  disconnectSSE           // Disconnect SSE function
-} = useWorkflowsWithSSE({ 
-  limit: 20, 
-  enableSSE: true 
+  data, // Workflow data from React Query
+  isLoading, // Loading state
+  error, // Query error
+  sseStatus, // SSE connection status
+  isSSEConnected, // SSE connection boolean
+  sseError, // SSE error
+  sseRetryCount, // SSE retry count
+  reconnectSSE, // Reconnect SSE function
+  disconnectSSE, // Disconnect SSE function
+} = useWorkflowsWithSSE({
+  limit: 20,
+  enableSSE: true,
 });
 
 // Jobs with SSE integration
-const jobsWithSSE = useJobsWithSSE({ 
-  limit: 10, 
-  enableSSE: true 
+const jobsWithSSE = useJobsWithSSE({
+  limit: 10,
+  enableSSE: true,
 });
 
 // Workflow-specific jobs with SSE
 const workflowJobsWithSSE = useWorkflowJobsWithSSE(
-  'workflow-id',
-  undefined,  // status filter
-  true        // enable SSE
+  "workflow-id",
+  undefined, // status filter
+  true, // enable SSE
 );
 ```
 
@@ -164,7 +171,7 @@ import SSEStatusIndicator from './components/SSEStatusIndicator';
 <SSEStatusIndicator filters="all" />
 
 // Detailed status card with controls
-<SSEStatusIndicator 
+<SSEStatusIndicator
   filters="workflows,jobs"
   showDetails={true}
   showStats={true}
@@ -202,6 +209,7 @@ data: {"table": "jobs", "action": "UPDATE", "data": {...}}
 ```
 
 Custom event types may include:
+
 - `workflow_update`: Workflow state changes
 - `job_update`: Job state changes
 
@@ -213,7 +221,7 @@ Configure the API base URL in `src/api/client.ts`:
 
 ```typescript
 const configuration = new Configuration({
-  basePath: 'http://127.0.0.1:8001',  // Update this URL
+  basePath: "http://127.0.0.1:8001", // Update this URL
 });
 ```
 
@@ -223,11 +231,11 @@ SSE hooks accept these configuration options:
 
 ```typescript
 interface UseSSEOptions {
-  baseUrl?: string;           // API base URL (default: 'http://127.0.0.1:8001')
-  filters?: string;           // Table filters (default: undefined)
-  enabled?: boolean;          // Enable/disable connection (default: true)
+  baseUrl?: string; // API base URL (default: 'http://127.0.0.1:8001')
+  filters?: string; // Table filters (default: undefined)
+  enabled?: boolean; // Enable/disable connection (default: true)
   reconnectInterval?: number; // Reconnection delay in ms (default: 3000)
-  maxRetries?: number;        // Maximum retry attempts (default: 5)
+  maxRetries?: number; // Maximum retry attempts (default: 5)
 }
 ```
 
@@ -238,12 +246,12 @@ interface UseSSEOptions {
 SSE connections automatically handle errors and attempt reconnection:
 
 ```typescript
-const { status, error, retryCount, reconnect } = useSSE({ filters: 'all' });
+const { status, error, retryCount, reconnect } = useSSE({ filters: "all" });
 
-if (status === 'error') {
-  console.error('SSE Error:', error);
-  console.log('Retry count:', retryCount);
-  
+if (status === "error") {
+  console.error("SSE Error:", error);
+  console.log("Retry count:", retryCount);
+
   // Manual reconnection
   reconnect();
 }
@@ -257,7 +265,7 @@ Use React Query's error handling for API calls:
 const { data, error, isError } = useWorkflows();
 
 if (isError) {
-  console.error('API Error:', error);
+  console.error("API Error:", error);
 }
 ```
 
@@ -298,10 +306,10 @@ import { useWorkflowsWithSSE } from './hooks/useQueries';
 import SSEStatusIndicator from './components/SSEStatusIndicator';
 
 const WorkflowDashboard = () => {
-  const { 
-    data: workflows, 
-    isLoading, 
-    isSSEConnected 
+  const {
+    data: workflows,
+    isLoading,
+    isSSEConnected
   } = useWorkflowsWithSSE({ enableSSE: true });
 
   return (
@@ -372,4 +380,4 @@ const EventTracker = () => {
 
 ## License
 
-This project is part of the Snakemake ecosystem and follows the same licensing terms. 
+This project is part of the Snakemake ecosystem and follows the same licensing terms.

@@ -42,12 +42,7 @@ const WorkflowProgress: React.FC<WorkflowProgressProps> = ({ workflowId }) => {
         >
           Workflow Progress - {workflowId}
           <Progress
-            percent={parseFloat(
-              (
-                ((progressData?.completed ?? 0) / (progressData?.total ?? 1)) *
-                100
-              ).toFixed(1),
-            )}
+            percent={progressData?.progress ?? 0}
             status={getProgressStatus()}
           />
         </Col>
