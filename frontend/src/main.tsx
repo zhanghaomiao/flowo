@@ -46,6 +46,9 @@ createRoot(document.getElementById("root")!).render(
             Tree: {
               indentSize: 2,
             },
+            Layout: {
+              headerHeight: 45,
+            },
           },
         }}
       >

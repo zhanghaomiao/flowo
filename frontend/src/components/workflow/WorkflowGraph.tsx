@@ -373,7 +373,7 @@ const WorkflowGraphInner: React.FC<WorkflowGraphProps> = ({
             zoomable
             pannable
           />
-          <Panel position="top-right" style={{ paddingTop: "50px" }}>
+          <Panel position="top-right">
             <Card
               size="small"
               style={{
@@ -457,7 +457,7 @@ const WorkflowGraphInner: React.FC<WorkflowGraphProps> = ({
               </div>
             </Card>
           </Panel>
-          <Panel position="top-right">
+          <Panel position="top-left">
             <Card
               size="small"
               style={{
@@ -466,7 +466,7 @@ const WorkflowGraphInner: React.FC<WorkflowGraphProps> = ({
               }}
             >
               <div
-                style={{ display: "flex", flexDirection: "row", gap: "6px" }}
+                style={{ display: "flex", flexDirection: "column", gap: "3px" }}
               >
                 {Object.entries(STATUS_COLORS).map(([status, color]) => (
                   <div

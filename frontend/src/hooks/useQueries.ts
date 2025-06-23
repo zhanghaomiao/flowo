@@ -359,7 +359,10 @@ export const useOutPutsTree = (workflowId: string, depth: number = 2) => {
   });
 };
 
-export const useWorkflowDetail = (workflowId: string) => {
+export const useWorkflowDetail = (
+  workflowId: string,
+  enabled: boolean = true,
+) => {
   return useQuery<WorkflowDetialResponse>({
     queryKey: ["workflowDetail", workflowId],
     queryFn: async () => {
@@ -371,6 +374,7 @@ export const useWorkflowDetail = (workflowId: string) => {
     },
     staleTime: 30000,
     refetchInterval: 60000,
+    enabled,
   });
 };
 
