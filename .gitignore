@@ -255,3 +255,5 @@ docs/build/
 scratch/
 tmp/
 temp/ 
+
+.prettierrc
