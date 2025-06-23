@@ -20,8 +20,8 @@ export const filterSupportedFiles = (
         // If children are already loaded, recursively filter them
         const filteredChildren = node.children
           ? filterSupportedFiles(
-            node.children as (TreeDataNode & { fileSize?: number | null })[],
-          )
+              node.children as (TreeDataNode & { fileSize?: number | null })[],
+            )
           : undefined; // Keep undefined for lazy loading
 
         return {
@@ -51,27 +51,33 @@ export const convertToAntdTreeData = (
       icon: node.isLeaf ? getFileIcon(node.title || "") : <FolderOutlined />,
       children: node.children
         ? convertToAntdTreeData(
-          node.children as (TreeDataNode & { fileSize?: number | null })[],
-          fullPath,
-          onLoadData,
-        )
-        : node.isLeaf ? undefined : [], // Empty array for directories to enable lazy loading
+            node.children as (TreeDataNode & { fileSize?: number | null })[],
+            fullPath,
+            onLoadData,
+          )
+        : node.isLeaf
+          ? undefined
+          : [], // Empty array for directories to enable lazy loading
       isLeaf: node.isLeaf || false,
       fullPath,
       type: node.isLeaf ? "file" : "directory",
       fileExtension,
       nodeData: node, // Store original node data for preview
-      loadData: onLoadData && !node.isLeaf ? () => onLoadData({
-        title: node.title || "",
-        key: node.key || "",
-        icon: <FolderOutlined />,
-        children: [],
-        isLeaf: false,
-        fullPath,
-        type: "directory",
-        fileExtension: "",
-        nodeData: node,
-      }) : undefined,
+      loadData:
+        onLoadData && !node.isLeaf
+          ? () =>
+              onLoadData({
+                title: node.title || "",
+                key: node.key || "",
+                icon: <FolderOutlined />,
+                children: [],
+                isLeaf: false,
+                fullPath,
+                type: "directory",
+                fileExtension: "",
+                nodeData: node,
+              })
+          : undefined,
     };
   });
 };

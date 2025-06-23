@@ -1,5 +1,6 @@
-import type { TreeDataNode } from "../../api/api";
 import React from "react";
+
+import type { TreeDataNode } from "../../api/api";
 
 export interface ResultViewerProps {
   workflowId: string;
@@ -40,9 +41,26 @@ export interface TreeSelectInfo {
 }
 
 export interface FileSizeThresholds {
-  PREVIEW_WARNING: number;
-  PREVIEW_BLOCK: number;
-  DOWNLOAD_WARNING: number;
+  default: {
+    PREVIEW_WARNING: number;
+    PREVIEW_BLOCK: number;
+    DOWNLOAD_WARNING: number;
+  };
+  pdf: {
+    PREVIEW_WARNING: number;
+    PREVIEW_BLOCK: number;
+    DOWNLOAD_WARNING: number;
+  };
+  html: {
+    PREVIEW_WARNING: number;
+    PREVIEW_BLOCK: number;
+    DOWNLOAD_WARNING: number;
+  };
+  image: {
+    PREVIEW_WARNING: number;
+    PREVIEW_BLOCK: number;
+    DOWNLOAD_WARNING: number;
+  };
 }
 
 export interface FileTypes {

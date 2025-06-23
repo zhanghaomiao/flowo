@@ -12,7 +12,6 @@ import {
   Button,
   Card,
   Empty,
-  InputNumber,
   message,
   Modal,
   Space,
@@ -22,13 +21,13 @@ import {
   Tree,
   Typography,
 } from "antd";
-import React, { useState, useCallback } from "react";
+import React, { useCallback, useState } from "react";
 
 import { constructApiUrl } from "../../api/client";
 import {
-  useWorkflowDetail,
   useCaddyDirectoryTree,
   useLazyDirectoryLoad,
+  useWorkflowDetail,
 } from "../../hooks/useQueries";
 import { FilePreview, renderFullscreenPreview } from "./FilePreview";
 import { convertToAntdTreeData } from "./FileTree";
@@ -40,24 +39,24 @@ import {
   isFileTooLargeForPreview,
 } from "./FileUtils";
 import type {
+  AntdTreeNode,
   ResultViewerProps,
   SelectedNodeData,
   TreeSelectInfo,
-  AntdTreeNode,
 } from "./types";
 
 const { Text } = Typography;
 
-export const ResultViewer: React.FC<ResultViewerProps> = ({
-  workflowId,
-}) => {
+export const ResultViewer: React.FC<ResultViewerProps> = ({ workflowId }) => {
   const [selectedKeys, setSelectedKeys] = useState<React.Key[]>([]);
   const [expandedKeys, setExpandedKeys] = useState<React.Key[]>([]);
   const [autoExpandParent, setAutoExpandParent] = useState<boolean>(false);
   const [selectedNodeData, setSelectedNodeData] =
     useState<SelectedNodeData | null>(null);
   const [isFullscreenOpen, setIsFullscreenOpen] = useState<boolean>(false);
-  const [loadedDirectories, setLoadedDirectories] = useState<Set<string>>(new Set());
+  const [loadedDirectories, setLoadedDirectories] = useState<Set<string>>(
+    new Set(),
+  );
 
   // Local tree state to manage the complete tree data
   const [treeData, setTreeData] = useState<AntdTreeNode[]>([]);
@@ -80,7 +79,10 @@ export const ResultViewer: React.FC<ResultViewerProps> = ({
 
   // Lazy loading mutation
   const lazyLoadMutation = useLazyDirectoryLoad();
-  const working_path = workflowDetail?.directory?.replace(import.meta.env.VITE_FLOWO_WORKING_PATH, '');
+  const working_path = workflowDetail?.directory?.replace(
+    import.meta.env.VITE_FLOWO_WORKING_PATH,
+    "",
+  );
 
   const isLoading = isWorkflowLoading || isTreeLoading;
   const error = workflowError || treeError;
@@ -90,52 +92,66 @@ export const ResultViewer: React.FC<ResultViewerProps> = ({
   };
 
   // Function to update tree node with new children
-  const updateTreeNode = useCallback((path: string, newChildren: AntdTreeNode[]) => {
-    setTreeData(prevTreeData => {
-      const updateNode = (nodes: AntdTreeNode[]): AntdTreeNode[] => {
-        return nodes.map(node => {
-          if (node.fullPath === path) {
-            // Update this node with new children
-            return {
-              ...node,
-              children: newChildren,
-            };
-          } else if (node.children) {
-            // Recursively update children
-            return {
-              ...node,
-              children: updateNode(node.children),
-            };
-          }
-          return node;
-        });
-      };
+  const updateTreeNode = useCallback(
+    (path: string, newChildren: AntdTreeNode[]) => {
+      setTreeData((prevTreeData) => {
+        const updateNode = (nodes: AntdTreeNode[]): AntdTreeNode[] => {
+          return nodes.map((node) => {
+            if (node.fullPath === path) {
+              // Update this node with new children
+              return {
+                ...node,
+                children: newChildren,
+              };
+            } else if (node.children) {
+              // Recursively update children
+              return {
+                ...node,
+                children: updateNode(node.children),
+              };
+            }
+            return node;
+          });
+        };
 
-      return updateNode(prevTreeData);
-    });
-  }, []);
+        return updateNode(prevTreeData);
+      });
+    },
+    [],
+  );
 
   // Handle lazy loading when a directory is expanded
-  const handleLoadData = useCallback(async (node: AntdTreeNode) => {
-    if (node.type === "directory" && !loadedDirectories.has(node.fullPath)) {
-      try {
-        const newChildren = await lazyLoadMutation.mutateAsync(node.fullPath);
-        setLoadedDirectories(prev => new Set(prev).add(node.fullPath));
+  const handleLoadData = useCallback(
+    async (node: AntdTreeNode) => {
+      if (node.type === "directory" && !loadedDirectories.has(node.fullPath)) {
+        try {
+          const newChildren = await lazyLoadMutation.mutateAsync(node.fullPath);
+          setLoadedDirectories((prev) => new Set(prev).add(node.fullPath));
 
-        // Convert the new children to AntdTreeNode format and update the tree
-        const convertedChildren = convertToAntdTreeData(newChildren, node.fullPath, handleLoadData);
-        updateTreeNode(node.fullPath, convertedChildren);
-      } catch (error) {
-        console.error("Failed to load directory:", error);
-        message.error(`Failed to load directory: ${node.title}`);
+          // Convert the new children to AntdTreeNode format and update the tree
+          const convertedChildren = convertToAntdTreeData(
+            newChildren,
+            node.fullPath,
+            handleLoadData,
+          );
+          updateTreeNode(node.fullPath, convertedChildren);
+        } catch (error) {
+          console.error("Failed to load directory:", error);
+          message.error(`Failed to load directory: ${node.title}`);
+        }
       }
-    }
-  }, [lazyLoadMutation, loadedDirectories, updateTreeNode]);
+    },
+    [lazyLoadMutation, loadedDirectories, updateTreeNode],
+  );
 
   // Update tree data when initial data loads
   React.useEffect(() => {
     if (outputsTree && outputsTree.length > 0) {
-      const initialTreeData = convertToAntdTreeData(outputsTree, working_path, handleLoadData);
+      const initialTreeData = convertToAntdTreeData(
+        outputsTree,
+        working_path,
+        handleLoadData,
+      );
       setTreeData(initialTreeData);
     }
   }, [outputsTree, working_path]);
@@ -192,7 +208,7 @@ export const ResultViewer: React.FC<ResultViewerProps> = ({
 
     const { nodeData, fullPath, type } = selectedNodeData;
     const hasChildren = nodeData.children && nodeData.children.length > 0;
-    const fileSize = (nodeData as any).fileSize;
+    const fileSize = nodeData.fileSize;
 
     return (
       <Space direction="vertical" style={{ width: "100%" }}>
@@ -224,7 +240,7 @@ export const ResultViewer: React.FC<ResultViewerProps> = ({
               >
                 Download
               </Button>
-              {!isFileTooLargeForPreview(fileSize) && (
+              {!isFileTooLargeForPreview(fileSize, nodeData.title || "") && (
                 <Button
                   icon={<FullscreenOutlined />}
                   onClick={handleFullscreenOpen}
@@ -256,7 +272,7 @@ export const ResultViewer: React.FC<ResultViewerProps> = ({
           <div>
             <Text strong>Contents:</Text>
             <ul style={{ marginTop: 8, paddingLeft: 20 }}>
-              {nodeData.children.slice(0, 10).map((child: any) => (
+              {nodeData.children.slice(0, 10).map((child) => (
                 <li key={child.key} style={{ marginBottom: 4 }}>
                   {child.isLeaf ? (
                     getFileIcon(child.title || "")
@@ -360,6 +376,7 @@ export const ResultViewer: React.FC<ResultViewerProps> = ({
               overflow: "auto",
               background: "#fafafa",
               border: "none",
+              textAlign: "left",
             }}
           >
             <Tree

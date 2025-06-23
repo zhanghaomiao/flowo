@@ -25,6 +25,12 @@
   color: #333;
 }
 
+.ant-tree-node-content-wrapper.ant-tree-node-content-wrapper-normal {
+  display: inline-block;
+  min-width: 300px;
+  white-space: nowrap;
+}
+
 /* Tree icon styling */
 .ant-tree-iconEle {
   margin-right: 6px;

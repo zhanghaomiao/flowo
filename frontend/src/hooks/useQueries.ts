@@ -132,7 +132,7 @@ export const useJob = (jobId: number, enabled: boolean = true) => {
 };
 
 // Custom hook for fetching job files - Note: This API endpoint may not exist
-export const useJobFiles = (jobId: number, _enabled: boolean = true) => {
+export const useJobFiles = (jobId: number) => {
   return useQuery({
     queryKey: ["jobFiles", jobId],
     queryFn: async () => {
@@ -386,14 +386,20 @@ export const useCaddyDirectoryTree = (directory: string | null) => {
       // Query the Caddy server for directory listing
       const VITE_FLOWO_WORKING_PATH = import.meta.env.VITE_FLOWO_WORKING_PATH;
       // strip the VITE_FLOWO_WORKING_PATH from the directory
-      const directoryWithoutViteFlowoWorkingPath = directory.replace(VITE_FLOWO_WORKING_PATH, '');
+      const directoryWithoutViteFlowoWorkingPath = directory.replace(
+        VITE_FLOWO_WORKING_PATH,
+        "",
+      );
 
       // Include Accept: application/json header to get JSON response from Caddy
-      const response = await fetch(constructApiUrl(`/files/${directoryWithoutViteFlowoWorkingPath}`), {
-        headers: {
-          'Accept': 'application/json'
-        }
-      });
+      const response = await fetch(
+        constructApiUrl(`/files/${directoryWithoutViteFlowoWorkingPath}`),
+        {
+          headers: {
+            Accept: "application/json",
+          },
+        },
+      );
 
       if (!response.ok) {
         throw new Error(`Failed to fetch directory: ${response.statusText}`);
@@ -406,7 +412,7 @@ export const useCaddyDirectoryTree = (directory: string | null) => {
       if (Array.isArray(jsonData)) {
         for (const item of jsonData) {
           // Skip parent directory links
-          if (item.name === '..' || item.name === '.') {
+          if (item.name === ".." || item.name === ".") {
             continue;
           }
 
@@ -418,7 +424,7 @@ export const useCaddyDirectoryTree = (directory: string | null) => {
             icon: isDirectory ? "folder" : "file",
             children: isDirectory ? [] : undefined,
             isLeaf: !isDirectory,
-            fileSize: isDirectory ? null : (item.size || null),
+            fileSize: isDirectory ? null : item.size || null,
           });
         }
       }
@@ -428,7 +434,7 @@ export const useCaddyDirectoryTree = (directory: string | null) => {
         const bIsDir = !b.isLeaf;
         if (aIsDir && !bIsDir) return -1;
         if (!aIsDir && bIsDir) return 1;
-        return (a.title || '').localeCompare(b.title || '');
+        return (a.title || "").localeCompare(b.title || "");
       });
 
       return nodes;
@@ -446,13 +452,19 @@ export const useLazyDirectoryLoad = () => {
   return useMutation({
     mutationFn: async (directoryPath: string) => {
       const VITE_FLOWO_WORKING_PATH = import.meta.env.VITE_FLOWO_WORKING_PATH;
-      const directoryWithoutViteFlowoWorkingPath = directoryPath.replace(VITE_FLOWO_WORKING_PATH, '');
+      const directoryWithoutViteFlowoWorkingPath = directoryPath.replace(
+        VITE_FLOWO_WORKING_PATH,
+        "",
+      );
 
-      const response = await fetch(constructApiUrl(`/files/${directoryWithoutViteFlowoWorkingPath}`), {
-        headers: {
-          'Accept': 'application/json'
-        }
-      });
+      const response = await fetch(
+        constructApiUrl(`/files/${directoryWithoutViteFlowoWorkingPath}`),
+        {
+          headers: {
+            Accept: "application/json",
+          },
+        },
+      );
 
       if (!response.ok) {
         throw new Error(`Failed to fetch directory: ${response.statusText}`);
@@ -463,7 +475,7 @@ export const useLazyDirectoryLoad = () => {
 
       if (Array.isArray(jsonData)) {
         for (const item of jsonData) {
-          if (item.name === '..' || item.name === '.') {
+          if (item.name === ".." || item.name === ".") {
             continue;
           }
 
@@ -475,7 +487,7 @@ export const useLazyDirectoryLoad = () => {
             icon: isDirectory ? "folder" : "file",
             children: isDirectory ? [] : undefined,
             isLeaf: !isDirectory,
-            fileSize: isDirectory ? null : (item.size || null),
+            fileSize: isDirectory ? null : item.size || null,
           });
         }
       }
@@ -485,7 +497,7 @@ export const useLazyDirectoryLoad = () => {
         const bIsDir = !b.isLeaf;
         if (aIsDir && !bIsDir) return -1;
         if (!aIsDir && bIsDir) return 1;
-        return (a.title || '').localeCompare(b.title || '');
+        return (a.title || "").localeCompare(b.title || "");
       });
 
       return nodes;

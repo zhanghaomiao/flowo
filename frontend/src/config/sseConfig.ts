@@ -15,7 +15,7 @@ interface SSEConfig {
 // Global SSE configuration
 const getSSEConfig = (): SSEConfig => {
   // Check environment variables for SSE configuration
-  const env = (import.meta as any).env;
+  const env = import.meta.env;
   const isSSEDisabled =
     env?.VITE_DISABLE_SSE === "true" || env?.VITE_DISABLE_SSE === "1";
 

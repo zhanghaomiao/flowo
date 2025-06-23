@@ -11,7 +11,7 @@ import {
 } from "./FileUtils";
 import type { SelectedNodeData } from "./types";
 
-const { Text, Paragraph } = Typography;
+const { Paragraph } = Typography;
 
 // Image Preview Component
 export const ImagePreview: React.FC<{ src: string; alt: string }> = ({
@@ -121,7 +121,7 @@ export const PdfPreview: React.FC<{ src: string }> = ({ src }) => (
 
 // HTML Preview Component
 export const HtmlPreview: React.FC<{ src: string }> = ({ src }) => (
-  <div style={{ height: "calc(100vh - 450px)" }}>
+  <div style={{ height: "calc(100vh - 350px)" }}>
     <iframe
       src={src}
       style={{ width: "100%", height: "100%", border: "1px solid #d9d9d9" }}
@@ -253,10 +253,10 @@ export const FilePreview: React.FC<{ nodeData: SelectedNodeData }> = ({
 
   const fileUrl = constructApiUrl(`/files/${fullPath}`);
   const category = getFileTypeCategory(data.title || "");
-  const fileSize = (data as any).fileSize;
+  const fileSize = data.fileSize || 0;
 
   // Check if file is too large for preview
-  if (isFileTooLargeForPreview(fileSize)) {
+  if (isFileTooLargeForPreview(fileSize, data.title || "")) {
     return (
       <Alert
         message="File Too Large for Preview"
@@ -268,7 +268,7 @@ export const FilePreview: React.FC<{ nodeData: SelectedNodeData }> = ({
   }
 
   // Show warning for large files
-  if (shouldShowPreviewWarning(fileSize)) {
+  if (shouldShowPreviewWarning(fileSize, data.title || "")) {
     return (
       <div>
         <Alert
@@ -320,10 +320,10 @@ export const renderFullscreenPreview = (nodeData: SelectedNodeData) => {
   const { fullPath, nodeData: data } = nodeData;
   const fileUrl = constructApiUrl(`/files/${fullPath}`);
   const category = getFileTypeCategory(data.title || "");
-  const fileSize = (data as any).fileSize;
+  const fileSize = data.fileSize || 0;
 
   // Check if file is too large for preview
-  if (isFileTooLargeForPreview(fileSize)) {
+  if (isFileTooLargeForPreview(fileSize, data.title || "")) {
     return (
       <div
         style={{
@@ -345,7 +345,7 @@ export const renderFullscreenPreview = (nodeData: SelectedNodeData) => {
   }
 
   // Show warning for large files
-  if (shouldShowPreviewWarning(fileSize)) {
+  if (shouldShowPreviewWarning(fileSize, data.title || "")) {
     return (
       <div>
         <Alert
