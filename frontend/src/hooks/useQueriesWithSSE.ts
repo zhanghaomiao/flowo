@@ -1,11 +1,83 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useRef } from "react";
 
 import type { RuleStatusResponse, WorkflowListResponse } from "../api/api";
 import { Status } from "../api/api";
 import { workflowApi } from "../api/client";
 import { type DatabaseChangeData, useSSE } from "./useSSE";
 
-// Enhanced workflows hook with direct SSE integration
+const createDebouncer = () => {
+  const timeouts = new Map<string, number>();
+
+  return (key: string, fn: () => void, delay: number) => {
+    console.log(
+      `⏱️ [DEBUG] Debouncer called for key: ${key}, delay: ${delay}ms`,
+    );
+    const existingTimeout = timeouts.get(key);
+    if (existingTimeout) {
+      console.log(`🔄 [DEBUG] Clearing existing timeout for key: ${key}`);
+      clearTimeout(existingTimeout);
+    }
+
+    const timeoutId = setTimeout(() => {
+      console.log(`🚀 [DEBUG] Executing debounced function for key: ${key}`);
+      fn();
+      timeouts.delete(key);
+    }, delay);
+
+    timeouts.set(key, timeoutId);
+  };
+};
+
+const globalDebouncer = createDebouncer();
+
+class EventAggregator {
+  private events = new Map<string, Set<string>>();
+  private timeouts = new Map<string, number>();
+
+  addEvent(
+    type: string,
+    workflowId: string,
+    callback: () => void,
+    delay = 1000,
+  ) {
+    const key = `${type}_${workflowId}`;
+
+    if (!this.events.has(key)) {
+      this.events.set(key, new Set());
+    }
+    this.events.get(key)!.add(workflowId);
+
+    const existingTimeout = this.timeouts.get(key);
+    if (existingTimeout) {
+      clearTimeout(existingTimeout);
+    }
+
+    const timeoutId = setTimeout(() => {
+      callback();
+      this.events.delete(key);
+      this.timeouts.delete(key);
+    }, delay);
+
+    this.timeouts.set(key, timeoutId);
+  }
+}
+
+const eventAggregator = new EventAggregator();
+
+const isSignificantChange = (data: DatabaseChangeData): boolean => {
+  if (data.operation === "INSERT" || data.operation === "DELETE") {
+    return true;
+  }
+
+  if (data.operation === "UPDATE") {
+    return data.status_changed === true;
+  }
+
+  return false;
+};
+
+// Enhanced workflows hook with direct SSE integration and optimization
 export const useWorkflowsWithSSE = (params?: {
   limit?: number | null;
   offset?: number | null;
@@ -20,7 +92,6 @@ export const useWorkflowsWithSSE = (params?: {
 }) => {
   const queryClient = useQueryClient();
 
-  // Use the main workflows query
   const workflowsQuery = useQuery<WorkflowListResponse>({
     queryKey: ["workflows", params],
     queryFn: async () => {
@@ -38,31 +109,43 @@ export const useWorkflowsWithSSE = (params?: {
       );
       return response.data as WorkflowListResponse;
     },
-    staleTime: 30000,
-    refetchInterval: 60000,
+    staleTime: 45000,
+    refetchInterval: 90000,
     placeholderData: (previousData) => previousData,
   });
 
-  // Direct SSE connection for database changes
   const sseConnection = useSSE({
     filters: "workflows,jobs",
     onDatabaseChange: (data: DatabaseChangeData) => {
-      if (data.table === "workflows") {
-        console.log(
-          "Workflows table changed, invalidating workflows query:",
-          data,
+      console.log(
+        "📨 [DEBUG] SSE database change received for workflows:",
+        data,
+      );
+      const shouldInvalidate = isSignificantChange(data);
+      console.log(
+        `🎯 [DEBUG] Should invalidate workflows: ${shouldInvalidate}`,
+      );
+
+      if (shouldInvalidate) {
+        globalDebouncer(
+          "workflows_list",
+          () => {
+            console.log("🔄 [DEBUG] Invalidating workflows query...");
+            const startTime = performance.now();
+            queryClient.invalidateQueries({ queryKey: ["workflows"] });
+            const endTime = performance.now();
+            console.log(
+              `✅ [DEBUG] Workflows query invalidated in ${(endTime - startTime).toFixed(2)}ms`,
+            );
+          },
+          1000,
         );
-        queryClient.invalidateQueries({ queryKey: ["workflows"] });
-      } else if (data.table === "jobs") {
-        console.log("Jobs table changed, might affect workflows list:", data);
-        queryClient.invalidateQueries({ queryKey: ["workflows"] });
       }
     },
   });
 
   return {
     ...workflowsQuery,
-    // SSE connection data
     sseStatus: sseConnection.status,
     sseError: sseConnection.error,
     isSSEConnected: sseConnection.isConnected,
@@ -73,7 +156,7 @@ export const useWorkflowsWithSSE = (params?: {
   };
 };
 
-// Enhanced workflow jobs hook with direct SSE integration
+// Enhanced workflow jobs hook with direct SSE integration and optimization
 export const useWorkflowJobsWithSSE = (params?: {
   workflowId: string;
   limit?: number | null;
@@ -85,7 +168,6 @@ export const useWorkflowJobsWithSSE = (params?: {
 }) => {
   const queryClient = useQueryClient();
 
-  // Use the main workflow jobs query
   const workflowJobsQuery = useQuery({
     queryKey: ["workflowJobs", params],
     queryFn: async () => {
@@ -100,24 +182,39 @@ export const useWorkflowJobsWithSSE = (params?: {
       );
       return response.data;
     },
-    staleTime: 30000,
-    refetchInterval: 60000,
+    staleTime: 45000,
+    refetchInterval: 90000,
   });
 
-  // Direct SSE connection for workflow-specific job events
   const sseConnection = useSSE({
     filters: "jobs",
     workflowId: params?.workflowId,
     onJobEvent: (data: DatabaseChangeData) => {
-      // Invalidate jobs query when jobs change for this workflow
-      console.log(`Job event for workflow ${params?.workflowId}:`, data);
-      queryClient.invalidateQueries({ queryKey: ["workflowJobs", params] });
+      if (isSignificantChange(data)) {
+        eventAggregator.addEvent(
+          "jobs",
+          params?.workflowId || "",
+          () => {
+            console.log(
+              `🔄 [DEBUG] Invalidating workflow jobs query for workflow: ${params?.workflowId}...`,
+            );
+            const startTime = performance.now();
+            queryClient.invalidateQueries({
+              queryKey: ["workflowJobs", params],
+            });
+            const endTime = performance.now();
+            console.log(
+              `✅ [DEBUG] Workflow jobs query invalidated in ${(endTime - startTime).toFixed(2)}ms`,
+            );
+          },
+          1000,
+        );
+      }
     },
   });
 
   return {
     ...workflowJobsQuery,
-    // SSE connection data
     sseStatus: sseConnection.status,
     sseError: sseConnection.error,
     isSSEConnected: sseConnection.isConnected,
@@ -128,9 +225,10 @@ export const useWorkflowJobsWithSSE = (params?: {
   };
 };
 
-// Enhanced workflow progress hook with direct SSE integration
+// Enhanced workflow progress hook with direct SSE integration and optimization
 export const useWorkflowProgressWithSSE = (workflowId: string) => {
   const queryClient = useQueryClient();
+  const lastUpdateTimeRef = useRef<number>(0);
 
   const workflowProgressQuery = useQuery({
     queryKey: ["workflowProgress", workflowId],
@@ -141,20 +239,44 @@ export const useWorkflowProgressWithSSE = (workflowId: string) => {
         );
       return response.data;
     },
-    staleTime: 30000,
-    refetchInterval: 60000,
+    staleTime: 60000,
+    refetchInterval: 120000,
+    gcTime: 300000,
   });
 
-  // Direct SSE connection for workflow-specific job events
   const sseConnection = useSSE({
     filters: "jobs",
     workflowId,
     onJobEvent: (data: DatabaseChangeData) => {
-      // Invalidate progress query when jobs change for this workflow
-      console.log(`Job progress update for workflow ${workflowId}:`, data);
-      queryClient.invalidateQueries({
-        queryKey: ["workflowProgress", workflowId],
-      });
+      if (!isSignificantChange(data)) {
+        return;
+      }
+
+      const now = Date.now();
+      const timeSinceLastUpdate = now - lastUpdateTimeRef.current;
+
+      if (timeSinceLastUpdate < 3000) {
+        return;
+      }
+
+      globalDebouncer(
+        `progress_${workflowId}`,
+        () => {
+          console.log(
+            `🔄 [DEBUG] Invalidating workflow progress query for workflow: ${workflowId}...`,
+          );
+          const startTime = performance.now();
+          lastUpdateTimeRef.current = Date.now();
+          queryClient.invalidateQueries({
+            queryKey: ["workflowProgress", workflowId],
+          });
+          const endTime = performance.now();
+          console.log(
+            `✅ [DEBUG] Workflow progress query invalidated in ${(endTime - startTime).toFixed(2)}ms`,
+          );
+        },
+        2000,
+      );
     },
   });
 
@@ -170,6 +292,7 @@ export const useWorkflowProgressWithSSE = (workflowId: string) => {
   };
 };
 
+// Enhanced rule status hook with optimization
 export const useRuleStatusWithSSE = (workflowId: string) => {
   const queryClient = useQueryClient();
 
@@ -182,16 +305,33 @@ export const useRuleStatusWithSSE = (workflowId: string) => {
         );
       return response.data as { [key: string]: RuleStatusResponse };
     },
-    staleTime: 30000,
-    refetchInterval: 60000,
+    staleTime: 45000,
+    refetchInterval: 90000,
   });
 
   const sseConnection = useSSE({
     filters: "jobs",
     workflowId,
     onJobEvent: (data: DatabaseChangeData) => {
-      console.log(`Rule status update for workflow ${workflowId}:`, data);
-      queryClient.invalidateQueries({ queryKey: ["ruleStatus", workflowId] });
+      if (isSignificantChange(data)) {
+        globalDebouncer(
+          `rule_status_${workflowId}`,
+          () => {
+            console.log(
+              `🔄 [DEBUG] Invalidating rule status query for workflow: ${workflowId}...`,
+            );
+            const startTime = performance.now();
+            queryClient.invalidateQueries({
+              queryKey: ["ruleStatus", workflowId],
+            });
+            const endTime = performance.now();
+            console.log(
+              `✅ [DEBUG] Rule status query invalidated in ${(endTime - startTime).toFixed(2)}ms`,
+            );
+          },
+          1500,
+        );
+      }
     },
   });
 

@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   postgresql:
     image: hub.miaodocker.space:8443/library/postgres:15-alpine
@@ -19,7 +17,11 @@ services:
     networks:
       - flowo-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-flowo} -d ${POSTGRES_DB:-flowo_logs}"]
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${POSTGRES_USER:-flowo} -d ${POSTGRES_DB:-flowo_logs}",
+        ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -48,17 +50,23 @@ services:
     networks:
       - flowo-network
     working_dir: /app
-    command: >
-      sh -c "
-        echo '1. Running Alembic migrations to create tables...' &&
-        uv run alembic upgrade head &&
-        echo '✅ Tables created successfully!' &&
-        echo '2. Running init-db scripts to create triggers and functions...' &&
-        cd /app &&
-        psql postgresql://\$${POSTGRES_USER}:\$${POSTGRES_PASSWORD}@\$${POSTGRES_HOST}:\$${POSTGRES_PORT}/\$${POSTGRES_DB} -f scripts/01-triggers-functions.sql &&
-        echo '✅ Triggers and functions created successfully!' &&
-        echo '🎉 Database setup completed!'
-      "
+    command:
+      - sh
+      - -c
+      - |
+        echo 'Checking if database has already been initialized...'
+        EXISTS=$$(psql postgresql://$$POSTGRES_USER:$$POSTGRES_PASSWORD@$$POSTGRES_HOST:$$POSTGRES_PORT/$$POSTGRES_DB -tAc "SELECT to_regclass('alembic_version')")
+        if [ "$$EXISTS" = "alembic_version" ]; then
+          echo '✅ Database already initialized. Skipping migration.'
+        else
+          echo '1. Running Alembic migrations to create tables...'
+          uv run alembic upgrade head
+          echo '✅ Tables created successfully!'
+          echo '2. Running init-db scripts to create triggers and functions...'
+          psql postgresql://$$POSTGRES_USER:$$POSTGRES_PASSWORD@$$POSTGRES_HOST:$$POSTGRES_PORT/$$POSTGRES_DB -f /app/scripts/01-triggers-functions.sql
+          echo '✅ Triggers and functions created successfully!'
+          echo '🎉 Database setup completed!'
+        fi
     restart: "no"
 
   flowo-backend:
@@ -104,11 +112,18 @@ services:
       - flowo-network
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost/health"]
+      test:
+        [
+          "CMD",
+          "wget",
+          "--no-verbose",
+          "--tries=1",
+          "--spider",
+          "http://localhost/health",
+        ]
       interval: 30s
       timeout: 10s
       retries: 3
-    
 
   caddy:
     image: hub.miaodocker.space:8443/library/caddy:2-alpine
@@ -132,7 +147,6 @@ services:
       - flowo-network
     restart: unless-stopped
 
-
 volumes:
   postgres_data:
     driver: local
@@ -143,4 +157,4 @@ volumes:
 
 networks:
   flowo-network:
-    driver: bridge 
+    driver: bridge

@@ -19,6 +19,10 @@ export interface DatabaseChangeData {
   timestamp: number;
   formatted_timestamp: string;
   channel: string;
+  record_id?: string;
+  old_status?: string;
+  new_status?: string;
+  status_changed?: boolean;
   [key: string]: unknown;
 }
 
@@ -181,7 +185,7 @@ export const useSSE = ({
       eventSource.addEventListener("database_change", (event) => {
         try {
           const parsedData = JSON.parse(event.data) as DatabaseChangeData;
-          console.log("📊 Database change event:", parsedData);
+          // console.log("📊 Database change event:", parsedData);
 
           const sseEvent: SSEEvent = {
             id: event.lastEventId || undefined,

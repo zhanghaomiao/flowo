@@ -19,13 +19,13 @@ RUN pip install uv -i https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple
 
 # Copy only dependency files first (for better Docker layer caching)
 COPY pyproject.toml uv.lock* alembic.ini README.md /app
-COPY ./scripts /app/scripts
 
 # Install dependencies in virtual environment (this creates .venv during build)
 RUN uv sync --frozen --no-dev
 
 # Copy the source code (done after dependency installation for better caching)
-COPY ./app /app/app/
+COPY ./app /app/app
+COPY ./scripts /app/scripts
 
 # Set environment variables
 ENV PYTHONPATH=/app

@@ -1,0 +1,89 @@
+/* ResultViewer component styles */
+
+/* Tree node content wrapper */
+.ant-tree-node-content-wrapper.ant-tree-node-content-wrapper-close {
+  padding-left: 0px !important;
+  padding-right: 0px !important;
+}
+
+.ant-tree-node-content-wrapper.ant-tree-node-content-wrapper-open {
+  padding-left: 0px !important;
+  padding-right: 0px !important;
+}
+
+.ant-tree-switcher.ant-tree-switcher_open {
+  margin-right: 0px !important;
+}
+
+.ant-tree-switcher.ant-tree-switcher_close {
+  margin-right: 0px !important;
+}
+
+/* Tree title styling */
+.ant-tree-title {
+  font-size: 14px;
+  color: #333;
+}
+
+.ant-tree-node-content-wrapper.ant-tree-node-content-wrapper-normal {
+  display: inline-block;
+  min-width: 300px;
+  white-space: nowrap;
+}
+
+/* Tree icon styling */
+.ant-tree-iconEle {
+  margin-right: 6px;
+}
+
+/* Card body padding */
+.ant-card-body {
+  padding: 12px !important;
+}
+
+/* Tree container styling */
+.ant-tree {
+  background: #fafafa !important;
+}
+
+/* Tree node hover effect */
+.ant-tree-node-content-wrapper:hover {
+  background-color: #e6f7ff !important;
+}
+
+/* Selected tree node */
+.ant-tree-node-content-wrapper.ant-tree-node-selected {
+  background-color: #bae7ff !important;
+}
+
+/* File type icons */
+.ant-tree .anticon {
+  font-size: 14px;
+  color: #1890ff;
+}
+
+/* Folder icons */
+.ant-tree .anticon-folder {
+  color: #faad14;
+}
+
+/* File icons by type */
+.ant-tree .anticon-file-image {
+  color: #52c41a;
+}
+
+.ant-tree .anticon-file-pdf {
+  color: #f5222d;
+}
+
+.ant-tree .anticon-file-text {
+  color: #722ed1;
+}
+
+.ant-tree .anticon-code {
+  color: #13c2c2;
+}
+
+.ant-tree .anticon-file {
+  color: #8c8c8c;
+}

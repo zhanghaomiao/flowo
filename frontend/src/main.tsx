@@ -2,6 +2,7 @@ import "./index.css";
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { createRouter, RouterProvider } from "@tanstack/react-router";
+import { ConfigProvider } from "antd";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 
@@ -39,7 +40,17 @@ declare module "@tanstack/react-router" {
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
-      <RouterProvider router={router} />
+      <ConfigProvider
+        theme={{
+          components: {
+            Tree: {
+              indentSize: 2,
+            },
+          },
+        }}
+      >
+        <RouterProvider router={router} />
+      </ConfigProvider>
     </QueryClientProvider>
   </StrictMode>,
 );
