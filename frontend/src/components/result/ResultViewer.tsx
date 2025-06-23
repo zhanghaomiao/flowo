@@ -208,7 +208,7 @@ export const ResultViewer: React.FC<ResultViewerProps> = ({ workflowId }) => {
 
     const { nodeData, fullPath, type } = selectedNodeData;
     const hasChildren = nodeData.children && nodeData.children.length > 0;
-    const fileSize = nodeData.fileSize;
+    const fileSize = nodeData.fileSize ?? null;
 
     return (
       <Space direction="vertical" style={{ width: "100%" }}>
@@ -284,11 +284,6 @@ export const ResultViewer: React.FC<ResultViewerProps> = ({ workflowId }) => {
                     <Tag style={{ marginLeft: 8 }}>
                       {getFileTypeCategory(child.title || "")}
                     </Tag>
-                  )}
-                  {child.fileSize && (
-                    <Text type="secondary" style={{ marginLeft: 8 }}>
-                      ({formatFileSize(child.fileSize)})
-                    </Text>
                   )}
                 </li>
               ))}
