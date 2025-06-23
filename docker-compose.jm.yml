@@ -1,99 +1,144 @@
-version: "3.8"
+version: '3.8'
 
 services:
-  flowo-db:
-    image: hub.miaodocker.space:8443/library/postgres:15-alpine
-    container_name: flowo-db
+  postgresql:
+    image: hub.jmzhang.click/postgres:15-alpine
+    container_name: flowo-postgres
+    env_file:
+      - .env
     environment:
-      POSTGRES_DB: snakemake_logs
-      POSTGRES_USER: snakemake
-      POSTGRES_PASSWORD: snakemake_password
+      POSTGRES_DB: ${POSTGRES_DB:-flowo_logs}
+      POSTGRES_USER: ${POSTGRES_USER:-flowo}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-flowo_password}
+      POSTGRES_HOST_AUTH_METHOD: trust
       TZ: ${TZ:-Asia/Shanghai}
     ports:
-      - "6666:5432"
+      - "${POSTGRES_PORT:-5432}:5432"
     volumes:
-      - flowo_local_data:/var/lib/postgresql/data
-    healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U snakemake -d snakemake_logs" ]
-      interval: 5s
-      timeout: 5s
-      retries: 10
-    restart: unless-stopped
+      - postgres_data:/var/lib/postgresql/data
     networks:
-      - flowo-local
+      - flowo-network
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-flowo} -d ${POSTGRES_DB:-flowo_logs}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
 
-  #Alembic migrations service - runs once after PostgreSQL is ready
-  # alembic-migrations:
-  #   build:
-  #     context: ./snakemake_logger_plugin_postgresql
-  #     dockerfile: Dockerfile
-  #   container_name: snakemake-alembic-local
-  #   environment:
-  #     POSTGRES_DB: snakemake_logs
-  #     POSTGRES_USER: snakemake
-  #     POSTGRES_PASSWORD: snakemake_password
-  #     POSTGRES_HOST: postgresql
-  #     POSTGRES_PORT: 5432
-  #     TZ: Asia/Shanghai
-  #   depends_on:
-  #     postgresql:
-  #       condition: service_healthy
-
-  #   working_dir: /app/snakemake_logger_plugin_postgresql
-  #   command: >
-  #     sh -c "
-  #       echo '1. Running Alembic migrations to create tables...' &&
-  #       uv run alembic upgrade head &&
-  #       echo '✅ Tables created successfully!' &&
-  #       echo '2. Running init-db scripts to create triggers and functions...' &&
-  #       psql postgresql://\$${POSTGRES_USER}:\$${POSTGRES_PASSWORD}@\$${POSTGRES_HOST}:\$${POSTGRES_PORT}/\$${POSTGRES_DB} -f scripts/01-triggers-functions.sql &&
-  #       echo '✅ Triggers and functions created successfully!' &&
-  #       echo '🎉 Database setup completed!'
-  #     "
-  #   restart: "no"
-  #   networks:
-  #     - flowo-local
+  # Alembic database migrations
+  alembic-migrations:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: flowo-migrations
+    env_file:
+      - .env
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-flowo_logs}
+      POSTGRES_USER: ${POSTGRES_USER:-flowo}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-flowo_password}
+      POSTGRES_HOST: postgresql
+      POSTGRES_PORT: ${POSTGRES_PORT:-5432}
+      PYTHONPATH: /app
+      PYTHONUNBUFFERED: 1
+      TZ: ${TZ:-Asia/Shanghai}
+    depends_on:
+      postgresql:
+        condition: service_healthy
+    networks:
+      - flowo-network
+    working_dir: /app
+    command: >
+      sh -c "
+        echo '1. Running Alembic migrations to create tables...' &&
+        uv run alembic upgrade head &&
+        echo '✅ Tables created successfully!' &&
+        echo '2. Running init-db scripts to create triggers and functions...' &&
+        cd /app &&
+        psql postgresql://\$${POSTGRES_USER}:\$${POSTGRES_PASSWORD}@\$${POSTGRES_HOST}:\$${POSTGRES_PORT}/\$${POSTGRES_DB} -f scripts/01-triggers-functions.sql &&
+        echo '✅ Triggers and functions created successfully!' &&
+        echo '🎉 Database setup completed!'
+      "
+    restart: "no"
 
   flowo-backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
     container_name: flowo-backend
+    env_file:
+      - .env
     environment:
-      # Database connection - will be built from individual components
-      POSTGRES_DB: ${POSTGRES_DB:-snakemake_logs}
-      POSTGRES_USER: ${POSTGRES_USER:-snakemake}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-snakemake_password}
-      POSTGRES_HOST: flowo-db
-      POSTGRES_PORT: 5432
-      FLOWO_WORKING_PATH: ${FLOWO_WORKING_PATH:-}
-      # Or use direct DATABASE_URL if provided
-      DATABASE_URL: ${DATABASE_URL:-}
-      # Application settings
-      REPO_PATH: ${REPO_PATH:-/workspace}
-      BACKEND_PORT: ${BACKEND_PORT:-8000}
-      SNAKEMAKE_CORES: ${SNAKEMAKE_CORES:-4}
+      POSTGRES_DB: ${POSTGRES_DB:-flowo_logs}
+      POSTGRES_USER: ${POSTGRES_USER:-flowo}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-flowo_password}
+      POSTGRES_HOST: postgresql
+      POSTGRES_PORT: ${POSTGRES_PORT:-5432}
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
       TZ: ${TZ:-Asia/Shanghai}
     volumes:
-      - ${FLOWO_WORKING_PATH:-}:/work_dir
-      - ./backend/app:/app/app
+      - ${FLOWO_WORKING_PATH:-.}:/work_dir
     ports:
-      - "${BACKEND_PORT:-8000}:8000"
-    # depends_on:
-    #   alembic-migrations:
-    #     condition: service_completed_successfully
+      - "${BACKEND_PORT:-8000}:80"
+    depends_on:
+      alembic-migrations:
+        condition: service_completed_successfully
     networks:
-      - flowo-local
+      - flowo-network
     restart: unless-stopped
-    command: sleep infinity
+    command: uv run uvicorn app.main:app --host 0.0.0.0 --port 80
+
+  flowo-frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_BASE_PATH: ${VITE_API_BASE_PATH:-http://localhost:3100}
+        VITE_DISABLE_SSE: ${VITE_DISABLE_SSE:-false}
+        VITE_SSE_RECONNECT_INTERVAL: ${VITE_SSE_RECONNECT_INTERVAL:-3000}
+        VITE_SSE_MAX_RETRIES: ${VITE_SSE_MAX_RETRIES:-5}
+    container_name: frontend
+    environment:
+      TZ: ${TZ:-Asia/Shanghai}
+    networks:
+      - flowo-network
+    restart: unless-stopped
+    healthcheck:
+      test: [ "CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  caddy:
+    image: hub.miaodocker.space:8443/library/caddy:2-alpine
+    container_name: caddy
+    environment:
+      TZ: ${TZ:-Asia/Shanghai}
+    env_file:
+      - .env
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - ${FLOWO_WORKING_PATH:-.}:/work_dir:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    ports:
+      - "${CADDY_PORT:-80}:80"
+      - "${CADDY_HTTPS_PORT:-443}:443"
+    depends_on:
+      - flowo-backend
+      - flowo-frontend
+    networks:
+      - flowo-network
+    restart: unless-stopped
 
 volumes:
-  flowo_local_data:
+  postgres_data:
     driver: local
-  # pgadmin_local_data:
-  #   driver: local
+  caddy_data:
+    driver: local
+  caddy_config:
+    driver: local
 
 networks:
-  flowo-local:
+  flowo-network:
     driver: bridge
