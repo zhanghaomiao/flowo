@@ -75,15 +75,10 @@ export const ResultViewer: React.FC<ResultViewerProps> = ({ workflowId }) => {
     isLoading: isTreeLoading,
     error: treeError,
     refetch: refetchTree,
-  } = useCaddyDirectoryTree(workflowDetail?.directory || null);
+  } = useCaddyDirectoryTree(workflowDetail?.flowo_directory || null);
 
   // Lazy loading mutation
   const lazyLoadMutation = useLazyDirectoryLoad();
-  const working_path = workflowDetail?.directory?.replace(
-    import.meta.env.VITE_FLOWO_WORKING_PATH,
-    "",
-  );
-
   const isLoading = isWorkflowLoading || isTreeLoading;
   const error = workflowError || treeError;
   const refetch = () => {
@@ -149,12 +144,12 @@ export const ResultViewer: React.FC<ResultViewerProps> = ({ workflowId }) => {
     if (outputsTree && outputsTree.length > 0) {
       const initialTreeData = convertToAntdTreeData(
         outputsTree,
-        working_path,
+        workflowDetail?.flowo_directory || "",
         handleLoadData,
       );
       setTreeData(initialTreeData);
     }
-  }, [outputsTree, working_path]);
+  }, [outputsTree, workflowDetail?.flowo_directory]);
 
   const handleExpand = (expandedKeysValue: React.Key[]) => {
     setExpandedKeys(expandedKeysValue);

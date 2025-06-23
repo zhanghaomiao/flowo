@@ -1,15 +1,16 @@
 # Status
 
+
 ## Enum
 
-- `Running` (value: `'RUNNING'`)
+* `Running` (value: `'RUNNING'`)
 
-- `Success` (value: `'SUCCESS'`)
+* `Success` (value: `'SUCCESS'`)
 
-- `Error` (value: `'ERROR'`)
+* `Error` (value: `'ERROR'`)
 
-- `Waiting` (value: `'WAITING'`)
+* `Waiting` (value: `'WAITING'`)
 
-- `Unknown` (value: `'UNKNOWN'`)
+* `Unknown` (value: `'UNKNOWN'`)
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)

@@ -1,22 +1,23 @@
 # ValidationError
 
+
 ## Properties
 
-| Name     | Type                                                                   | Description | Notes                  |
-| -------- | ---------------------------------------------------------------------- | ----------- | ---------------------- |
-| **loc**  | [**Array&lt;ValidationErrorLocInner&gt;**](ValidationErrorLocInner.md) |             | [default to undefined] |
-| **msg**  | **string**                                                             |             | [default to undefined] |
-| **type** | **string**                                                             |             | [default to undefined] |
+Name | Type | Description | Notes
+------------ | ------------- | ------------- | -------------
+**loc** | [**Array&lt;ValidationErrorLocInner&gt;**](ValidationErrorLocInner.md) |  | [default to undefined]
+**msg** | **string** |  | [default to undefined]
+**type** | **string** |  | [default to undefined]
 
 ## Example
 
 ```typescript
-import { ValidationError } from "./api";
+import { ValidationError } from './api';
 
 const instance: ValidationError = {
-  loc,
-  msg,
-  type,
+    loc,
+    msg,
+    type,
 };
 ```
 

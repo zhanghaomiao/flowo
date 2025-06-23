@@ -387,23 +387,11 @@ export const useCaddyDirectoryTree = (directory: string | null) => {
         return [];
       }
 
-      // Query the Caddy server for directory listing
-      const VITE_FLOWO_WORKING_PATH = import.meta.env.VITE_FLOWO_WORKING_PATH;
-      // strip the VITE_FLOWO_WORKING_PATH from the directory
-      const directoryWithoutViteFlowoWorkingPath = directory.replace(
-        VITE_FLOWO_WORKING_PATH,
-        "",
-      );
-
-      // Include Accept: application/json header to get JSON response from Caddy
-      const response = await fetch(
-        constructApiUrl(`/files/${directoryWithoutViteFlowoWorkingPath}`),
-        {
-          headers: {
-            Accept: "application/json",
-          },
+      const response = await fetch(constructApiUrl(`/files/${directory}`), {
+        headers: {
+          Accept: "application/json",
         },
-      );
+      });
 
       if (!response.ok) {
         throw new Error(`Failed to fetch directory: ${response.statusText}`);

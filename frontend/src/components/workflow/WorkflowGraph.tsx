@@ -72,6 +72,100 @@ const STATUS_LABELS: Record<string, string> = {
   WAITING: "Waiting",
 };
 
+// Draggable Legend Panel Component
+const DraggableLegendPanel: React.FC = () => {
+  const [position, setPosition] = useState({ x: 20, y: 20 });
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  const panelRef = useRef<HTMLDivElement>(null);
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    setIsDragging(true);
+    setDragStart({
+      x: e.clientX - position.x,
+      y: e.clientY - position.y,
+    });
+    e.preventDefault();
+  };
+
+  const handleMouseMove = useCallback(
+    (e: MouseEvent) => {
+      if (isDragging) {
+        setPosition({
+          x: e.clientX - dragStart.x,
+          y: e.clientY - dragStart.y,
+        });
+      }
+    },
+    [isDragging, dragStart],
+  );
+
+  const handleMouseUp = useCallback(() => {
+    setIsDragging(false);
+  }, []);
+
+  useEffect(() => {
+    if (isDragging) {
+      document.addEventListener("mousemove", handleMouseMove);
+      document.addEventListener("mouseup", handleMouseUp);
+      return () => {
+        document.removeEventListener("mousemove", handleMouseMove);
+        document.removeEventListener("mouseup", handleMouseUp);
+      };
+    }
+  }, [isDragging, handleMouseMove, handleMouseUp]);
+
+  return (
+    <div
+      ref={panelRef}
+      style={{
+        position: "absolute",
+        left: position.x,
+        top: position.y,
+        zIndex: 1000,
+        cursor: isDragging ? "grabbing" : "grab",
+        userSelect: "none",
+      }}
+      onMouseDown={handleMouseDown}
+    >
+      <Card
+        size="small"
+        style={{
+          boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)",
+          border: "1px solid #d9d9d9",
+        }}
+      >
+        <div style={{ display: "flex", flexDirection: "column", gap: "3px" }}>
+          {Object.entries(STATUS_COLORS).map(([status, color]) => (
+            <div
+              key={status}
+              style={{
+                display: "flex",
+                flexDirection: "row",
+                alignItems: "center",
+                gap: "6px",
+              }}
+            >
+              <div
+                style={{
+                  width: "12px",
+                  height: "12px",
+                  backgroundColor: color,
+                  borderRadius: "2px",
+                  border: "1px solid #d9d9d9",
+                }}
+              />
+              <span style={{ fontSize: "10px", color: "#666" }}>
+                {STATUS_LABELS[status]}
+              </span>
+            </div>
+          ))}
+        </div>
+      </Card>
+    </div>
+  );
+};
+
 // Inner component that uses useReactFlow
 const WorkflowGraphInner: React.FC<WorkflowGraphProps> = ({
   workflowId,
@@ -337,7 +431,8 @@ const WorkflowGraphInner: React.FC<WorkflowGraphProps> = ({
   }
 
   return (
-    <div ref={containerRef} style={{ height: "100%" }}>
+    <div ref={containerRef} style={{ height: "100%", position: "relative" }}>
+      <DraggableLegendPanel />
       <div
         style={{
           height: "96%",
@@ -454,44 +549,6 @@ const WorkflowGraphInner: React.FC<WorkflowGraphProps> = ({
                     </div>
                   </div>
                 )}
-              </div>
-            </Card>
-          </Panel>
-          <Panel position="top-left">
-            <Card
-              size="small"
-              style={{
-                boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)",
-                border: "1px solid #d9d9d9",
-              }}
-            >
-              <div
-                style={{ display: "flex", flexDirection: "column", gap: "3px" }}
-              >
-                {Object.entries(STATUS_COLORS).map(([status, color]) => (
-                  <div
-                    key={status}
-                    style={{
-                      display: "flex",
-                      flexDirection: "row",
-                      alignItems: "center",
-                      gap: "6px",
-                    }}
-                  >
-                    <div
-                      style={{
-                        width: "12px",
-                        height: "12px",
-                        backgroundColor: color,
-                        borderRadius: "2px",
-                        border: "1px solid #d9d9d9",
-                      }}
-                    />
-                    <span style={{ fontSize: "10px", color: "#666" }}>
-                      {STATUS_LABELS[status]}
-                    </span>
-                  </div>
-                ))}
               </div>
             </Card>
           </Panel>

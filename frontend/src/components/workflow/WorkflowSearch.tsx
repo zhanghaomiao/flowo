@@ -57,10 +57,10 @@ const WorkflowSearch: React.FC<WorkflowSearchProps> = ({
     dates: [Dayjs | null, Dayjs | null] | null,
   ) => {
     if (dates && dates[0]) {
-      // Start time is provided
-      const startTime = dates[0].toISOString();
+      // Start time is provided - use local time format to match DatePicker display
+      const startTime = dates[0].format();
       // If end time is not provided, default to today (current time)
-      const endTime = dates[1] ? dates[1].toISOString() : dayjs().toISOString();
+      const endTime = dates[1] ? dates[1].format() : dayjs().format();
       onDateRangeChange(startTime, endTime);
     } else {
       // Clear both when no start time is selected

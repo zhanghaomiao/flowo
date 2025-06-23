@@ -50,7 +50,6 @@ interface WorkflowTableProps {
   showRefreshButton?: boolean;
 }
 
-// Component to display real-time duration for running workflows
 const DurationCell: React.FC<{
   record: WorkflowResponse;
 }> = ({ record }) => {
@@ -67,7 +66,11 @@ const DurationCell: React.FC<{
     }
   }, [record.status, record.started_at]);
 
-  // Calculate duration
+  // Return "-" for error status
+  if (record.status === "ERROR") {
+    return <span>-</span>;
+  }
+
   if (record.end_time && record.started_at) {
     // Completed workflow - use actual end time
     const duration =
