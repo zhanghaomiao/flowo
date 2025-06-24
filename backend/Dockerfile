@@ -18,7 +18,7 @@ RUN apt-get update && apt-get install -y \
 RUN pip install uv -i https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple
 
 # Copy only dependency files first (for better Docker layer caching)
-COPY pyproject.toml uv.lock* alembic.ini README.md /app
+COPY pyproject.toml uv.lock* alembic.ini README.md /app/
 
 # Install dependencies in virtual environment (this creates .venv during build)
 RUN uv sync --frozen --no-dev

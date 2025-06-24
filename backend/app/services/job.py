@@ -1,6 +1,6 @@
 import uuid
 
-from sqlalchemy import and_, func, select
+from sqlalchemy import and_, func, select, case
 from sqlalchemy.orm import Session
 
 from ..models import File, Job, Rule, Status
@@ -64,15 +64,18 @@ class JobService:
             .where(Job.workflow_id == workflow_id)
         )
 
-        if order_by_started:
-            order_column = Job.started_at
-        else:
-            order_column = Job.id
+        status_order = case(
+            (Job.status == "ERROR", 1),
+            (Job.status == "RUNNING", 2),
+            (Job.status == "SUCCESS", 3),
+            (Job.status == "UNKNOWN", 4),
+            else_=5,
+        )
 
         if descending:
-            query = query.order_by(order_column.desc())
+            query = query.order_by(status_order, Job.started_at.desc())
         else:
-            query = query.order_by(order_column)
+            query = query.order_by(status_order, Job.id)
 
         if rule_name:
             query = query.filter(Rule.name == rule_name)
@@ -107,7 +110,7 @@ class JobService:
         ]
 
         return JobListResponse(
-            jobs=results, total=total_jobs, limit=limit or 0, offset=offset
+            jobs=results, total=total_jobs, limit=limit or 0, offset=offset or 0
         )
 
     def _get_jobs_by_workflow_id(self):

@@ -1,3 +1,4 @@
+import code
 import os
 import uuid
 from collections import Counter, defaultdict
@@ -5,10 +6,12 @@ from datetime import datetime
 from itertools import chain, groupby
 from operator import itemgetter
 from typing import Any
+from datetime import datetime
 
 from fastapi import HTTPException
 from fastapi.responses import JSONResponse
-from sqlalchemy import and_, case, func, select
+from pydantic_core.core_schema import filter_seq_schema
+from sqlalchemy import and_, case, func, select, or_
 from sqlalchemy.orm import Session
 
 from ..models import Error, Job, Status, Workflow
@@ -44,20 +47,35 @@ class WorkflowService:
         if not workflow:
             raise HTTPException(status_code=404, detail="Workflow not found")
 
-    def get_detail(self, workflow_id):
+    def get_workflow(self, workflow_id: uuid.UUID):
         query = select(Workflow).where(Workflow.id == workflow_id)
-        wf = self.db_session.execute(query).scalar_one_or_none()
-        if not wf:
-            raise HTTPException(status_code=404, detail="Workflow not found")
+        workflow = self.db_session.execute(query).scalar_one_or_none()
+        return workflow
+
+    def get_flowo_directory(self, workflow_id: uuid.UUID):
+        workflow = self.get_workflow(workflow_id=workflow_id)
+        if workflow and workflow.flowo_working_path and workflow.directory:
+            return workflow.directory.replace(workflow.flowo_working_path, "/work_dir")
+
+    def get_detail(self, workflow_id: uuid.UUID):
+        workflow = self.get_workflow(workflow_id=workflow_id)
+        if not workflow:
+            return
+
+        flowo_directory = self.get_flowo_directory(workflow_id=workflow_id)
+        if flowo_directory:
+            flowo_directory = flowo_directory.replace("/work_dir", "")
+
         return WorkflowDetialResponse(
             **{
-                **wf.__dict__,
-                "progress": self._get_progress(wf.id),
-                "workflow_id": wf.id,
+                **workflow.__dict__,
+                "progress": self._get_progress(workflow.id),
+                "workflow_id": workflow.id,
+                "flowo_directory": flowo_directory,
             }
         )
 
-    def list_all_workflows_dev(
+    def list_all_workflows(
         self,
         limit: int | None = None,
         offset: int | None = 0,
@@ -67,12 +85,11 @@ class WorkflowService:
         status: Status | None = None,
         tags: str | None = None,
         name: str | None = None,
-        start_at: str | None = None,
-        end_at: str | None = None,
+        start_at: datetime | None = None,
+        end_at: datetime | None = None,
     ) -> WorkflowListResponse:
         base_query = select(Workflow)
         filters = []
-
         if user:
             filters.append(Workflow.user == user)
 
@@ -87,10 +104,15 @@ class WorkflowService:
             filters.append(Workflow.name.ilike(f"%{name}%"))
 
         if start_at:
-            filters.append(Workflow.started_at >= start_at)
+            filters.append(Workflow.started_at >= str(start_at))
 
         if end_at:
-            filters.append(Workflow.end_time <= end_at)
+            filters.append(
+                or_(
+                    Workflow.end_time == None,  # 仍在运行
+                    Workflow.end_time <= str(end_at),  # 已结束，且时间早于end_at
+                )
+            )
 
         if filters:
             base_query = base_query.where(and_(*filters))
@@ -122,124 +144,40 @@ class WorkflowService:
             workflows=[
                 WorkflowResponse(
                     **{
-                        **wf.__dict__,
-                        "progress": self._get_progress(wf.id),
-                        "configfiles": bool(wf.configfiles),
-                        "snakefile": bool(wf.snakefile),
+                        **workflow.__dict__,
+                        "progress": self._get_progress(workflow.id),
+                        "configfiles": bool(workflow.configfiles),
+                        "snakefile": bool(workflow.snakefile),
                     }
                 )
-                for wf in workflows
+                for workflow in workflows
             ],
             offset=offset,
             limit=limit,
             total=total_count,
         )
 
-    # def list_all_workflows(
-    #     self,
-    #     limit: Optional[int] = None,
-    #     offset: Optional[int] = 0,
-    #     order_by_started: bool = True,
-    #     descending: bool = True,
-    #     user: Optional[str] = None,
-    #     status: Optional[Status] = None,
-    #     tags: Optional[str] = None,
-    #     start_at: Optional[str] = None,
-    #     end_at: Optional[str] = None,
-    # ) -> WorkflowListResponse:
-
-    #     # Build the query for fetching workflows
-    #     query = select(Workflow)
-    #     filters = []
-
-    #     if order_by_started:
-    #         order_column = Workflow.started_at
-    #     else:
-    #         order_column = Workflow.id  # type: ignore
-
-    #     if descending:
-    #         query = query.order_by(order_column.desc())
-    #     else:
-    #         query = query.order_by(order_column)
-
-    #     if user:
-    #         filters.append(Workflow.user == user)
-
-    #     if status:
-    #         filters.append(Workflow.status == status)
-
-    #     if start_at:
-    #         filters.append(Workflow.started_at >= start_at)
-
-    #     if end_at:
-    #         filters.append(Workflow.end_time <= end_at)
-
-    #     if filters:
-    #         query = query.filter(and_(*filters))
-
-    #     # if has filter, count the number of workflow has been filtered
-    #     count_query = select(func.count()).select_from(Workflow)
-    #     if user:
-    #         count_query = count_query.filter(Workflow.user == user)
-    #     if status:
-    #         count_query = count_query.filter(Workflow.status == status)
-    #     total_workflows = self.db_session.execute(count_query).scalar() or 0
-
-    #     # Apply pagination to the main query
-    #     if offset:
-    #         query = query.offset(offset)
-
-    #     if limit is not None:
-    #         query = query.limit(limit)
-
-    #     # Execute the query
-    #     workflows = list(self.db_session.execute(query).scalars())
-
-    #     # Convert to Pydantic models for serialization
-    #     workflow_responses = [
-    #         WorkflowResponse(
-    #             id=str(wf.id),
-    #             snakefile=bool(wf.snakefile),
-    #             started_at=wf.started_at.isoformat() if wf.started_at else None,
-    #             end_time=wf.end_time.isoformat() if wf.end_time else None,
-    #             status=wf.status.value if hasattr(wf.status, "value") else wf.status,
-    #             command_line=wf.command_line,
-    #             dryrun=wf.dryrun,
-    #             user=wf.user,
-    #             name=wf.name,
-    #             configfiles=bool(wf.configfiles),
-    #             directory=wf.directory,
-    #             run_info=wf.run_info,
-    #             logfile=wf.logfile,
-    #             tags=wf.tags,
-    #             progress=self._get_progress(wf.id),
-    #         )
-    #         for wf in workflows
-    #     ]
-
-    #     # Return the response with workflows and pagination info
-    #     return WorkflowListResponse(
-    #         workflows=workflow_responses,
-    #         total=total_workflows,
-    #         limit=limit or 0,
-    #         offset=offset,
-    #     )
-
     def get_all_users(self) -> list[str]:
         query = select(Workflow.user).distinct().where(Workflow.user.is_not(None))
         return list(self.db_session.execute(query).scalars())
 
-    def get_snakefile(self, workflow_id: uuid.UUID) -> str:
-        wf = self.db_session.execute(
-            select(Workflow).where(Workflow.id == workflow_id)
-        ).scalar_one_or_none()
+    def get_snakefile(self, workflow_id: uuid.UUID) -> str | JSONResponse:
+        workflow = self.get_workflow(workflow_id=workflow_id)
 
-        if wf.flowo_working_path:
-            snakefile = str(wf.snakefile).replace(wf.flowo_working_path, "/work_dir/")
+        if workflow is None:
+            return JSONResponse(
+                status_code=404,
+                content={"error": "Workflow not found"},
+            )
+
+        if workflow.flowo_working_path:
+            snakefile = str(workflow.snakefile).replace(
+                workflow.flowo_working_path, "/work_dir/"
+            )
         else:
-            snakefile = wf.snakefile
+            snakefile = workflow.snakefile
 
-        if os.path.exists(snakefile):
+        if snakefile and os.path.exists(snakefile):
             try:
                 with open(snakefile) as f:
                     file_content = f.read()
@@ -261,17 +199,18 @@ class WorkflowService:
         return list(set(flattened))
 
     def get_configfiles(self, workflow_id: uuid.UUID):
-        wf = self.db_session.execute(
-            select(Workflow).where(Workflow.id == workflow_id)
-        ).scalar_one_or_none()
-        if not wf.configfiles or not wf.flowo_working_path:
-            raise HTTPException(status_code=404, detail="configfiles not found")
+        workflow = self.get_workflow(workflow_id=workflow_id)
+
+        if not workflow or not workflow.configfiles or not workflow.flowo_working_path:
+            raise HTTPException(
+                status_code=404, detail="configfiles or workflow not found"
+            )
 
         data = {}
-        for configfile in wf.configfiles:
+        for configfile in workflow.configfiles:
             try:
                 configfile_path = str(configfile).replace(
-                    wf.flowo_working_path, "/work_dir/"
+                    workflow.flowo_working_path, "/work_dir/"
                 )
                 with open(configfile_path) as f:
                     data[configfile] = f.read()
@@ -293,10 +232,20 @@ class WorkflowService:
             ).where(Job.workflow_id == workflow_id)
         ).first()
 
+        workflow_run_info = self.get_workflow_run_info(workflow_id=workflow_id)
+        total_jobs = workflow_run_info.get("total", 0)
+
+        if not result:
+            completed = 0
+            running = 0
+        else:
+            completed = result.completed or 0
+            running = result.running or 0
+
         return {
-            "total": self.get_workflow_run_info(workflow_id=workflow_id).get("total"),
-            "completed": result.completed or 0,
-            "running": result.running or 0,
+            "total": total_jobs,
+            "completed": completed,
+            "running": running,
         }
 
     def _get_progress(self, workflow_id: uuid.UUID):
@@ -313,30 +262,20 @@ class WorkflowService:
             return round((success / total) * 100) if total else 0
 
     def get_workflow_rule_graph_data(self, workflow_id: uuid.UUID) -> dict[str, Any]:
-        """
-        Get the rule graph for a workflow
-        """
-        workflow = self.db_session.execute(
-            select(Workflow).where(Workflow.id == workflow_id)
-        ).scalar_one_or_none()
+
+        workflow = self.get_workflow(workflow_id=workflow_id)
         if not workflow:
-            raise HTTPException(status_code=404, detail="Workflow not found")
+            return {}
 
-        # res = self.convert_rule_graph_to_dag(workflow.rulegraph_data)
-
-        return workflow.rulegraph_data
+        return workflow.rulegraph_data if workflow.rulegraph_data else {}
 
     def get_workflow_run_info(self, workflow_id: uuid.UUID) -> dict[str, Any]:
-        """
-        Get the run information for a workflow
-        """
-        workflow = self.db_session.execute(
-            select(Workflow).where(Workflow.id == workflow_id)
-        ).scalar_one_or_none()
-        if not workflow:
-            raise HTTPException(status_code=404, detail="Workflow not found")
 
-        return workflow.run_info
+        workflow = self.get_workflow(workflow_id=workflow_id)
+        if not workflow:
+            return {}
+
+        return workflow.run_info if workflow.run_info else {}
 
     def get_timelines_with_id(self, workflow_id: uuid.UUID):
         # rule_name: [[rule name show, started at, end time, status] ...]
@@ -428,16 +367,11 @@ class WorkflowService:
         workflow_id: uuid.UUID,
         max_depth: int = 2,
     ) -> list[TreeDataNode]:
-        workflow = self.db_session.execute(
-            select(Workflow).where(Workflow.id == workflow_id)
-        ).scalar_one_or_none()
 
-        if not workflow.flowo_working_path or not workflow.directory:
-            pass
+        directory = self.get_flowo_directory(workflow_id=workflow_id)
+        if not directory:
+            raise HTTPException(status_code=404, detail="directory not found")
 
-        directory = workflow.directory.replace(
-            workflow.flowo_working_path, "/work_dir/"
-        )
         return build_tree_with_anytree(directory, max_depth=max_depth)
 
     def delete_workflow(self, workflow_id: uuid.UUID):

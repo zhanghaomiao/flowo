@@ -1,0 +1,16 @@
+{
+    "name": "flowo-fastapi",
+    "dockerComposeFile": [
+        "../../docker-compose.jm.yml"
+    ],
+    "workspaceFolder": "/app",
+    "service": "flowo-backend",
+    "settings": {
+        "terminal.integrated.shell.linux": "/bin/bash"
+    },
+    "extensions": [
+        "ms-python.python",
+        "ms-python.black-formatter"
+    ],
+    "shutdownAction": "none"
+}

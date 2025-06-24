@@ -1,8 +1,6 @@
-version: '3.8'
-
 services:
   postgresql:
-    image: hub.jmzhang.click/postgres:15-alpine
+    image: hub.miaodocker.space:8443/library/postgres:15-alpine
     container_name: flowo-postgres
     env_file:
       - .env
@@ -48,17 +46,23 @@ services:
     networks:
       - flowo-network
     working_dir: /app
-    command: >
-      sh -c "
-        echo '1. Running Alembic migrations to create tables...' &&
-        uv run alembic upgrade head &&
-        echo '✅ Tables created successfully!' &&
-        echo '2. Running init-db scripts to create triggers and functions...' &&
-        cd /app &&
-        psql postgresql://\$${POSTGRES_USER}:\$${POSTGRES_PASSWORD}@\$${POSTGRES_HOST}:\$${POSTGRES_PORT}/\$${POSTGRES_DB} -f scripts/01-triggers-functions.sql &&
-        echo '✅ Triggers and functions created successfully!' &&
-        echo '🎉 Database setup completed!'
-      "
+    command:
+      - sh
+      - -c
+      - |
+        echo 'Checking if database has already been initialized...'
+        EXISTS=$$(psql postgresql://$$POSTGRES_USER:$$POSTGRES_PASSWORD@$$POSTGRES_HOST:$$POSTGRES_PORT/$$POSTGRES_DB -tAc "SELECT to_regclass('alembic_version')")
+        if [ "$$EXISTS" = "alembic_version" ]; then
+          echo '✅ Database already initialized. Skipping migration.'
+        else
+          echo '1. Running Alembic migrations to create tables...'
+          uv run alembic upgrade head
+          echo '✅ Tables created successfully!'
+          echo '2. Running init-db scripts to create triggers and functions...'
+          psql postgresql://$$POSTGRES_USER:$$POSTGRES_PASSWORD@$$POSTGRES_HOST:$$POSTGRES_PORT/$$POSTGRES_DB -f /app/scripts/01-triggers-functions.sql
+          echo '✅ Triggers and functions created successfully!'
+          echo '🎉 Database setup completed!'
+        fi
     restart: "no"
 
   flowo-backend:
@@ -78,6 +82,7 @@ services:
       TZ: ${TZ:-Asia/Shanghai}
     volumes:
       - ${FLOWO_WORKING_PATH:-.}:/work_dir
+      - ./backend/app:/app/app
     ports:
       - "${BACKEND_PORT:-8000}:80"
     depends_on:
@@ -86,7 +91,8 @@ services:
     networks:
       - flowo-network
     restart: unless-stopped
-    command: uv run uvicorn app.main:app --host 0.0.0.0 --port 80
+    # command: uv run uvicorn app.main:app --host 0.0.0.0 --port 80
+    command: sleep infinity
 
   flowo-frontend:
     build:

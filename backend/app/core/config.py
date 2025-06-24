@@ -1,4 +1,3 @@
-
 from pydantic_settings import BaseSettings
 
 
@@ -15,7 +14,7 @@ class Settings(BaseSettings):
 
     # Application settings
     LOG_LEVEL: str = "INFO"
-    SQL_ECHO: bool = True
+    SQL_ECHO: bool = False
 
     # SQL settings
     BACKEND_CORS_ORIGINS: list[str] = ["*"]
