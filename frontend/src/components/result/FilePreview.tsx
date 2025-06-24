@@ -12,8 +12,6 @@ import {
 import type { SelectedNodeData } from "./types";
 import FileContent from "../code/FileContent";
 
-const { Paragraph } = Typography;
-
 // Image Preview Component
 export const ImagePreview: React.FC<{ src: string; alt: string }> = ({
   src,
@@ -32,6 +30,7 @@ export const ImagePreview: React.FC<{ src: string; alt: string }> = ({
       alt={alt}
       style={{ maxWidth: "60%", maxHeight: "60%" }}
       fallback="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMIAAADDCAYAAADQvc6UAAABRWlDQ1BJQ0MgUHJvZmlsZQAAKJFjYGASSSwoyGFhYGDIzSspCnJ3UoiIjFJgf8LAwSDCIMogwMCcmFxc4BgQ4ANUwgCjUcG3awyMIPqyLsis7PPOq3QdDFcvjV3jOD1boQVTPQrgSkktTgbSf4A4LbmgqISBgTEFyFYuLykAsTuAbJEioKOA7DkgdjqEvQHEToKwj4DVhAQ5A9k3gGyB5IxEoBmML4BsnSQk8XQkNtReEOBxcfXxUQg1Mjc0dyHgXNJBSWpFCYh2zi+oLMpMzyhRcASGUqqCZ16yno6CkYGRAQMDKMwhqj/fAIcloxgHQqxAjIHBEugw5sUIsSQpBobtQPdLciLEVJYzMPBHMDBsayhILEqEO4DxG0txmrERhM29nYGBddr//5/DGRjYNRkY/l7////39v///y4Dmn+LgeHANwDrkl1AuO+pmgAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAwqADAAQAAAABAAAAwwAAAAD9b/HnAAAHlklEQVR4Ae3dP3Yk1RUG8A+1CC4iIOcnkcIaYAjhvQ=="
+      preview={false}
     />
   </div>
 );
@@ -134,6 +133,7 @@ export const FullscreenImagePreview: React.FC<{ src: string; alt: string }> = ({
       alt={alt}
       style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }}
       fallback="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMIAAADDCAYAAADQvc6UAE..."
+      preview={false}
     />
   </div>
 );

@@ -6,9 +6,10 @@ import {
 } from "@ant-design/icons";
 import { createFileRoute } from "@tanstack/react-router";
 import { Splitter, Tabs } from "antd";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import type { Status } from "../../api/api";
+import FileContent from "../../components/code/FileContent";
 import SnakefileViewerWithFilter from "../../components/code/SnakefileViewerWithFilter";
 import JobTable from "../../components/job/JobTable";
 import { ResultViewer } from "../../components/result/ResultViewer";
@@ -16,6 +17,7 @@ import WorkflowGraph from "../../components/workflow/WorkflowGraph";
 import WorkflowProgress from "../../components/workflow/WorkflowProgress";
 import WorkflowTimeline from "../../components/workflow/WorkflowTimeline";
 import { useWorkflow } from "../../hooks/useQueries";
+import { useWorkflowSnakefile } from "../../hooks/useQueries";
 
 export const Route = createFileRoute("/workflow/$workflowId")({
   component: WorkflowDetail,
@@ -28,6 +30,13 @@ function WorkflowDetail() {
   const [highlightedRule, setHighlightedRule] = useState<string | null>(null);
 
   const { data: workflow } = useWorkflow(workflowId);
+  const [enableSnakefile, setEnableSnakefile] = useState(false);
+
+  // Enable snakefile when activeTab is "code"
+  useEffect(() => {
+    setEnableSnakefile(activeTab === "code");
+  }, [activeTab]);
+
   const workflowStatus = workflow?.status as Status;
 
   const handleNodeClick = (ruleName: string) => {
@@ -55,6 +64,11 @@ function WorkflowDetail() {
       setHighlightedRule(null);
     }
   };
+
+  const { data: snakefileContent } = useWorkflowSnakefile(
+    workflowId,
+    enableSnakefile,
+  );
 
   return (
     <div style={{ width: "90%", margin: "0 auto" }}>
@@ -192,7 +206,6 @@ function WorkflowDetail() {
                   </div>
                 )}
 
-                {/* Timeline Tab */}
                 {activeTab === "timeline" && (
                   <div
                     style={{
@@ -213,21 +226,20 @@ function WorkflowDetail() {
 
                 {/* Code Tab */}
                 {activeTab === "code" && (
-                  <div
-                    style={{
-                      height: "100%",
-                      padding: "0 0 0 10px",
-                      overflow: "hidden",
-                      display: "flex",
-                      flexDirection: "column",
-                    }}
-                  >
-                    <SnakefileViewerWithFilter
-                      workflowId={workflowId}
-                      selectedRule={selectedRule}
-                      onRuleClick={handleNodeClick}
-                    />
-                  </div>
+                  // <div
+                  //   style={{
+                  //     height: "100%",
+                  //     padding: "0 0 0 10px",
+                  //     overflow: "hidden",
+                  //     display: "flex",
+                  //     flexDirection: "column",
+                  //   }}
+                  // >
+                  <FileContent
+                    fileContent={snakefileContent}
+                    fileFormat="python"
+                  />
+                  // </div>
                 )}
 
                 {/* Result Tab */}

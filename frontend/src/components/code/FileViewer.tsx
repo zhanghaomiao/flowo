@@ -9,7 +9,7 @@ interface FileViewerProps {
   fileContent: string;
   workflowId?: string | null;
   jobId?: number | null;
-  fileFormat?: "log" | "yaml" | "json";
+  fileFormat?: "log" | "yaml" | "json" | "python";
 }
 
 const FileViewer: React.FC<FileViewerProps> = ({

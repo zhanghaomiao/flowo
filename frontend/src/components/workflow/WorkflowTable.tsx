@@ -736,10 +736,12 @@ const WorkflowTable: React.FC<WorkflowTableProps> = ({
       />
 
       <FileViewer
+        key={`snakefile-${snakefileModal.workflowId}`}
         visible={snakefileModal.visible}
         onClose={() => setSnakefileModal({ visible: false, workflowId: "" })}
         fileContent={snakefileData || ""}
         workflowId={snakefileModal.workflowId}
+        fileFormat="python"
       />
 
       <FilesViewer
@@ -755,15 +757,18 @@ const WorkflowTable: React.FC<WorkflowTableProps> = ({
       />
 
       <FileViewer
+        key={`detail-${workflowDetailModal.workflowId}`}
         visible={workflowDetailModal.visible}
         onClose={() =>
           setWorkflowDetailModal({ visible: false, workflowId: "" })
         }
         fileContent={JSON.stringify(workflowDetailData, null, 2) || ""}
         workflowId={workflowDetailModal.workflowId}
+        fileFormat="json"
       />
 
       <FileViewer
+        key={`log-${logModal.workflowId}`}
         visible={logModal.visible}
         onClose={() =>
           setLogModal({

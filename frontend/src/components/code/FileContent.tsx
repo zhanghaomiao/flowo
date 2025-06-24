@@ -1,9 +1,8 @@
 import { ExclamationCircleOutlined } from "@ant-design/icons";
 import { Alert, Switch, Typography } from "antd";
 import React, { useMemo, useState } from "react";
-import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
-import { oneLight } from "react-syntax-highlighter/dist/esm/styles/prism";
-// import { virtualizedRenderer } from "react-syntax-highlighter-virtualized-renderer";
+
+import VirtualizedCodeViewer from "./VirtualizedCodeViewer";
 
 const { Text } = Typography;
 
@@ -15,7 +14,7 @@ const LARGE_FILE_PREVIEW_LINES = 1000;
 interface FileContentProps {
   fileContent: string;
   fileName?: string;
-  fileFormat?: "log" | "yaml" | "json";
+  fileFormat?: "log" | "yaml" | "json" | "python";
   showFileName?: boolean;
 }
 
@@ -80,13 +79,15 @@ const FileContent: React.FC<FileContentProps> = ({
         return "yaml";
       case "log":
         return "text";
+      case "python":
+        return "python";
       default:
         return "yaml";
     }
   };
 
   return (
-    <div style={{ overflow: "auto" }}>
+    <div style={{ height: "100%", maxHeight: "70vh", overflow: "hidden" }}>
       {showFileName && (
         <div
           style={{
@@ -147,8 +148,7 @@ const FileContent: React.FC<FileContentProps> = ({
         />
       )}
 
-      {/* File content */}
-      <div>
+      <div style={{ height: "100%", display: "flex", flexDirection: "column" }}>
         {fileAnalysis.shouldSkipHighlighting ? (
           <div
             style={{
@@ -167,27 +167,17 @@ const FileContent: React.FC<FileContentProps> = ({
             {previewContent}
           </div>
         ) : (
-          <SyntaxHighlighter
-            language={getLanguageFromFormat()}
-            customStyle={{
-              fontSize: "12px",
-              fontFamily: 'Monaco, Menlo, "Ubuntu Mono", Consolas, monospace',
-            }}
-            style={oneLight}
-            height={800}
-            // renderer={virtualizedRenderer}
-            showInlineLineNumbers={false}
-            lineProps={{ style: { flexWrap: "wrap" } }}
-            showLineNumbers={true}
-            lineNumberStyle={{
-              color: "#999",
-              fontSize: "12px",
-              paddingRight: "10px",
-              userSelect: "none",
-            }}
-          >
-            {fileContent || ""}
-          </SyntaxHighlighter>
+          <div style={{ height: "550px", minHeight: 0 }}>
+            <VirtualizedCodeViewer
+              code={fileContent || ""}
+              language={getLanguageFromFormat()}
+              theme="light"
+              fontSize={12}
+              showLineNumbers={true}
+              wrapLines={true}
+              wrapLongLines={true}
+            />
+          </div>
         )}
       </div>
     </div>
