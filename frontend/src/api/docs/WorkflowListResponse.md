@@ -4,23 +4,23 @@ Schema for workflow list response
 
 ## Properties
 
-| Name          | Type                                                     | Description | Notes                  |
-| ------------- | -------------------------------------------------------- | ----------- | ---------------------- |
-| **workflows** | [**Array&lt;WorkflowResponse&gt;**](WorkflowResponse.md) |             | [default to undefined] |
-| **total**     | **number**                                               |             | [default to undefined] |
-| **limit**     | **number**                                               |             | [default to undefined] |
-| **offset**    | **number**                                               |             | [default to undefined] |
+Name | Type | Description | Notes
+------------ | ------------- | ------------- | -------------
+**workflows** | [**Array&lt;WorkflowResponse&gt;**](WorkflowResponse.md) |  | [default to undefined]
+**total** | **number** |  | [default to undefined]
+**limit** | **number** |  | [default to undefined]
+**offset** | **number** |  | [default to undefined]
 
 ## Example
 
 ```typescript
-import { WorkflowListResponse } from "./api";
+import { WorkflowListResponse } from './api';
 
 const instance: WorkflowListResponse = {
-  workflows,
-  total,
-  limit,
-  offset,
+    workflows,
+    total,
+    limit,
+    offset,
 };
 ```
 

@@ -44,7 +44,10 @@ createRoot(document.getElementById("root")!).render(
         theme={{
           components: {
             Tree: {
-              indentSize: 2,
+              indentSize: 12,
+            },
+            Layout: {
+              headerHeight: 45,
             },
           },
         }}

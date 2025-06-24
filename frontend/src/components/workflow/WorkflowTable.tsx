@@ -1,6 +1,7 @@
 import {
   DeleteOutlined,
   FileTextOutlined,
+  InfoCircleOutlined,
   LinkOutlined,
   ReloadOutlined,
   SettingOutlined,
@@ -18,13 +19,15 @@ import {
   Tooltip,
 } from "antd";
 import type { ColumnsType } from "antd/es/table";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import type { Status } from "../../api/api";
 import type { WorkflowResponse } from "../../api/client";
+import SnakemakeIcon from "../../assets/snakemake.svg?react";
 import {
   useDeleteWorkflow,
   useWorkflowConfig,
+  useWorkflowDetail,
   useWorkflowLogs,
   useWorkflowSnakefile,
   useWorkFlowUsers,
@@ -46,7 +49,51 @@ interface WorkflowTableProps {
   limit?: number;
   showRefreshButton?: boolean;
 }
-import SnakemakeIcon from "../../assets/snakemake.svg?react";
+
+const DurationCell: React.FC<{
+  record: WorkflowResponse;
+}> = ({ record }) => {
+  const [currentTime, setCurrentTime] = useState(Date.now());
+
+  useEffect(() => {
+    // Only set up timer for running workflows
+    if (record.status === "RUNNING" && record.started_at) {
+      const timer = setInterval(() => {
+        setCurrentTime(Date.now());
+      }, 1000); // Update every second
+
+      return () => clearInterval(timer);
+    }
+  }, [record.status, record.started_at]);
+
+  // Return "-" for error status
+  if (record.status === "ERROR") {
+    return <span>-</span>;
+  }
+
+  if (record.end_time && record.started_at) {
+    // Completed workflow - use actual end time
+    const duration =
+      new Date(record.end_time).getTime() -
+      new Date(record.started_at).getTime();
+    return <span>{formatDuration(duration)}</span>;
+  } else if (record.started_at) {
+    // Running or other status - use current time
+    let endTime = record.end_time
+      ? new Date(record.end_time).getTime()
+      : currentTime;
+
+    // For running workflows, always use current time for real-time updates
+    if (record.status === "RUNNING") {
+      endTime = currentTime;
+    }
+
+    const duration = endTime - new Date(record.started_at).getTime();
+    return <span>{formatDuration(duration)}</span>;
+  }
+
+  return <span>-</span>;
+};
 
 const WorkflowTable: React.FC<WorkflowTableProps> = ({
   limit = 20,
@@ -79,6 +126,14 @@ const WorkflowTable: React.FC<WorkflowTableProps> = ({
     workflowStatus: "SUCCESS",
   });
 
+  const [workflowDetailModal, setWorkflowDetailModal] = useState<{
+    visible: boolean;
+    workflowId: string;
+  }>({
+    visible: false,
+    workflowId: "",
+  });
+
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(limit);
@@ -107,6 +162,11 @@ const WorkflowTable: React.FC<WorkflowTableProps> = ({
   const { data: logData } = useWorkflowLogs(
     logModal.workflowId,
     logModal.visible && !!logModal.workflowId,
+  );
+
+  const { data: workflowDetailData } = useWorkflowDetail(
+    workflowDetailModal.workflowId,
+    workflowDetailModal.visible && !!workflowDetailModal.workflowId,
   );
 
   const queryParams = useMemo(() => {
@@ -396,20 +456,7 @@ const WorkflowTable: React.FC<WorkflowTableProps> = ({
       dataIndex: "duration",
       key: "duration",
       width: 60,
-      render: (_, record) => {
-        // if has end_time and started_at, calculate duration
-        if (record.end_time && record.started_at) {
-          // using the time now as end_time if the status is running
-          let endTime = record.end_time;
-          if (record.status === "running") {
-            endTime = new Date().toISOString();
-          }
-          const duration =
-            new Date(endTime).getTime() - new Date(record.started_at).getTime();
-          return formatDuration(duration);
-        }
-        return "-";
-      },
+      render: (_, record) => <DurationCell record={record} />,
     },
     {
       title: "Progress",
@@ -505,6 +552,25 @@ const WorkflowTable: React.FC<WorkflowTableProps> = ({
                   />
                 </Tooltip>
               )}
+
+              {/* Workflow detail button */}
+              <Tooltip title="View Workflow Detail">
+                <Button
+                  type="text"
+                  icon={<InfoCircleOutlined style={{ fontSize: 20 }} />}
+                  size="small"
+                  onClick={() =>
+                    setWorkflowDetailModal({
+                      visible: true,
+                      workflowId: record.id,
+                    })
+                  }
+                  style={{
+                    color: "#1890ff",
+                    padding: "2px",
+                  }}
+                />
+              </Tooltip>
 
               {/* Delete button */}
               <Popconfirm
@@ -690,6 +756,15 @@ const WorkflowTable: React.FC<WorkflowTableProps> = ({
           ]),
         )}
         workflowId={configModal.workflowId}
+      />
+
+      <FileViewer
+        visible={workflowDetailModal.visible}
+        onClose={() =>
+          setWorkflowDetailModal({ visible: false, workflowId: "" })
+        }
+        fileContent={JSON.stringify(workflowDetailData, null, 2) || ""}
+        workflowId={workflowDetailModal.workflowId}
       />
 
       <FileViewer
