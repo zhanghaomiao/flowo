@@ -110,7 +110,7 @@ export const useWorkflowsWithSSE = (params?: {
       return response.data as WorkflowListResponse;
     },
     staleTime: 45000,
-    refetchInterval: 90000,
+    refetchInterval: 300000,
     placeholderData: (previousData) => previousData,
   });
 
@@ -183,7 +183,7 @@ export const useWorkflowJobsWithSSE = (params?: {
       return response.data;
     },
     staleTime: 45000,
-    refetchInterval: 90000,
+    refetchInterval: 300000,
   });
 
   const sseConnection = useSSE({
@@ -240,7 +240,7 @@ export const useWorkflowProgressWithSSE = (workflowId: string) => {
       return response.data;
     },
     staleTime: 60000,
-    refetchInterval: 120000,
+    refetchInterval: 600000,
     gcTime: 300000,
   });
 
@@ -306,7 +306,7 @@ export const useRuleStatusWithSSE = (workflowId: string) => {
       return response.data as { [key: string]: RuleStatusResponse };
     },
     staleTime: 45000,
-    refetchInterval: 90000,
+    refetchInterval: 600000,
   });
 
   const sseConnection = useSSE({

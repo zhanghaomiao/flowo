@@ -358,11 +358,10 @@ export const ResultViewer: React.FC<ResultViewerProps> = ({ workflowId }) => {
     }
 
     return (
-      <Splitter style={{ height: "100%" }}>
+      <Splitter style={{ overflow: "auto" }}>
         <Splitter.Panel defaultSize="30%" min="20%" max="40%">
           <Card
             style={{
-              height: "100%",
               overflow: "auto",
               background: "#fafafa",
               border: "none",
@@ -404,7 +403,14 @@ export const ResultViewer: React.FC<ResultViewerProps> = ({ workflowId }) => {
   };
 
   return (
-    <div style={{ height: "100%" }}>
+    <div
+      style={{
+        flex: 1,
+        display: "flex",
+        flexDirection: "column",
+        height: "100%",
+      }}
+    >
       <div
         style={{
           display: "flex",

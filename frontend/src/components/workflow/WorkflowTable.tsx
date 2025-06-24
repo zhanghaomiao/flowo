@@ -66,24 +66,20 @@ const DurationCell: React.FC<{
     }
   }, [record.status, record.started_at]);
 
-  // Return "-" for error status
   if (record.status === "ERROR") {
     return <span>-</span>;
   }
 
   if (record.end_time && record.started_at) {
-    // Completed workflow - use actual end time
     const duration =
       new Date(record.end_time).getTime() -
       new Date(record.started_at).getTime();
     return <span>{formatDuration(duration)}</span>;
   } else if (record.started_at) {
-    // Running or other status - use current time
     let endTime = record.end_time
       ? new Date(record.end_time).getTime()
       : currentTime;
 
-    // For running workflows, always use current time for real-time updates
     if (record.status === "RUNNING") {
       endTime = currentTime;
     }
@@ -711,7 +707,7 @@ const WorkflowTable: React.FC<WorkflowTableProps> = ({
         }}
         pagination={{
           current: currentPage,
-          total: workflowsData?.total,
+          total: workflowsData?.total ?? 0,
           pageSize: pageSize,
           showSizeChanger: true,
           showQuickJumper: true,

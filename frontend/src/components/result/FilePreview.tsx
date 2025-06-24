@@ -10,6 +10,7 @@ import {
   shouldShowPreviewWarning,
 } from "./FileUtils";
 import type { SelectedNodeData } from "./types";
+import FileContent from "../code/FileContent";
 
 const { Paragraph } = Typography;
 
@@ -58,15 +59,7 @@ export const TextPreview: React.FC<{ src: string }> = ({ src }) => {
     return <Spin />;
   }
 
-  return (
-    <div style={{ maxHeight: "400px", overflow: "auto" }}>
-      <Paragraph>
-        <pre style={{ whiteSpace: "pre-wrap", fontSize: "12px" }}>
-          {content}
-        </pre>
-      </Paragraph>
-    </div>
-  );
+  return <FileContent fileContent={content} showFileName={false} />;
 };
 
 // JSON Preview Component
@@ -167,21 +160,7 @@ export const FullscreenTextPreview: React.FC<{ src: string }> = ({ src }) => {
     return <Spin />;
   }
 
-  return (
-    <div style={{ height: "100%", overflow: "auto" }}>
-      <Paragraph>
-        <pre
-          style={{
-            whiteSpace: "pre-wrap",
-            fontSize: "14px",
-            fontFamily: "monospace",
-          }}
-        >
-          {content}
-        </pre>
-      </Paragraph>
-    </div>
-  );
+  return <FileContent fileContent={content} showFileName={false} />;
 };
 
 export const FullscreenJsonPreview: React.FC<{ src: string }> = ({ src }) => {

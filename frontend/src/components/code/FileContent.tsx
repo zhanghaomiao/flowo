@@ -85,7 +85,7 @@ const FileContent: React.FC<FileContentProps> = ({
   };
 
   return (
-    <div style={{ maxHeight: "60vh", overflow: "auto" }}>
+    <div style={{ flex: 1, overflow: "auto" }}>
       {/* File header with name and copy button */}
       {showFileName && (
         <div
