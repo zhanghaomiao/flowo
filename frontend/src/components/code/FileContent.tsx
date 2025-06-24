@@ -8,8 +8,8 @@ const { Text } = Typography;
 
 // Constants for performance optimization
 const MAX_FILE_SIZE_FOR_HIGHLIGHTING = 100 * 1024; // 100KB
-const MAX_LINES_FOR_HIGHLIGHTING = 1000;
-const LARGE_FILE_PREVIEW_LINES = 1000;
+const MAX_LINES_FOR_HIGHLIGHTING = 5000;
+const LARGE_FILE_PREVIEW_LINES = 5000;
 
 interface FileContentProps {
   fileContent: string;
@@ -87,7 +87,7 @@ const FileContent: React.FC<FileContentProps> = ({
   };
 
   return (
-    <div style={{ height: "100%", maxHeight: "70vh", overflow: "hidden" }}>
+    <div style={{ height: "100%", maxHeight: "100%", overflow: "hidden", display: "flex", flexDirection: "column" }}>
       {showFileName && (
         <div
           style={{
@@ -99,6 +99,7 @@ const FileContent: React.FC<FileContentProps> = ({
             padding: "8px 12px",
             backgroundColor: "#f5f5f5",
             borderRadius: "4px",
+            flexShrink: 0,
           }}
         >
           {showFileName && fileName && (
@@ -144,11 +145,11 @@ const FileContent: React.FC<FileContentProps> = ({
           type="warning"
           icon={<ExclamationCircleOutlined />}
           showIcon
-          style={{ marginBottom: "16px" }}
+          style={{ marginBottom: "16px", flexShrink: 0 }}
         />
       )}
 
-      <div style={{ height: "100%", display: "flex", flexDirection: "column" }}>
+      <div style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column" }}>
         {fileAnalysis.shouldSkipHighlighting ? (
           <div
             style={{
@@ -162,12 +163,14 @@ const FileContent: React.FC<FileContentProps> = ({
               lineHeight: "1.5",
               border: "1px solid #dee2e6",
               borderRadius: "4px",
+              flex: 1,
+              overflow: "auto",
             }}
           >
             {previewContent}
           </div>
         ) : (
-          <div style={{ height: "550px", minHeight: 0 }}>
+          <div style={{ height: "100%", minHeight: 0 }}>
             <VirtualizedCodeViewer
               code={fileContent || ""}
               language={getLanguageFromFormat()}

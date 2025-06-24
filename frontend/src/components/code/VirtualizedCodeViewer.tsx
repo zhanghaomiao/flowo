@@ -144,7 +144,7 @@ const VirtualizedCodeViewer: React.FC<VirtualizedCodeViewerProps> = ({
               </div>
             </div>
           )}
-        </CellMeasurer>
+        </CellMeasurer >
       );
     },
     [
@@ -170,7 +170,7 @@ const VirtualizedCodeViewer: React.FC<VirtualizedCodeViewerProps> = ({
           fontStyle: "italic",
         }}
       >
-        No code to display
+        No content to display.
       </div>
     );
   }
@@ -178,6 +178,7 @@ const VirtualizedCodeViewer: React.FC<VirtualizedCodeViewerProps> = ({
   return (
     <div
       ref={containerRef}
+      className="code-viewer-container"
       style={{
         height: "100%",
         width: "100%",

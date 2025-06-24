@@ -90,7 +90,7 @@ function WorkflowDetail() {
             </div>
           </Splitter.Panel>
 
-          <Splitter.Panel>
+          <Splitter.Panel style={{ height: "100%" }}>
             <div
               style={{
                 height: "100%",
@@ -185,6 +185,7 @@ function WorkflowDetail() {
               <div
                 style={{
                   flex: 1,
+                  height: "100%",
                   overflow: "hidden",
                   position: "relative",
                 }}
@@ -224,25 +225,13 @@ function WorkflowDetail() {
                   </div>
                 )}
 
-                {/* Code Tab */}
                 {activeTab === "code" && (
-                  // <div
-                  //   style={{
-                  //     height: "100%",
-                  //     padding: "0 0 0 10px",
-                  //     overflow: "hidden",
-                  //     display: "flex",
-                  //     flexDirection: "column",
-                  //   }}
-                  // >
                   <FileContent
                     fileContent={snakefileContent}
                     fileFormat="python"
                   />
-                  // </div>
                 )}
 
-                {/* Result Tab */}
                 {activeTab === "result" && (
                   <div
                     style={{

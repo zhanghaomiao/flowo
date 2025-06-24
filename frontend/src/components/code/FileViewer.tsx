@@ -7,18 +7,16 @@ interface FileViewerProps {
   visible: boolean;
   onClose: () => void;
   fileContent: string;
-  workflowId?: string | null;
-  jobId?: number | null;
   fileFormat?: "log" | "yaml" | "json" | "python";
+  title: string
 }
 
 const FileViewer: React.FC<FileViewerProps> = ({
   visible,
   onClose,
   fileContent,
-  workflowId,
-  jobId,
   fileFormat = "yaml",
+  title
 }) => {
   return (
     <Modal
@@ -27,14 +25,10 @@ const FileViewer: React.FC<FileViewerProps> = ({
           style={{
             display: "flex",
             alignItems: "center",
-            gap: "8px",
+            gap: "4px",
           }}
         >
-          {fileFormat === "yaml" && (
-            <span>Snakefile - Workflow {workflowId}</span>
-          )}
-          {fileFormat === "log" && <span>Log - Workflow {workflowId}</span>}
-          {jobId && <span>Job - {jobId} Details</span>}
+          <span>{title}</span>
         </div>
       }
       open={visible}
@@ -45,7 +39,7 @@ const FileViewer: React.FC<FileViewerProps> = ({
         </Button>,
       ]}
       width={1000}
-      styles={{ body: { padding: "16px", top: 20 } }}
+      styles={{ body: { height: "75vh", padding: "16px", top: 20 } }}
     >
       <FileContent fileContent={fileContent} fileFormat={fileFormat} />
     </Modal>

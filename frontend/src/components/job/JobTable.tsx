@@ -95,12 +95,12 @@ const JobTable: React.FC<JobTableProps> = ({
     needsSSE
       ? sseResult
       : {
-          sseStatus: "disconnected" as const,
-          isSSEConnected: false,
-          sseError: null,
-          sseRetryCount: 0,
-          reconnectSSE: () => {},
-        };
+        sseStatus: "disconnected" as const,
+        isSSEConnected: false,
+        sseError: null,
+        sseRetryCount: 0,
+        reconnectSSE: () => { },
+      };
 
   const columns: ColumnsType<JobResponse> = [
     {
@@ -466,10 +466,11 @@ const JobTable: React.FC<JobTableProps> = ({
       />
 
       <FileViewer
+        key={`jobDetail`}
+        title={`Detail -  Job ${jobDetailModal.jobId}`}
         visible={jobDetailModal.visible}
         onClose={() => setJobDetailModal({ visible: false, jobId: 0 })}
         fileContent={JSON.stringify(jobDetailData, null, 2)}
-        jobId={jobDetailModal.jobId}
       />
 
       <FilesViewer

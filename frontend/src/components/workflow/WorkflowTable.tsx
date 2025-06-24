@@ -734,16 +734,14 @@ const WorkflowTable: React.FC<WorkflowTableProps> = ({
           style: { cursor: "pointer" },
         })}
       />
-
       <FileViewer
         key={`snakefile-${snakefileModal.workflowId}`}
+        title={`Snakefile - Workflow ${snakefileModal.workflowId}`}
         visible={snakefileModal.visible}
         onClose={() => setSnakefileModal({ visible: false, workflowId: "" })}
         fileContent={snakefileData || ""}
-        workflowId={snakefileModal.workflowId}
-        fileFormat="python"
+        fileFormat="yaml"
       />
-
       <FilesViewer
         visible={configModal.visible}
         onClose={() => setConfigModal({ visible: false, workflowId: "" })}
@@ -758,17 +756,18 @@ const WorkflowTable: React.FC<WorkflowTableProps> = ({
 
       <FileViewer
         key={`detail-${workflowDetailModal.workflowId}`}
+        title={`Detail - Workflow ${workflowDetailModal.workflowId}`}
         visible={workflowDetailModal.visible}
         onClose={() =>
           setWorkflowDetailModal({ visible: false, workflowId: "" })
         }
         fileContent={JSON.stringify(workflowDetailData, null, 2) || ""}
-        workflowId={workflowDetailModal.workflowId}
         fileFormat="json"
       />
 
       <FileViewer
         key={`log-${logModal.workflowId}`}
+        title={`Log - Workflow ${logModal.workflowId}`}
         visible={logModal.visible}
         onClose={() =>
           setLogModal({
@@ -778,7 +777,6 @@ const WorkflowTable: React.FC<WorkflowTableProps> = ({
           })
         }
         fileContent={logData?.content || ""}
-        workflowId={logModal.workflowId}
         fileFormat="log"
       />
 

@@ -10,7 +10,7 @@ export const Route = createFileRoute("/Dashboard/")({
 
 function RouteComponent() {
   const { data: snakefileData } = useWorkflowSnakefile(
-    "30d2c60f-2ab8-4484-9a6a-62277ab9fac0",
+    "f19e43b1-d0cf-4388-83c4-674cdf8705cf"
   );
   return (
     <div
@@ -23,7 +23,6 @@ function RouteComponent() {
         flex: 1,
       }}
     >
-      {/* <FileContent fileContent={snakefileData} fileFormat="python" /> */}
       <VirtualizedCodeViewer
         code={snakefileData}
         language="python"
