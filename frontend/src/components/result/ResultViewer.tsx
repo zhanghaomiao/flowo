@@ -21,7 +21,7 @@ import {
   Tree,
   Typography,
 } from "antd";
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 
 import { constructApiUrl } from "../../api/client";
 import {
@@ -61,6 +61,9 @@ export const ResultViewer: React.FC<ResultViewerProps> = ({ workflowId }) => {
   // Local tree state to manage the complete tree data
   const [treeData, setTreeData] = useState<AntdTreeNode[]>([]);
 
+  const [treeHeight, setTreeHeight] = useState<number>(400);
+  const treeContainerRef = useRef<HTMLDivElement>(null);
+
   // Get workflow detail to get the directory
   const {
     data: workflowDetail,
@@ -86,20 +89,17 @@ export const ResultViewer: React.FC<ResultViewerProps> = ({ workflowId }) => {
     refetchTree();
   };
 
-  // Function to update tree node with new children
   const updateTreeNode = useCallback(
     (path: string, newChildren: AntdTreeNode[]) => {
       setTreeData((prevTreeData) => {
         const updateNode = (nodes: AntdTreeNode[]): AntdTreeNode[] => {
           return nodes.map((node) => {
             if (node.fullPath === path) {
-              // Update this node with new children
               return {
                 ...node,
                 children: newChildren,
               };
             } else if (node.children) {
-              // Recursively update children
               return {
                 ...node,
                 children: updateNode(node.children),
@@ -108,7 +108,6 @@ export const ResultViewer: React.FC<ResultViewerProps> = ({ workflowId }) => {
             return node;
           });
         };
-
         return updateNode(prevTreeData);
       });
     },
@@ -150,6 +149,30 @@ export const ResultViewer: React.FC<ResultViewerProps> = ({ workflowId }) => {
       setTreeData(initialTreeData);
     }
   }, [outputsTree, workflowDetail?.flowo_directory]);
+
+  useEffect(() => {
+    const updateTreeHeight = () => {
+      if (treeContainerRef.current) {
+        const containerHeight = treeContainerRef.current.clientHeight;
+        const availableHeight = containerHeight - 100;
+        setTreeHeight(Math.max(200, availableHeight));
+      }
+    };
+
+    updateTreeHeight();
+
+    window.addEventListener("resize", updateTreeHeight);
+
+    const resizeObserver = new ResizeObserver(updateTreeHeight);
+    if (treeContainerRef.current) {
+      resizeObserver.observe(treeContainerRef.current);
+    }
+
+    return () => {
+      window.removeEventListener("resize", updateTreeHeight);
+      resizeObserver.disconnect();
+    };
+  }, []);
 
   const handleExpand = (expandedKeysValue: React.Key[]) => {
     setExpandedKeys(expandedKeysValue);
@@ -381,6 +404,7 @@ export const ResultViewer: React.FC<ResultViewerProps> = ({ workflowId }) => {
                 overflow: "auto",
                 background: "#fafafa",
               }}
+              height={treeHeight}
             />
           </Card>
         </Splitter.Panel>
@@ -404,6 +428,7 @@ export const ResultViewer: React.FC<ResultViewerProps> = ({ workflowId }) => {
 
   return (
     <div
+      ref={treeContainerRef}
       style={{
         flex: 1,
         display: "flex",

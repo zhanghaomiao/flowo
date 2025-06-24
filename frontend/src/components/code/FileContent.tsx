@@ -3,6 +3,7 @@ import { Alert, Switch, Typography } from "antd";
 import React, { useMemo, useState } from "react";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { oneLight } from "react-syntax-highlighter/dist/esm/styles/prism";
+// import { virtualizedRenderer } from "react-syntax-highlighter-virtualized-renderer";
 
 const { Text } = Typography;
 
@@ -85,8 +86,7 @@ const FileContent: React.FC<FileContentProps> = ({
   };
 
   return (
-    <div style={{ flex: 1, overflow: "auto" }}>
-      {/* File header with name and copy button */}
+    <div style={{ overflow: "auto" }}>
       {showFileName && (
         <div
           style={{
@@ -174,6 +174,8 @@ const FileContent: React.FC<FileContentProps> = ({
               fontFamily: 'Monaco, Menlo, "Ubuntu Mono", Consolas, monospace',
             }}
             style={oneLight}
+            height={800}
+            // renderer={virtualizedRenderer}
             showInlineLineNumbers={false}
             lineProps={{ style: { flexWrap: "wrap" } }}
             showLineNumbers={true}

@@ -443,20 +443,11 @@ export const useLazyDirectoryLoad = () => {
 
   return useMutation({
     mutationFn: async (directoryPath: string) => {
-      const VITE_FLOWO_WORKING_PATH = import.meta.env.VITE_FLOWO_WORKING_PATH;
-      const directoryWithoutViteFlowoWorkingPath = directoryPath.replace(
-        VITE_FLOWO_WORKING_PATH,
-        "",
-      );
-
-      const response = await fetch(
-        constructApiUrl(`/files/${directoryWithoutViteFlowoWorkingPath}`),
-        {
-          headers: {
-            Accept: "application/json",
-          },
+      const response = await fetch(constructApiUrl(`/files/${directoryPath}`), {
+        headers: {
+          Accept: "application/json",
         },
-      );
+      });
 
       if (!response.ok) {
         throw new Error(`Failed to fetch directory: ${response.statusText}`);
@@ -495,7 +486,6 @@ export const useLazyDirectoryLoad = () => {
       return nodes;
     },
     onSuccess: (data, directoryPath) => {
-      // Update the cache with the loaded directory contents
       queryClient.setQueryData(["caddyDirectoryTree", directoryPath], data);
     },
   });

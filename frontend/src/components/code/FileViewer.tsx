@@ -23,7 +23,13 @@ const FileViewer: React.FC<FileViewerProps> = ({
   return (
     <Modal
       title={
-        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+          }}
+        >
           {fileFormat === "yaml" && (
             <span>Snakefile - Workflow {workflowId}</span>
           )}
