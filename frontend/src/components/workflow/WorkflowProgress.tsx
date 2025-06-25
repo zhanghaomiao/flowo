@@ -30,10 +30,12 @@ const WorkflowProgress: React.FC<WorkflowProgressProps> = ({ workflowId }) => {
 
   return (
     <Card>
-      <Row gutter={2}>
+      <Row gutter={24}>
         <Col
           span={12}
           style={{
+            display: "flex",
+            flexDirection: "column",
             alignItems: "center",
             alignContent: "center",
             fontWeight: "bold",

@@ -50,7 +50,6 @@ interface WorkflowTableProps {
   showRefreshButton?: boolean;
 }
 
-// Component to display real-time duration for running workflows
 const DurationCell: React.FC<{
   record: WorkflowResponse;
 }> = ({ record }) => {
@@ -67,20 +66,20 @@ const DurationCell: React.FC<{
     }
   }, [record.status, record.started_at]);
 
-  // Calculate duration
+  if (record.status === "ERROR") {
+    return <span>-</span>;
+  }
+
   if (record.end_time && record.started_at) {
-    // Completed workflow - use actual end time
     const duration =
       new Date(record.end_time).getTime() -
       new Date(record.started_at).getTime();
     return <span>{formatDuration(duration)}</span>;
   } else if (record.started_at) {
-    // Running or other status - use current time
     let endTime = record.end_time
       ? new Date(record.end_time).getTime()
       : currentTime;
 
-    // For running workflows, always use current time for real-time updates
     if (record.status === "RUNNING") {
       endTime = currentTime;
     }
@@ -708,7 +707,7 @@ const WorkflowTable: React.FC<WorkflowTableProps> = ({
         }}
         pagination={{
           current: currentPage,
-          total: workflowsData?.total,
+          total: workflowsData?.total ?? 0,
           pageSize: pageSize,
           showSizeChanger: true,
           showQuickJumper: true,
@@ -735,15 +734,16 @@ const WorkflowTable: React.FC<WorkflowTableProps> = ({
           style: { cursor: "pointer" },
         })}
       />
-
       <FileViewer
+        key={`snakefile-${snakefileModal.workflowId}`}
+        title={`Snakefile - Workflow ${snakefileModal.workflowId}`}
         visible={snakefileModal.visible}
         onClose={() => setSnakefileModal({ visible: false, workflowId: "" })}
         fileContent={snakefileData || ""}
-        workflowId={snakefileModal.workflowId}
+        fileFormat="yaml"
       />
-
       <FilesViewer
+        key={`config-${configModal.workflowId}`}
         visible={configModal.visible}
         onClose={() => setConfigModal({ visible: false, workflowId: "" })}
         fileContent={Object.fromEntries(
@@ -756,15 +756,19 @@ const WorkflowTable: React.FC<WorkflowTableProps> = ({
       />
 
       <FileViewer
+        key={`detail-${workflowDetailModal.workflowId}`}
+        title={`Detail - Workflow ${workflowDetailModal.workflowId}`}
         visible={workflowDetailModal.visible}
         onClose={() =>
           setWorkflowDetailModal({ visible: false, workflowId: "" })
         }
         fileContent={JSON.stringify(workflowDetailData, null, 2) || ""}
-        workflowId={workflowDetailModal.workflowId}
+        fileFormat="json"
       />
 
       <FileViewer
+        key={`log-${logModal.workflowId}`}
+        title={`Log - Workflow ${logModal.workflowId}`}
         visible={logModal.visible}
         onClose={() =>
           setLogModal({
@@ -774,7 +778,6 @@ const WorkflowTable: React.FC<WorkflowTableProps> = ({
           })
         }
         fileContent={logData?.content || ""}
-        workflowId={logModal.workflowId}
         fileFormat="log"
       />
 

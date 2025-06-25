@@ -22,6 +22,9 @@ importers:
       "@types/react-syntax-highlighter":
         specifier: ^15.5.13
         version: 15.5.13
+      "@types/react-virtualized":
+        specifier: ^9.22.2
+        version: 9.22.2
       "@xyflow/react":
         specifier: ^12.6.4
         version: 12.7.0(@types/react@19.1.8)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
@@ -49,6 +52,12 @@ importers:
       react-syntax-highlighter:
         specifier: ^15.6.1
         version: 15.6.1(react@19.1.0)
+      react-syntax-highlighter-virtualized-renderer:
+        specifier: ^1.1.0
+        version: 1.1.0(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
+      react-virtualized:
+        specifier: ^9.22.6
+        version: 9.22.6(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
     devDependencies:
       "@eslint/js":
         specifier: ^9.25.0
@@ -1529,6 +1538,12 @@ packages:
         integrity: sha512-5+fP8P8MFNC+AyZCDxrB2pkZFPGzqQWUzpSeuuVLvm8VMcorNYavBqoFcxK8bQz4Qsbn4oUEEem4wDLfcysGHA==,
       }
 
+  "@types/prop-types@15.7.15":
+    resolution:
+      {
+        integrity: sha512-F6bEyamV9jKGAFBEmlQnesRPGOQqS2+Uwi0Em15xenOxHaf2hv6L8YCVn3rPdPJOiJfPiCnLIRyvwVaqMY3MIw==,
+      }
+
   "@types/react-dom@19.1.6":
     resolution:
       {
@@ -1541,6 +1556,12 @@ packages:
     resolution:
       {
         integrity: sha512-uLGJ87j6Sz8UaBAooU0T6lWJ0dBmjZgN1PZTrj05TNql2/XpC6+4HhMT5syIdFUUt+FASfCeLLv4kBygNU+8qA==,
+      }
+
+  "@types/react-virtualized@9.22.2":
+    resolution:
+      {
+        integrity: sha512-0Eg/ME3OHYWGxs+/n4VelfYrhXssireZaa1Uqj5SEkTpSaBu5ctFGOCVxcOqpGXRiEdrk/7uho9tlZaryCIjHA==,
       }
 
   "@types/react@19.1.8":
@@ -1845,6 +1866,12 @@ packages:
         integrity: sha512-DV5bdJZTzZ0zn0DC24v3jD7Mnidh6xhKa4GfKCbq3sfW8kaWhDdZjP3i81geA8T33tdYqWKw4D3fVv0CwEgKVA==,
       }
 
+  babel-runtime@6.26.0:
+    resolution:
+      {
+        integrity: sha512-ITKNuq2wKlW1fJg9sSW52eepoYgZBggvOAHC0u/CYu/qxQ9EVzThCgR69BnSXLHjy2f7SY5zaQ4yt7H9ZVxY2g==,
+      }
+
   balanced-match@1.0.2:
     resolution:
       {
@@ -2035,6 +2062,13 @@ packages:
       }
     engines: { node: ">=0.8" }
 
+  clsx@1.2.1:
+    resolution:
+      {
+        integrity: sha512-EcR6r5a8bj6pu3ycsa/E/cKVGuTgZJZdsyUYHOksG/UHIiKfjxzRxYJpyVBwYaQeOvghal9fcc4PidlgzugAQg==,
+      }
+    engines: { node: ">=6" }
+
   clsx@2.1.1:
     resolution:
       {
@@ -2132,6 +2166,13 @@ packages:
       {
         integrity: sha512-2KV8NhB5JqC3ky0r9PMCAZKbUHSwtEo4CwCs0KXgruG43gX5PMqDEBbVU4OUzw2MuAWUfsuFmWvEKG5QRfSnJA==,
       }
+
+  core-js@2.6.12:
+    resolution:
+      {
+        integrity: sha512-Kb2wC0fvsWfQrgk8HU5lW6U/Lcs8+9aaYcy4ZFc6DDlo4nZ7n70dEgE5rtR0oG6ufKDUnrwfWL1mXR5ljDatrQ==,
+      }
+    deprecated: core-js@<3.23.3 is no longer maintained and not recommended for usage due to the number of issues. Because of the V8 engine whims, feature detection in old core-js versions could cause a slowdown up to 100x even if nothing is polyfilled. Some versions have web compatibility issues. Please, upgrade your dependencies to the actual version of core-js.
 
   cosmiconfig@8.3.6:
     resolution:
@@ -2332,6 +2373,12 @@ packages:
         integrity: sha512-35mSku4ZXK0vfCuHEDAwt55dg2jNajHZ1odvF+8SSr82EsZY4QmXfuWso8oEd8zRhVObSN18aM0CjSdoBX7zIw==,
       }
     engines: { node: ">=0.10.0" }
+
+  dom-helpers@5.2.1:
+    resolution:
+      {
+        integrity: sha512-nRCa7CK3VTrM2NmGkIy4cbK7IZlgBE/PYMn55rrXefr5xXDP0LdtfPnblFDoVdcAfslJ7or6iqAUnx0CCGIWQA==,
+      }
 
   dot-case@3.0.4:
     resolution:
@@ -3000,6 +3047,13 @@ packages:
         integrity: sha512-tzcUFauisWKNHaRkN4Wjl/ZA07gENAjFl3J/c480dprkGTg5EQstgaNFqBfUqCq54kZRIEcreTsAgF/m2quD7A==,
       }
 
+  highlight.js@9.12.0:
+    resolution:
+      {
+        integrity: sha512-qNnYpBDO/FQwYVur1+sQBQw7v0cxso1nOYLklqWh6af8ROwwTVoII5+kf/BVa8354WL4ad6rURHYGUXCbD9mMg==,
+      }
+    deprecated: Version no longer supported. Upgrade to @latest
+
   highlightjs-vue@1.0.0:
     resolution:
       {
@@ -3488,6 +3542,12 @@ packages:
     resolution:
       {
         integrity: sha512-8Ktj+prEb1RoCPkEOrPMYUN/nCggB7qAWe3a7OpMjWQkh3l2RD5wKRQ+o8Q8YuI9RG/xs95waaI/E6ym/7NsTw==,
+      }
+
+  lowlight@1.9.2:
+    resolution:
+      {
+        integrity: sha512-Ek18ElVCf/wF/jEm1b92gTnigh94CtBNWiZ2ad+vTgW7cTmQxUY3I98BjHK68gZAJEWmybGBZgx9qv3QxLQB/Q==,
       }
 
   lru-cache@10.4.3:
@@ -4286,12 +4346,27 @@ packages:
         integrity: sha512-/LLMVyas0ljjAtoYiPqYiL8VWXzUUdThrmU5+n20DZv+a+ClRoevUzw5JxU+Ieh5/c87ytoTBV9G1FiKfNJdmg==,
       }
 
+  react-lifecycles-compat@3.0.4:
+    resolution:
+      {
+        integrity: sha512-fBASbA6LnOU9dOU2eW7aQ8xmYBSXUIWr+UmF9b1efZBazGNO+rcXT/icdKnYm2pTwcRylVUYwW7H1PHfLekVzA==,
+      }
+
   react-refresh@0.17.0:
     resolution:
       {
         integrity: sha512-z6F7K9bV85EfseRCp2bzrpyQ0Gkw1uLoCel9XBVWPg/TjRj94SkJzUTGfOa4bs7iJvBWtQG0Wq7wnI0syw3EBQ==,
       }
     engines: { node: ">=0.10.0" }
+
+  react-syntax-highlighter-virtualized-renderer@1.1.0:
+    resolution:
+      {
+        integrity: sha512-eJmBbBPfrj+L6iygx2M4o5O2QQAVhBl3nvxAhrzpI2pH2NtM7FjKgXW/9WuBR9J+BZhUXwNraGqxs4x+a3PhFg==,
+      }
+    peerDependencies:
+      react: ">= 0.14.0"
+      react-dom: ">= 0.14.0"
 
   react-syntax-highlighter@15.6.1:
     resolution:
@@ -4300,6 +4375,23 @@ packages:
       }
     peerDependencies:
       react: ">= 0.14.0"
+
+  react-syntax-highlighter@5.8.0:
+    resolution:
+      {
+        integrity: sha512-+FolT9NhFBqE4SsZDelSzsYJJS/JCnQqo4+GxLrFPoML548uvr8f4Eh5nnd5o6ERKFW7ryiygOX9SPnxdnlpkg==,
+      }
+    peerDependencies:
+      react: ">= 0.14.0"
+
+  react-virtualized@9.22.6:
+    resolution:
+      {
+        integrity: sha512-U5j7KuUQt3AaMatlMJ0UJddqSiX+Km0YJxSqbAzIiGw5EmNz0khMyqP2hzgu4+QUtm+QPIrxzUX4raJxmVJnHg==,
+      }
+    peerDependencies:
+      react: ^16.3.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
+      react-dom: ^16.3.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
 
   react@19.1.0:
     resolution:
@@ -4346,6 +4438,12 @@ packages:
     resolution:
       {
         integrity: sha512-MY9W41IOWxxk31o+YvFCNyNzdkc9M20NoZK5vq6jkv4I/uh2zkWcfudj0Q1fovjUQJrNewS9NMzeTtqPf+n5EA==,
+      }
+
+  regenerator-runtime@0.11.1:
+    resolution:
+      {
+        integrity: sha512-MguG95oij0fC3QV3URf4V2SDYGJhJnJGqvIIgdECeODCT98wSWDAJ94SSuVpYQUoTcGUIL6L4yNB7j1DFFHSBg==,
       }
 
   regexp.prototype.flags@1.5.4:
@@ -6087,12 +6185,19 @@ snapshots:
 
   "@types/json-schema@7.0.15": {}
 
+  "@types/prop-types@15.7.15": {}
+
   "@types/react-dom@19.1.6(@types/react@19.1.8)":
     dependencies:
       "@types/react": 19.1.8
 
   "@types/react-syntax-highlighter@15.5.13":
     dependencies:
+      "@types/react": 19.1.8
+
+  "@types/react-virtualized@9.22.2":
+    dependencies:
+      "@types/prop-types": 15.7.15
       "@types/react": 19.1.8
 
   "@types/react@19.1.8":
@@ -6418,6 +6523,11 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
+  babel-runtime@6.26.0:
+    dependencies:
+      core-js: 2.6.12
+      regenerator-runtime: 0.11.1
+
   balanced-match@1.0.2: {}
 
   base64-js@1.5.1: {}
@@ -6525,6 +6635,8 @@ snapshots:
 
   clone@1.0.4: {}
 
+  clsx@1.2.1: {}
+
   clsx@2.1.1: {}
 
   color-convert@2.0.1:
@@ -6571,6 +6683,8 @@ snapshots:
   copy-to-clipboard@3.3.3:
     dependencies:
       toggle-selection: 1.0.6
+
+  core-js@2.6.12: {}
 
   cosmiconfig@8.3.6(typescript@5.8.3):
     dependencies:
@@ -6691,6 +6805,11 @@ snapshots:
   doctrine@2.1.0:
     dependencies:
       esutils: 2.0.3
+
+  dom-helpers@5.2.1:
+    dependencies:
+      "@babel/runtime": 7.27.6
+      csstype: 3.1.3
 
   dot-case@3.0.4:
     dependencies:
@@ -7203,6 +7322,8 @@ snapshots:
 
   highlight.js@10.7.3: {}
 
+  highlight.js@9.12.0: {}
+
   highlightjs-vue@1.0.0: {}
 
   http-proxy-agent@7.0.2:
@@ -7487,6 +7608,11 @@ snapshots:
     dependencies:
       fault: 1.0.4
       highlight.js: 10.7.3
+
+  lowlight@1.9.2:
+    dependencies:
+      fault: 1.0.4
+      highlight.js: 9.12.0
 
   lru-cache@10.4.3: {}
 
@@ -8071,7 +8197,16 @@ snapshots:
 
   react-is@18.3.1: {}
 
+  react-lifecycles-compat@3.0.4: {}
+
   react-refresh@0.17.0: {}
+
+  react-syntax-highlighter-virtualized-renderer@1.1.0(react-dom@19.1.0(react@19.1.0))(react@19.1.0):
+    dependencies:
+      react: 19.1.0
+      react-dom: 19.1.0(react@19.1.0)
+      react-syntax-highlighter: 5.8.0(react@19.1.0)
+      react-virtualized: 9.22.6(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
 
   react-syntax-highlighter@15.6.1(react@19.1.0):
     dependencies:
@@ -8082,6 +8217,24 @@ snapshots:
       prismjs: 1.30.0
       react: 19.1.0
       refractor: 3.6.0
+
+  react-syntax-highlighter@5.8.0(react@19.1.0):
+    dependencies:
+      babel-runtime: 6.26.0
+      highlight.js: 9.12.0
+      lowlight: 1.9.2
+      react: 19.1.0
+
+  react-virtualized@9.22.6(react-dom@19.1.0(react@19.1.0))(react@19.1.0):
+    dependencies:
+      "@babel/runtime": 7.27.6
+      clsx: 1.2.1
+      dom-helpers: 5.2.1
+      loose-envify: 1.4.0
+      prop-types: 15.8.1
+      react: 19.1.0
+      react-dom: 19.1.0(react@19.1.0)
+      react-lifecycles-compat: 3.0.4
 
   react@19.1.0: {}
 
@@ -8121,6 +8274,8 @@ snapshots:
       hastscript: 6.0.0
       parse-entities: 2.0.0
       prismjs: 1.27.0
+
+  regenerator-runtime@0.11.1: {}
 
   regexp.prototype.flags@1.5.4:
     dependencies:

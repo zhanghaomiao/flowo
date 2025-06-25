@@ -466,10 +466,11 @@ const JobTable: React.FC<JobTableProps> = ({
       />
 
       <FileViewer
+        key={`jobDetail`}
+        title={`Detail -  Job ${jobDetailModal.jobId}`}
         visible={jobDetailModal.visible}
         onClose={() => setJobDetailModal({ visible: false, jobId: 0 })}
         fileContent={JSON.stringify(jobDetailData, null, 2)}
-        jobId={jobDetailModal.jobId}
       />
 
       <FilesViewer

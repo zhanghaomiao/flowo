@@ -1,26 +1,27 @@
 # RuleStatusResponse
 
+
 ## Properties
 
-| Name        | Type       | Description | Notes                  |
-| ----------- | ---------- | ----------- | ---------------------- |
-| **success** | **string** |             | [default to undefined] |
-| **running** | **string** |             | [default to undefined] |
-| **error**   | **string** |             | [default to undefined] |
-| **total**   | **string** |             | [default to undefined] |
-| **status**  | **string** |             | [default to undefined] |
+Name | Type | Description | Notes
+------------ | ------------- | ------------- | -------------
+**success** | **string** |  | [default to undefined]
+**running** | **string** |  | [default to undefined]
+**error** | **string** |  | [default to undefined]
+**total** | **string** |  | [default to undefined]
+**status** | **string** |  | [default to undefined]
 
 ## Example
 
 ```typescript
-import { RuleStatusResponse } from "./api";
+import { RuleStatusResponse } from './api';
 
 const instance: RuleStatusResponse = {
-  success,
-  running,
-  error,
-  total,
-  status,
+    success,
+    running,
+    error,
+    total,
+    status,
 };
 ```
 

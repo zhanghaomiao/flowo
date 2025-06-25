@@ -21,7 +21,7 @@ import {
   Tree,
   Typography,
 } from "antd";
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 
 import { constructApiUrl } from "../../api/client";
 import {
@@ -61,6 +61,9 @@ export const ResultViewer: React.FC<ResultViewerProps> = ({ workflowId }) => {
   // Local tree state to manage the complete tree data
   const [treeData, setTreeData] = useState<AntdTreeNode[]>([]);
 
+  const [treeHeight, setTreeHeight] = useState<number>(400);
+  const treeContainerRef = useRef<HTMLDivElement>(null);
+
   // Get workflow detail to get the directory
   const {
     data: workflowDetail,
@@ -75,15 +78,10 @@ export const ResultViewer: React.FC<ResultViewerProps> = ({ workflowId }) => {
     isLoading: isTreeLoading,
     error: treeError,
     refetch: refetchTree,
-  } = useCaddyDirectoryTree(workflowDetail?.directory || null);
+  } = useCaddyDirectoryTree(workflowDetail?.flowo_directory || null);
 
   // Lazy loading mutation
   const lazyLoadMutation = useLazyDirectoryLoad();
-  const working_path = workflowDetail?.directory?.replace(
-    import.meta.env.VITE_FLOWO_WORKING_PATH,
-    "",
-  );
-
   const isLoading = isWorkflowLoading || isTreeLoading;
   const error = workflowError || treeError;
   const refetch = () => {
@@ -91,20 +89,17 @@ export const ResultViewer: React.FC<ResultViewerProps> = ({ workflowId }) => {
     refetchTree();
   };
 
-  // Function to update tree node with new children
   const updateTreeNode = useCallback(
     (path: string, newChildren: AntdTreeNode[]) => {
       setTreeData((prevTreeData) => {
         const updateNode = (nodes: AntdTreeNode[]): AntdTreeNode[] => {
           return nodes.map((node) => {
             if (node.fullPath === path) {
-              // Update this node with new children
               return {
                 ...node,
                 children: newChildren,
               };
             } else if (node.children) {
-              // Recursively update children
               return {
                 ...node,
                 children: updateNode(node.children),
@@ -113,7 +108,6 @@ export const ResultViewer: React.FC<ResultViewerProps> = ({ workflowId }) => {
             return node;
           });
         };
-
         return updateNode(prevTreeData);
       });
     },
@@ -149,12 +143,36 @@ export const ResultViewer: React.FC<ResultViewerProps> = ({ workflowId }) => {
     if (outputsTree && outputsTree.length > 0) {
       const initialTreeData = convertToAntdTreeData(
         outputsTree,
-        working_path,
+        workflowDetail?.flowo_directory || "",
         handleLoadData,
       );
       setTreeData(initialTreeData);
     }
-  }, [outputsTree, working_path]);
+  }, [outputsTree, workflowDetail?.flowo_directory]);
+
+  useEffect(() => {
+    const updateTreeHeight = () => {
+      if (treeContainerRef.current) {
+        const containerHeight = treeContainerRef.current.clientHeight;
+        const availableHeight = containerHeight - 100;
+        setTreeHeight(Math.max(200, availableHeight));
+      }
+    };
+
+    updateTreeHeight();
+
+    window.addEventListener("resize", updateTreeHeight);
+
+    const resizeObserver = new ResizeObserver(updateTreeHeight);
+    if (treeContainerRef.current) {
+      resizeObserver.observe(treeContainerRef.current);
+    }
+
+    return () => {
+      window.removeEventListener("resize", updateTreeHeight);
+      resizeObserver.disconnect();
+    };
+  }, []);
 
   const handleExpand = (expandedKeysValue: React.Key[]) => {
     setExpandedKeys(expandedKeysValue);
@@ -211,7 +229,14 @@ export const ResultViewer: React.FC<ResultViewerProps> = ({ workflowId }) => {
     const fileSize = nodeData.fileSize ?? null;
 
     return (
-      <Space direction="vertical" style={{ width: "100%" }}>
+      <div
+        style={{
+          width: "100%",
+          display: "flex",
+          flexDirection: "column",
+          height: "100%",
+        }}
+      >
         <div
           style={{
             display: "flex",
@@ -254,17 +279,16 @@ export const ResultViewer: React.FC<ResultViewerProps> = ({ workflowId }) => {
         </div>
 
         {type === "file" && (
-          <div style={{ marginTop: 16 }}>
-            <div
-              style={{
-                marginTop: 8,
-                border: "1px solid #f0f0f0",
-                borderRadius: "4px",
-                padding: "8px",
-              }}
-            >
-              <FilePreview nodeData={selectedNodeData} />
-            </div>
+          <div
+            style={{
+              marginTop: 8,
+              flex: 1,
+              border: "1px solid #f0f0f0",
+              borderRadius: "4px",
+              padding: "8px",
+            }}
+          >
+            <FilePreview nodeData={selectedNodeData} />
           </div>
         )}
 
@@ -295,7 +319,7 @@ export const ResultViewer: React.FC<ResultViewerProps> = ({ workflowId }) => {
             </ul>
           </div>
         )}
-      </Space>
+      </div>
     );
   };
 
@@ -363,11 +387,10 @@ export const ResultViewer: React.FC<ResultViewerProps> = ({ workflowId }) => {
     }
 
     return (
-      <Splitter style={{ height: "100%" }}>
+      <Splitter style={{ overflow: "auto", height: "100%" }}>
         <Splitter.Panel defaultSize="30%" min="20%" max="40%">
           <Card
             style={{
-              height: "100%",
               overflow: "auto",
               background: "#fafafa",
               border: "none",
@@ -387,19 +410,16 @@ export const ResultViewer: React.FC<ResultViewerProps> = ({ workflowId }) => {
                 overflow: "auto",
                 background: "#fafafa",
               }}
+              height={treeHeight}
             />
           </Card>
         </Splitter.Panel>
-        <Splitter.Panel>
+        <Splitter.Panel style={{ height: "100%" }}>
           <Card
             style={{
               height: "100%",
-              padding: "2px",
-              overflow: "auto",
-              background: "#fafafa",
-              borderRadius: "4px",
-              border: "1px solid #f0f0f0",
             }}
+            styles={{ body: { height: "100%" } }}
           >
             {renderPreview()}
           </Card>
@@ -409,7 +429,15 @@ export const ResultViewer: React.FC<ResultViewerProps> = ({ workflowId }) => {
   };
 
   return (
-    <div style={{ height: "100%" }}>
+    <div
+      ref={treeContainerRef}
+      style={{
+        flex: 1,
+        display: "flex",
+        flexDirection: "column",
+        height: "100%",
+      }}
+    >
       <div
         style={{
           display: "flex",

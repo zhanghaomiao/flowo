@@ -1,18 +1,19 @@
 # HTTPValidationError
 
+
 ## Properties
 
-| Name       | Type                                                   | Description | Notes                             |
-| ---------- | ------------------------------------------------------ | ----------- | --------------------------------- |
-| **detail** | [**Array&lt;ValidationError&gt;**](ValidationError.md) |             | [optional] [default to undefined] |
+Name | Type | Description | Notes
+------------ | ------------- | ------------- | -------------
+**detail** | [**Array&lt;ValidationError&gt;**](ValidationError.md) |  | [optional] [default to undefined]
 
 ## Example
 
 ```typescript
-import { HTTPValidationError } from "./api";
+import { HTTPValidationError } from './api';
 
 const instance: HTTPValidationError = {
-  detail,
+    detail,
 };
 ```
 

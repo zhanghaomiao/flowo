@@ -4,23 +4,23 @@ Schema for job list response
 
 ## Properties
 
-| Name       | Type                                           | Description | Notes                  |
-| ---------- | ---------------------------------------------- | ----------- | ---------------------- |
-| **jobs**   | [**Array&lt;JobResponse&gt;**](JobResponse.md) |             | [default to undefined] |
-| **total**  | **number**                                     |             | [default to undefined] |
-| **limit**  | **number**                                     |             | [default to undefined] |
-| **offset** | **number**                                     |             | [default to undefined] |
+Name | Type | Description | Notes
+------------ | ------------- | ------------- | -------------
+**jobs** | [**Array&lt;JobResponse&gt;**](JobResponse.md) |  | [default to undefined]
+**total** | **number** |  | [default to undefined]
+**limit** | **number** |  | [default to undefined]
+**offset** | **number** |  | [default to undefined]
 
 ## Example
 
 ```typescript
-import { JobListResponse } from "./api";
+import { JobListResponse } from './api';
 
 const instance: JobListResponse = {
-  jobs,
-  total,
-  limit,
-  offset,
+    jobs,
+    total,
+    limit,
+    offset,
 };
 ```
 

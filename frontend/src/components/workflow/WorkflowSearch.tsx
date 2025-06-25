@@ -57,10 +57,10 @@ const WorkflowSearch: React.FC<WorkflowSearchProps> = ({
     dates: [Dayjs | null, Dayjs | null] | null,
   ) => {
     if (dates && dates[0]) {
-      // Start time is provided
-      const startTime = dates[0].toISOString();
+      // Start time is provided - use local time format to match DatePicker display
+      const startTime = dates[0].format();
       // If end time is not provided, default to today (current time)
-      const endTime = dates[1] ? dates[1].toISOString() : dayjs().toISOString();
+      const endTime = dates[1] ? dates[1].format() : dayjs().format();
       onDateRangeChange(startTime, endTime);
     } else {
       // Clear both when no start time is selected
@@ -85,7 +85,7 @@ const WorkflowSearch: React.FC<WorkflowSearchProps> = ({
         value={tags && tags.trim() ? tags.split(",") : []}
         tagRender={(tag) => <WorkflowTag tag={tag.label as string} />}
         mode="multiple"
-        style={{ width: 130 }}
+        style={{ width: 140 }}
         size="small"
       />
 
@@ -100,15 +100,7 @@ const WorkflowSearch: React.FC<WorkflowSearchProps> = ({
       />
 
       <RangePicker
-        presets={[
-          {
-            label: (
-              <span aria-label="Current Time to End of Day">Now ~ END</span>
-            ),
-            value: () => [dayjs(), dayjs().endOf("day")], // 5.8.0+ support function
-          },
-          ...rangePresets,
-        ]}
+        presets={[...rangePresets]}
         placeholder={["Start time", "End time"]}
         allowEmpty={[true, true]}
         showTime

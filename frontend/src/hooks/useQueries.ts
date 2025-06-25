@@ -46,9 +46,9 @@ export const useWorkflows = (params?: {
       );
       return response.data;
     },
-    staleTime: 30000, // Data is fresh for 30 seconds
-    refetchInterval: 60000, // Refetch every minute
-    placeholderData: (previousData) => previousData, // Keep previous data while loading
+    staleTime: 30000,
+    refetchInterval: 60000,
+    placeholderData: (previousData) => previousData,
   });
 };
 
@@ -105,16 +105,18 @@ export const useWorkflowsPaginated = (
 };
 
 export const useWorkflowTotalJobs = (workflowId: string) => {
-  return useQuery<{ total: number }>({
+  return useQuery<{ [key: string]: number }>({
     queryKey: ["workflowTotalJobs", workflowId],
     queryFn: async () => {
       const response =
         await workflowApi.getProgressApiV1WorkflowsWorkflowIdProgressGet(
           workflowId,
-          true,
+          true, // returnTotalJobsNumber
         );
-      return response.data as { total: number };
+      return response.data as { [key: string]: number };
     },
+    staleTime: 60000,
+    refetchInterval: 300000, // 5分钟
   });
 };
 
@@ -126,25 +128,10 @@ export const useJob = (jobId: number, enabled: boolean = true) => {
       const response = await jobsApi.getJobApiV1JobsJobIdDetailGet(jobId);
       return response.data;
     },
-    enabled, // Only fetch when enabled is true
-    staleTime: 30000,
+    enabled,
   });
 };
 
-// Custom hook for fetching job files - Note: This API endpoint may not exist
-export const useJobFiles = (jobId: number) => {
-  return useQuery({
-    queryKey: ["jobFiles", jobId],
-    queryFn: async () => {
-      // This endpoint may not be available in the current API
-      throw new Error("Job files endpoint not available");
-    },
-    enabled: false, // Disabled since endpoint doesn't exist
-    staleTime: 30000,
-  });
-};
-
-// Custom hook for fetching workflow jobs
 export const useWorkflowJobs = (
   workflowId: string,
   limit: number | null = null,
@@ -168,8 +155,8 @@ export const useWorkflowJobs = (
         offset,
         orderByStarted,
         descending,
-        ruleName, // ruleName
-        status as Status, // status
+        ruleName,
+        status as Status,
       );
       return response.data;
     },
@@ -194,7 +181,9 @@ export const useWorkflowRuleGraph = (
       return response.data;
     },
     enabled,
-    staleTime: 300000, // Rule graph is relatively static, cache for 5 minutes
+    staleTime: 600000,
+    refetchInterval: false,
+    refetchOnWindowFocus: false,
   });
 };
 
@@ -213,7 +202,9 @@ export const useWorkflowSnakefile = (
       return response.data;
     },
     enabled,
-    staleTime: 300000, // Snakefile content is static, cache for 5 minutes
+    staleTime: 600000,
+    refetchInterval: false,
+    refetchOnWindowFocus: false,
   });
 };
 
@@ -224,6 +215,8 @@ export const useWorkFlowUsers = () => {
       const response = await workflowApi.getAllUsersApiV1WorkflowsUsersGet();
       return response.data;
     },
+    staleTime: 600000,
+    refetchInterval: false,
   });
 };
 
@@ -239,6 +232,8 @@ export const useWorkflowLogs = (
       return response.data;
     },
     enabled,
+    staleTime: 120000,
+    refetchInterval: false,
   });
 };
 
@@ -283,8 +278,8 @@ export const useWorkflowTimeline = (workflowId: string) => {
         );
       return response.data;
     },
-    staleTime: 30000,
-    refetchInterval: 60000,
+    staleTime: 60000,
+    refetchInterval: 300000,
   });
 };
 
@@ -302,6 +297,9 @@ export const useWorkflowConfig = (
       return response.data;
     },
     enabled,
+    staleTime: 600000,
+    refetchInterval: false,
+    refetchOnWindowFocus: false,
   });
 };
 
@@ -312,8 +310,8 @@ export const useJobDetail = (jobId: number, enabled: boolean = true) => {
       const response = await jobsApi.getJobApiV1JobsJobIdDetailGet(jobId);
       return response.data as JobDetailResponse;
     },
-    staleTime: 30000,
-    refetchInterval: 60000,
+    staleTime: 60000,
+    refetchInterval: false,
     enabled,
   });
 };
@@ -326,8 +324,8 @@ export const useJobLogs = (jobId: number, enabled: boolean = true) => {
       return response.data as Record<string, string>;
     },
     enabled,
-    staleTime: 30000,
-    refetchInterval: 60000,
+    staleTime: 60000,
+    refetchInterval: 300000,
   });
 };
 
@@ -338,8 +336,9 @@ export const useAllTags = () => {
       const response = await utilsApi.getAllTagsApiV1UtilsTagsGet();
       return response.data as string[];
     },
-    staleTime: 30000,
-    refetchInterval: 60000,
+    staleTime: 600000,
+    refetchInterval: false,
+    refetchOnWindowFocus: false,
   });
 };
 
@@ -354,8 +353,8 @@ export const useOutPutsTree = (workflowId: string, depth: number = 2) => {
         );
       return response.data;
     },
-    staleTime: 30000,
-    refetchInterval: 60000,
+    staleTime: 120000,
+    refetchInterval: 600000,
   });
 };
 
@@ -372,8 +371,8 @@ export const useWorkflowDetail = (
         );
       return response.data;
     },
-    staleTime: 30000,
-    refetchInterval: 60000,
+    staleTime: 60000,
+    refetchInterval: 300000,
     enabled,
   });
 };
@@ -387,23 +386,11 @@ export const useCaddyDirectoryTree = (directory: string | null) => {
         return [];
       }
 
-      // Query the Caddy server for directory listing
-      const VITE_FLOWO_WORKING_PATH = import.meta.env.VITE_FLOWO_WORKING_PATH;
-      // strip the VITE_FLOWO_WORKING_PATH from the directory
-      const directoryWithoutViteFlowoWorkingPath = directory.replace(
-        VITE_FLOWO_WORKING_PATH,
-        "",
-      );
-
-      // Include Accept: application/json header to get JSON response from Caddy
-      const response = await fetch(
-        constructApiUrl(`/files/${directoryWithoutViteFlowoWorkingPath}`),
-        {
-          headers: {
-            Accept: "application/json",
-          },
+      const response = await fetch(constructApiUrl(`/files/${directory}`), {
+        headers: {
+          Accept: "application/json",
         },
-      );
+      });
 
       if (!response.ok) {
         throw new Error(`Failed to fetch directory: ${response.statusText}`);
@@ -444,8 +431,9 @@ export const useCaddyDirectoryTree = (directory: string | null) => {
       return nodes;
     },
     enabled: !!directory,
-    staleTime: 30000,
-    refetchInterval: 60000,
+    staleTime: 120000,
+    refetchInterval: 600000,
+    refetchOnWindowFocus: false,
   });
 };
 
@@ -455,20 +443,11 @@ export const useLazyDirectoryLoad = () => {
 
   return useMutation({
     mutationFn: async (directoryPath: string) => {
-      const VITE_FLOWO_WORKING_PATH = import.meta.env.VITE_FLOWO_WORKING_PATH;
-      const directoryWithoutViteFlowoWorkingPath = directoryPath.replace(
-        VITE_FLOWO_WORKING_PATH,
-        "",
-      );
-
-      const response = await fetch(
-        constructApiUrl(`/files/${directoryWithoutViteFlowoWorkingPath}`),
-        {
-          headers: {
-            Accept: "application/json",
-          },
+      const response = await fetch(constructApiUrl(`/files/${directoryPath}`), {
+        headers: {
+          Accept: "application/json",
         },
-      );
+      });
 
       if (!response.ok) {
         throw new Error(`Failed to fetch directory: ${response.statusText}`);
@@ -507,7 +486,6 @@ export const useLazyDirectoryLoad = () => {
       return nodes;
     },
     onSuccess: (data, directoryPath) => {
-      // Update the cache with the loaded directory contents
       queryClient.setQueryData(["caddyDirectoryTree", directoryPath], data);
     },
   });
