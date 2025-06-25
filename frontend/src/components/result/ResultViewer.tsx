@@ -229,7 +229,14 @@ export const ResultViewer: React.FC<ResultViewerProps> = ({ workflowId }) => {
     const fileSize = nodeData.fileSize ?? null;
 
     return (
-      <Space direction="vertical" style={{ width: "100%" }}>
+      <div
+        style={{
+          width: "100%",
+          display: "flex",
+          flexDirection: "column",
+          height: "100%",
+        }}
+      >
         <div
           style={{
             display: "flex",
@@ -272,17 +279,16 @@ export const ResultViewer: React.FC<ResultViewerProps> = ({ workflowId }) => {
         </div>
 
         {type === "file" && (
-          <div style={{ marginTop: 16 }}>
-            <div
-              style={{
-                marginTop: 8,
-                border: "1px solid #f0f0f0",
-                borderRadius: "4px",
-                padding: "8px",
-              }}
-            >
-              <FilePreview nodeData={selectedNodeData} />
-            </div>
+          <div
+            style={{
+              marginTop: 8,
+              flex: 1,
+              border: "1px solid #f0f0f0",
+              borderRadius: "4px",
+              padding: "8px",
+            }}
+          >
+            <FilePreview nodeData={selectedNodeData} />
           </div>
         )}
 
@@ -313,7 +319,7 @@ export const ResultViewer: React.FC<ResultViewerProps> = ({ workflowId }) => {
             </ul>
           </div>
         )}
-      </Space>
+      </div>
     );
   };
 
@@ -381,7 +387,7 @@ export const ResultViewer: React.FC<ResultViewerProps> = ({ workflowId }) => {
     }
 
     return (
-      <Splitter style={{ overflow: "auto" }}>
+      <Splitter style={{ overflow: "auto", height: "100%" }}>
         <Splitter.Panel defaultSize="30%" min="20%" max="40%">
           <Card
             style={{
@@ -408,16 +414,12 @@ export const ResultViewer: React.FC<ResultViewerProps> = ({ workflowId }) => {
             />
           </Card>
         </Splitter.Panel>
-        <Splitter.Panel>
+        <Splitter.Panel style={{ height: "100%" }}>
           <Card
             style={{
               height: "100%",
-              padding: "2px",
-              overflow: "auto",
-              background: "#fafafa",
-              borderRadius: "4px",
-              border: "1px solid #f0f0f0",
             }}
+            styles={{ body: { height: "100%" } }}
           >
             {renderPreview()}
           </Card>

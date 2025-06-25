@@ -743,6 +743,7 @@ const WorkflowTable: React.FC<WorkflowTableProps> = ({
         fileFormat="yaml"
       />
       <FilesViewer
+        key={`config-${configModal.workflowId}`}
         visible={configModal.visible}
         onClose={() => setConfigModal({ visible: false, workflowId: "" })}
         fileContent={Object.fromEntries(

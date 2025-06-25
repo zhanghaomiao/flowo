@@ -41,7 +41,7 @@ const VirtualizedCodeViewer: React.FC<VirtualizedCodeViewerProps> = ({
         fixedWidth: true,
         defaultHeight: fontSize * 1.5, // 预估行高
       }),
-    [fontSize]
+    [fontSize],
   );
 
   const listRef = useRef<List>(null);
@@ -69,7 +69,7 @@ const VirtualizedCodeViewer: React.FC<VirtualizedCodeViewerProps> = ({
         }, 0);
       }
     },
-    [clearCacheAndRecompute]
+    [clearCacheAndRecompute],
   );
 
   const rowRenderer = useCallback(
@@ -103,8 +103,8 @@ const VirtualizedCodeViewer: React.FC<VirtualizedCodeViewerProps> = ({
               {showLineNumbers && (
                 <div
                   style={{
-                    minWidth: "50px",
-                    paddingRight: "12px",
+                    minWidth: "40px",
+                    paddingRight: "0px",
                     paddingLeft: "8px",
                     color: theme === "dark" ? "#666" : "#999",
                     textAlign: "right",
@@ -157,7 +157,7 @@ const VirtualizedCodeViewer: React.FC<VirtualizedCodeViewerProps> = ({
       wrapLines,
       wrapLongLines,
       maxWidth,
-    ]
+    ],
   );
 
   if (!code || codeLines.length === 0) {

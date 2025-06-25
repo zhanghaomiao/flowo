@@ -185,7 +185,7 @@ const FileContent: React.FC<FileContentProps> = ({
             {previewContent}
           </div>
         ) : (
-          <div style={{ height: "100%", minHeight: 0 }}>
+          <div style={{ height: "100%", minHeight: "50px" }}>
             <VirtualizedCodeViewer
               code={fileContent || ""}
               language={getLanguageFromFormat()}
