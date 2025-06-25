@@ -8,7 +8,7 @@ interface FileViewerProps {
   onClose: () => void;
   fileContent: string;
   fileFormat?: "log" | "yaml" | "json" | "python";
-  title: string
+  title: string;
 }
 
 const FileViewer: React.FC<FileViewerProps> = ({
@@ -16,7 +16,7 @@ const FileViewer: React.FC<FileViewerProps> = ({
   onClose,
   fileContent,
   fileFormat = "yaml",
-  title
+  title,
 }) => {
   return (
     <Modal

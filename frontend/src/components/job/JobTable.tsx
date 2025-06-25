@@ -95,12 +95,12 @@ const JobTable: React.FC<JobTableProps> = ({
     needsSSE
       ? sseResult
       : {
-        sseStatus: "disconnected" as const,
-        isSSEConnected: false,
-        sseError: null,
-        sseRetryCount: 0,
-        reconnectSSE: () => { },
-      };
+          sseStatus: "disconnected" as const,
+          isSSEConnected: false,
+          sseError: null,
+          sseRetryCount: 0,
+          reconnectSSE: () => {},
+        };
 
   const columns: ColumnsType<JobResponse> = [
     {

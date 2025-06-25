@@ -1,8 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useWorkflowSnakefile } from "../../hooks/useQueries";
-import FileContent from "../../components/code/FileContent";
-import SnakefileViewerWithFilter from "../../components/code/SnakefileViewerWithFilter";
+
 import VirtualizedCodeViewer from "../../components/code/VirtualizedCodeViewer";
+import { useWorkflowSnakefile } from "../../hooks/useQueries";
 
 export const Route = createFileRoute("/Dashboard/")({
   component: RouteComponent,
@@ -10,7 +9,7 @@ export const Route = createFileRoute("/Dashboard/")({
 
 function RouteComponent() {
   const { data: snakefileData } = useWorkflowSnakefile(
-    "f19e43b1-d0cf-4388-83c4-674cdf8705cf"
+    "f19e43b1-d0cf-4388-83c4-674cdf8705cf",
   );
   return (
     <div

@@ -1,7 +1,8 @@
-import { Alert, Image, Spin, Typography } from "antd";
+import { Alert, Image, Spin } from "antd";
 import React, { useState } from "react";
 
 import { constructApiUrl } from "../../api/client";
+import FileContent from "../code/FileContent";
 import {
   formatFileSize,
   getFileExtension,
@@ -10,7 +11,6 @@ import {
   shouldShowPreviewWarning,
 } from "./FileUtils";
 import type { SelectedNodeData } from "./types";
-import FileContent from "../code/FileContent";
 
 // Image Preview Component
 export const ImagePreview: React.FC<{ src: string; alt: string }> = ({

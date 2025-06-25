@@ -87,7 +87,15 @@ const FileContent: React.FC<FileContentProps> = ({
   };
 
   return (
-    <div style={{ height: "100%", maxHeight: "100%", overflow: "hidden", display: "flex", flexDirection: "column" }}>
+    <div
+      style={{
+        height: "100%",
+        maxHeight: "100%",
+        overflow: "hidden",
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
       {showFileName && (
         <div
           style={{
@@ -149,7 +157,14 @@ const FileContent: React.FC<FileContentProps> = ({
         />
       )}
 
-      <div style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column" }}>
+      <div
+        style={{
+          flex: 1,
+          minHeight: 0,
+          display: "flex",
+          flexDirection: "column",
+        }}
+      >
         {fileAnalysis.shouldSkipHighlighting ? (
           <div
             style={{

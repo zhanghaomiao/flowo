@@ -41,7 +41,7 @@ const VirtualizedCodeViewer: React.FC<VirtualizedCodeViewerProps> = ({
         fixedWidth: true,
         defaultHeight: fontSize * 1.5, // 预估行高
       }),
-    [fontSize],
+    [fontSize]
   );
 
   const listRef = useRef<List>(null);
@@ -69,7 +69,7 @@ const VirtualizedCodeViewer: React.FC<VirtualizedCodeViewerProps> = ({
         }, 0);
       }
     },
-    [clearCacheAndRecompute],
+    [clearCacheAndRecompute]
   );
 
   const rowRenderer = useCallback(
@@ -144,7 +144,7 @@ const VirtualizedCodeViewer: React.FC<VirtualizedCodeViewerProps> = ({
               </div>
             </div>
           )}
-        </CellMeasurer >
+        </CellMeasurer>
       );
     },
     [
@@ -157,7 +157,7 @@ const VirtualizedCodeViewer: React.FC<VirtualizedCodeViewerProps> = ({
       wrapLines,
       wrapLongLines,
       maxWidth,
-    ],
+    ]
   );
 
   if (!code || codeLines.length === 0) {

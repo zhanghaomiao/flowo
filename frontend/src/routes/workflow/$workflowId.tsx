@@ -10,7 +10,6 @@ import { useEffect, useState } from "react";
 
 import type { Status } from "../../api/api";
 import FileContent from "../../components/code/FileContent";
-import SnakefileViewerWithFilter from "../../components/code/SnakefileViewerWithFilter";
 import JobTable from "../../components/job/JobTable";
 import { ResultViewer } from "../../components/result/ResultViewer";
 import WorkflowGraph from "../../components/workflow/WorkflowGraph";
