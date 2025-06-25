@@ -207,76 +207,50 @@ const WorkflowGraphInner: React.FC<WorkflowGraphProps> = ({
     }, 100);
   }, [reactFlowInstance]);
 
-  const { nodes, edges } = useMemo(() => {
+  // Memoize the rule status to prevent unnecessary re-renders when the object reference changes but content is same
+  const memoizedRuleStatus = useMemo(
+    () => ruleStatus,
+    [ruleStatus ? JSON.stringify(ruleStatus) : null],
+  );
+
+  // Separate layout structure from status-dependent styling
+  const { baseNodes, edges } = useMemo(() => {
     if (!graphData) {
-      return { nodes: [], edges: [] };
+      return { baseNodes: [], edges: [] };
     }
 
     const parsedData: GraphData =
       typeof graphData === "string" ? JSON.parse(graphData) : graphData;
 
-    // Create nodes with proper handle positions based on layout direction
-    const flowNodes: Node[] = parsedData.nodes.map((nodeData, index) => {
-      const isSelected = selectedRule === nodeData.rule;
-      const isHighlighted = highlightedRule === nodeData.rule;
-
-      // Determine node styling based on selection and highlighting states
-      let backgroundColor = STATUS_COLORS.unscheduled;
-      const data = {
-        label: nodeData.rule,
+    // Create base nodes without status-dependent styling
+    const flowNodes: Node[] = parsedData.nodes.map((nodeData, index) => ({
+      id: index.toString(),
+      type: "default",
+      position: { x: 0, y: 0 }, // Will be set by layout algorithm
+      data: {
+        label: nodeData.rule, // Base label without status
         value: nodeData.rule,
-      };
-      if (ruleStatus && nodeData.rule in ruleStatus) {
-        const status = ruleStatus[nodeData.rule].status;
-        backgroundColor = STATUS_COLORS[status];
-        data.label =
-          nodeData.rule +
-          ` (${ruleStatus[nodeData.rule].success}/${ruleStatus[nodeData.rule].total})`;
-      }
-      let textColor = "#000000";
-      let borderColor = "#1890ff";
-      let boxShadow = "none";
-      const isUnscheduled = !ruleStatus || !(nodeData.rule in ruleStatus);
+        rule: nodeData.rule,
+      },
+      sourcePosition:
+        layoutDirection === "LR" ? Position.Right : Position.Bottom,
+      targetPosition: layoutDirection === "LR" ? Position.Left : Position.Top,
+      style: {
+        borderRadius: "8px",
+        padding: "10px",
+        fontSize: "16px",
+        fontWeight: "500",
+        width: NODE_WIDTH,
+        height: NODE_HEIGHT,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        textAlign: "center",
+        transition: "all 0.3s ease",
+      },
+    }));
 
-      if (isSelected) {
-        backgroundColor = "#1890ff";
-        textColor = "#ffffff";
-      } else if (isHighlighted) {
-        backgroundColor = "#fff7e6";
-        borderColor = "#faad14";
-        boxShadow = "0 0 10px rgba(250, 173, 20, 0.5)";
-      }
-
-      return {
-        id: index.toString(),
-        type: "default",
-        position: { x: 0, y: 0 }, // Will be set by layout algorithm
-        data: data,
-        sourcePosition:
-          layoutDirection === "LR" ? Position.Right : Position.Bottom,
-        targetPosition: layoutDirection === "LR" ? Position.Left : Position.Top,
-        style: {
-          background: backgroundColor,
-          color: textColor,
-          borderColor: borderColor,
-          borderRadius: "8px",
-          padding: "10px",
-          fontSize: "16px",
-          fontWeight: "500",
-          cursor: isUnscheduled ? "default" : "pointer",
-          width: NODE_WIDTH,
-          height: NODE_HEIGHT,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          textAlign: "center",
-          boxShadow: boxShadow,
-          transition: "all 0.3s ease",
-        },
-      };
-    });
-
-    // Create edges with appropriate connection points based on layout direction
+    // Create edges
     const flowEdges: Edge[] = parsedData.links.map((link, index) => ({
       id: `edge-${index}`,
       source: link.source.toString(),
@@ -296,24 +270,109 @@ const WorkflowGraphInner: React.FC<WorkflowGraphProps> = ({
     }));
 
     // Apply layout using utility function
-    return getLayoutedElements(flowNodes, flowEdges, {
-      direction: layoutDirection,
-      nodeWidth: NODE_WIDTH,
-      nodeHeight: NODE_HEIGHT,
-    });
-  }, [graphData, selectedRule, highlightedRule, layoutDirection, ruleStatus]);
+    return {
+      baseNodes: getLayoutedElements(flowNodes, flowEdges, {
+        direction: layoutDirection,
+        nodeWidth: NODE_WIDTH,
+        nodeHeight: NODE_HEIGHT,
+      }).nodes,
+      edges: getLayoutedElements(flowNodes, flowEdges, {
+        direction: layoutDirection,
+        nodeWidth: NODE_WIDTH,
+        nodeHeight: NODE_HEIGHT,
+      }).edges,
+    };
+  }, [graphData, layoutDirection]);
 
-  const [flowNodes, setNodes, onNodesChange] = useNodesState(nodes);
+  const [flowNodes, setNodes, onNodesChange] = useNodesState(baseNodes);
   const [flowEdges, setEdges, onEdgesChange] = useEdgesState(edges);
 
-  // Update nodes when dependencies change
+  // Initialize base nodes when layout changes
   useEffect(() => {
-    setNodes(nodes);
-  }, [nodes, setNodes]);
+    setNodes(baseNodes);
+  }, [baseNodes, setNodes]);
 
   useEffect(() => {
     setEdges(edges);
   }, [edges, setEdges]);
+
+  // Efficiently update only nodes that have changed status/selection/highlighting
+  useEffect(() => {
+    if (flowNodes.length === 0) return;
+
+    const updatedNodes = flowNodes.map((node) => {
+      const ruleName = node.data.rule as string;
+      const isSelected = selectedRule === ruleName;
+      const isHighlighted = highlightedRule === ruleName;
+
+      // Calculate new styling
+      let backgroundColor = STATUS_COLORS.unscheduled;
+      let label = ruleName;
+
+      if (memoizedRuleStatus && ruleName in memoizedRuleStatus) {
+        const status = memoizedRuleStatus[ruleName].status;
+        backgroundColor = STATUS_COLORS[status];
+        label = `${ruleName} (${memoizedRuleStatus[ruleName].success}/${memoizedRuleStatus[ruleName].total})`;
+      }
+
+      let textColor = "#000000";
+      let borderColor = "#1890ff";
+      let boxShadow = "none";
+      const isUnscheduled =
+        !memoizedRuleStatus || !(ruleName in memoizedRuleStatus);
+
+      if (isSelected) {
+        backgroundColor = "#1890ff";
+        textColor = "#ffffff";
+      } else if (isHighlighted) {
+        backgroundColor = "#fff7e6";
+        borderColor = "#faad14";
+        boxShadow = "0 0 10px rgba(250, 173, 20, 0.5)";
+      }
+
+      // Check if this node actually needs updating
+      const currentStyle = node.style || {};
+      const currentLabel = node.data.label;
+
+      const needsUpdate =
+        currentLabel !== label ||
+        currentStyle.background !== backgroundColor ||
+        currentStyle.color !== textColor ||
+        currentStyle.borderColor !== borderColor ||
+        currentStyle.cursor !== (isUnscheduled ? "default" : "pointer") ||
+        currentStyle.boxShadow !== boxShadow;
+
+      if (!needsUpdate) {
+        return node; // Return existing node if no changes needed
+      }
+
+      // Return updated node only if changes are needed
+      return {
+        ...node,
+        data: {
+          ...node.data,
+          label: label,
+        },
+        style: {
+          ...node.style,
+          background: backgroundColor,
+          color: textColor,
+          borderColor: borderColor,
+          cursor: isUnscheduled ? "default" : "pointer",
+          boxShadow: boxShadow,
+        },
+      };
+    });
+
+    // Only update if at least one node has changed
+    const hasAnyChanges = updatedNodes.some(
+      (updatedNode, index) => updatedNode !== flowNodes[index],
+    );
+
+    if (hasAnyChanges) {
+      setNodes(updatedNodes);
+    }
+  }, [memoizedRuleStatus, selectedRule, highlightedRule, flowNodes, setNodes]);
 
   // Fit view when nodes change (initial load or layout change)
   useEffect(() => {

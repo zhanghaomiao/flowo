@@ -1,6 +1,6 @@
 export { DashboardLayout } from "./DashboardLayout";
-export { StatusChart } from "./StatusChart";
 export { PerformanceChart } from "./PerformanceChart";
-export { UserActivityTable } from "./UserActivityTable";
 export { RecentWorkflows } from "./RecentWorkflows";
+export { StatusChart } from "./StatusChart";
 export { SystemHealth } from "./SystemHealth";
+export { UserActivityTable } from "./UserActivityTable";

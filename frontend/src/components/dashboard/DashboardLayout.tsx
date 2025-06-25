@@ -1,48 +1,40 @@
 import {
-  CheckCircleOutlined,
-  ClockCircleOutlined,
-  ExclamationCircleOutlined,
+  CloudServerOutlined,
+  DatabaseOutlined,
   PlayCircleOutlined,
-  ReloadOutlined,
   SyncOutlined,
   TeamOutlined,
-  TrophyOutlined,
+  WifiOutlined,
 } from "@ant-design/icons";
-import {
-  Alert,
-  Button,
-  Card,
-  Col,
-  Row,
-  Space,
-  Statistic,
-  Typography,
-} from "antd";
+import { Alert, Button, Card, Col, Row, Statistic, Typography } from "antd";
 import React from "react";
 
-import { useDashboardMetrics } from "../../hooks/useDashboardMetrics";
-import LiveUpdatesIndicator from "../LiveUpdatesIndicator";
-import { PerformanceChart } from "./PerformanceChart";
-import { RecentWorkflows } from "./RecentWorkflows";
 import { StatusChart } from "./StatusChart";
-import { SystemHealth } from "./SystemHealth";
-import { UserActivityTable } from "./UserActivityTable";
+import { useDashboardMetrics } from "./useDashboardMetrics";
+// import LiveUpdatesIndicator from "../LiveUpdatesIndicator";
+// import { PerformanceChart } from "./PerformanceChart";
+// import { RecentWorkflows } from "./RecentWorkflows";
+// import { SystemHealth } from "./SystemHealth";
+// import { UserActivityTable } from "./UserActivityTable";
 
 const { Title } = Typography;
 
 export const DashboardLayout: React.FC = () => {
   const {
-    metrics,
+    runningWorkflows,
+    runningJobs,
+    runningUsers,
+    cpuUsage,
+    memoryUsage,
+    sseStatus,
+    workflowChartData,
+    jobChartData,
     isLoading,
     error,
-    refetch,
-    isSSEConnected,
-    sseRetryCount,
-    reconnectSSE,
   } = useDashboardMetrics();
 
   const handleRefresh = () => {
-    refetch();
+    window.location.reload();
   };
 
   if (error) {
@@ -83,94 +75,119 @@ export const DashboardLayout: React.FC = () => {
             Workflow Dashboard
           </Title>
         </div>
-        <Space>
-          <LiveUpdatesIndicator
-            isConnected={isSSEConnected}
-            retryCount={sseRetryCount}
-            onReconnect={reconnectSSE}
-            showReconnectButton={true}
-          />
-          <Button
-            icon={<ReloadOutlined />}
-            onClick={handleRefresh}
-            loading={isLoading}
-          >
-            Refresh
-          </Button>
-        </Space>
       </div>
 
       <Row gutter={[16, 16]} style={{ marginBottom: "12px" }}>
+        {/* Running Workflows */}
         <Col span={4}>
           <Card>
             <Statistic
-              title="Total Workflows"
-              value={metrics?.totalWorkflows || 0}
-              prefix={<CheckCircleOutlined />}
-              valueStyle={{ color: "#1890ff" }}
-              loading={isLoading}
-            />
-          </Card>
-        </Col>
-        <Col span={4}>
-          <Card>
-            <Statistic
-              title="Active Workflows"
-              value={metrics?.activeWorkflows || 0}
+              title="Running Workflows"
+              value={runningWorkflows.running}
               prefix={
-                metrics && metrics.activeWorkflows > 0 ? (
+                runningWorkflows.running > 0 ? (
                   <SyncOutlined spin />
                 ) : (
                   <PlayCircleOutlined />
                 )
               }
-              valueStyle={{ color: "#faad14" }}
+              valueStyle={{ color: "#1890ff", textAlign: "center" }}
+              style={{ textAlign: "center" }}
               loading={isLoading}
             />
           </Card>
         </Col>
+
+        {/* Running Jobs */}
         <Col span={4}>
           <Card>
             <Statistic
-              title="Failed Workflows"
-              value={metrics?.failedWorkflows || 0}
-              prefix={<ExclamationCircleOutlined />}
-              valueStyle={{ color: "#ff4d4f" }}
+              title="Running Jobs"
+              value={runningJobs.running}
+              prefix={
+                runningJobs.running > 0 ? (
+                  <SyncOutlined spin />
+                ) : (
+                  <PlayCircleOutlined />
+                )
+              }
+              valueStyle={{ color: "#faad14", textAlign: "center" }}
+              style={{ textAlign: "center" }}
               loading={isLoading}
             />
           </Card>
         </Col>
-        <Col span={4}>
-          <Card>
-            <Statistic
-              title="Success Rate"
-              value={metrics?.successRate || 0}
-              suffix="%"
-              prefix={<TrophyOutlined />}
-              valueStyle={{ color: "#52c41a" }}
-              loading={isLoading}
-            />
-          </Card>
-        </Col>
-        <Col span={4}>
-          <Card>
-            <Statistic
-              title="Avg Duration"
-              value={metrics?.avgExecutionTime || 0}
-              suffix="min"
-              prefix={<ClockCircleOutlined />}
-              valueStyle={{ color: "#722ed1" }}
-              loading={isLoading}
-            />
-          </Card>
-        </Col>
+
+        {/* Running Users */}
         <Col span={4}>
           <Card>
             <Statistic
               title="Active Users"
-              value={metrics?.activeUsers || 0}
+              value={`${runningUsers.running}/${runningUsers.total}`}
               prefix={<TeamOutlined />}
-              valueStyle={{ color: "#13c2c2" }}
+              valueStyle={{ color: "#52c41a", textAlign: "center" }}
+              style={{ textAlign: "center" }}
+              loading={isLoading}
+            />
+          </Card>
+        </Col>
+
+        {/* CPU Usage */}
+        <Col span={4}>
+          <Card>
+            <Statistic
+              title="CPU Usage"
+              value={`${Math.round(cpuUsage.used)}/${Math.round(cpuUsage.total)}`}
+              suffix="cores"
+              prefix={<CloudServerOutlined />}
+              valueStyle={{ color: "#722ed1", textAlign: "center" }}
+              style={{ textAlign: "center" }}
+              loading={isLoading}
+            />
+          </Card>
+        </Col>
+
+        {/* Memory Usage */}
+        <Col span={4}>
+          <Card>
+            <Statistic
+              title="Memory Usage"
+              value={`${Math.round(memoryUsage.used)}/${Math.round(memoryUsage.total)}`}
+              suffix="GB"
+              prefix={<DatabaseOutlined />}
+              valueStyle={{ color: "#13c2c2", textAlign: "center" }}
+              style={{ textAlign: "center" }}
+              loading={isLoading}
+            />
+          </Card>
+        </Col>
+
+        {/* SSE Status */}
+        <Col span={4}>
+          <Card>
+            <Statistic
+              title="SSE Status"
+              value={sseStatus.status}
+              prefix={
+                <WifiOutlined
+                  style={{
+                    color: sseStatus.isConnected
+                      ? "#52c41a"
+                      : sseStatus.status === "Error"
+                        ? "#ff4d4f"
+                        : "#faad14",
+                  }}
+                />
+              }
+              valueStyle={{
+                color: sseStatus.isConnected
+                  ? "#52c41a"
+                  : sseStatus.status === "Error"
+                    ? "#ff4d4f"
+                    : "#faad14",
+                textAlign: "center",
+              }}
+              style={{ textAlign: "center" }}
               loading={isLoading}
             />
           </Card>
@@ -180,18 +197,23 @@ export const DashboardLayout: React.FC = () => {
       {/* Charts Section */}
       <Row gutter={[16, 16]} style={{ marginBottom: "24px" }}>
         <Col xs={24} lg={12}>
-          <StatusChart data={metrics?.statusDistribution} loading={isLoading} />
+          <StatusChart
+            title="Workflow Status Distribution"
+            data={workflowChartData}
+            loading={isLoading}
+          />
         </Col>
         <Col xs={24} lg={12}>
-          <PerformanceChart
-            data={metrics?.performanceTrends}
+          <StatusChart
+            title="Job Status Distribution"
+            data={jobChartData}
             loading={isLoading}
           />
         </Col>
       </Row>
 
       {/* Details Section */}
-      <Row gutter={[16, 16]}>
+      {/* <Row gutter={[16, 16]}>
         <Col xs={24} lg={16}>
           <RecentWorkflows />
         </Col>
@@ -204,7 +226,7 @@ export const DashboardLayout: React.FC = () => {
             <SystemHealth data={metrics?.systemHealth} loading={isLoading} />
           </Space>
         </Col>
-      </Row>
+      </Row> */}
     </div>
   );
 };

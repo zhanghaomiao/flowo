@@ -26,6 +26,20 @@ import { BASE_PATH, COLLECTION_FORMATS, BaseAPI, RequiredError, operationServerM
 /**
  * 
  * @export
+ * @interface GetActivityApiV1SummaryActivityGet200ResponseInnerInner
+ */
+export interface GetActivityApiV1SummaryActivityGet200ResponseInnerInner {
+}
+/**
+ * 
+ * @export
+ * @interface GetRuleErrorApiV1SummaryRuleErrorGet200ResponseInnerInner
+ */
+export interface GetRuleErrorApiV1SummaryRuleErrorGet200ResponseInnerInner {
+}
+/**
+ * 
+ * @export
  * @interface HTTPValidationError
  */
 export interface HTTPValidationError {
@@ -53,13 +67,13 @@ export interface JobDetailResponse {
      * @type {string}
      * @memberof JobDetailResponse
      */
-    'workflow_id'?: string;
+    'workflow_id'?: string | null;
     /**
      * 
      * @type {string}
      * @memberof JobDetailResponse
      */
-    'status'?: string;
+    'status'?: string | null;
     /**
      * 
      * @type {string}
@@ -113,7 +127,7 @@ export interface JobDetailResponse {
      * @type {Array<string>}
      * @memberof JobDetailResponse
      */
-    'input'?: Array<string>;
+    'input'?: Array<string> | null;
     /**
      * 
      * @type {Array<string>}
@@ -125,7 +139,7 @@ export interface JobDetailResponse {
      * @type {Array<string>}
      * @memberof JobDetailResponse
      */
-    'log'?: Array<string>;
+    'log'?: Array<string> | null;
 }
 /**
  * Schema for job list response
@@ -169,31 +183,31 @@ export interface JobResponse {
      * @type {number}
      * @memberof JobResponse
      */
-    'id'?: number;
+    'id'?: number | null;
     /**
      * 
      * @type {number}
      * @memberof JobResponse
      */
-    'rule_id'?: number;
+    'rule_id'?: number | null;
     /**
      * 
      * @type {string}
      * @memberof JobResponse
      */
-    'rule_name'?: string;
+    'rule_name'?: string | null;
     /**
      * 
      * @type {string}
      * @memberof JobResponse
      */
-    'workflow_id'?: string;
+    'workflow_id'?: string | null;
     /**
      * 
      * @type {string}
      * @memberof JobResponse
      */
-    'status'?: string;
+    'status'?: string | null;
     /**
      * 
      * @type {string}
@@ -293,9 +307,9 @@ export interface RuleStatusResponse {
  */
 
 export const Status = {
+    Error: 'ERROR',
     Running: 'RUNNING',
     Success: 'SUCCESS',
-    Error: 'ERROR',
     Waiting: 'WAITING',
     Unknown: 'UNKNOWN'
 } as const;
@@ -303,6 +317,37 @@ export const Status = {
 export type Status = typeof Status[keyof typeof Status];
 
 
+/**
+ * 
+ * @export
+ * @interface StatusSummary
+ */
+export interface StatusSummary {
+    /**
+     * 
+     * @type {number}
+     * @memberof StatusSummary
+     */
+    'total': number;
+    /**
+     * 
+     * @type {number}
+     * @memberof StatusSummary
+     */
+    'success': number;
+    /**
+     * 
+     * @type {number}
+     * @memberof StatusSummary
+     */
+    'running': number;
+    /**
+     * 
+     * @type {number}
+     * @memberof StatusSummary
+     */
+    'error': number;
+}
 /**
  * 
  * @export
@@ -343,15 +388,34 @@ export interface TreeDataNode {
 /**
  * 
  * @export
+ * @interface UserSummary
+ */
+export interface UserSummary {
+    /**
+     * 
+     * @type {number}
+     * @memberof UserSummary
+     */
+    'total': number;
+    /**
+     * 
+     * @type {number}
+     * @memberof UserSummary
+     */
+    'running': number;
+}
+/**
+ * 
+ * @export
  * @interface ValidationError
  */
 export interface ValidationError {
     /**
      * 
-     * @type {Array<ValidationErrorLocInner>}
+     * @type {Array<GetActivityApiV1SummaryActivityGet200ResponseInnerInner>}
      * @memberof ValidationError
      */
-    'loc': Array<ValidationErrorLocInner>;
+    'loc': Array<GetActivityApiV1SummaryActivityGet200ResponseInnerInner>;
     /**
      * 
      * @type {string}
@@ -364,13 +428,6 @@ export interface ValidationError {
      * @memberof ValidationError
      */
     'type': string;
-}
-/**
- * 
- * @export
- * @interface ValidationErrorLocInner
- */
-export interface ValidationErrorLocInner {
 }
 /**
  * 
@@ -1516,6 +1573,538 @@ export class SseApi extends BaseAPI {
 
 
 /**
+ * SummaryApi - axios parameter creator
+ * @export
+ */
+export const SummaryApiAxiosParamCreator = function (configuration?: Configuration) {
+    return {
+        /**
+         * 
+         * @summary Get Activity
+         * @param {GetActivityApiV1SummaryActivityGetItemEnum} item 
+         * @param {string | null} [startAt] 
+         * @param {string | null} [endAt] 
+         * @param {number} [limit] 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getActivityApiV1SummaryActivityGet: async (item: GetActivityApiV1SummaryActivityGetItemEnum, startAt?: string | null, endAt?: string | null, limit?: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'item' is not null or undefined
+            assertParamExists('getActivityApiV1SummaryActivityGet', 'item', item)
+            const localVarPath = `/api/v1/summary/activity`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            if (item !== undefined) {
+                localVarQueryParameter['item'] = item;
+            }
+
+            if (startAt !== undefined) {
+                localVarQueryParameter['start_at'] = (startAt as any instanceof Date) ?
+                    (startAt as any).toISOString() :
+                    startAt;
+            }
+
+            if (endAt !== undefined) {
+                localVarQueryParameter['end_at'] = (endAt as any instanceof Date) ?
+                    (endAt as any).toISOString() :
+                    endAt;
+            }
+
+            if (limit !== undefined) {
+                localVarQueryParameter['limit'] = limit;
+            }
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Get Rule Duration
+         * @param {string | null} [startAt] 
+         * @param {string | null} [endAt] 
+         * @param {number} [limit] 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getRuleDurationApiV1SummaryRuleDurationGet: async (startAt?: string | null, endAt?: string | null, limit?: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            const localVarPath = `/api/v1/summary/rule_duration`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            if (startAt !== undefined) {
+                localVarQueryParameter['start_at'] = (startAt as any instanceof Date) ?
+                    (startAt as any).toISOString() :
+                    startAt;
+            }
+
+            if (endAt !== undefined) {
+                localVarQueryParameter['end_at'] = (endAt as any instanceof Date) ?
+                    (endAt as any).toISOString() :
+                    endAt;
+            }
+
+            if (limit !== undefined) {
+                localVarQueryParameter['limit'] = limit;
+            }
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Get Rule Error
+         * @param {string | null} [startAt] 
+         * @param {string | null} [endAt] 
+         * @param {number} [limit] 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getRuleErrorApiV1SummaryRuleErrorGet: async (startAt?: string | null, endAt?: string | null, limit?: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            const localVarPath = `/api/v1/summary/rule_error`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            if (startAt !== undefined) {
+                localVarQueryParameter['start_at'] = (startAt as any instanceof Date) ?
+                    (startAt as any).toISOString() :
+                    startAt;
+            }
+
+            if (endAt !== undefined) {
+                localVarQueryParameter['end_at'] = (endAt as any instanceof Date) ?
+                    (endAt as any).toISOString() :
+                    endAt;
+            }
+
+            if (limit !== undefined) {
+                localVarQueryParameter['limit'] = limit;
+            }
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Get Status
+         * @param {GetStatusApiV1SummaryStatusGetItemEnum} item 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getStatusApiV1SummaryStatusGet: async (item: GetStatusApiV1SummaryStatusGetItemEnum, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'item' is not null or undefined
+            assertParamExists('getStatusApiV1SummaryStatusGet', 'item', item)
+            const localVarPath = `/api/v1/summary/status`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            if (item !== undefined) {
+                localVarQueryParameter['item'] = item;
+            }
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Get System Resources
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getSystemResourcesApiV1SummaryResourcesGet: async (options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            const localVarPath = `/api/v1/summary/resources`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Get User Summary
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getUserSummaryApiV1SummaryUserGet: async (options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            const localVarPath = `/api/v1/summary/user`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+    }
+};
+
+/**
+ * SummaryApi - functional programming interface
+ * @export
+ */
+export const SummaryApiFp = function(configuration?: Configuration) {
+    const localVarAxiosParamCreator = SummaryApiAxiosParamCreator(configuration)
+    return {
+        /**
+         * 
+         * @summary Get Activity
+         * @param {GetActivityApiV1SummaryActivityGetItemEnum} item 
+         * @param {string | null} [startAt] 
+         * @param {string | null} [endAt] 
+         * @param {number} [limit] 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async getActivityApiV1SummaryActivityGet(item: GetActivityApiV1SummaryActivityGetItemEnum, startAt?: string | null, endAt?: string | null, limit?: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Array<Array<GetActivityApiV1SummaryActivityGet200ResponseInnerInner>>>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.getActivityApiV1SummaryActivityGet(item, startAt, endAt, limit, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['SummaryApi.getActivityApiV1SummaryActivityGet']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
+         * @summary Get Rule Duration
+         * @param {string | null} [startAt] 
+         * @param {string | null} [endAt] 
+         * @param {number} [limit] 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async getRuleDurationApiV1SummaryRuleDurationGet(startAt?: string | null, endAt?: string | null, limit?: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<{ [key: string]: Array<number>; }>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.getRuleDurationApiV1SummaryRuleDurationGet(startAt, endAt, limit, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['SummaryApi.getRuleDurationApiV1SummaryRuleDurationGet']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
+         * @summary Get Rule Error
+         * @param {string | null} [startAt] 
+         * @param {string | null} [endAt] 
+         * @param {number} [limit] 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async getRuleErrorApiV1SummaryRuleErrorGet(startAt?: string | null, endAt?: string | null, limit?: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Array<Array<GetRuleErrorApiV1SummaryRuleErrorGet200ResponseInnerInner>>>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.getRuleErrorApiV1SummaryRuleErrorGet(startAt, endAt, limit, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['SummaryApi.getRuleErrorApiV1SummaryRuleErrorGet']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
+         * @summary Get Status
+         * @param {GetStatusApiV1SummaryStatusGetItemEnum} item 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async getStatusApiV1SummaryStatusGet(item: GetStatusApiV1SummaryStatusGetItemEnum, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<StatusSummary>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.getStatusApiV1SummaryStatusGet(item, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['SummaryApi.getStatusApiV1SummaryStatusGet']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
+         * @summary Get System Resources
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async getSystemResourcesApiV1SummaryResourcesGet(options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<any>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.getSystemResourcesApiV1SummaryResourcesGet(options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['SummaryApi.getSystemResourcesApiV1SummaryResourcesGet']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
+         * @summary Get User Summary
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async getUserSummaryApiV1SummaryUserGet(options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<UserSummary>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.getUserSummaryApiV1SummaryUserGet(options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['SummaryApi.getUserSummaryApiV1SummaryUserGet']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+    }
+};
+
+/**
+ * SummaryApi - factory interface
+ * @export
+ */
+export const SummaryApiFactory = function (configuration?: Configuration, basePath?: string, axios?: AxiosInstance) {
+    const localVarFp = SummaryApiFp(configuration)
+    return {
+        /**
+         * 
+         * @summary Get Activity
+         * @param {GetActivityApiV1SummaryActivityGetItemEnum} item 
+         * @param {string | null} [startAt] 
+         * @param {string | null} [endAt] 
+         * @param {number} [limit] 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getActivityApiV1SummaryActivityGet(item: GetActivityApiV1SummaryActivityGetItemEnum, startAt?: string | null, endAt?: string | null, limit?: number, options?: RawAxiosRequestConfig): AxiosPromise<Array<Array<GetActivityApiV1SummaryActivityGet200ResponseInnerInner>>> {
+            return localVarFp.getActivityApiV1SummaryActivityGet(item, startAt, endAt, limit, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @summary Get Rule Duration
+         * @param {string | null} [startAt] 
+         * @param {string | null} [endAt] 
+         * @param {number} [limit] 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getRuleDurationApiV1SummaryRuleDurationGet(startAt?: string | null, endAt?: string | null, limit?: number, options?: RawAxiosRequestConfig): AxiosPromise<{ [key: string]: Array<number>; }> {
+            return localVarFp.getRuleDurationApiV1SummaryRuleDurationGet(startAt, endAt, limit, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @summary Get Rule Error
+         * @param {string | null} [startAt] 
+         * @param {string | null} [endAt] 
+         * @param {number} [limit] 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getRuleErrorApiV1SummaryRuleErrorGet(startAt?: string | null, endAt?: string | null, limit?: number, options?: RawAxiosRequestConfig): AxiosPromise<Array<Array<GetRuleErrorApiV1SummaryRuleErrorGet200ResponseInnerInner>>> {
+            return localVarFp.getRuleErrorApiV1SummaryRuleErrorGet(startAt, endAt, limit, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @summary Get Status
+         * @param {GetStatusApiV1SummaryStatusGetItemEnum} item 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getStatusApiV1SummaryStatusGet(item: GetStatusApiV1SummaryStatusGetItemEnum, options?: RawAxiosRequestConfig): AxiosPromise<StatusSummary> {
+            return localVarFp.getStatusApiV1SummaryStatusGet(item, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @summary Get System Resources
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getSystemResourcesApiV1SummaryResourcesGet(options?: RawAxiosRequestConfig): AxiosPromise<any> {
+            return localVarFp.getSystemResourcesApiV1SummaryResourcesGet(options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @summary Get User Summary
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getUserSummaryApiV1SummaryUserGet(options?: RawAxiosRequestConfig): AxiosPromise<UserSummary> {
+            return localVarFp.getUserSummaryApiV1SummaryUserGet(options).then((request) => request(axios, basePath));
+        },
+    };
+};
+
+/**
+ * SummaryApi - object-oriented interface
+ * @export
+ * @class SummaryApi
+ * @extends {BaseAPI}
+ */
+export class SummaryApi extends BaseAPI {
+    /**
+     * 
+     * @summary Get Activity
+     * @param {GetActivityApiV1SummaryActivityGetItemEnum} item 
+     * @param {string | null} [startAt] 
+     * @param {string | null} [endAt] 
+     * @param {number} [limit] 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof SummaryApi
+     */
+    public getActivityApiV1SummaryActivityGet(item: GetActivityApiV1SummaryActivityGetItemEnum, startAt?: string | null, endAt?: string | null, limit?: number, options?: RawAxiosRequestConfig) {
+        return SummaryApiFp(this.configuration).getActivityApiV1SummaryActivityGet(item, startAt, endAt, limit, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @summary Get Rule Duration
+     * @param {string | null} [startAt] 
+     * @param {string | null} [endAt] 
+     * @param {number} [limit] 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof SummaryApi
+     */
+    public getRuleDurationApiV1SummaryRuleDurationGet(startAt?: string | null, endAt?: string | null, limit?: number, options?: RawAxiosRequestConfig) {
+        return SummaryApiFp(this.configuration).getRuleDurationApiV1SummaryRuleDurationGet(startAt, endAt, limit, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @summary Get Rule Error
+     * @param {string | null} [startAt] 
+     * @param {string | null} [endAt] 
+     * @param {number} [limit] 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof SummaryApi
+     */
+    public getRuleErrorApiV1SummaryRuleErrorGet(startAt?: string | null, endAt?: string | null, limit?: number, options?: RawAxiosRequestConfig) {
+        return SummaryApiFp(this.configuration).getRuleErrorApiV1SummaryRuleErrorGet(startAt, endAt, limit, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @summary Get Status
+     * @param {GetStatusApiV1SummaryStatusGetItemEnum} item 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof SummaryApi
+     */
+    public getStatusApiV1SummaryStatusGet(item: GetStatusApiV1SummaryStatusGetItemEnum, options?: RawAxiosRequestConfig) {
+        return SummaryApiFp(this.configuration).getStatusApiV1SummaryStatusGet(item, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @summary Get System Resources
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof SummaryApi
+     */
+    public getSystemResourcesApiV1SummaryResourcesGet(options?: RawAxiosRequestConfig) {
+        return SummaryApiFp(this.configuration).getSystemResourcesApiV1SummaryResourcesGet(options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @summary Get User Summary
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof SummaryApi
+     */
+    public getUserSummaryApiV1SummaryUserGet(options?: RawAxiosRequestConfig) {
+        return SummaryApiFp(this.configuration).getUserSummaryApiV1SummaryUserGet(options).then((request) => request(this.axios, this.basePath));
+    }
+}
+
+/**
+ * @export
+ */
+export const GetActivityApiV1SummaryActivityGetItemEnum = {
+    Rule: 'rule',
+    User: 'user',
+    Tag: 'tag'
+} as const;
+export type GetActivityApiV1SummaryActivityGetItemEnum = typeof GetActivityApiV1SummaryActivityGetItemEnum[keyof typeof GetActivityApiV1SummaryActivityGetItemEnum];
+/**
+ * @export
+ */
+export const GetStatusApiV1SummaryStatusGetItemEnum = {
+    Job: 'job',
+    Workflow: 'workflow'
+} as const;
+export type GetStatusApiV1SummaryStatusGetItemEnum = typeof GetStatusApiV1SummaryStatusGetItemEnum[keyof typeof GetStatusApiV1SummaryStatusGetItemEnum];
+
+
+/**
  * UtilsApi - axios parameter creator
  * @export
  */
@@ -2106,7 +2695,7 @@ export const WorkflowApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async getAllUsersApiV1WorkflowsUsersGet(options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Array<string>>> {
+        async getAllUsersApiV1WorkflowsUsersGet(options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Array<string | null>>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.getAllUsersApiV1WorkflowsUsersGet(options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['WorkflowApi.getAllUsersApiV1WorkflowsUsersGet']?.[localVarOperationServerIndex]?.url;
@@ -2271,7 +2860,7 @@ export const WorkflowApiFactory = function (configuration?: Configuration, baseP
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getAllUsersApiV1WorkflowsUsersGet(options?: RawAxiosRequestConfig): AxiosPromise<Array<string>> {
+        getAllUsersApiV1WorkflowsUsersGet(options?: RawAxiosRequestConfig): AxiosPromise<Array<string | null>> {
             return localVarFp.getAllUsersApiV1WorkflowsUsersGet(options).then((request) => request(axios, basePath));
         },
         /**

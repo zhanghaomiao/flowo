@@ -1,6 +1,6 @@
 import { EyeOutlined, ReloadOutlined } from "@ant-design/icons";
 import { Link } from "@tanstack/react-router";
-import { Button, Card, Table, Tag, Space, Typography } from "antd";
+import { Button, Card, Space, Table, Tag, Typography } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import React from "react";
 

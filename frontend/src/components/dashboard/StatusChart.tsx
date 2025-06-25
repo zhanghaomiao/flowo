@@ -1,157 +1,134 @@
-import { Card, Empty, Spin } from "antd";
+import { Card } from "antd";
 import React from "react";
+import { Chart } from "react-google-charts";
 
 interface StatusData {
-  SUCCESS: number;
-  RUNNING: number;
-  ERROR: number;
-  WAITING: number;
+  success: number;
+  running: number;
+  error: number;
+  total: number;
 }
 
 interface StatusChartProps {
-  data?: StatusData;
+  title: string;
+  data: StatusData;
   loading?: boolean;
 }
 
-export const StatusChart: React.FC<StatusChartProps> = ({ data, loading }) => {
-  if (loading) {
-    return (
-      <Card title="Workflow Status Distribution" style={{ height: "400px" }}>
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            height: "300px",
-          }}
-        >
-          <Spin size="large" />
-        </div>
-      </Card>
-    );
-  }
-
-  if (!data) {
-    return (
-      <Card title="Workflow Status Distribution" style={{ height: "400px" }}>
-        <Empty description="No data available" />
-      </Card>
-    );
-  }
-
-  // Transform data for chart
+export const StatusChart: React.FC<StatusChartProps> = ({
+  title,
+  data,
+  loading = false,
+}) => {
+  // Prepare chart data
   const chartData = [
-    { status: "Success", count: data.SUCCESS, color: "#52c41a" },
-    { status: "Running", count: data.RUNNING, color: "#1890ff" },
-    { status: "Error", count: data.ERROR, color: "#ff4d4f" },
-    { status: "Waiting", count: data.WAITING, color: "#faad14" },
-  ].filter((item) => item.count > 0);
+    ["Status", "Count"],
+    ["Success", data.success],
+    ["Running", data.running],
+    ["Error", data.error],
+  ];
 
-  const total = Object.values(data).reduce((sum, count) => sum + count, 0);
+  const options = {
+    title: "",
+    pieHole: 0.5, // Donut chart with larger hole for total display
+    colors: ["#52c41a", "#1890ff", "#ff4d4f"], // Green, Blue, Red
+    legend: {
+      position: "bottom",
+      alignment: "center",
+      textStyle: {
+        fontSize: 12,
+      },
+    },
+    chartArea: {
+      left: 0,
+      top: 0,
+      width: "80%",
+      height: "80%",
+    },
+    backgroundColor: "transparent",
+    pieSliceTextStyle: {
+      color: "white",
+      fontSize: 11,
+    },
+    tooltip: {
+      textStyle: {
+        fontSize: 12,
+      },
+      showColorCode: true,
+    },
+    pieSliceText: "value",
+  };
 
   return (
-    <Card title="Workflow Status Distribution" style={{ height: "400px" }}>
-      <div style={{ height: "320px", display: "flex", alignItems: "center" }}>
-        {total === 0 ? (
-          <Empty description="No workflows found" style={{ margin: "auto" }} />
-        ) : (
-          <div style={{ width: "100%", height: "100%" }}>
-            {/* Simple pie chart using CSS */}
+    <Card title={title} loading={loading} style={{ height: "350px" }}>
+      <div
+        style={{
+          width: "100%",
+          height: "280px",
+          position: "relative",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          overflow: "hidden",
+        }}
+      >
+        {!loading && (
+          <>
+            <div
+              style={{ width: "100%", height: "100%", position: "relative" }}
+            >
+              <Chart
+                chartType="PieChart"
+                width="100%"
+                height="100%"
+                data={chartData}
+                options={options}
+              />
+            </div>
+            {/* Total count overlay in the center of donut */}
             <div
               style={{
+                position: "absolute",
+                top: "calc(50% - 10px)",
+                left: "50%",
+                // transform: "translate(-50%, -50%)",
+                textAlign: "center",
+                pointerEvents: "none",
+                zIndex: 10,
+                userSelect: "none",
                 display: "flex",
                 flexDirection: "column",
-                height: "100%",
+                alignItems: "center",
                 justifyContent: "center",
               }}
             >
               <div
                 style={{
-                  display: "flex",
-                  justifyContent: "center",
-                  marginBottom: "20px",
+                  fontSize: "28px",
+                  fontWeight: "bold",
+                  color: "#333",
+                  lineHeight: "1",
+                  textShadow: "0 1px 2px rgba(255,255,255,0.8)",
                 }}
               >
-                <div
-                  style={{
-                    width: "200px",
-                    height: "200px",
-                    borderRadius: "50%",
-                    background: `conic-gradient(
-                      ${chartData
-                        .map((item, index) => {
-                          const percentage = (item.count / total) * 100;
-                          const prevPercentages = chartData
-                            .slice(0, index)
-                            .reduce(
-                              (sum, prev) => sum + (prev.count / total) * 100,
-                              0,
-                            );
-                          return `${item.color} ${prevPercentages}% ${prevPercentages + percentage}%`;
-                        })
-                        .join(", ")}
-                    )`,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    position: "relative",
-                  }}
-                >
-                  <div
-                    style={{
-                      width: "120px",
-                      height: "120px",
-                      borderRadius: "50%",
-                      backgroundColor: "white",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      flexDirection: "column",
-                      boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-                    }}
-                  >
-                    <div style={{ fontSize: "24px", fontWeight: "bold" }}>
-                      {total}
-                    </div>
-                    <div style={{ fontSize: "12px", color: "#666" }}>Total</div>
-                  </div>
-                </div>
+                {data.total}
               </div>
-
-              {/* Legend */}
               <div
                 style={{
-                  display: "flex",
-                  justifyContent: "center",
-                  flexWrap: "wrap",
-                  gap: "16px",
+                  fontSize: "13px",
+                  color: "#666",
+                  fontWeight: "500",
+                  marginTop: "2px",
                 }}
               >
-                {chartData.map((item) => (
-                  <div
-                    key={item.status}
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "8px",
-                    }}
-                  >
-                    <div
-                      style={{
-                        width: "12px",
-                        height: "12px",
-                        borderRadius: "2px",
-                        backgroundColor: item.color,
-                      }}
-                    />
-                    <span style={{ fontSize: "14px" }}>
-                      {item.status}: {item.count} (
-                      {Math.round((item.count / total) * 100)}%)
-                    </span>
-                  </div>
-                ))}
+                Total
               </div>
             </div>
+          </>
+        )}
+        {loading && (
+          <div style={{ textAlign: "center", color: "#666" }}>
+            Loading chart...
           </div>
         )}
       </div>

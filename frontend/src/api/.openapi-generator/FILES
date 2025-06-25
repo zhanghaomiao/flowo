@@ -4,6 +4,8 @@ api.ts
 base.ts
 common.ts
 configuration.ts
+docs/GetActivityApiV1SummaryActivityGet200ResponseInnerInner.md
+docs/GetRuleErrorApiV1SummaryRuleErrorGet200ResponseInnerInner.md
 docs/HTTPValidationError.md
 docs/JobDetailResponse.md
 docs/JobListResponse.md
@@ -14,10 +16,12 @@ docs/OutputsApi.md
 docs/RuleStatusResponse.md
 docs/SseApi.md
 docs/Status.md
+docs/StatusSummary.md
+docs/SummaryApi.md
 docs/TreeDataNode.md
+docs/UserSummary.md
 docs/UtilsApi.md
 docs/ValidationError.md
-docs/ValidationErrorLocInner.md
 docs/WorkflowApi.md
 docs/WorkflowDetialResponse.md
 docs/WorkflowListResponse.md

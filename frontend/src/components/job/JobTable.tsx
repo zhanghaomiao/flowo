@@ -5,7 +5,7 @@ import {
 } from "@ant-design/icons";
 import { Alert, Button, Table, Tag, Tooltip } from "antd";
 import type { ColumnsType } from "antd/es/table";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 
 import type { Status } from "../../api/api";
 import type { JobResponse } from "../../api/client";
@@ -53,6 +53,12 @@ const JobTable: React.FC<JobTableProps> = ({
   });
 
   const offset = (currentPage - 1) * pageSize;
+
+  // Reset pagination when ruleName changes
+  useEffect(() => {
+    setCurrentPage(1);
+    setPageSize(20);
+  }, [ruleName]);
 
   const needsSSE = workflowStatus === "RUNNING";
 
