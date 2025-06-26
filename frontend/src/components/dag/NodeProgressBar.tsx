@@ -1,6 +1,6 @@
 import type { NodeProps } from "@xyflow/react";
 import { Handle, Position } from "@xyflow/react";
-import { Tooltip } from "antd";
+import { Space, Tooltip } from "antd";
 import React, { memo } from "react";
 
 // Multi-progress bar component for showing job status breakdown
@@ -59,19 +59,6 @@ const MultiProgressBar = ({
             />
           </Tooltip>
         )}
-      </div>
-      <div
-        style={{
-          paddingLeft: "4px",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          fontSize: "10px",
-          color: "#000000",
-          fontStyle: "italic",
-        }}
-      >
-        ({total})
       </div>
     </div>
   );
@@ -166,7 +153,7 @@ const ProgressNode: React.FC<NodeProps> = ({ data }) => {
               maxWidth: "130px",
             }}
           >
-            {rule}
+            {rule}  ({statusInfo?.total})
           </div>
         </Tooltip>
 

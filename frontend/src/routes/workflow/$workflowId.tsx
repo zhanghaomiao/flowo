@@ -10,14 +10,15 @@ import { useEffect, useState } from "react";
 
 import type { Status } from "../../api/api";
 import FileContent from "../../components/code/FileContent";
+import { WorkflowGraph } from "../../components/dag";
 import JobTable from "../../components/job/JobTable";
 import { ResultViewer } from "../../components/result/ResultViewer";
-import WorkflowGraph from "../../components/dag/WorkflowGraph.tsx";
 import WorkflowProgress from "../../components/workflow/WorkflowProgress";
 import WorkflowTimeline from "../../components/workflow/WorkflowTimeline";
 import { useWorkflow } from "../../hooks/useQueries";
 import { useWorkflowSnakefile } from "../../hooks/useQueries";
 import { SSEManagerProvider } from "../../hooks/useSSEManager.tsx";
+import { useWorkflowState } from "../../hooks/useWorkflowState";
 
 export const Route = createFileRoute("/workflow/$workflowId")({
   component: WorkflowDetail,
@@ -25,9 +26,17 @@ export const Route = createFileRoute("/workflow/$workflowId")({
 
 function WorkflowDetail() {
   const { workflowId } = Route.useParams();
-  const [selectedRule, setSelectedRule] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState("jobs");
-  const [highlightedRule, setHighlightedRule] = useState<string | null>(null);
+  
+  // Use simplified state management
+  const {
+    selectedRule,
+    highlightedRule,
+    activeTab,
+    setSelectedRule,
+    setActiveTab,
+    clearRuleFilter,
+    handleJobSelect,
+  } = useWorkflowState();
 
   const { data: workflow } = useWorkflow(workflowId);
   const [enableSnakefile, setEnableSnakefile] = useState(false);
@@ -41,28 +50,6 @@ function WorkflowDetail() {
 
   const handleNodeClick = (ruleName: string) => {
     setSelectedRule(selectedRule === ruleName ? null : ruleName);
-  };
-
-  const handleClearRuleFilter = () => {
-    setSelectedRule(null);
-  };
-
-  const handleJobSelect = (
-    jobInfo: {
-      jobId: string;
-      ruleName: string;
-      startTime: string;
-      endTime: string;
-      status: string;
-    } | null,
-  ) => {
-    if (jobInfo) {
-      // Highlight the rule in the graph when a job is selected in the timeline
-      setHighlightedRule(jobInfo.ruleName);
-    } else {
-      // Clear highlighting when no job is selected
-      setHighlightedRule(null);
-    }
   };
 
   const { data: snakefileContent } = useWorkflowSnakefile(
@@ -85,7 +72,7 @@ function WorkflowDetail() {
                   workflowId={workflowId}
                   onNodeClick={handleNodeClick}
                   selectedRule={selectedRule}
-                  onClearRule={handleClearRuleFilter}
+                  onClearRule={clearRuleFilter}
                   highlightedRule={highlightedRule}
                 />
               </div>

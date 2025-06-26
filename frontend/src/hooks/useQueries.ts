@@ -42,7 +42,7 @@ export const useWorkflows = (params?: {
         params?.tags ?? null,
         params?.name ?? null,
         params?.startedAt ?? null,
-        params?.endAt ?? null,
+        params?.endAt ?? null
       );
       return response.data;
     },
@@ -60,7 +60,7 @@ export const useDeleteWorkflow = () => {
     mutationFn: async (workflowId: string) => {
       const response =
         await workflowApi.deleteWorkflowApiV1WorkflowsWorkflowIdDelete(
-          workflowId,
+          workflowId
         );
       return response.data;
     },
@@ -80,7 +80,7 @@ export const useWorkflowsPaginated = (
   page: number = 1,
   pageSize: number = 20,
   orderByStarted: boolean = true,
-  descending: boolean = true,
+  descending: boolean = true
 ) => {
   const offset = (page - 1) * pageSize;
 
@@ -95,7 +95,7 @@ export const useWorkflowsPaginated = (
         pageSize,
         offset,
         orderByStarted,
-        descending,
+        descending
       );
       return response.data;
     },
@@ -111,7 +111,7 @@ export const useWorkflowTotalJobs = (workflowId: string) => {
       const response =
         await workflowApi.getProgressApiV1WorkflowsWorkflowIdProgressGet(
           workflowId,
-          true, // returnTotalJobsNumber
+          true // returnTotalJobsNumber
         );
       return response.data as { [key: string]: number };
     },
@@ -140,7 +140,7 @@ export const useWorkflowJobs = (
   descending: boolean = true,
   ruleName: string | null = null,
   status: Status | null = null,
-  enabled: boolean = true,
+  enabled: boolean = true
 ) => {
   return useQuery({
     queryKey: [
@@ -156,7 +156,7 @@ export const useWorkflowJobs = (
         orderByStarted,
         descending,
         ruleName,
-        status as Status,
+        status as Status
       );
       return response.data;
     },
@@ -169,14 +169,14 @@ export const useWorkflowJobs = (
 // Custom hook for fetching workflow rule graph
 export const useWorkflowRuleGraph = (
   workflowId: string,
-  enabled: boolean = true,
+  enabled: boolean = true
 ) => {
   return useQuery({
     queryKey: ["workflowRuleGraph", workflowId],
     queryFn: async () => {
       const response =
         await workflowApi.getRuleGraphApiV1WorkflowsWorkflowIdRuleGraphGet(
-          workflowId,
+          workflowId
         );
       return response.data;
     },
@@ -190,14 +190,14 @@ export const useWorkflowRuleGraph = (
 // Custom hook for fetching workflow Snakefile content
 export const useWorkflowSnakefile = (
   workflowId: string,
-  enabled: boolean = true,
+  enabled: boolean = true
 ) => {
   return useQuery({
     queryKey: ["workflowSnakefile", workflowId],
     queryFn: async () => {
       const response =
         await workflowApi.getSnakefileApiV1WorkflowsWorkflowIdSnakefileGet(
-          workflowId,
+          workflowId
         );
       return response.data;
     },
@@ -222,7 +222,7 @@ export const useWorkFlowUsers = () => {
 
 export const useWorkflowLogs = (
   workflowId: string,
-  enabled: boolean = true,
+  enabled: boolean = true
 ) => {
   return useQuery({
     queryKey: ["workflowLogs", workflowId],
@@ -249,11 +249,11 @@ export const useWorkflow = (workflowId: string) => {
         true, // orderByStarted
         true, // descending
         null, // user
-        null, // status
+        null // status
       );
       // Find the workflow with matching ID
       const workflow = response.data.workflows?.find(
-        (w) => w.id === workflowId,
+        (w) => w.id === workflowId
       );
       return workflow || null; // Return null instead of undefined if not found
     },
@@ -274,7 +274,7 @@ export const useWorkflowTimeline = (workflowId: string) => {
     queryFn: async () => {
       const response =
         await workflowApi.getTimelinesApiV1WorkflowsWorkflowIdTimelinesGet(
-          workflowId,
+          workflowId
         );
       return response.data;
     },
@@ -285,14 +285,14 @@ export const useWorkflowTimeline = (workflowId: string) => {
 
 export const useWorkflowConfig = (
   workflowId: string,
-  enabled: boolean = true,
+  enabled: boolean = true
 ) => {
   return useQuery({
     queryKey: ["workflowConfig", workflowId],
     queryFn: async () => {
       const response =
         await workflowApi.getConfigfilesApiV1WorkflowsWorkflowIdConfigfilesGet(
-          workflowId,
+          workflowId
         );
       return response.data;
     },
@@ -349,7 +349,7 @@ export const useOutPutsTree = (workflowId: string, depth: number = 2) => {
       const response =
         await outputsApi.getOutputsApiV1OutputsWorkflowIdOutputsGet(
           workflowId,
-          depth,
+          depth
         );
       return response.data;
     },
@@ -360,14 +360,14 @@ export const useOutPutsTree = (workflowId: string, depth: number = 2) => {
 
 export const useWorkflowDetail = (
   workflowId: string,
-  enabled: boolean = true,
+  enabled: boolean = true
 ) => {
   return useQuery<WorkflowDetialResponse>({
     queryKey: ["workflowDetail", workflowId],
     queryFn: async () => {
       const response =
         await workflowApi.getDetailApiV1WorkflowsWorkflowIdDetailGet(
-          workflowId,
+          workflowId
         );
       return response.data;
     },
