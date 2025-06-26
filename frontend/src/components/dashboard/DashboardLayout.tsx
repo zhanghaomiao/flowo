@@ -11,6 +11,7 @@ import React from "react";
 
 import { StatusChart } from "./StatusChart";
 import { useDashboardMetrics } from "./useDashboardMetrics";
+import { ActivityAnalyticsCard } from "./ActivityAnalyticsCard";
 // import LiveUpdatesIndicator from "../LiveUpdatesIndicator";
 // import { PerformanceChart } from "./PerformanceChart";
 // import { RecentWorkflows } from "./RecentWorkflows";
@@ -213,6 +214,16 @@ export const DashboardLayout: React.FC = () => {
       </Row>
 
       {/* Details Section */}
+      <Row gutter={[16, 16]} style={{ marginTop: "24px" }}>
+        <Col xs={24}>
+          <ActivityAnalyticsCard
+            title="Rule & Tag Activity Analytics"
+            defaultLimit={15}
+            height="700px"
+          />
+        </Col>
+      </Row>
+
       {/* <Row gutter={[16, 16]}>
         <Col xs={24} lg={16}>
           <RecentWorkflows />

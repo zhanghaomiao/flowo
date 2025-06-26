@@ -12,7 +12,7 @@ All URIs are relative to *http://localhost*
 |[**getUserSummaryApiV1SummaryUserGet**](#getusersummaryapiv1summaryuserget) | **GET** /api/v1/summary/user | Get User Summary|
 
 # **getActivityApiV1SummaryActivityGet**
-> Array<Array<GetActivityApiV1SummaryActivityGet200ResponseInnerInner>> getActivityApiV1SummaryActivityGet()
+> { [key: string]: number; } getActivityApiV1SummaryActivityGet()
 
 
 ### Example
@@ -51,7 +51,7 @@ const { status, data } = await apiInstance.getActivityApiV1SummaryActivityGet(
 
 ### Return type
 
-**Array<Array<GetActivityApiV1SummaryActivityGet200ResponseInnerInner>>**
+**{ [key: string]: number; }**
 
 ### Authorization
 
@@ -129,7 +129,7 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **getRuleErrorApiV1SummaryRuleErrorGet**
-> Array<Array<GetRuleErrorApiV1SummaryRuleErrorGet200ResponseInnerInner>> getRuleErrorApiV1SummaryRuleErrorGet()
+> { [key: string]: { [key: string]: any; }; } getRuleErrorApiV1SummaryRuleErrorGet()
 
 
 ### Example
@@ -165,7 +165,7 @@ const { status, data } = await apiInstance.getRuleErrorApiV1SummaryRuleErrorGet(
 
 ### Return type
 
-**Array<Array<GetRuleErrorApiV1SummaryRuleErrorGet200ResponseInnerInner>>**
+**{ [key: string]: { [key: string]: any; }; }**
 
 ### Authorization
 

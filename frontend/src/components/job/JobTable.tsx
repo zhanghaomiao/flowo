@@ -12,13 +12,10 @@ import type { JobResponse } from "../../api/client";
 import { useWorkflowJobs } from "../../hooks/useQueries";
 import { useJobDetail, useJobLogs } from "../../hooks/useQueries";
 import { useWorkflowJobsWithSSE } from "../../hooks/useQueriesWithSSE";
-import {
-  formatDateCompact,
-  formatDuration,
-  getStatusColor,
-} from "../../utils/formatters";
+import { formatDateCompact, getStatusColor } from "../../utils/formatters";
 import FilesViewer from "../code/FilesViewer";
 import FileViewer from "../code/FileViewer";
+import { DurationCell } from "../common/common";
 import LiveUpdatesIndicator from "../LiveUpdatesIndicator";
 
 interface JobTableProps {
@@ -170,18 +167,7 @@ const JobTable: React.FC<JobTableProps> = ({
       dataIndex: "duration",
       key: "duration",
       width: 40,
-      render: (_, record) => {
-        if (record.end_time && record.started_at) {
-          let endTime = record.end_time;
-          if (record.status === "running") {
-            endTime = new Date().toISOString();
-          }
-          const duration =
-            new Date(endTime).getTime() - new Date(record.started_at).getTime();
-          return formatDuration(duration);
-        }
-        return "-";
-      },
+      render: (_, record) => <DurationCell record={record} />,
     },
     {
       title: "Threads",
@@ -426,13 +412,7 @@ const JobTable: React.FC<JobTableProps> = ({
       <Table
         columns={columns}
         dataSource={jobs?.jobs ?? []}
-        rowKey={(record, index) => {
-          // Create a unique key using multiple fields to avoid duplicates
-          const id = record.id ?? "no-id";
-          const ruleId = record.rule_id ?? "no-rule-id";
-          const workflowId = record.workflow_id ?? "no-workflow";
-          return `${workflowId}-${ruleId}-${id}-${index}`;
-        }}
+        rowKey={(record) => record.id ?? ""}
         loading={isLoading}
         onChange={(_, filters) => {
           if (filters.status !== undefined) {

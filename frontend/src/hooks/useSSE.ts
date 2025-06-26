@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { constructApiUrl } from "../api/client";
-import { getSSESettings, isSSEEnabled } from "../config/sseConfig";
+import { isSSEEnabled } from "../config/sseConfig";
 
 // Define the possible SSE event types based on the API
 export interface SSEEvent {
@@ -44,8 +44,6 @@ export interface UseSSEOptions {
   filters?: string; // Comma-separated list of table names to filter
   workflowId?: string; // Subscribe to specific workflow events
   enabled?: boolean;
-  reconnectInterval?: number; // Milliseconds
-  maxRetries?: number;
   onJobEvent?: (data: DatabaseChangeData) => void; // Callback for job events
   onWorkflowEvent?: (data: DatabaseChangeData) => void; // Callback for workflow events
   onDatabaseChange?: (data: DatabaseChangeData) => void; // Callback for general database changes
@@ -57,40 +55,29 @@ export interface UseSSEReturn {
   status: SSEConnectionStatus;
   error: string | null;
   isConnected: boolean;
-  reconnect: () => void;
   disconnect: () => void;
-  retryCount: number;
 }
 
 export const useSSE = ({
   filters,
   workflowId,
-  reconnectInterval = 3000,
-  maxRetries = 5,
   onJobEvent,
   onWorkflowEvent,
   onDatabaseChange,
 }: UseSSEOptions = {}): UseSSEReturn => {
   // Check global SSE configuration first
   const globalSSEEnabled = isSSEEnabled();
-  const sseSettings = getSSESettings({ reconnectInterval, maxRetries });
 
   const [data, setData] = useState<SSEEvent | null>(null);
   const [status, setStatus] = useState<SSEConnectionStatus>("disconnected");
   const [error, setError] = useState<string | null>(null);
-  const [retryCount, setRetryCount] = useState(0);
 
   const eventSourceRef = useRef<EventSource | null>(null);
-  const reconnectTimeoutRef = useRef<number | null>(null);
 
   const disconnect = useCallback(() => {
     if (eventSourceRef.current) {
       eventSourceRef.current.close();
       eventSourceRef.current = null;
-    }
-    if (reconnectTimeoutRef.current) {
-      clearTimeout(reconnectTimeoutRef.current);
-      reconnectTimeoutRef.current = null;
     }
     setStatus("disconnected");
   }, []);
@@ -121,7 +108,6 @@ export const useSSE = ({
       eventSource.onopen = () => {
         setStatus("connected");
         setError(null);
-        setRetryCount(0);
         console.log("✅ SSE connected successfully to:", url.toString());
       };
 
@@ -159,26 +145,7 @@ export const useSSE = ({
         // Clean up current connection
         eventSource.close();
         eventSourceRef.current = null;
-
-        // Attempt to reconnect if enabled and within retry limits
-        setRetryCount((prev) => {
-          const currentRetryCount = prev;
-          if (isSSEEnabled() && currentRetryCount < sseSettings.maxRetries) {
-            reconnectTimeoutRef.current = setTimeout(() => {
-              // Check again when timeout executes to get fresh state
-              connect(); // connect() will check isSSEEnabled() internally
-            }, sseSettings.reconnectInterval);
-            return currentRetryCount + 1;
-          } else {
-            setStatus("disconnected");
-            if (currentRetryCount >= sseSettings.maxRetries) {
-              setError(
-                `Max retry attempts (${sseSettings.maxRetries}) exceeded`,
-              );
-            }
-            return currentRetryCount;
-          }
-        });
+        setStatus("disconnected");
       };
 
       // Handle different event types
@@ -267,16 +234,8 @@ export const useSSE = ({
       setStatus("error");
       setError("Failed to establish connection");
     }
-  }, [filters, workflowId, maxRetries, reconnectInterval]);
+  }, [filters, workflowId]);
 
-  const reconnect = useCallback(() => {
-    disconnect();
-    setRetryCount(0);
-    // Small delay before reconnecting - connect() will check if SSE is enabled
-    setTimeout(connect, 100);
-  }, [disconnect, connect]);
-
-  // Effect to handle connection lifecycle
   useEffect(() => {
     if (globalSSEEnabled) {
       connect();
@@ -290,22 +249,12 @@ export const useSSE = ({
     };
   }, [globalSSEEnabled, connect, disconnect]);
 
-  // Effect to handle cleanup on filters/workflowId change
-  useEffect(() => {
-    if (globalSSEEnabled && eventSourceRef.current) {
-      // Reconnect when filters or workflowId change
-      reconnect();
-    }
-  }, [filters, workflowId, globalSSEEnabled, reconnect]);
-
   return {
     data,
     status,
     error,
     isConnected: status === "connected",
-    reconnect,
     disconnect,
-    retryCount,
   };
 };
 
@@ -314,40 +263,26 @@ export const useLogSSE = (
   workflowId: string,
   options: {
     enabled?: boolean;
-    reconnectInterval?: number;
-    maxRetries?: number;
     onLogLine?: (logLine: string) => void;
   } = {},
 ) => {
-  const {
-    enabled = true,
-    reconnectInterval = 3000,
-    maxRetries = 5,
-    onLogLine,
-  } = options;
+  const { enabled = true, onLogLine } = options;
 
   // Check global SSE configuration
   const globalSSEEnabled = isSSEEnabled();
-  const sseSettings = getSSESettings({ reconnectInterval, maxRetries });
 
   // SSE is only enabled if both global config and local enabled are true
   const shouldConnect = globalSSEEnabled && enabled;
 
   const [status, setStatus] = useState<SSEConnectionStatus>("disconnected");
   const [error, setError] = useState<string | null>(null);
-  const [retryCount, setRetryCount] = useState(0);
 
   const eventSourceRef = useRef<EventSource | null>(null);
-  const reconnectTimeoutRef = useRef<number | null>(null);
 
   const disconnect = useCallback(() => {
     if (eventSourceRef.current) {
       eventSourceRef.current.close();
       eventSourceRef.current = null;
-    }
-    if (reconnectTimeoutRef.current) {
-      clearTimeout(reconnectTimeoutRef.current);
-      reconnectTimeoutRef.current = null;
     }
     setStatus("disconnected");
   }, []);
@@ -372,7 +307,6 @@ export const useLogSSE = (
       eventSource.onopen = () => {
         setStatus("connected");
         setError(null);
-        setRetryCount(0);
         console.log(
           `✅ Logs SSE connected successfully for workflow: ${workflowId}`,
         );
@@ -385,29 +319,7 @@ export const useLogSSE = (
 
         eventSource.close();
         eventSourceRef.current = null;
-
-        setRetryCount((prev) => {
-          const currentRetryCount = prev;
-          if (
-            isSSEEnabled() &&
-            enabled &&
-            currentRetryCount < sseSettings.maxRetries
-          ) {
-            reconnectTimeoutRef.current = setTimeout(() => {
-              // Check again when timeout executes to get fresh state
-              connect(); // connect() will check conditions internally
-            }, sseSettings.reconnectInterval);
-            return currentRetryCount + 1;
-          } else {
-            setStatus("disconnected");
-            if (currentRetryCount >= sseSettings.maxRetries) {
-              setError(
-                `Max retry attempts (${sseSettings.maxRetries}) exceeded`,
-              );
-            }
-            return currentRetryCount;
-          }
-        });
+        setStatus("disconnected");
       };
 
       // Handle log events
@@ -429,20 +341,7 @@ export const useLogSSE = (
       setStatus("error");
       setError("Failed to establish connection");
     }
-  }, [
-    workflowId,
-    enabled,
-    sseSettings.maxRetries,
-    sseSettings.reconnectInterval,
-    onLogLine,
-  ]);
-
-  const reconnect = useCallback(() => {
-    disconnect();
-    setRetryCount(0);
-    // Small delay before reconnecting - connect() will check conditions
-    setTimeout(connect, 100);
-  }, [disconnect, connect]);
+  }, [workflowId, enabled, onLogLine]);
 
   useEffect(() => {
     if (shouldConnect && workflowId) {
@@ -460,8 +359,6 @@ export const useLogSSE = (
     status,
     error,
     isConnected: status === "connected",
-    reconnect,
     disconnect,
-    retryCount,
   };
 };

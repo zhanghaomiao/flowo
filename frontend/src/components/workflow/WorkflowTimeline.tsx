@@ -96,7 +96,7 @@ interface WorkflowTimelineProps {
       startTime: string;
       endTime: string;
       status: string;
-    } | null,
+    } | null
   ) => void;
 }
 
@@ -272,11 +272,9 @@ const WorkflowTimeline: React.FC<WorkflowTimelineProps> = ({
     // Calculate dynamic height based on data
     const taskCount = ganttData.length - 1; // Subtract header row
     const minHeight = 400;
-    const taskHeight = 32;
+    const taskHeight = 31;
     const calculatedHeight = Math.max(minHeight, taskCount * taskHeight);
 
-    // Create a palette that maintains consistent colors for resources
-    // We need to map the resources in the current data to their consistent palette indices
     const resourcesInCurrentData = new Set<string>();
     for (let i = 1; i < ganttData.length; i++) {
       const resource = ganttData[i][2]; // Resource is at index 2
@@ -285,7 +283,6 @@ const WorkflowTimeline: React.FC<WorkflowTimelineProps> = ({
       }
     }
 
-    // Create a custom palette based on the resources present and their consistent mapping
     const customPalette = Array.from(resourcesInCurrentData).map((resource) => {
       const paletteIndex = paletteMapping[resource] || 0;
       return DEFAULT_GANTT_PALETTE[paletteIndex];

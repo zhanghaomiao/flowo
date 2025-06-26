@@ -38,22 +38,22 @@ declare module "@tanstack/react-router" {
 }
 
 createRoot(document.getElementById("root")!).render(
-  <StrictMode>
-    <QueryClientProvider client={queryClient}>
-      <ConfigProvider
-        theme={{
-          components: {
-            Tree: {
-              indentSize: 12,
-            },
-            Layout: {
-              headerHeight: 45,
-            },
+  // <StrictMode>
+  <QueryClientProvider client={queryClient}>
+    <ConfigProvider
+      theme={{
+        components: {
+          Tree: {
+            indentSize: 12,
           },
-        }}
-      >
-        <RouterProvider router={router} />
-      </ConfigProvider>
-    </QueryClientProvider>
-  </StrictMode>,
+          Layout: {
+            headerHeight: 45,
+          },
+        },
+      }}
+    >
+      <RouterProvider router={router} />
+    </ConfigProvider>
+  </QueryClientProvider>,
+  // </StrictMode>,
 );

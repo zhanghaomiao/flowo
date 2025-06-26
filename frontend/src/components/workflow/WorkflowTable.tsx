@@ -19,7 +19,7 @@ import {
   Tooltip,
 } from "antd";
 import type { ColumnsType } from "antd/es/table";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 
 import type { Status } from "../../api/api";
 import type { WorkflowResponse } from "../../api/client";
@@ -35,12 +35,12 @@ import {
 import { useWorkflowsWithSSE } from "../../hooks/useQueriesWithSSE";
 import {
   formatDateCompact,
-  formatDuration,
   getStatusColor,
   getWorkflowProgressStatus,
 } from "../../utils/formatters";
 import FilesViewer from "../code/FilesViewer";
 import FileViewer from "../code/FileViewer";
+import { DurationCell } from "../common/common";
 import LiveUpdatesIndicator from "../LiveUpdatesIndicator";
 import WorkflowTag from "../tag/WorkflowTag";
 import WorkflowSearch from "./WorkflowSearch";
@@ -49,47 +49,6 @@ interface WorkflowTableProps {
   limit?: number;
   showRefreshButton?: boolean;
 }
-
-const DurationCell: React.FC<{
-  record: WorkflowResponse;
-}> = ({ record }) => {
-  const [currentTime, setCurrentTime] = useState(Date.now());
-
-  useEffect(() => {
-    // Only set up timer for running workflows
-    if (record.status === "RUNNING" && record.started_at) {
-      const timer = setInterval(() => {
-        setCurrentTime(Date.now());
-      }, 1000); // Update every second
-
-      return () => clearInterval(timer);
-    }
-  }, [record.status, record.started_at]);
-
-  if (record.status === "ERROR") {
-    return <span>-</span>;
-  }
-
-  if (record.end_time && record.started_at) {
-    const duration =
-      new Date(record.end_time).getTime() -
-      new Date(record.started_at).getTime();
-    return <span>{formatDuration(duration)}</span>;
-  } else if (record.started_at) {
-    let endTime = record.end_time
-      ? new Date(record.end_time).getTime()
-      : currentTime;
-
-    if (record.status === "RUNNING") {
-      endTime = currentTime;
-    }
-
-    const duration = endTime - new Date(record.started_at).getTime();
-    return <span>{formatDuration(duration)}</span>;
-  }
-
-  return <span>-</span>;
-};
 
 const WorkflowTable: React.FC<WorkflowTableProps> = ({
   limit = 20,
@@ -296,7 +255,7 @@ const WorkflowTable: React.FC<WorkflowTableProps> = ({
       title: "Name",
       dataIndex: "name",
       key: "name",
-      width: 120,
+      width: 140,
       sorter: (a, b) => {
         const nameA = a.name || "";
         const nameB = b.name || "";
@@ -319,7 +278,7 @@ const WorkflowTable: React.FC<WorkflowTableProps> = ({
                 letterSpacing: "-0.01em",
               }}
             >
-              {name || "Unnamed"}
+              {name || "Unnamed"} ({record.total_jobs})
             </div>
 
             {tags.length > 0 && (

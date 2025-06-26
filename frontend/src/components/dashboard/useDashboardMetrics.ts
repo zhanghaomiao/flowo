@@ -1,11 +1,15 @@
 import { useQuery } from "@tanstack/react-query";
 
-import { StatusSummary, UserSummary } from "../../api/api";
+import {
+  GetActivityApiV1SummaryActivityGetItemEnum,
+  StatusSummary,
+  UserSummary,
+} from "../../api/api";
 import { summaryApi } from "../../api/client";
 import { useSSE } from "../../hooks/useSSE";
 
 const DASHBOARD_STALE_TIME = 3000;
-const DASHBOARD_REFETCH_INTERVAL = 3000;
+const DASHBOARD_REFETCH_INTERVAL = false;
 
 // Hook for Running Workflows (running/total)
 export const useRunningWorkflows = () => {
@@ -61,12 +65,73 @@ export const useSystemResources = () => {
   });
 };
 
+export const useActivity = (
+  type: GetActivityApiV1SummaryActivityGetItemEnum,
+  start: string | null,
+  end: string | null,
+  limit: number,
+) => {
+  return useQuery<{ [key: string]: number }>({
+    queryKey: ["activity", start, end, limit, type],
+    queryFn: async () => {
+      const response = await summaryApi.getActivityApiV1SummaryActivityGet(
+        type,
+        start,
+        end,
+        limit,
+      );
+      return response.data;
+    },
+    staleTime: DASHBOARD_STALE_TIME,
+    refetchInterval: DASHBOARD_REFETCH_INTERVAL,
+  });
+};
+
+export const useRuleError = (
+  start: string | null,
+  end: string | null,
+  limit: number,
+) => {
+  return useQuery<{ [key: string]: { [key: string]: number } }>({
+    queryKey: ["rule-error", start, end, limit],
+    queryFn: async () => {
+      const response = await summaryApi.getRuleErrorApiV1SummaryRuleErrorGet(
+        start,
+        end,
+        limit,
+      );
+      return response.data;
+    },
+    staleTime: DASHBOARD_STALE_TIME,
+    refetchInterval: DASHBOARD_REFETCH_INTERVAL,
+  });
+};
+
+export const useRuleDuration = (
+  start: string | null,
+  end: string | null,
+  limit: number,
+) => {
+  return useQuery<{ [key: string]: number[] }>({
+    queryKey: ["rule-duration", start, end, limit],
+    queryFn: async () => {
+      const response =
+        await summaryApi.getRuleDurationApiV1SummaryRuleDurationGet(
+          start,
+          end,
+          limit,
+        );
+      return response.data;
+    },
+    staleTime: DASHBOARD_STALE_TIME,
+    refetchInterval: DASHBOARD_REFETCH_INTERVAL,
+  });
+};
+
 // Hook for SSE Connection Status
 export const useSSEStatus = () => {
   const { data, status, error, isConnected } = useSSE({
     filters: "workflow,job",
-    reconnectInterval: 3000,
-    maxRetries: 5,
   });
 
   return {

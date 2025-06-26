@@ -32,6 +32,7 @@ import {
   getLayoutInfo,
   type LayoutDirection,
 } from "../../utils/graphLayout";
+import ProgressNode from "./NodeProgressBar";
 
 interface GraphData {
   nodes: Array<{
@@ -70,6 +71,11 @@ const STATUS_LABELS: Record<string, string> = {
   RUNNING: "Running",
   ERROR: "Error",
   WAITING: "Waiting",
+};
+
+// Define nodeTypes outside component to prevent re-renders
+const nodeTypes = {
+  progressNode: ProgressNode,
 };
 
 // Draggable Legend Panel Component
@@ -195,7 +201,6 @@ const WorkflowGraphInner: React.FC<WorkflowGraphProps> = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const resizeTimeoutRef = useRef<number | undefined>(undefined);
 
-  // Function to fit view with debouncing
   const fitViewDebounced = useCallback(() => {
     if (resizeTimeoutRef.current) {
       clearTimeout(resizeTimeoutRef.current);
@@ -222,32 +227,27 @@ const WorkflowGraphInner: React.FC<WorkflowGraphProps> = ({
     const parsedData: GraphData =
       typeof graphData === "string" ? JSON.parse(graphData) : graphData;
 
-    // Create base nodes without status-dependent styling
+    // Create base nodes with progressNode type
     const flowNodes: Node[] = parsedData.nodes.map((nodeData, index) => ({
       id: index.toString(),
-      type: "default",
+      type: "progressNode",
       position: { x: 0, y: 0 }, // Will be set by layout algorithm
       data: {
-        label: nodeData.rule, // Base label without status
-        value: nodeData.rule,
         rule: nodeData.rule,
+        value: nodeData.rule,
+        statusInfo: null,
+        isSelected: false,
+        isHighlighted: false,
+        isUnscheduled: true,
+        backgroundColor: STATUS_COLORS.unscheduled,
+        textColor: "#000000",
+        borderColor: "#1890ff",
+        boxShadow: "none",
+        layoutDirection,
       },
       sourcePosition:
         layoutDirection === "LR" ? Position.Right : Position.Bottom,
       targetPosition: layoutDirection === "LR" ? Position.Left : Position.Top,
-      style: {
-        borderRadius: "8px",
-        padding: "10px",
-        fontSize: "16px",
-        fontWeight: "500",
-        width: NODE_WIDTH,
-        height: NODE_HEIGHT,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        textAlign: "center",
-        transition: "all 0.3s ease",
-      },
     }));
 
     // Create edges
@@ -304,22 +304,22 @@ const WorkflowGraphInner: React.FC<WorkflowGraphProps> = ({
       const ruleName = node.data.rule as string;
       const isSelected = selectedRule === ruleName;
       const isHighlighted = highlightedRule === ruleName;
+      const isUnscheduled =
+        !memoizedRuleStatus || !(ruleName in memoizedRuleStatus);
 
       // Calculate new styling
       let backgroundColor = STATUS_COLORS.unscheduled;
-      let label = ruleName;
+      let statusInfo = null;
 
       if (memoizedRuleStatus && ruleName in memoizedRuleStatus) {
         const status = memoizedRuleStatus[ruleName].status;
         backgroundColor = STATUS_COLORS[status];
-        label = `${ruleName} (${memoizedRuleStatus[ruleName].success}/${memoizedRuleStatus[ruleName].total})`;
+        statusInfo = memoizedRuleStatus[ruleName];
       }
 
       let textColor = "#000000";
       let borderColor = "#1890ff";
       let boxShadow = "none";
-      const isUnscheduled =
-        !memoizedRuleStatus || !(ruleName in memoizedRuleStatus);
 
       if (isSelected) {
         backgroundColor = "#1890ff";
@@ -331,35 +331,35 @@ const WorkflowGraphInner: React.FC<WorkflowGraphProps> = ({
       }
 
       // Check if this node actually needs updating
-      const currentStyle = node.style || {};
-      const currentLabel = node.data.label;
-
+      const currentData = node.data;
       const needsUpdate =
-        currentLabel !== label ||
-        currentStyle.background !== backgroundColor ||
-        currentStyle.color !== textColor ||
-        currentStyle.borderColor !== borderColor ||
-        currentStyle.cursor !== (isUnscheduled ? "default" : "pointer") ||
-        currentStyle.boxShadow !== boxShadow;
+        currentData.isSelected !== isSelected ||
+        currentData.isHighlighted !== isHighlighted ||
+        currentData.isUnscheduled !== isUnscheduled ||
+        currentData.backgroundColor !== backgroundColor ||
+        currentData.textColor !== textColor ||
+        currentData.borderColor !== borderColor ||
+        currentData.boxShadow !== boxShadow ||
+        currentData.layoutDirection !== layoutDirection ||
+        JSON.stringify(currentData.statusInfo) !== JSON.stringify(statusInfo);
 
       if (!needsUpdate) {
         return node; // Return existing node if no changes needed
       }
 
-      // Return updated node only if changes are needed
       return {
         ...node,
         data: {
           ...node.data,
-          label: label,
-        },
-        style: {
-          ...node.style,
-          background: backgroundColor,
-          color: textColor,
-          borderColor: borderColor,
-          cursor: isUnscheduled ? "default" : "pointer",
-          boxShadow: boxShadow,
+          statusInfo,
+          isSelected,
+          isHighlighted,
+          isUnscheduled,
+          backgroundColor,
+          textColor,
+          borderColor,
+          boxShadow,
+          layoutDirection,
         },
       };
     });
@@ -372,14 +372,14 @@ const WorkflowGraphInner: React.FC<WorkflowGraphProps> = ({
     if (hasAnyChanges) {
       setNodes(updatedNodes);
     }
-  }, [memoizedRuleStatus, selectedRule, highlightedRule, flowNodes, setNodes]);
-
-  // Fit view when nodes change (initial load or layout change)
-  useEffect(() => {
-    if (flowNodes.length > 0) {
-      fitViewDebounced();
-    }
-  }, [flowNodes, fitViewDebounced]);
+  }, [
+    memoizedRuleStatus,
+    selectedRule,
+    highlightedRule,
+    flowNodes,
+    setNodes,
+    layoutDirection,
+  ]);
 
   // Set up ResizeObserver for container size changes
   useEffect(() => {
@@ -413,7 +413,7 @@ const WorkflowGraphInner: React.FC<WorkflowGraphProps> = ({
   // Handle node click
   const handleNodeClick = useCallback(
     (event: React.MouseEvent, node: Node) => {
-      const ruleName = node.data.value as string;
+      const ruleName = node.data.rule as string;
 
       // Check if the node is unscheduled and disable click
       const isUnscheduled = !ruleStatus || !(ruleName in ruleStatus);
@@ -431,7 +431,39 @@ const WorkflowGraphInner: React.FC<WorkflowGraphProps> = ({
     setLayoutDirection(value);
   };
 
-  const layoutInfo = getLayoutInfo(layoutDirection);
+  // Handle fit view with layout recalculation
+  const handleFitView = useCallback(() => {
+    // Force layout recalculation by creating new nodes with updated positions
+    if (baseNodes.length > 0) {
+      const { nodes: newNodes, edges: newEdges } = getLayoutedElements(
+        baseNodes.map((node) => ({ ...node, position: { x: 0, y: 0 } })),
+        edges,
+        {
+          direction: layoutDirection,
+          nodeWidth: NODE_WIDTH,
+          nodeHeight: NODE_HEIGHT,
+        },
+      );
+
+      // Update nodes and edges with new layout
+      setNodes(newNodes);
+      setEdges(newEdges);
+
+      // Then fit view after a brief delay to ensure nodes are updated
+      setTimeout(() => {
+        if (reactFlowInstance) {
+          reactFlowInstance.fitView();
+        }
+      }, 50);
+    }
+  }, [
+    baseNodes,
+    edges,
+    layoutDirection,
+    setNodes,
+    setEdges,
+    reactFlowInstance,
+  ]);
 
   if (isLoading) {
     return (
@@ -502,6 +534,7 @@ const WorkflowGraphInner: React.FC<WorkflowGraphProps> = ({
         <ReactFlow
           nodes={flowNodes}
           edges={flowEdges}
+          nodeTypes={nodeTypes}
           onNodesChange={onNodesChange}
           onEdgesChange={onEdgesChange}
           onNodeClick={handleNodeClick}
@@ -518,7 +551,7 @@ const WorkflowGraphInner: React.FC<WorkflowGraphProps> = ({
           maxZoom={2}
         >
           <Background />
-          <Controls />
+          <Controls onFitView={handleFitView} />
           <MiniMap
             style={{
               height: 80,
@@ -622,8 +655,9 @@ const WorkflowGraphInner: React.FC<WorkflowGraphProps> = ({
           textAlign: "center",
         }}
       >
-        Layout: {layoutInfo.name} {layoutInfo.icon} • Click nodes to filter jobs
-        • Drag to reposition
+        Layout: {getLayoutInfo(layoutDirection).name}{" "}
+        {getLayoutInfo(layoutDirection).icon} • Click nodes to filter jobs •
+        Drag to reposition
       </div>
     </div>
   );

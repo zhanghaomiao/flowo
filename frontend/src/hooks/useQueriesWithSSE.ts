@@ -1,10 +1,11 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useRef } from "react";
+import { useCallback } from "react";
 
 import type { RuleStatusResponse, WorkflowListResponse } from "../api/api";
 import { Status } from "../api/api";
 import { workflowApi } from "../api/client";
-import { type DatabaseChangeData, useSSE } from "./useSSE";
+import { type DatabaseChangeData } from "./useSSE";
+import { useSharedSSE } from "./useSSEManager.tsx";
 
 const createDebouncer = () => {
   const timeouts = new Map<string, number>();
@@ -114,9 +115,9 @@ export const useWorkflowsWithSSE = (params?: {
     placeholderData: (previousData) => previousData,
   });
 
-  const sseConnection = useSSE({
-    filters: "workflows,jobs",
-    onDatabaseChange: (data: DatabaseChangeData) => {
+  // Stable callback for SSE events
+  const handleWorkflowsEvent = useCallback(
+    (data: DatabaseChangeData) => {
       console.log(
         "📨 [DEBUG] SSE database change received for workflows:",
         data,
@@ -142,21 +143,24 @@ export const useWorkflowsWithSSE = (params?: {
         );
       }
     },
+    [queryClient],
+  );
+
+  // Use shared SSE connection
+  const { status: sseStatus, isConnected } = useSharedSSE("workflows_list", {
+    filters: "workflows,jobs",
+    onEvent: handleWorkflowsEvent,
   });
 
   return {
     ...workflowsQuery,
-    sseStatus: sseConnection.status,
-    sseError: sseConnection.error,
-    isSSEConnected: sseConnection.isConnected,
-    sseRetryCount: sseConnection.retryCount,
-    reconnectSSE: sseConnection.reconnect,
-    disconnectSSE: sseConnection.disconnect,
-    latestEvent: sseConnection.data,
+    sseStatus,
+    sseError: null,
+    isSSEConnected: isConnected,
   };
 };
 
-// Enhanced workflow jobs hook with direct SSE integration and optimization
+// Enhanced workflow jobs hook with shared SSE connection
 export const useWorkflowJobsWithSSE = (params?: {
   workflowId: string;
   limit?: number | null;
@@ -186,10 +190,9 @@ export const useWorkflowJobsWithSSE = (params?: {
     refetchInterval: 300000,
   });
 
-  const sseConnection = useSSE({
-    filters: "jobs",
-    workflowId: params?.workflowId,
-    onJobEvent: (data: DatabaseChangeData) => {
+  // Stable callback for SSE events
+  const handleJobEvent = useCallback(
+    (data: DatabaseChangeData) => {
       if (isSignificantChange(data)) {
         eventAggregator.addEvent(
           "jobs",
@@ -198,37 +201,38 @@ export const useWorkflowJobsWithSSE = (params?: {
             console.log(
               `🔄 [DEBUG] Invalidating workflow jobs query for workflow: ${params?.workflowId}...`,
             );
-            const startTime = performance.now();
             queryClient.invalidateQueries({
               queryKey: ["workflowJobs", params],
             });
-            const endTime = performance.now();
-            console.log(
-              `✅ [DEBUG] Workflow jobs query invalidated in ${(endTime - startTime).toFixed(2)}ms`,
-            );
           },
-          1000,
+          500,
         );
       }
     },
-  });
+    [params?.workflowId, queryClient, params],
+  );
+
+  // Use shared SSE connection
+  const { status: sseStatus, isConnected } = useSharedSSE(
+    `workflowJobs-${params?.workflowId}`,
+    {
+      filters: "jobs",
+      workflowId: params?.workflowId,
+      onEvent: handleJobEvent,
+    },
+  );
 
   return {
     ...workflowJobsQuery,
-    sseStatus: sseConnection.status,
-    sseError: sseConnection.error,
-    isSSEConnected: sseConnection.isConnected,
-    sseRetryCount: sseConnection.retryCount,
-    reconnectSSE: sseConnection.reconnect,
-    disconnectSSE: sseConnection.disconnect,
-    latestEvent: sseConnection.data,
+    sseStatus,
+    sseError: null,
+    isSSEConnected: isConnected,
   };
 };
 
-// Enhanced workflow progress hook with direct SSE integration and optimization
+// Enhanced workflow progress hook with shared SSE connection
 export const useWorkflowProgressWithSSE = (workflowId: string) => {
   const queryClient = useQueryClient();
-  const lastUpdateTimeRef = useRef<number>(0);
 
   const workflowProgressQuery = useQuery({
     queryKey: ["workflowProgress", workflowId],
@@ -239,60 +243,51 @@ export const useWorkflowProgressWithSSE = (workflowId: string) => {
         );
       return response.data;
     },
-    staleTime: 60000,
-    refetchInterval: 600000,
-    gcTime: 300000,
+    staleTime: 45000,
+    refetchInterval: 300000,
   });
 
-  const sseConnection = useSSE({
-    filters: "jobs",
-    workflowId,
-    onJobEvent: (data: DatabaseChangeData) => {
-      if (!isSignificantChange(data)) {
-        return;
+  // Stable callback for SSE events
+  const handleProgressEvent = useCallback(
+    (data: DatabaseChangeData) => {
+      if (isSignificantChange(data)) {
+        eventAggregator.addEvent(
+          "progress",
+          workflowId,
+          () => {
+            console.log(
+              `🔄 [DEBUG] Invalidating workflow progress query for workflow: ${workflowId}...`,
+            );
+            queryClient.invalidateQueries({
+              queryKey: ["workflowProgress", workflowId],
+            });
+          },
+          500,
+        );
       }
-
-      const now = Date.now();
-      const timeSinceLastUpdate = now - lastUpdateTimeRef.current;
-
-      if (timeSinceLastUpdate < 3000) {
-        return;
-      }
-
-      globalDebouncer(
-        `progress_${workflowId}`,
-        () => {
-          console.log(
-            `🔄 [DEBUG] Invalidating workflow progress query for workflow: ${workflowId}...`,
-          );
-          const startTime = performance.now();
-          lastUpdateTimeRef.current = Date.now();
-          queryClient.invalidateQueries({
-            queryKey: ["workflowProgress", workflowId],
-          });
-          const endTime = performance.now();
-          console.log(
-            `✅ [DEBUG] Workflow progress query invalidated in ${(endTime - startTime).toFixed(2)}ms`,
-          );
-        },
-        2000,
-      );
     },
-  });
+    [workflowId, queryClient],
+  );
+
+  // Use shared SSE connection
+  const { status: sseStatus, isConnected } = useSharedSSE(
+    `workflowProgress-${workflowId}`,
+    {
+      filters: "jobs",
+      workflowId,
+      onEvent: handleProgressEvent,
+    },
+  );
 
   return {
     ...workflowProgressQuery,
-    sseStatus: sseConnection.status,
-    sseError: sseConnection.error,
-    isSSEConnected: sseConnection.isConnected,
-    sseRetryCount: sseConnection.retryCount,
-    reconnectSSE: sseConnection.reconnect,
-    disconnectSSE: sseConnection.disconnect,
-    latestEvent: sseConnection.data,
+    sseStatus,
+    sseError: null,
+    isSSEConnected: isConnected,
   };
 };
 
-// Enhanced rule status hook with optimization
+// Enhanced rule status hook with shared SSE connection
 export const useRuleStatusWithSSE = (workflowId: string) => {
   const queryClient = useQueryClient();
 
@@ -306,43 +301,45 @@ export const useRuleStatusWithSSE = (workflowId: string) => {
       return response.data as { [key: string]: RuleStatusResponse };
     },
     staleTime: 45000,
-    refetchInterval: 600000,
+    refetchInterval: 300000,
   });
 
-  const sseConnection = useSSE({
-    filters: "jobs",
-    workflowId,
-    onJobEvent: (data: DatabaseChangeData) => {
+  // Stable callback for SSE events
+  const handleRuleStatusEvent = useCallback(
+    (data: DatabaseChangeData) => {
       if (isSignificantChange(data)) {
-        globalDebouncer(
-          `rule_status_${workflowId}`,
+        eventAggregator.addEvent(
+          "ruleStatus",
+          workflowId,
           () => {
             console.log(
               `🔄 [DEBUG] Invalidating rule status query for workflow: ${workflowId}...`,
             );
-            const startTime = performance.now();
             queryClient.invalidateQueries({
               queryKey: ["ruleStatus", workflowId],
             });
-            const endTime = performance.now();
-            console.log(
-              `✅ [DEBUG] Rule status query invalidated in ${(endTime - startTime).toFixed(2)}ms`,
-            );
           },
-          1500,
+          500,
         );
       }
     },
-  });
+    [workflowId, queryClient],
+  );
+
+  // Use shared SSE connection
+  const { status: sseStatus, isConnected } = useSharedSSE(
+    `ruleStatus-${workflowId}`,
+    {
+      filters: "jobs",
+      workflowId,
+      onEvent: handleRuleStatusEvent,
+    },
+  );
 
   return {
     ...ruleStatusQuery,
-    sseStatus: sseConnection.status,
-    sseError: sseConnection.error,
-    isSSEConnected: sseConnection.isConnected,
-    sseRetryCount: sseConnection.retryCount,
-    reconnectSSE: sseConnection.reconnect,
-    disconnectSSE: sseConnection.disconnect,
-    latestEvent: sseConnection.data,
+    sseStatus,
+    sseError: null,
+    isSSEConnected: isConnected,
   };
 };

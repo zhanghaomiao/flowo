@@ -26,20 +26,6 @@ import { BASE_PATH, COLLECTION_FORMATS, BaseAPI, RequiredError, operationServerM
 /**
  * 
  * @export
- * @interface GetActivityApiV1SummaryActivityGet200ResponseInnerInner
- */
-export interface GetActivityApiV1SummaryActivityGet200ResponseInnerInner {
-}
-/**
- * 
- * @export
- * @interface GetRuleErrorApiV1SummaryRuleErrorGet200ResponseInnerInner
- */
-export interface GetRuleErrorApiV1SummaryRuleErrorGet200ResponseInnerInner {
-}
-/**
- * 
- * @export
  * @interface HTTPValidationError
  */
 export interface HTTPValidationError {
@@ -412,10 +398,10 @@ export interface UserSummary {
 export interface ValidationError {
     /**
      * 
-     * @type {Array<GetActivityApiV1SummaryActivityGet200ResponseInnerInner>}
+     * @type {Array<ValidationErrorLocInner>}
      * @memberof ValidationError
      */
-    'loc': Array<GetActivityApiV1SummaryActivityGet200ResponseInnerInner>;
+    'loc': Array<ValidationErrorLocInner>;
     /**
      * 
      * @type {string}
@@ -428,6 +414,13 @@ export interface ValidationError {
      * @memberof ValidationError
      */
     'type': string;
+}
+/**
+ * 
+ * @export
+ * @interface ValidationErrorLocInner
+ */
+export interface ValidationErrorLocInner {
 }
 /**
  * 
@@ -611,6 +604,12 @@ export interface WorkflowResponse {
      * @memberof WorkflowResponse
      */
     'progress'?: number | null;
+    /**
+     * 
+     * @type {number}
+     * @memberof WorkflowResponse
+     */
+    'total_jobs': number;
 }
 
 /**
@@ -1849,7 +1848,7 @@ export const SummaryApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async getActivityApiV1SummaryActivityGet(item: GetActivityApiV1SummaryActivityGetItemEnum, startAt?: string | null, endAt?: string | null, limit?: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Array<Array<GetActivityApiV1SummaryActivityGet200ResponseInnerInner>>>> {
+        async getActivityApiV1SummaryActivityGet(item: GetActivityApiV1SummaryActivityGetItemEnum, startAt?: string | null, endAt?: string | null, limit?: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<{ [key: string]: number; }>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.getActivityApiV1SummaryActivityGet(item, startAt, endAt, limit, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['SummaryApi.getActivityApiV1SummaryActivityGet']?.[localVarOperationServerIndex]?.url;
@@ -1879,7 +1878,7 @@ export const SummaryApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async getRuleErrorApiV1SummaryRuleErrorGet(startAt?: string | null, endAt?: string | null, limit?: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Array<Array<GetRuleErrorApiV1SummaryRuleErrorGet200ResponseInnerInner>>>> {
+        async getRuleErrorApiV1SummaryRuleErrorGet(startAt?: string | null, endAt?: string | null, limit?: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<{ [key: string]: { [key: string]: any; }; }>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.getRuleErrorApiV1SummaryRuleErrorGet(startAt, endAt, limit, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['SummaryApi.getRuleErrorApiV1SummaryRuleErrorGet']?.[localVarOperationServerIndex]?.url;
@@ -1942,7 +1941,7 @@ export const SummaryApiFactory = function (configuration?: Configuration, basePa
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getActivityApiV1SummaryActivityGet(item: GetActivityApiV1SummaryActivityGetItemEnum, startAt?: string | null, endAt?: string | null, limit?: number, options?: RawAxiosRequestConfig): AxiosPromise<Array<Array<GetActivityApiV1SummaryActivityGet200ResponseInnerInner>>> {
+        getActivityApiV1SummaryActivityGet(item: GetActivityApiV1SummaryActivityGetItemEnum, startAt?: string | null, endAt?: string | null, limit?: number, options?: RawAxiosRequestConfig): AxiosPromise<{ [key: string]: number; }> {
             return localVarFp.getActivityApiV1SummaryActivityGet(item, startAt, endAt, limit, options).then((request) => request(axios, basePath));
         },
         /**
@@ -1966,7 +1965,7 @@ export const SummaryApiFactory = function (configuration?: Configuration, basePa
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getRuleErrorApiV1SummaryRuleErrorGet(startAt?: string | null, endAt?: string | null, limit?: number, options?: RawAxiosRequestConfig): AxiosPromise<Array<Array<GetRuleErrorApiV1SummaryRuleErrorGet200ResponseInnerInner>>> {
+        getRuleErrorApiV1SummaryRuleErrorGet(startAt?: string | null, endAt?: string | null, limit?: number, options?: RawAxiosRequestConfig): AxiosPromise<{ [key: string]: { [key: string]: any; }; }> {
             return localVarFp.getRuleErrorApiV1SummaryRuleErrorGet(startAt, endAt, limit, options).then((request) => request(axios, basePath));
         },
         /**

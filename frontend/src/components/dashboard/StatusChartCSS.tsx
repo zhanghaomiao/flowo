@@ -14,7 +14,7 @@ interface StatusChartProps {
   loading?: boolean;
 }
 
-export const StatusChart: React.FC<StatusChartProps> = ({
+export const StatusChartCSS: React.FC<StatusChartProps> = ({
   title,
   data,
   loading = false,
@@ -44,30 +44,32 @@ export const StatusChart: React.FC<StatusChartProps> = ({
     let gradientString = "conic-gradient(from 0deg, ";
     let currentAngle = 0;
 
-    // Success (green)
+    // Success
     if (data.success > 0) {
       const endAngle = currentAngle + percentages.success * 3.6; // Convert percentage to degrees
       gradientString += `#37a460 ${currentAngle}deg ${endAngle}deg, `;
       currentAngle = endAngle;
     }
 
-    // Running (light green)
+    // Running
     if (data.running > 0) {
       const endAngle = currentAngle + percentages.running * 3.6;
       gradientString += `#85d2ab ${currentAngle}deg ${endAngle}deg, `;
       currentAngle = endAngle;
     }
 
-    // Error (red)
+    // Error
     if (data.error > 0) {
       const endAngle = currentAngle + percentages.error * 3.6;
       gradientString += `#f5222d ${currentAngle}deg ${endAngle}deg, `;
       currentAngle = endAngle;
     }
 
+    // Waiting (remaining)
     if (waiting > 0) {
       gradientString += `#d9d9d9 ${currentAngle}deg 360deg`;
     } else {
+      // Remove trailing comma if no waiting
       gradientString = gradientString.slice(0, -2);
     }
 
@@ -101,7 +103,6 @@ export const StatusChart: React.FC<StatusChartProps> = ({
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                transition: "all 0.3s ease",
               }}
             >
               {/* Inner circle to create donut effect */}

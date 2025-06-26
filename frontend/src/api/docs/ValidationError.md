@@ -5,7 +5,7 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**loc** | [**Array&lt;GetActivityApiV1SummaryActivityGet200ResponseInnerInner&gt;**](GetActivityApiV1SummaryActivityGet200ResponseInnerInner.md) |  | [default to undefined]
+**loc** | [**Array&lt;ValidationErrorLocInner&gt;**](ValidationErrorLocInner.md) |  | [default to undefined]
 **msg** | **string** |  | [default to undefined]
 **type** | **string** |  | [default to undefined]
 
