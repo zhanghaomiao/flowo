@@ -1,6 +1,6 @@
 import type { NodeProps } from "@xyflow/react";
 import { Handle, Position } from "@xyflow/react";
-import { Space, Tooltip } from "antd";
+import { Tooltip } from "antd";
 import React, { memo } from "react";
 
 // Multi-progress bar component for showing job status breakdown
@@ -65,7 +65,7 @@ const MultiProgressBar = ({
 };
 
 // Define interface for the custom node data
-interface ProgressNodeData {
+export interface ProgressNodeData {
   rule: string;
   value: string;
   statusInfo?: {
@@ -153,7 +153,7 @@ const ProgressNode: React.FC<NodeProps> = ({ data }) => {
               maxWidth: "130px",
             }}
           >
-            {rule}  ({statusInfo?.total})
+            {rule} ({statusInfo?.total})
           </div>
         </Tooltip>
 

@@ -1828,6 +1828,36 @@ export const SummaryApiAxiosParamCreator = function (configuration?: Configurati
                 options: localVarRequestOptions,
             };
         },
+        /**
+         * 
+         * @summary Post Pruning
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        postPruningApiV1SummaryPruningPost: async (options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            const localVarPath = `/api/v1/summary/pruning`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
     }
 };
 
@@ -1863,7 +1893,7 @@ export const SummaryApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async getRuleDurationApiV1SummaryRuleDurationGet(startAt?: string | null, endAt?: string | null, limit?: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<{ [key: string]: Array<number>; }>> {
+        async getRuleDurationApiV1SummaryRuleDurationGet(startAt?: string | null, endAt?: string | null, limit?: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<{ [key: string]: { [key: string]: number; }; }>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.getRuleDurationApiV1SummaryRuleDurationGet(startAt, endAt, limit, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['SummaryApi.getRuleDurationApiV1SummaryRuleDurationGet']?.[localVarOperationServerIndex]?.url;
@@ -1921,6 +1951,18 @@ export const SummaryApiFp = function(configuration?: Configuration) {
             const localVarOperationServerBasePath = operationServerMap['SummaryApi.getUserSummaryApiV1SummaryUserGet']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
+        /**
+         * 
+         * @summary Post Pruning
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async postPruningApiV1SummaryPruningPost(options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<{ [key: string]: number; }>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.postPruningApiV1SummaryPruningPost(options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['SummaryApi.postPruningApiV1SummaryPruningPost']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
     }
 };
 
@@ -1953,7 +1995,7 @@ export const SummaryApiFactory = function (configuration?: Configuration, basePa
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getRuleDurationApiV1SummaryRuleDurationGet(startAt?: string | null, endAt?: string | null, limit?: number, options?: RawAxiosRequestConfig): AxiosPromise<{ [key: string]: Array<number>; }> {
+        getRuleDurationApiV1SummaryRuleDurationGet(startAt?: string | null, endAt?: string | null, limit?: number, options?: RawAxiosRequestConfig): AxiosPromise<{ [key: string]: { [key: string]: number; }; }> {
             return localVarFp.getRuleDurationApiV1SummaryRuleDurationGet(startAt, endAt, limit, options).then((request) => request(axios, basePath));
         },
         /**
@@ -1995,6 +2037,15 @@ export const SummaryApiFactory = function (configuration?: Configuration, basePa
          */
         getUserSummaryApiV1SummaryUserGet(options?: RawAxiosRequestConfig): AxiosPromise<UserSummary> {
             return localVarFp.getUserSummaryApiV1SummaryUserGet(options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @summary Post Pruning
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        postPruningApiV1SummaryPruningPost(options?: RawAxiosRequestConfig): AxiosPromise<{ [key: string]: number; }> {
+            return localVarFp.postPruningApiV1SummaryPruningPost(options).then((request) => request(axios, basePath));
         },
     };
 };
@@ -2081,6 +2132,17 @@ export class SummaryApi extends BaseAPI {
      */
     public getUserSummaryApiV1SummaryUserGet(options?: RawAxiosRequestConfig) {
         return SummaryApiFp(this.configuration).getUserSummaryApiV1SummaryUserGet(options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @summary Post Pruning
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof SummaryApi
+     */
+    public postPruningApiV1SummaryPruningPost(options?: RawAxiosRequestConfig) {
+        return SummaryApiFp(this.configuration).postPruningApiV1SummaryPruningPost(options).then((request) => request(this.axios, this.basePath));
     }
 }
 

@@ -96,7 +96,7 @@ interface WorkflowTimelineProps {
       startTime: string;
       endTime: string;
       status: string;
-    } | null
+    } | null,
   ) => void;
 }
 

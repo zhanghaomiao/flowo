@@ -26,7 +26,7 @@ export const Route = createFileRoute("/workflow/$workflowId")({
 
 function WorkflowDetail() {
   const { workflowId } = Route.useParams();
-  
+
   // Use simplified state management
   const {
     selectedRule,

@@ -11,7 +11,7 @@ function Index() {
   return (
     <SSEManagerProvider>
       <div style={{ width: "90%", margin: "0 auto" }}>
-        <WorkflowTable limit={20} />
+        <WorkflowTable />
       </div>
     </SSEManagerProvider>
   );

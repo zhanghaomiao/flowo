@@ -3,7 +3,7 @@ import {
   InfoCircleOutlined,
   ReloadOutlined,
 } from "@ant-design/icons";
-import { Alert, Button, Table, Tag, Tooltip } from "antd";
+import { Button, Table, Tag, Tooltip } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import React, { useEffect, useState } from "react";
 
@@ -94,16 +94,7 @@ const JobTable: React.FC<JobTableProps> = ({
 
   const { data: jobs, isLoading, error, refetch } = result;
 
-  const { sseStatus, isSSEConnected, sseError, sseRetryCount, reconnectSSE } =
-    needsSSE
-      ? sseResult
-      : {
-          sseStatus: "disconnected" as const,
-          isSSEConnected: false,
-          sseError: null,
-          sseRetryCount: 0,
-          reconnectSSE: () => {},
-        };
+  const { isSSEConnected } = needsSSE ? sseResult : { isSSEConnected: false };
 
   const columns: ColumnsType<JobResponse> = [
     {
@@ -336,8 +327,6 @@ const JobTable: React.FC<JobTableProps> = ({
           {needsSSE ? (
             <LiveUpdatesIndicator
               isConnected={isSSEConnected}
-              retryCount={sseRetryCount}
-              onReconnect={reconnectSSE}
               showReconnectButton={false}
             />
           ) : (
@@ -355,16 +344,6 @@ const JobTable: React.FC<JobTableProps> = ({
           )}
         </div>
         <div style={{ display: "flex", alignItems: "center" }}>
-          {needsSSE && !isSSEConnected && (
-            <Button
-              size="small"
-              type="link"
-              onClick={reconnectSSE}
-              style={{ padding: "4px 8px", fontSize: "12px" }}
-            >
-              Reconnect SSE
-            </Button>
-          )}
           {showRefreshButton && (
             <Button
               icon={<ReloadOutlined />}
@@ -376,22 +355,6 @@ const JobTable: React.FC<JobTableProps> = ({
           )}
         </div>
       </div>
-
-      {needsSSE && sseError && sseStatus === "error" && (
-        <Alert
-          message="Live Updates Connection Issue"
-          description={`Unable to connect to live updates: ${sseError}`}
-          type="warning"
-          style={{ marginBottom: "16px" }}
-          showIcon
-          action={
-            <Button size="small" onClick={reconnectSSE}>
-              Retry Connection
-            </Button>
-          }
-          closable
-        />
-      )}
 
       {error && (
         <div
@@ -456,10 +419,12 @@ const JobTable: React.FC<JobTableProps> = ({
         title={`Detail -  Job ${jobDetailModal.jobId}`}
         visible={jobDetailModal.visible}
         onClose={() => setJobDetailModal({ visible: false, jobId: 0 })}
-        fileContent={JSON.stringify(jobDetailData, null, 2)}
+        fileContent={JSON.stringify(jobDetailData, null, 2) || ""}
+        fileFormat="json"
       />
 
       <FilesViewer
+        key={`jobLogs`}
         visible={jobLogsModal.visible}
         onClose={() => setJobLogsModal({ visible: false, jobId: 0 })}
         fileContent={jobLogsData ?? {}}

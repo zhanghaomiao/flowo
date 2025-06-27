@@ -10,6 +10,7 @@ All URIs are relative to *http://localhost*
 |[**getStatusApiV1SummaryStatusGet**](#getstatusapiv1summarystatusget) | **GET** /api/v1/summary/status | Get Status|
 |[**getSystemResourcesApiV1SummaryResourcesGet**](#getsystemresourcesapiv1summaryresourcesget) | **GET** /api/v1/summary/resources | Get System Resources|
 |[**getUserSummaryApiV1SummaryUserGet**](#getusersummaryapiv1summaryuserget) | **GET** /api/v1/summary/user | Get User Summary|
+|[**postPruningApiV1SummaryPruningPost**](#postpruningapiv1summarypruningpost) | **POST** /api/v1/summary/pruning | Post Pruning|
 
 # **getActivityApiV1SummaryActivityGet**
 > { [key: string]: number; } getActivityApiV1SummaryActivityGet()
@@ -72,7 +73,7 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **getRuleDurationApiV1SummaryRuleDurationGet**
-> { [key: string]: Array<number>; } getRuleDurationApiV1SummaryRuleDurationGet()
+> { [key: string]: { [key: string]: number; }; } getRuleDurationApiV1SummaryRuleDurationGet()
 
 
 ### Example
@@ -108,7 +109,7 @@ const { status, data } = await apiInstance.getRuleDurationApiV1SummaryRuleDurati
 
 ### Return type
 
-**{ [key: string]: Array<number>; }**
+**{ [key: string]: { [key: string]: number; }; }**
 
 ### Authorization
 
@@ -304,6 +305,49 @@ This endpoint does not have any parameters.
 ### Return type
 
 **UserSummary**
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+ - **Content-Type**: Not defined
+ - **Accept**: application/json
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+|**200** | Successful Response |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **postPruningApiV1SummaryPruningPost**
+> { [key: string]: number; } postPruningApiV1SummaryPruningPost()
+
+
+### Example
+
+```typescript
+import {
+    SummaryApi,
+    Configuration
+} from './api';
+
+const configuration = new Configuration();
+const apiInstance = new SummaryApi(configuration);
+
+const { status, data } = await apiInstance.postPruningApiV1SummaryPruningPost();
+```
+
+### Parameters
+This endpoint does not have any parameters.
+
+
+### Return type
+
+**{ [key: string]: number; }**
 
 ### Authorization
 

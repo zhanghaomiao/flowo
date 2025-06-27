@@ -1,6 +1,6 @@
 import "@xyflow/react/dist/style.css";
 
-import type { Node } from "@xyflow/react";
+import type { Node, NodeProps } from "@xyflow/react";
 import {
   Background,
   ConnectionMode,
@@ -14,43 +14,41 @@ import {
   useReactFlow,
 } from "@xyflow/react";
 import React, {
+  createContext,
   useCallback,
+  useContext,
   useEffect,
+  useMemo,
   useRef,
   useState,
-  useMemo,
-  createContext,
-  useContext,
 } from "react";
 
-import { useWorkflowGraph } from "./useDag";
-import {
-  getLayoutInfo,
-  type LayoutDirection,
-} from "../../utils/graphLayout";
-import ProgressNode from "./NodeProgressBar";
+import { getLayoutInfo, type LayoutDirection } from "../../utils/graphLayout";
 import DraggableLegendPanel from "./DraggableLegendPanel";
 import LayoutControlPanel from "./LayoutControlPanel";
+import type { ProgressNodeData } from "./NodeProgressBar";
+import ProgressNode from "./NodeProgressBar";
+import { useWorkflowGraph } from "./useDag";
 
 // Create context for styling data
 const StylingContext = createContext<{
-  nodeStyling: Record<string, any>;
+  nodeStyling: Record<string, ProgressNodeData>;
   layoutDirection: LayoutDirection;
 } | null>(null);
 
 // Wrapper component that provides styling context to nodes
-const StyledProgressNode: React.FC<any> = (props) => {
+const StyledProgressNode: React.FC<NodeProps> = (props) => {
   const stylingContext = useContext(StylingContext);
   if (!stylingContext) {
     return <ProgressNode {...props} />;
   }
-  
+
   const ruleName = props.data.rule as string;
   const nodeStyle = stylingContext.nodeStyling[ruleName];
-  
+
   return (
-    <ProgressNode 
-      {...props} 
+    <ProgressNode
+      {...props}
       data={{
         ...props.data,
         ...nodeStyle,
@@ -83,9 +81,16 @@ const WorkflowGraphInner: React.FC<WorkflowGraphProps> = ({
   const [layoutDirection, setLayoutDirection] = useState<LayoutDirection>("TB");
   const [forceLayoutRecalc, setForceLayoutRecalc] = useState(0);
   const isFittingView = useRef(false);
-  
+
   // Use the custom hook for graph data
-  const { nodes: flowNodes, edges: flowEdges, nodeStyling, isLoading, error, ruleStatus } = useWorkflowGraph({
+  const {
+    nodes: flowNodes,
+    edges: flowEdges,
+    nodeStyling,
+    isLoading,
+    error,
+    ruleStatus,
+  } = useWorkflowGraph({
     workflowId,
     layoutDirection,
     selectedRule,
@@ -132,10 +137,13 @@ const WorkflowGraphInner: React.FC<WorkflowGraphProps> = ({
     }
   }, [nodes, reactFlowInstance]);
 
-    const stylingContext = useMemo(() => ({
+  const stylingContext = useMemo(
+    () => ({
       nodeStyling,
       layoutDirection,
-    }), [nodeStyling, layoutDirection]);
+    }),
+    [nodeStyling, layoutDirection],
+  );
 
   const handleNodeClick = useCallback(
     (event: React.MouseEvent, node: Node) => {
@@ -153,25 +161,28 @@ const WorkflowGraphInner: React.FC<WorkflowGraphProps> = ({
   );
 
   // Handle layout direction change
-  const handleLayoutChange = useCallback((value: LayoutDirection) => {
-    if (isFittingView.current) {
-      return;
-    }
-    isFittingView.current = true;
-    setLayoutDirection(value);
-    setForceLayoutRecalc(prev => prev + 1);
-    isLayoutChange.current = true;
-    setTimeout(() => {
-      if (reactFlowInstance) {
-        reactFlowInstance.fitView({ duration: 300 });
+  const handleLayoutChange = useCallback(
+    (value: LayoutDirection) => {
+      if (isFittingView.current) {
+        return;
       }
-      // Reset the flags after fit view is complete
+      isFittingView.current = true;
+      setLayoutDirection(value);
+      setForceLayoutRecalc((prev) => prev + 1);
+      isLayoutChange.current = true;
       setTimeout(() => {
-        isLayoutChange.current = false;
-        isFittingView.current = false;
-      }, 350);
-    }, 150);
-  }, [reactFlowInstance]);
+        if (reactFlowInstance) {
+          reactFlowInstance.fitView({ duration: 300 });
+        }
+        // Reset the flags after fit view is complete
+        setTimeout(() => {
+          isLayoutChange.current = false;
+          isFittingView.current = false;
+        }, 350);
+      }, 150);
+    },
+    [reactFlowInstance],
+  );
 
   // Handle fit view with layout recalculation
   const handleFitView = useCallback(() => {
@@ -181,7 +192,7 @@ const WorkflowGraphInner: React.FC<WorkflowGraphProps> = ({
     }
     isFittingView.current = true;
     isLayoutChange.current = true;
-    setForceLayoutRecalc(prev => prev + 1);
+    setForceLayoutRecalc((prev) => prev + 1);
     setTimeout(() => {
       if (reactFlowInstance) {
         reactFlowInstance.fitView({ duration: 300 });

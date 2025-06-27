@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import {
   GetActivityApiV1SummaryActivityGetItemEnum,
@@ -9,7 +9,7 @@ import { summaryApi } from "../../api/client";
 import { useSSE } from "../../hooks/useSSE";
 
 const DASHBOARD_STALE_TIME = 3000;
-const DASHBOARD_REFETCH_INTERVAL = false;
+const DASHBOARD_REFETCH_INTERVAL = 3000;
 
 // Hook for Running Workflows (running/total)
 export const useRunningWorkflows = () => {
@@ -71,7 +71,7 @@ export const useActivity = (
   end: string | null,
   limit: number,
 ) => {
-  return useQuery<{ [key: string]: number }>({
+  return useQuery<{ [key: string]: number }, Error, Array<[string, number]>>({
     queryKey: ["activity", start, end, limit, type],
     queryFn: async () => {
       const response = await summaryApi.getActivityApiV1SummaryActivityGet(
@@ -82,6 +82,8 @@ export const useActivity = (
       );
       return response.data;
     },
+    select: (data: { [key: string]: number }) =>
+      Object.entries(data).map(([name, count]) => [name, count]),
     staleTime: DASHBOARD_STALE_TIME,
     refetchInterval: DASHBOARD_REFETCH_INTERVAL,
   });
@@ -92,7 +94,11 @@ export const useRuleError = (
   end: string | null,
   limit: number,
 ) => {
-  return useQuery<{ [key: string]: { [key: string]: number } }>({
+  return useQuery<
+    { [key: string]: { [key: string]: number } },
+    Error,
+    Array<{ name: string; total: number; error: number }>
+  >({
     queryKey: ["rule-error", start, end, limit],
     queryFn: async () => {
       const response = await summaryApi.getRuleErrorApiV1SummaryRuleErrorGet(
@@ -101,6 +107,13 @@ export const useRuleError = (
         limit,
       );
       return response.data;
+    },
+    select: (data: { [key: string]: { [key: string]: number } }) => {
+      const result: { name: string; total: number; error: number }[] = [];
+      for (const [name, counts] of Object.entries(data)) {
+        result.push({ name, total: counts.total, error: counts.error });
+      }
+      return result;
     },
     staleTime: DASHBOARD_STALE_TIME,
     refetchInterval: DASHBOARD_REFETCH_INTERVAL,
@@ -112,7 +125,7 @@ export const useRuleDuration = (
   end: string | null,
   limit: number,
 ) => {
-  return useQuery<{ [key: string]: number[] }>({
+  return useQuery<{ [key: string]: { [key: string]: number } }>({
     queryKey: ["rule-duration", start, end, limit],
     queryFn: async () => {
       const response =
@@ -128,10 +141,31 @@ export const useRuleDuration = (
   });
 };
 
+export const useDatabasePruning = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async () => {
+      const response = await summaryApi.postPruningApiV1SummaryPruningPost();
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["rule-duration"] });
+      queryClient.invalidateQueries({ queryKey: ["running-workflows"] });
+      queryClient.invalidateQueries({ queryKey: ["running-jobs"] });
+      queryClient.invalidateQueries({ queryKey: ["rule-error"] });
+      queryClient.invalidateQueries({ queryKey: ["activity"] });
+      queryClient.invalidateQueries({ queryKey: ["rule-duration"] });
+    },
+    onError: () => {
+      console.error("Database pruning failed");
+    },
+  });
+};
+
 // Hook for SSE Connection Status
 export const useSSEStatus = () => {
   const { data, status, error, isConnected } = useSSE({
-    filters: "workflow,job",
+    filters: "workflow,job,rule",
   });
 
   return {
@@ -154,19 +188,21 @@ export const useDashboardMetrics = () => {
   const userStats = useRunningUsers();
   const systemStats = useSystemResources();
   const sseStatus = useSSEStatus();
+  const tagActivity = useActivity(
+    GetActivityApiV1SummaryActivityGetItemEnum.Tag,
+    null,
+    null,
+    10,
+  );
+  const ruleActivity = useActivity(
+    GetActivityApiV1SummaryActivityGetItemEnum.Rule,
+    null,
+    null,
+    10,
+  );
 
-  const isLoading =
-    workflowStats.isLoading ||
-    jobStats.isLoading ||
-    userStats.isLoading ||
-    systemStats.isLoading;
-
-  const error =
-    workflowStats.error ||
-    jobStats.error ||
-    userStats.error ||
-    systemStats.error ||
-    sseStatus.error;
+  const ruleError = useRuleError(null, null, 10);
+  const ruleDuration = useRuleDuration(null, null, 10);
 
   return {
     // Running Workflows (running/total)
@@ -178,6 +214,8 @@ export const useDashboardMetrics = () => {
             (workflowStats.data.running / workflowStats.data.total) * 100,
           )
         : 0,
+      loading: workflowStats.isLoading,
+      error: workflowStats.error,
     },
 
     // Running Jobs (running/total)
@@ -187,6 +225,8 @@ export const useDashboardMetrics = () => {
       percentage: jobStats.data?.total
         ? Math.round((jobStats.data.running / jobStats.data.total) * 100)
         : 0,
+      loading: jobStats.isLoading,
+      error: jobStats.error,
     },
 
     // Complete Workflow Status for Charts
@@ -195,6 +235,8 @@ export const useDashboardMetrics = () => {
       running: workflowStats.data?.running || 0,
       error: workflowStats.data?.error || 0,
       total: workflowStats.data?.total || 0,
+      loading: workflowStats.isLoading,
+      requestError: workflowStats.error,
     },
 
     // Complete Job Status for Charts
@@ -203,6 +245,8 @@ export const useDashboardMetrics = () => {
       running: jobStats.data?.running || 0,
       error: jobStats.data?.error || 0,
       total: jobStats.data?.total || 0,
+      loading: jobStats.isLoading,
+      requestError: jobStats.error,
     },
 
     // Running Users (running/total)
@@ -212,18 +256,15 @@ export const useDashboardMetrics = () => {
       percentage: userStats.data?.total
         ? Math.round((userStats.data.running / userStats.data.total) * 100)
         : 0,
+      loading: userStats.isLoading,
+      error: userStats.error,
     },
 
     // CPU Usage (used/total)
     cpuUsage: {
       used:
-        systemStats.data?.cpu_total_cores && systemStats.data?.cpu_idle_cores
-          ? Math.round(
-              (systemStats.data.cpu_total_cores -
-                systemStats.data.cpu_idle_cores) *
-                100,
-            ) / 100
-          : 0,
+        (systemStats.data?.cpu_total_cores || 0) -
+        (systemStats.data?.cpu_idle_cores || 0),
       total: systemStats.data?.cpu_total_cores || 0,
       idle: systemStats.data?.cpu_idle_cores || 0,
       percentage:
@@ -235,6 +276,8 @@ export const useDashboardMetrics = () => {
                 100,
             )
           : 0,
+      loading: systemStats.isLoading,
+      error: systemStats.error,
     },
 
     // Memory Usage (used/total)
@@ -258,18 +301,38 @@ export const useDashboardMetrics = () => {
                 100,
             )
           : 0,
+      loading: systemStats.isLoading,
+      error: systemStats.error,
     },
 
-    // SSE Status
     sseStatus: {
       status: sseStatus.connectionStatus,
       isConnected: sseStatus.isConnected,
       connectionState: sseStatus.status,
       lastMessage: sseStatus.lastMessage,
+      error: sseStatus.error,
     },
 
-    // Loading and error states
-    isLoading,
-    error,
+    tagActivity: {
+      data: tagActivity.data || [],
+      loading: tagActivity.isLoading,
+      error: tagActivity.error,
+    },
+
+    ruleActivity: {
+      data: ruleActivity.data || [],
+      loading: ruleActivity.isLoading,
+      error: ruleActivity.error,
+    },
+    ruleError: {
+      data: ruleError.data || {},
+      loading: ruleError.isLoading,
+      error: ruleError.error,
+    },
+    ruleDuration: {
+      data: ruleDuration.data || {},
+      loading: ruleDuration.isLoading,
+      error: ruleDuration.error,
+    },
   };
 };

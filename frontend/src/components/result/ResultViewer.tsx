@@ -55,16 +55,11 @@ export const ResultViewer: React.FC<ResultViewerProps> = ({ workflowId }) => {
     useState<SelectedNodeData | null>(null);
   const [isFullscreenOpen, setIsFullscreenOpen] = useState<boolean>(false);
 
-  // Track which tree nodes have been loaded (for Tree component)
   const [loadedKeys, setLoadedKeys] = useState<React.Key[]>([]);
-
-  // Local tree state to manage the complete tree data
   const [treeData, setTreeData] = useState<AntdTreeNode[]>([]);
-
   const [treeHeight, setTreeHeight] = useState<number>(400);
   const treeContainerRef = useRef<HTMLDivElement>(null);
 
-  // Get workflow detail to get the directory
   const {
     data: workflowDetail,
     isLoading: isWorkflowLoading,
@@ -72,7 +67,6 @@ export const ResultViewer: React.FC<ResultViewerProps> = ({ workflowId }) => {
     refetch: refetchWorkflow,
   } = useWorkflowDetail(workflowId);
 
-  // Get initial directory tree from Caddy server (only root level)
   const {
     data: outputsTree,
     isLoading: isTreeLoading,

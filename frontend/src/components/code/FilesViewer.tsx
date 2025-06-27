@@ -49,14 +49,12 @@ const FilesViewer: React.FC<FilesViewerProps> = ({
 
   const filePaths = Object.keys(fileContent);
 
-  // Set the first file as selected by default when modal opens
   useEffect(() => {
     if (visible && filePaths.length > 0 && !selectedFile) {
       setSelectedFile(filePaths[0]);
     }
   }, [visible, filePaths, selectedFile]);
 
-  // Reset selected file when modal closes
   useEffect(() => {
     if (!visible) {
       setSelectedFile(null);
@@ -109,7 +107,7 @@ const FilesViewer: React.FC<FilesViewerProps> = ({
       footer={null}
       width={1000}
       closeIcon={<CloseOutlined />}
-      styles={{ body: { height: "70vh", padding: "2px", top: 10 } }}
+      styles={{ body: { height: "75vh", padding: "2px", top: 10 } }}
     >
       <div style={{ height: "100%", display: "flex", flexDirection: "column" }}>
         <span style={{ fontSize: "16px", marginBottom: "10px" }}>
@@ -162,16 +160,7 @@ const FilesViewer: React.FC<FilesViewerProps> = ({
             ))}
           </Row>
         )}
-        <div
-          style={{
-            border: "1px solid #f0f0f0",
-            borderRadius: "6px",
-            backgroundColor: "#fafafa",
-            height: "100%",
-          }}
-        >
-          {renderFileContent()}
-        </div>
+        {renderFileContent()}
       </div>
     </Modal>
   );

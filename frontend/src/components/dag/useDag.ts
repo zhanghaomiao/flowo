@@ -1,7 +1,8 @@
-import { useMemo } from "react";
 import type { Edge, Node } from "@xyflow/react";
-import { Position, MarkerType } from "@xyflow/react";
+import { MarkerType, Position } from "@xyflow/react";
+import { useMemo } from "react";
 
+import type { RuleStatusResponse } from "../../api/api";
 import { useWorkflowRuleGraph } from "../../hooks/useQueries";
 import { useRuleStatusWithSSE } from "../../hooks/useQueriesWithSSE";
 import {
@@ -62,7 +63,7 @@ export const useWorkflowGraph = ({
   // Memoize the rule status to prevent unnecessary re-renders
   const memoizedRuleStatus = useMemo(
     () => ruleStatus,
-    [ruleStatus ? JSON.stringify(ruleStatus) : null]
+    [ruleStatus ? JSON.stringify(ruleStatus) : null],
   );
 
   // Memoize graphData to prevent unnecessary layout recalculations
@@ -125,7 +126,7 @@ export const useWorkflowGraph = ({
         direction: layoutDirection,
         nodeWidth: NODE_WIDTH,
         nodeHeight: NODE_HEIGHT,
-      }
+      },
     );
 
     return {
@@ -147,7 +148,7 @@ export const useWorkflowGraph = ({
     const styling: Record<
       string,
       {
-        statusInfo: any;
+        statusInfo: RuleStatusResponse | null;
         isSelected: boolean;
         isHighlighted: boolean;
         isUnscheduled: boolean;

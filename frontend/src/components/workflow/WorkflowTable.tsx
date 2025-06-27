@@ -3,7 +3,6 @@ import {
   FileTextOutlined,
   InfoCircleOutlined,
   LinkOutlined,
-  ReloadOutlined,
   SettingOutlined,
 } from "@ant-design/icons";
 import Icon from "@ant-design/icons";
@@ -45,15 +44,7 @@ import LiveUpdatesIndicator from "../LiveUpdatesIndicator";
 import WorkflowTag from "../tag/WorkflowTag";
 import WorkflowSearch from "./WorkflowSearch";
 
-interface WorkflowTableProps {
-  limit?: number;
-  showRefreshButton?: boolean;
-}
-
-const WorkflowTable: React.FC<WorkflowTableProps> = ({
-  limit = 20,
-  showRefreshButton = true,
-}) => {
+const WorkflowTable = () => {
   const deleteWorkflowMutation = useDeleteWorkflow();
   const [snakefileModal, setSnakefileModal] = useState<{
     visible: boolean;
@@ -91,7 +82,7 @@ const WorkflowTable: React.FC<WorkflowTableProps> = ({
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(limit);
+  const [pageSize, setPageSize] = useState(10);
   const [user, setUser] = useState<string | null>(null);
   const [status, setStatus] = useState<Status | null>(null);
   const [messageApi, contextHolder] = message.useMessage();
@@ -152,12 +143,8 @@ const WorkflowTable: React.FC<WorkflowTableProps> = ({
   const {
     data: workflowsData,
     isLoading,
-    error,
-    refetch,
     sseError,
     isSSEConnected,
-    sseRetryCount,
-    reconnectSSE,
   } = useWorkflowsWithSSE(queryParams);
 
   const workflows = workflowsData?.workflows ?? [];
@@ -574,8 +561,7 @@ const WorkflowTable: React.FC<WorkflowTableProps> = ({
           </h3>
           <LiveUpdatesIndicator
             isConnected={isSSEConnected}
-            retryCount={sseRetryCount}
-            onReconnect={reconnectSSE}
+            retryCount={0}
             showReconnectButton={false}
           />
           <WorkflowSearch
@@ -586,44 +572,7 @@ const WorkflowTable: React.FC<WorkflowTableProps> = ({
             name={searchName}
           />
         </div>
-        <Space>
-          {!isSSEConnected && (
-            <Button
-              type="link"
-              size="small"
-              onClick={reconnectSSE}
-              style={{ padding: "4px 8px" }}
-            >
-              Reconnect SSE
-            </Button>
-          )}
-          {showRefreshButton && (
-            <Button
-              icon={<ReloadOutlined />}
-              onClick={() => refetch()}
-              loading={isLoading}
-            >
-              Refresh
-            </Button>
-          )}
-        </Space>
       </div>
-
-      {error && (
-        <div
-          style={{
-            color: "#ff4d4f",
-            backgroundColor: "#fff2f0",
-            border: "1px solid #ffccc7",
-            borderRadius: "6px",
-            padding: "8px 12px",
-            marginBottom: "16px",
-          }}
-        >
-          Error loading workflows:{" "}
-          {error instanceof Error ? error.message : "Unknown error"}
-        </div>
-      )}
 
       {sseError && (
         <div
@@ -646,7 +595,6 @@ const WorkflowTable: React.FC<WorkflowTableProps> = ({
         rowKey="id"
         loading={isLoading}
         onChange={(pagination, filters) => {
-          // Handle filter changes
           if (filters.user !== undefined) {
             const userFilter = filters.user;
             setUser(
@@ -715,17 +663,6 @@ const WorkflowTable: React.FC<WorkflowTableProps> = ({
       />
 
       <FileViewer
-        key={`detail-${workflowDetailModal.workflowId}`}
-        title={`Detail - Workflow ${workflowDetailModal.workflowId}`}
-        visible={workflowDetailModal.visible}
-        onClose={() =>
-          setWorkflowDetailModal({ visible: false, workflowId: "" })
-        }
-        fileContent={JSON.stringify(workflowDetailData, null, 2) || ""}
-        fileFormat="json"
-      />
-
-      <FileViewer
         key={`log-${logModal.workflowId}`}
         title={`Log - Workflow ${logModal.workflowId}`}
         visible={logModal.visible}
@@ -740,32 +677,16 @@ const WorkflowTable: React.FC<WorkflowTableProps> = ({
         fileFormat="log"
       />
 
-      {/* Conditionally render LogViewer or LiveLogViewer based on workflow status */}
-      {/* {logModal.workflowStatus === "RUNNING" ? (
-        <LiveLogViewer
-          visible={logModal.visible}
-          onClose={() =>
-            setLogModal({
-              visible: false,
-              workflowId: "",
-              workflowStatus: "SUCCESS",
-            })
-          }
-          workflowId={logModal.workflowId}
-        />
-      ) : (
-        <LogViewer
-          visible={logModal.visible}
-          onClose={() =>
-            setLogModal({
-              visible: false,
-              workflowId: "",
-              workflowStatus: "SUCCESS",
-            })
-          }
-          workflowId={logModal.workflowId}
-        />
-      )} */}
+      <FileViewer
+        key={`detail-${workflowDetailModal.workflowId}`}
+        title={`Detail - Workflow ${workflowDetailModal.workflowId}`}
+        visible={workflowDetailModal.visible}
+        onClose={() =>
+          setWorkflowDetailModal({ visible: false, workflowId: "" })
+        }
+        fileContent={JSON.stringify(workflowDetailData, null, 2) || ""}
+        fileFormat="json"
+      />
     </div>
   );
 };

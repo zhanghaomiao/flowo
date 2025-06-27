@@ -2,7 +2,7 @@ import { ClearOutlined, DownOutlined, RightOutlined } from "@ant-design/icons";
 import { Button, Card, Radio, Space, Tooltip } from "antd";
 import React from "react";
 
-import { getLayoutInfo, type LayoutDirection } from "../../utils/graphLayout";
+import { type LayoutDirection } from "../../utils/graphLayout";
 
 interface LayoutControlPanelProps {
   layoutDirection: LayoutDirection;
@@ -27,9 +27,7 @@ const LayoutControlPanel: React.FC<LayoutControlPanelProps> = ({
     >
       <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
         <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-          <span style={{ fontSize: "12px", fontWeight: "500" }}>
-            Layout:
-          </span>
+          <span style={{ fontSize: "12px", fontWeight: "500" }}>Layout:</span>
           <Radio.Group
             value={layoutDirection}
             onChange={(e) => onLayoutChange(e.target.value)}
@@ -99,4 +97,4 @@ const LayoutControlPanel: React.FC<LayoutControlPanelProps> = ({
   );
 };
 
-export default LayoutControlPanel; 
+export default LayoutControlPanel;

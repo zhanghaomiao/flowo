@@ -102,4 +102,4 @@ const DraggableLegendPanel: React.FC = () => {
   );
 };
 
-export default DraggableLegendPanel; 
+export default DraggableLegendPanel;

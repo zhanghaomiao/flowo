@@ -14,34 +14,39 @@ export const useWorkflowState = () => {
   });
 
   const setSelectedRule = useCallback((rule: string | null) => {
-    setState(prev => ({ ...prev, selectedRule: rule }));
+    setState((prev) => ({ ...prev, selectedRule: rule }));
   }, []);
 
   const setHighlightedRule = useCallback((rule: string | null) => {
-    setState(prev => ({ ...prev, highlightedRule: rule }));
+    setState((prev) => ({ ...prev, highlightedRule: rule }));
   }, []);
 
   const setActiveTab = useCallback((tab: string) => {
-    setState(prev => ({ ...prev, activeTab: tab }));
+    setState((prev) => ({ ...prev, activeTab: tab }));
   }, []);
 
   const clearRuleFilter = useCallback(() => {
-    setState(prev => ({ ...prev, selectedRule: null }));
+    setState((prev) => ({ ...prev, selectedRule: null }));
   }, []);
 
-  const handleJobSelect = useCallback((jobInfo: {
-    jobId: string;
-    ruleName: string;
-    startTime: string;
-    endTime: string;
-    status: string;
-  } | null) => {
-    if (jobInfo) {
-      setState(prev => ({ ...prev, highlightedRule: jobInfo.ruleName }));
-    } else {
-      setState(prev => ({ ...prev, highlightedRule: null }));
-    }
-  }, []);
+  const handleJobSelect = useCallback(
+    (
+      jobInfo: {
+        jobId: string;
+        ruleName: string;
+        startTime: string;
+        endTime: string;
+        status: string;
+      } | null,
+    ) => {
+      if (jobInfo) {
+        setState((prev) => ({ ...prev, highlightedRule: jobInfo.ruleName }));
+      } else {
+        setState((prev) => ({ ...prev, highlightedRule: null }));
+      }
+    },
+    [],
+  );
 
   return {
     ...state,
@@ -51,4 +56,4 @@ export const useWorkflowState = () => {
     clearRuleFilter,
     handleJobSelect,
   };
-}; 
+};
