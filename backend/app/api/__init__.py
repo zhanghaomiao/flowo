@@ -1,15 +1,9 @@
 from fastapi import APIRouter
 
-from app.api.endpoints import (
-    jobs,
-    logs,
-    outputs,
-    sse,
-    utils,
-    workflows,
-)
+from app.api.endpoints import jobs, logs, outputs, sse, utils, workflows, summary
 
 api_router = APIRouter()
+api_router.include_router(summary.router, prefix="/summary", tags=["summary"])
 api_router.include_router(workflows.router, prefix="/workflows", tags=["workflow"])
 api_router.include_router(jobs.router, prefix="/jobs", tags=["jobs"])
 api_router.include_router(outputs.router, prefix="/outputs", tags=["outputs"])

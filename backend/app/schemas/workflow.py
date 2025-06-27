@@ -12,14 +12,9 @@ class WorkflowResponse(BaseModel):
     started_at: datetime | None = None
     end_time: datetime | None = None
     status: str
-    # command_line: Optional[str] = None
-    # dryrun: bool
-    # run_info: Optional[Dict[str, int]] = None
     user: str | None = None
     name: str | None = None
     configfiles: bool
-    # directory: Optional[str] = None
-    # logfile: Optional[str] = None
     tags: list[str] | None = None
     progress: float | None = None
 
@@ -30,9 +25,9 @@ class WorkflowListResponse(BaseModel):
     """Schema for workflow list response"""
 
     workflows: list[WorkflowResponse]
-    total: int
-    limit: int
-    offset: int
+    total: int | None
+    limit: int | None
+    offset: int | None
 
 
 class WorkflowDetialResponse(BaseModel):
@@ -50,6 +45,7 @@ class WorkflowDetialResponse(BaseModel):
     snakefile: str | None
     directory: str | None = None
     configfiles: list[str] | None = None
+    flowo_directory: str | None = None
 
 
 class RuleStatusResponse(BaseModel):

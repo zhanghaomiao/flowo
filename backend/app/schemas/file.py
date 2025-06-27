@@ -1,11 +1,10 @@
-
 from pydantic import BaseModel, ConfigDict
 
 
 class FileResponse(BaseModel):
     input: list[str]
-    output: list[str] = None
-    log: list[str] = None
+    output: list[str] | None = None
+    log: list[str] | None = None
 
     model_config = ConfigDict(from_attributes=True)
 

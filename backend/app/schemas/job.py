@@ -8,11 +8,11 @@ from pydantic import BaseModel, ConfigDict
 class JobResponse(BaseModel):
     """Schema for job response"""
 
-    id: int = None
-    rule_id: int = None
-    rule_name: str = None
-    workflow_id: uuid.UUID = None
-    status: str = None
+    id: int | None = None
+    rule_id: int | None = None
+    rule_name: str | None = None
+    workflow_id: uuid.UUID | None = None
+    status: str | None = None
     started_at: datetime | None = None
     end_time: datetime | None = None
     threads: int | None = None
@@ -37,8 +37,8 @@ class JobListResponse(BaseModel):
 
 class JobDetailResponse(BaseModel):
     rule_name: str
-    workflow_id: uuid.UUID = None
-    status: str = None
+    workflow_id: uuid.UUID | None = None
+    status: str | None = None
     started_at: datetime | None = None
     end_time: datetime | None = None
     message: str | None = None
@@ -47,6 +47,6 @@ class JobDetailResponse(BaseModel):
     reason: str | None = None
     resources: dict[str, Any] | None = None
     directory: str | None = None
-    input: list[str] = None
+    input: list[str] | None = None
     output: list[str]
-    log: list[str] = None
+    log: list[str] | None = None
