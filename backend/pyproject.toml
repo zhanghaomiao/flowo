@@ -19,6 +19,7 @@ dependencies = [
     "alembic>=1.16.1",
     "fastapi[standard]>=0.115.12",
     "anytree>=2.13.0",
+    "psutil>=7.0.0",
 ]
 
 [project.optional-dependencies]
