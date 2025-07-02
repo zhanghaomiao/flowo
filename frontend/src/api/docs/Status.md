@@ -3,11 +3,11 @@
 
 ## Enum
 
+* `Error` (value: `'ERROR'`)
+
 * `Running` (value: `'RUNNING'`)
 
 * `Success` (value: `'SUCCESS'`)
-
-* `Error` (value: `'ERROR'`)
 
 * `Waiting` (value: `'WAITING'`)
 

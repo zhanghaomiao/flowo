@@ -3,22 +3,19 @@ import {
   InfoCircleOutlined,
   ReloadOutlined,
 } from "@ant-design/icons";
-import { Alert, Button, Table, Tag, Tooltip } from "antd";
+import { Button, Table, Tag, Tooltip } from "antd";
 import type { ColumnsType } from "antd/es/table";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 
 import type { Status } from "../../api/api";
 import type { JobResponse } from "../../api/client";
 import { useWorkflowJobs } from "../../hooks/useQueries";
 import { useJobDetail, useJobLogs } from "../../hooks/useQueries";
 import { useWorkflowJobsWithSSE } from "../../hooks/useQueriesWithSSE";
-import {
-  formatDateCompact,
-  formatDuration,
-  getStatusColor,
-} from "../../utils/formatters";
+import { formatDateCompact, getStatusColor } from "../../utils/formatters";
 import FilesViewer from "../code/FilesViewer";
 import FileViewer from "../code/FileViewer";
+import { DurationCell } from "../common/common";
 import LiveUpdatesIndicator from "../LiveUpdatesIndicator";
 
 interface JobTableProps {
@@ -53,6 +50,12 @@ const JobTable: React.FC<JobTableProps> = ({
   });
 
   const offset = (currentPage - 1) * pageSize;
+
+  // Reset pagination when ruleName changes
+  useEffect(() => {
+    setCurrentPage(1);
+    setPageSize(20);
+  }, [ruleName]);
 
   const needsSSE = workflowStatus === "RUNNING";
 
@@ -91,16 +94,7 @@ const JobTable: React.FC<JobTableProps> = ({
 
   const { data: jobs, isLoading, error, refetch } = result;
 
-  const { sseStatus, isSSEConnected, sseError, sseRetryCount, reconnectSSE } =
-    needsSSE
-      ? sseResult
-      : {
-          sseStatus: "disconnected" as const,
-          isSSEConnected: false,
-          sseError: null,
-          sseRetryCount: 0,
-          reconnectSSE: () => {},
-        };
+  const { isSSEConnected } = needsSSE ? sseResult : { isSSEConnected: false };
 
   const columns: ColumnsType<JobResponse> = [
     {
@@ -164,18 +158,7 @@ const JobTable: React.FC<JobTableProps> = ({
       dataIndex: "duration",
       key: "duration",
       width: 40,
-      render: (_, record) => {
-        if (record.end_time && record.started_at) {
-          let endTime = record.end_time;
-          if (record.status === "running") {
-            endTime = new Date().toISOString();
-          }
-          const duration =
-            new Date(endTime).getTime() - new Date(record.started_at).getTime();
-          return formatDuration(duration);
-        }
-        return "-";
-      },
+      render: (_, record) => <DurationCell record={record} />,
     },
     {
       title: "Threads",
@@ -344,8 +327,6 @@ const JobTable: React.FC<JobTableProps> = ({
           {needsSSE ? (
             <LiveUpdatesIndicator
               isConnected={isSSEConnected}
-              retryCount={sseRetryCount}
-              onReconnect={reconnectSSE}
               showReconnectButton={false}
             />
           ) : (
@@ -363,16 +344,6 @@ const JobTable: React.FC<JobTableProps> = ({
           )}
         </div>
         <div style={{ display: "flex", alignItems: "center" }}>
-          {needsSSE && !isSSEConnected && (
-            <Button
-              size="small"
-              type="link"
-              onClick={reconnectSSE}
-              style={{ padding: "4px 8px", fontSize: "12px" }}
-            >
-              Reconnect SSE
-            </Button>
-          )}
           {showRefreshButton && (
             <Button
               icon={<ReloadOutlined />}
@@ -384,22 +355,6 @@ const JobTable: React.FC<JobTableProps> = ({
           )}
         </div>
       </div>
-
-      {needsSSE && sseError && sseStatus === "error" && (
-        <Alert
-          message="Live Updates Connection Issue"
-          description={`Unable to connect to live updates: ${sseError}`}
-          type="warning"
-          style={{ marginBottom: "16px" }}
-          showIcon
-          action={
-            <Button size="small" onClick={reconnectSSE}>
-              Retry Connection
-            </Button>
-          }
-          closable
-        />
-      )}
 
       {error && (
         <div
@@ -420,13 +375,7 @@ const JobTable: React.FC<JobTableProps> = ({
       <Table
         columns={columns}
         dataSource={jobs?.jobs ?? []}
-        rowKey={(record, index) => {
-          // Create a unique key using multiple fields to avoid duplicates
-          const id = record.id ?? "no-id";
-          const ruleId = record.rule_id ?? "no-rule-id";
-          const workflowId = record.workflow_id ?? "no-workflow";
-          return `${workflowId}-${ruleId}-${id}-${index}`;
-        }}
+        rowKey={(record) => record.id ?? ""}
         loading={isLoading}
         onChange={(_, filters) => {
           if (filters.status !== undefined) {
@@ -470,10 +419,12 @@ const JobTable: React.FC<JobTableProps> = ({
         title={`Detail -  Job ${jobDetailModal.jobId}`}
         visible={jobDetailModal.visible}
         onClose={() => setJobDetailModal({ visible: false, jobId: 0 })}
-        fileContent={JSON.stringify(jobDetailData, null, 2)}
+        fileContent={JSON.stringify(jobDetailData, null, 2) || ""}
+        fileFormat="json"
       />
 
       <FilesViewer
+        key={`jobLogs`}
         visible={jobLogsModal.visible}
         onClose={() => setJobLogsModal({ visible: false, jobId: 0 })}
         fileContent={jobLogsData ?? {}}

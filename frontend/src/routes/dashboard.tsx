@@ -1,9 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 
-import { DashboardLayout } from "../../components/dashboard";
-import { SSEManagerProvider } from "../../hooks/useSSEManager.tsx";
+import { DashboardLayout } from "../components/dashboard";
+import { SSEManagerProvider } from "../hooks/useSSEManager.tsx";
 
-export const Route = createFileRoute("/Dashboard/")({
+export const Route = createFileRoute("/dashboard")({
   component: Dashboard,
 });
 

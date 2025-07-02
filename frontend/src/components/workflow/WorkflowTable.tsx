@@ -2,11 +2,11 @@ import {
   DeleteOutlined,
   FileTextOutlined,
   InfoCircleOutlined,
-  LinkOutlined,
   ReloadOutlined,
   SettingOutlined,
 } from "@ant-design/icons";
 import Icon from "@ant-design/icons";
+import { useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import {
   Button,
@@ -19,7 +19,7 @@ import {
   Tooltip,
 } from "antd";
 import type { ColumnsType } from "antd/es/table";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 
 import type { Status } from "../../api/api";
 import type { WorkflowResponse } from "../../api/client";
@@ -35,67 +35,19 @@ import {
 import { useWorkflowsWithSSE } from "../../hooks/useQueriesWithSSE";
 import {
   formatDateCompact,
-  formatDuration,
   getStatusColor,
   getWorkflowProgressStatus,
 } from "../../utils/formatters";
 import FilesViewer from "../code/FilesViewer";
 import FileViewer from "../code/FileViewer";
+import { DurationCell } from "../common/common";
 import LiveUpdatesIndicator from "../LiveUpdatesIndicator";
 import WorkflowTag from "../tag/WorkflowTag";
 import WorkflowSearch from "./WorkflowSearch";
 
-interface WorkflowTableProps {
-  limit?: number;
-  showRefreshButton?: boolean;
-}
-
-const DurationCell: React.FC<{
-  record: WorkflowResponse;
-}> = ({ record }) => {
-  const [currentTime, setCurrentTime] = useState(Date.now());
-
-  useEffect(() => {
-    // Only set up timer for running workflows
-    if (record.status === "RUNNING" && record.started_at) {
-      const timer = setInterval(() => {
-        setCurrentTime(Date.now());
-      }, 1000); // Update every second
-
-      return () => clearInterval(timer);
-    }
-  }, [record.status, record.started_at]);
-
-  if (record.status === "ERROR") {
-    return <span>-</span>;
-  }
-
-  if (record.end_time && record.started_at) {
-    const duration =
-      new Date(record.end_time).getTime() -
-      new Date(record.started_at).getTime();
-    return <span>{formatDuration(duration)}</span>;
-  } else if (record.started_at) {
-    let endTime = record.end_time
-      ? new Date(record.end_time).getTime()
-      : currentTime;
-
-    if (record.status === "RUNNING") {
-      endTime = currentTime;
-    }
-
-    const duration = endTime - new Date(record.started_at).getTime();
-    return <span>{formatDuration(duration)}</span>;
-  }
-
-  return <span>-</span>;
-};
-
-const WorkflowTable: React.FC<WorkflowTableProps> = ({
-  limit = 20,
-  showRefreshButton = true,
-}) => {
+const WorkflowTable = () => {
   const deleteWorkflowMutation = useDeleteWorkflow();
+  const queryClient = useQueryClient();
   const [snakefileModal, setSnakefileModal] = useState<{
     visible: boolean;
     workflowId: string;
@@ -132,7 +84,7 @@ const WorkflowTable: React.FC<WorkflowTableProps> = ({
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(limit);
+  const [pageSize, setPageSize] = useState(10);
   const [user, setUser] = useState<string | null>(null);
   const [status, setStatus] = useState<Status | null>(null);
   const [messageApi, contextHolder] = message.useMessage();
@@ -193,12 +145,8 @@ const WorkflowTable: React.FC<WorkflowTableProps> = ({
   const {
     data: workflowsData,
     isLoading,
-    error,
-    refetch,
     sseError,
     isSSEConnected,
-    sseRetryCount,
-    reconnectSSE,
   } = useWorkflowsWithSSE(queryParams);
 
   const workflows = workflowsData?.workflows ?? [];
@@ -264,39 +212,22 @@ const WorkflowTable: React.FC<WorkflowTableProps> = ({
     [],
   );
 
+  // Refresh handler
+  const handleRefresh = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ["workflows"] });
+    messageApi.open({
+      type: "success",
+      content: "Workflows refreshed successfully!",
+    });
+  }, [queryClient, messageApi]);
+
   const columns: ColumnsType<WorkflowResponse> = [
-    {
-      title: "Workflow ID",
-      dataIndex: "id",
-      key: "id",
-      width: 120,
-      fixed: "left",
-      render: (id: string) => (
-        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-          <Link
-            to="/workflow/$workflowId"
-            params={{ workflowId: id }}
-            style={{
-              color: "#1890ff",
-              textDecoration: "none",
-              fontSize: "12px",
-              fontFamily: "monospace",
-              display: "flex",
-              alignItems: "center",
-              gap: "4px",
-            }}
-          >
-            <LinkOutlined style={{ fontSize: "10px" }} />
-            <code style={{ fontSize: "12px", color: "inherit" }}>{id}</code>
-          </Link>
-        </div>
-      ),
-    },
     {
       title: "Name",
       dataIndex: "name",
       key: "name",
-      width: 120,
+      width: 140,
+      fixed: "left",
       sorter: (a, b) => {
         const nameA = a.name || "";
         const nameB = b.name || "";
@@ -310,17 +241,28 @@ const WorkflowTable: React.FC<WorkflowTableProps> = ({
         return (
           <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
             {/* Name on first row */}
-            <div
+            <Link
+              to="/workflow/$workflowId"
+              params={{ workflowId: record.id }}
               style={{
-                fontWeight: 600,
-                fontSize: "15px",
-                color: "#1f2937",
-                lineHeight: "1.3",
-                letterSpacing: "-0.01em",
+                color: "#1890ff",
+                textDecoration: "none",
+                display: "block",
               }}
             >
-              {name || "Unnamed"}
-            </div>
+              <div
+                style={{
+                  fontWeight: 600,
+                  fontSize: "15px",
+                  color: "#1f2937",
+                  lineHeight: "1.3",
+                  letterSpacing: "-0.01em",
+                  cursor: "pointer",
+                }}
+              >
+                {name || "Unnamed"} ({record.total_jobs})
+              </div>
+            </Link>
 
             {tags.length > 0 && (
               <div
@@ -615,8 +557,7 @@ const WorkflowTable: React.FC<WorkflowTableProps> = ({
           </h3>
           <LiveUpdatesIndicator
             isConnected={isSSEConnected}
-            retryCount={sseRetryCount}
-            onReconnect={reconnectSSE}
+            retryCount={0}
             showReconnectButton={false}
           />
           <WorkflowSearch
@@ -627,44 +568,16 @@ const WorkflowTable: React.FC<WorkflowTableProps> = ({
             name={searchName}
           />
         </div>
-        <Space>
-          {!isSSEConnected && (
-            <Button
-              type="link"
-              size="small"
-              onClick={reconnectSSE}
-              style={{ padding: "4px 8px" }}
-            >
-              Reconnect SSE
-            </Button>
-          )}
-          {showRefreshButton && (
-            <Button
-              icon={<ReloadOutlined />}
-              onClick={() => refetch()}
-              loading={isLoading}
-            >
-              Refresh
-            </Button>
-          )}
-        </Space>
-      </div>
-
-      {error && (
-        <div
-          style={{
-            color: "#ff4d4f",
-            backgroundColor: "#fff2f0",
-            border: "1px solid #ffccc7",
-            borderRadius: "6px",
-            padding: "8px 12px",
-            marginBottom: "16px",
-          }}
+        <Button
+          type="default"
+          icon={<ReloadOutlined />}
+          onClick={handleRefresh}
+          loading={isLoading}
+          size="small"
         >
-          Error loading workflows:{" "}
-          {error instanceof Error ? error.message : "Unknown error"}
-        </div>
-      )}
+          Refresh
+        </Button>
+      </div>
 
       {sseError && (
         <div
@@ -687,7 +600,6 @@ const WorkflowTable: React.FC<WorkflowTableProps> = ({
         rowKey="id"
         loading={isLoading}
         onChange={(pagination, filters) => {
-          // Handle filter changes
           if (filters.user !== undefined) {
             const userFilter = filters.user;
             setUser(
@@ -756,17 +668,6 @@ const WorkflowTable: React.FC<WorkflowTableProps> = ({
       />
 
       <FileViewer
-        key={`detail-${workflowDetailModal.workflowId}`}
-        title={`Detail - Workflow ${workflowDetailModal.workflowId}`}
-        visible={workflowDetailModal.visible}
-        onClose={() =>
-          setWorkflowDetailModal({ visible: false, workflowId: "" })
-        }
-        fileContent={JSON.stringify(workflowDetailData, null, 2) || ""}
-        fileFormat="json"
-      />
-
-      <FileViewer
         key={`log-${logModal.workflowId}`}
         title={`Log - Workflow ${logModal.workflowId}`}
         visible={logModal.visible}
@@ -781,32 +682,16 @@ const WorkflowTable: React.FC<WorkflowTableProps> = ({
         fileFormat="log"
       />
 
-      {/* Conditionally render LogViewer or LiveLogViewer based on workflow status */}
-      {/* {logModal.workflowStatus === "RUNNING" ? (
-        <LiveLogViewer
-          visible={logModal.visible}
-          onClose={() =>
-            setLogModal({
-              visible: false,
-              workflowId: "",
-              workflowStatus: "SUCCESS",
-            })
-          }
-          workflowId={logModal.workflowId}
-        />
-      ) : (
-        <LogViewer
-          visible={logModal.visible}
-          onClose={() =>
-            setLogModal({
-              visible: false,
-              workflowId: "",
-              workflowStatus: "SUCCESS",
-            })
-          }
-          workflowId={logModal.workflowId}
-        />
-      )} */}
+      <FileViewer
+        key={`detail-${workflowDetailModal.workflowId}`}
+        title={`Detail - Workflow ${workflowDetailModal.workflowId}`}
+        visible={workflowDetailModal.visible}
+        onClose={() =>
+          setWorkflowDetailModal({ visible: false, workflowId: "" })
+        }
+        fileContent={JSON.stringify(workflowDetailData, null, 2) || ""}
+        fileFormat="json"
+      />
     </div>
   );
 };

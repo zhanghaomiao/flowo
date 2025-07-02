@@ -54,17 +54,12 @@ export const ResultViewer: React.FC<ResultViewerProps> = ({ workflowId }) => {
   const [selectedNodeData, setSelectedNodeData] =
     useState<SelectedNodeData | null>(null);
   const [isFullscreenOpen, setIsFullscreenOpen] = useState<boolean>(false);
-  const [loadedDirectories, setLoadedDirectories] = useState<Set<string>>(
-    new Set(),
-  );
 
-  // Local tree state to manage the complete tree data
+  const [loadedKeys, setLoadedKeys] = useState<React.Key[]>([]);
   const [treeData, setTreeData] = useState<AntdTreeNode[]>([]);
-
   const [treeHeight, setTreeHeight] = useState<number>(400);
   const treeContainerRef = useRef<HTMLDivElement>(null);
 
-  // Get workflow detail to get the directory
   const {
     data: workflowDetail,
     isLoading: isWorkflowLoading,
@@ -72,7 +67,6 @@ export const ResultViewer: React.FC<ResultViewerProps> = ({ workflowId }) => {
     refetch: refetchWorkflow,
   } = useWorkflowDetail(workflowId);
 
-  // Get initial directory tree from Caddy server (only root level)
   const {
     data: outputsTree,
     isLoading: isTreeLoading,
@@ -117,10 +111,12 @@ export const ResultViewer: React.FC<ResultViewerProps> = ({ workflowId }) => {
   // Handle lazy loading when a directory is expanded
   const handleLoadData = useCallback(
     async (node: AntdTreeNode) => {
-      if (node.type === "directory" && !loadedDirectories.has(node.fullPath)) {
+      if (node.type === "directory" && !loadedKeys.includes(node.key)) {
         try {
           const newChildren = await lazyLoadMutation.mutateAsync(node.fullPath);
-          setLoadedDirectories((prev) => new Set(prev).add(node.fullPath));
+
+          // Mark this node as loaded in Tree component
+          setLoadedKeys((prev) => [...prev, node.key]);
 
           // Convert the new children to AntdTreeNode format and update the tree
           const convertedChildren = convertToAntdTreeData(
@@ -135,7 +131,7 @@ export const ResultViewer: React.FC<ResultViewerProps> = ({ workflowId }) => {
         }
       }
     },
-    [lazyLoadMutation, loadedDirectories, updateTreeNode],
+    [lazyLoadMutation, loadedKeys, updateTreeNode],
   );
 
   // Update tree data when initial data loads
@@ -175,6 +171,47 @@ export const ResultViewer: React.FC<ResultViewerProps> = ({ workflowId }) => {
   }, []);
 
   const handleExpand = (expandedKeysValue: React.Key[]) => {
+    // Find nodes that were collapsed (were in expandedKeys but not in expandedKeysValue)
+    const collapsedKeys = expandedKeys.filter(
+      (key) => !expandedKeysValue.includes(key),
+    );
+
+    // Remove collapsed nodes from loadedKeys to allow re-loading
+    // Also clean up the tree data to free memory
+    if (collapsedKeys.length > 0) {
+      // Remove from loadedKeys so Tree component will call loadData again
+      setLoadedKeys((prev) =>
+        prev.filter((key) => !collapsedKeys.includes(key)),
+      );
+
+      // Remove from our internal tracking
+      setTreeData((currentTreeData) => {
+        const removeCollapsedData = (nodes: AntdTreeNode[]): AntdTreeNode[] => {
+          return nodes.map((node) => {
+            if (
+              node.type === "directory" &&
+              collapsedKeys.includes(node.key) &&
+              node.children &&
+              node.children.length > 0
+            ) {
+              // Clear children to free memory
+              return {
+                ...node,
+                children: [], // Reset to empty array for next load
+              };
+            } else if (node.children) {
+              return {
+                ...node,
+                children: removeCollapsedData(node.children),
+              };
+            }
+            return node;
+          });
+        };
+        return removeCollapsedData(currentTreeData);
+      });
+    }
+
     setExpandedKeys(expandedKeysValue);
     setAutoExpandParent(false);
   };
@@ -400,6 +437,7 @@ export const ResultViewer: React.FC<ResultViewerProps> = ({ workflowId }) => {
             <Tree
               showIcon
               loadData={handleLoadData}
+              loadedKeys={loadedKeys}
               onExpand={handleExpand}
               expandedKeys={expandedKeys}
               autoExpandParent={autoExpandParent}

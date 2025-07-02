@@ -16,6 +16,7 @@ Name | Type | Description | Notes
 **configfiles** | **boolean** |  | [default to undefined]
 **tags** | **Array&lt;string&gt;** |  | [optional] [default to undefined]
 **progress** | **number** |  | [optional] [default to undefined]
+**total_jobs** | **number** |  | [default to undefined]
 
 ## Example
 
@@ -33,6 +34,7 @@ const instance: WorkflowResponse = {
     configfiles,
     tags,
     progress,
+    total_jobs,
 };
 ```
 

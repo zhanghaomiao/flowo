@@ -342,22 +342,6 @@ export const useAllTags = () => {
   });
 };
 
-export const useOutPutsTree = (workflowId: string, depth: number = 2) => {
-  return useQuery<Array<TreeDataNode>>({
-    queryKey: ["outputsTree", workflowId, depth],
-    queryFn: async () => {
-      const response =
-        await outputsApi.getOutputsApiV1OutputsWorkflowIdOutputsGet(
-          workflowId,
-          depth,
-        );
-      return response.data;
-    },
-    staleTime: 120000,
-    refetchInterval: 600000,
-  });
-};
-
 export const useWorkflowDetail = (
   workflowId: string,
   enabled: boolean = true,

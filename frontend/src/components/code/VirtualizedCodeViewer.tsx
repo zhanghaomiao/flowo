@@ -1,4 +1,10 @@
-import React, { useCallback, useEffect, useMemo, useRef } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import SyntaxHighlighter from "react-syntax-highlighter";
 import { a11yLight } from "react-syntax-highlighter/dist/esm/styles/hljs";
 import {
@@ -20,6 +26,13 @@ interface VirtualizedCodeViewerProps {
   maxWidth?: number;
 }
 
+// Simple search interface
+interface SearchResult {
+  lineIndex: number;
+  startIndex: number;
+  endIndex: number;
+}
+
 const VirtualizedCodeViewer: React.FC<VirtualizedCodeViewerProps> = ({
   code,
   language = "python",
@@ -30,10 +43,47 @@ const VirtualizedCodeViewer: React.FC<VirtualizedCodeViewerProps> = ({
   wrapLongLines = true,
   maxWidth,
 }) => {
+  // Search state
+  const [searchTerm, setSearchTerm] = useState("");
+  const [currentMatchIndex, setCurrentMatchIndex] = useState(0);
+
   // 将代码分割成行
   const codeLines = useMemo(() => {
     return code ? code.split("\n") : [];
   }, [code]);
+
+  // Find search matches
+  const searchResults = useMemo(() => {
+    if (!searchTerm.trim()) return [];
+
+    const results: SearchResult[] = [];
+    const searchLower = searchTerm.toLowerCase();
+
+    codeLines.forEach((line, lineIndex) => {
+      const lineLower = line.toLowerCase();
+      let startIndex = 0;
+
+      while (true) {
+        const foundIndex = lineLower.indexOf(searchLower, startIndex);
+        if (foundIndex === -1) break;
+
+        results.push({
+          lineIndex,
+          startIndex: foundIndex,
+          endIndex: foundIndex + searchTerm.length,
+        });
+
+        startIndex = foundIndex + 1;
+      }
+    });
+
+    return results;
+  }, [codeLines, searchTerm]);
+
+  // Reset current match when search changes
+  useEffect(() => {
+    setCurrentMatchIndex(0);
+  }, [searchResults]);
 
   const cache = useMemo(
     () =>
@@ -70,6 +120,82 @@ const VirtualizedCodeViewer: React.FC<VirtualizedCodeViewerProps> = ({
       }
     },
     [clearCacheAndRecompute],
+  );
+
+  // Navigate to specific match
+  const goToMatch = useCallback(
+    (matchIndex: number) => {
+      if (searchResults.length === 0) return;
+
+      const validIndex = Math.max(
+        0,
+        Math.min(matchIndex, searchResults.length - 1),
+      );
+      setCurrentMatchIndex(validIndex);
+
+      const result = searchResults[validIndex];
+      if (listRef.current && result) {
+        listRef.current.scrollToRow(result.lineIndex);
+      }
+    },
+    [searchResults],
+  );
+
+  // Navigation handlers
+  const goToNextMatch = useCallback(() => {
+    goToMatch(currentMatchIndex + 1);
+  }, [currentMatchIndex, goToMatch]);
+
+  const goToPrevMatch = useCallback(() => {
+    goToMatch(currentMatchIndex - 1);
+  }, [currentMatchIndex, goToMatch]);
+
+  // Highlight search matches in text
+  const highlightText = useCallback(
+    (text: string, lineIndex: number) => {
+      if (!searchTerm.trim()) return text;
+
+      const lineMatches = searchResults.filter(
+        (r) => r.lineIndex === lineIndex,
+      );
+      if (lineMatches.length === 0) return text;
+
+      const parts = [];
+      let lastIndex = 0;
+
+      lineMatches.forEach((match) => {
+        // Add text before match
+        if (match.startIndex > lastIndex) {
+          parts.push(text.slice(lastIndex, match.startIndex));
+        }
+
+        // Add highlighted match
+        const isCurrentMatch = searchResults[currentMatchIndex] === match;
+        const matchText = text.slice(match.startIndex, match.endIndex);
+        parts.push(
+          <span
+            key={`${lineIndex}-${match.startIndex}`}
+            style={{
+              backgroundColor: isCurrentMatch ? "#ff6b35" : "#ffeb3b",
+              color: isCurrentMatch ? "white" : "black",
+              fontWeight: isCurrentMatch ? "bold" : "normal",
+            }}
+          >
+            {matchText}
+          </span>,
+        );
+
+        lastIndex = match.endIndex;
+      });
+
+      // Add remaining text
+      if (lastIndex < text.length) {
+        parts.push(text.slice(lastIndex));
+      }
+
+      return parts;
+    },
+    [searchTerm, searchResults, currentMatchIndex],
   );
 
   const rowRenderer = useCallback(
@@ -123,24 +249,39 @@ const VirtualizedCodeViewer: React.FC<VirtualizedCodeViewerProps> = ({
                   overflow: wrapLines ? "visible" : "hidden",
                 }}
               >
-                <SyntaxHighlighter
-                  style={a11yLight}
-                  language={language}
-                  customStyle={{
-                    margin: 0,
-                    padding: 0,
-                    background: "transparent",
-                    fontSize: "inherit",
-                    fontFamily: "inherit",
-                    lineHeight: "inherit",
-                  }}
-                  wrapLines={wrapLines}
-                  wrapLongLines={wrapLongLines}
-                  showLineNumbers={false}
-                  showInlineLineNumbers={false}
-                >
-                  {line}
-                </SyntaxHighlighter>
+                {searchTerm.trim() ? (
+                  <div
+                    style={{
+                      fontFamily:
+                        'Monaco, Menlo, "Ubuntu Mono", Consolas, monospace',
+                      fontSize: "inherit",
+                      lineHeight: "inherit",
+                      whiteSpace: wrapLines ? "pre-wrap" : "pre",
+                      wordBreak: wrapLines ? "break-word" : "normal",
+                    }}
+                  >
+                    {highlightText(line, index)}
+                  </div>
+                ) : (
+                  <SyntaxHighlighter
+                    style={a11yLight}
+                    language={language}
+                    customStyle={{
+                      margin: 0,
+                      padding: 0,
+                      background: "transparent",
+                      fontSize: "inherit",
+                      fontFamily: "inherit",
+                      lineHeight: "inherit",
+                    }}
+                    wrapLines={wrapLines}
+                    wrapLongLines={wrapLongLines}
+                    showLineNumbers={false}
+                    showInlineLineNumbers={false}
+                  >
+                    {line}
+                  </SyntaxHighlighter>
+                )}
               </div>
             </div>
           )}
@@ -157,6 +298,8 @@ const VirtualizedCodeViewer: React.FC<VirtualizedCodeViewerProps> = ({
       wrapLines,
       wrapLongLines,
       maxWidth,
+      searchTerm,
+      highlightText,
     ],
   );
 
@@ -186,25 +329,99 @@ const VirtualizedCodeViewer: React.FC<VirtualizedCodeViewerProps> = ({
         border: "1px solid #d9d9d9",
         borderRadius: "4px",
         overflow: "hidden",
+        display: "flex",
+        flexDirection: "column",
       }}
     >
-      <AutoSizer onResize={handleResize}>
-        {({ height, width }) => (
-          <List
-            ref={listRef}
-            height={height}
-            width={width}
-            rowCount={codeLines.length}
-            deferredMeasurementCache={cache}
-            rowHeight={cache.rowHeight}
-            rowRenderer={rowRenderer}
-            overscanRowCount={5}
-            style={{
-              outline: "none",
-            }}
-          />
+      {/* Search Bar */}
+      <div
+        style={{
+          padding: "8px 12px",
+          borderBottom: "1px solid #d9d9d9",
+          backgroundColor: theme === "dark" ? "#21252b" : "#f5f5f5",
+          display: "flex",
+          alignItems: "center",
+          gap: "8px",
+          flexShrink: 0,
+        }}
+      >
+        <input
+          type="text"
+          placeholder="Search in code..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          style={{
+            flex: 1,
+            padding: "4px 8px",
+            border: "1px solid #d9d9d9",
+            borderRadius: "4px",
+            fontSize: "12px",
+            fontFamily: 'Monaco, Menlo, "Ubuntu Mono", Consolas, monospace',
+          }}
+        />
+        {searchResults.length > 0 && (
+          <>
+            <span
+              style={{
+                fontSize: "12px",
+                color: theme === "dark" ? "#ccc" : "#666",
+                minWidth: "60px",
+              }}
+            >
+              {currentMatchIndex + 1} of {searchResults.length}
+            </span>
+            <button
+              onClick={goToPrevMatch}
+              disabled={searchResults.length === 0}
+              style={{
+                padding: "2px 6px",
+                border: "1px solid #d9d9d9",
+                borderRadius: "3px",
+                backgroundColor: "white",
+                cursor: "pointer",
+                fontSize: "12px",
+              }}
+            >
+              ↑
+            </button>
+            <button
+              onClick={goToNextMatch}
+              disabled={searchResults.length === 0}
+              style={{
+                padding: "2px 6px",
+                border: "1px solid #d9d9d9",
+                borderRadius: "3px",
+                backgroundColor: "white",
+                cursor: "pointer",
+                fontSize: "12px",
+              }}
+            >
+              ↓
+            </button>
+          </>
         )}
-      </AutoSizer>
+      </div>
+
+      {/* Code Content */}
+      <div style={{ flex: 1 }}>
+        <AutoSizer onResize={handleResize}>
+          {({ height, width }) => (
+            <List
+              ref={listRef}
+              height={height}
+              width={width}
+              rowCount={codeLines.length}
+              deferredMeasurementCache={cache}
+              rowHeight={cache.rowHeight}
+              rowRenderer={rowRenderer}
+              overscanRowCount={5}
+              style={{
+                outline: "none",
+              }}
+            />
+          )}
+        </AutoSizer>
+      </div>
     </div>
   );
 };

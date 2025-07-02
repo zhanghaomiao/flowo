@@ -1,12 +1,14 @@
 import {
+  ArrowLeftOutlined,
   CheckCircleOutlined,
   ClockCircleOutlined,
   SyncOutlined,
 } from "@ant-design/icons";
-import { Card, Col, Progress, Row, Statistic } from "antd";
+import { Link } from "@tanstack/react-router";
+import { Button, Card, Col, Progress, Row, Statistic } from "antd";
 import React from "react";
 
-import { useWorkflowTotalJobs } from "../../hooks/useQueries";
+import { useWorkflow, useWorkflowTotalJobs } from "../../hooks/useQueries";
 import { useWorkflowProgressWithSSE } from "../../hooks/useQueriesWithSSE";
 
 interface WorkflowProgressProps {
@@ -16,6 +18,7 @@ interface WorkflowProgressProps {
 const WorkflowProgress: React.FC<WorkflowProgressProps> = ({ workflowId }) => {
   const { data: progressData } = useWorkflowProgressWithSSE(workflowId);
   const { data: totalJobsData } = useWorkflowTotalJobs(workflowId);
+  const { data: workflow } = useWorkflow(workflowId);
 
   const getProgressStatus = () => {
     if ((progressData?.failed ?? 0) > 0) return "exception";
@@ -30,9 +33,25 @@ const WorkflowProgress: React.FC<WorkflowProgressProps> = ({ workflowId }) => {
 
   return (
     <Card>
-      <Row gutter={24}>
+      <Row gutter={24} align="middle">
+        <Col span={2}>
+          <Link to="/">
+            <Button
+              type="text"
+              icon={<ArrowLeftOutlined />}
+              size="large"
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              Back
+            </Button>
+          </Link>
+        </Col>
         <Col
-          span={12}
+          span={10}
           style={{
             display: "flex",
             flexDirection: "column",
@@ -42,7 +61,7 @@ const WorkflowProgress: React.FC<WorkflowProgressProps> = ({ workflowId }) => {
             fontSize: "16px",
           }}
         >
-          Workflow Progress - {workflowId}
+          Workflow Progress - {workflow?.name || "Unnamed"}
           <Progress
             percent={progressData?.progress ?? 0}
             status={getProgressStatus()}
