@@ -3,6 +3,7 @@ import React, { useState } from "react";
 
 import { constructApiUrl } from "../../api/client";
 import FileContent from "../code/FileContent";
+import { CSVPreview, FullscreenCSVPreview } from "./CSVPreview";
 import {
   formatFileSize,
   getFileExtension,
@@ -58,45 +59,12 @@ export const TextPreview: React.FC<{ src: string }> = ({ src }) => {
     return <Spin />;
   }
 
-  return <FileContent fileContent={content} showFileName={false} />;
-};
-
-// JSON Preview Component
-export const JsonPreview: React.FC<{ src: string }> = ({ src }) => {
-  const [content, setContent] = useState<Record<string, unknown> | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
-
-  React.useEffect(() => {
-    fetch(src)
-      .then((response) => response.json())
-      .then((json) => {
-        setContent(json);
-        setLoading(false);
-      })
-      .catch((error) => {
-        console.error("Error loading JSON file:", error);
-        setContent({ error: "Failed to load JSON content" });
-        setLoading(false);
-      });
-  }, [src]);
-
-  if (loading) {
-    return <Spin />;
-  }
-
   return (
-    <div style={{ maxHeight: "400px", overflow: "auto" }}>
-      <pre
-        style={{
-          fontSize: "12px",
-          background: "#f5f5f5",
-          padding: "8px",
-          borderRadius: "4px",
-        }}
-      >
-        {JSON.stringify(content, null, 2)}
-      </pre>
-    </div>
+    <FileContent
+      fileContent={content}
+      showFileName={false}
+      fileFormat={getFileExtension(src)}
+    />
   );
 };
 
@@ -161,45 +129,6 @@ export const FullscreenTextPreview: React.FC<{ src: string }> = ({ src }) => {
   }
 
   return <FileContent fileContent={content} showFileName={false} />;
-};
-
-export const FullscreenJsonPreview: React.FC<{ src: string }> = ({ src }) => {
-  const [content, setContent] = useState<Record<string, unknown> | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
-
-  React.useEffect(() => {
-    fetch(src)
-      .then((response) => response.json())
-      .then((json) => {
-        setContent(json);
-        setLoading(false);
-      })
-      .catch((error) => {
-        console.error("Error loading JSON file:", error);
-        setContent({ error: "Failed to load JSON content" });
-        setLoading(false);
-      });
-  }, [src]);
-
-  if (loading) {
-    return <Spin />;
-  }
-
-  return (
-    <div style={{ height: "100%", overflow: "auto" }}>
-      <pre
-        style={{
-          fontSize: "14px",
-          background: "#f5f5f5",
-          padding: "16px",
-          borderRadius: "4px",
-          fontFamily: "monospace",
-        }}
-      >
-        {JSON.stringify(content, null, 2)}
-      </pre>
-    </div>
-  );
 };
 
 export const FullscreenPdfPreview: React.FC<{ src: string }> = ({ src }) => (
@@ -276,12 +205,12 @@ const renderPreviewContent = (
       return <ImagePreview src={fileUrl} alt={title} />;
     case "text":
       return <TextPreview src={fileUrl} />;
-    case "json":
-      return <JsonPreview src={fileUrl} />;
     case "pdf":
       return <PdfPreview src={fileUrl} />;
     case "html":
       return <HtmlPreview src={fileUrl} />;
+    case "csv":
+      return <CSVPreview src={fileUrl} />;
     default:
       return (
         <Alert
@@ -352,12 +281,12 @@ const renderFullscreenContent = (
       return <FullscreenImagePreview src={fileUrl} alt={title} />;
     case "text":
       return <FullscreenTextPreview src={fileUrl} />;
-    case "json":
-      return <FullscreenJsonPreview src={fileUrl} />;
     case "pdf":
       return <FullscreenPdfPreview src={fileUrl} />;
     case "html":
       return <FullscreenHtmlPreview src={fileUrl} />;
+    case "csv":
+      return <FullscreenCSVPreview src={fileUrl} />;
     default:
       return (
         <Alert

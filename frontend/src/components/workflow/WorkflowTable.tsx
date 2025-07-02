@@ -226,7 +226,7 @@ const WorkflowTable = () => {
       title: "Name",
       dataIndex: "name",
       key: "name",
-      width: 140,
+      width: 200,
       fixed: "left",
       sorter: (a, b) => {
         const nameA = a.name || "";
@@ -347,7 +347,7 @@ const WorkflowTable = () => {
       title: "Status",
       dataIndex: "status",
       key: "status",
-      width: 60,
+      width: 50,
       render: (status: Status) => (
         <Tag
           color={getStatusColor(status)}
@@ -369,7 +369,7 @@ const WorkflowTable = () => {
       title: "Started time",
       dataIndex: "started_at",
       key: "started_at",
-      width: 100,
+      width: 80,
       render: (startedAt: string | null) => formatDateCompact(startedAt),
       sorter: (a, b) => {
         const dateA = a.started_at ? new Date(a.started_at).getTime() : 0;
@@ -381,7 +381,7 @@ const WorkflowTable = () => {
       title: "End Time",
       dataIndex: "end_time",
       key: "end_time",
-      width: 100,
+      width: 80,
       render: (endTime: string | null) => formatDateCompact(endTime),
       sorter: (a, b) => {
         const dateA = a.end_time ? new Date(a.end_time).getTime() : 0;
@@ -393,7 +393,7 @@ const WorkflowTable = () => {
       title: "Duration (min:sec)",
       dataIndex: "duration",
       key: "duration",
-      width: 60,
+      width: 40,
       render: (_, record) => <DurationCell record={record} />,
     },
     {

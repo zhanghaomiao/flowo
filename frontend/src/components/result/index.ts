@@ -6,16 +6,17 @@ export {
   FilePreview,
   FullscreenHtmlPreview,
   FullscreenImagePreview,
-  FullscreenJsonPreview,
   FullscreenPdfPreview,
   FullscreenTextPreview,
   HtmlPreview,
   ImagePreview,
-  JsonPreview,
   PdfPreview,
   renderFullscreenPreview,
   TextPreview,
 } from "./FilePreview";
+
+// CSV preview components
+export { CSVPreview, FullscreenCSVPreview } from "./CSVPreview";
 
 // File tree utilities
 export { convertToAntdTreeData, filterSupportedFiles } from "./FileTree";

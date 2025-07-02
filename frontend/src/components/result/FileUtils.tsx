@@ -39,8 +39,8 @@ export const FILE_TYPES: FileTypes = {
   images: ["jpg", "jpeg", "png", "gif", "bmp", "svg", "webp", "ico"],
   pdfs: ["pdf"],
   html: ["html", "htm"],
-  text: ["txt", "log", "md"],
-  json: ["json"],
+  text: ["txt", "log", "md", "rst", "json", "yaml"],
+  csv: ["csv", "tsv"],
 };
 
 export const ALL_SUPPORTED_EXTENSIONS = [
@@ -48,7 +48,7 @@ export const ALL_SUPPORTED_EXTENSIONS = [
   ...FILE_TYPES.pdfs,
   ...FILE_TYPES.html,
   ...FILE_TYPES.text,
-  ...FILE_TYPES.json,
+  ...FILE_TYPES.csv,
 ];
 
 // Get file extension from filename
@@ -70,7 +70,7 @@ export const getFileTypeCategory = (filename: string): string => {
   if (FILE_TYPES.pdfs.includes(ext)) return "pdf";
   if (FILE_TYPES.html.includes(ext)) return "html";
   if (FILE_TYPES.text.includes(ext)) return "text";
-  if (FILE_TYPES.json.includes(ext)) return "json";
+  if (FILE_TYPES.csv.includes(ext)) return "csv";
   return "unknown";
 };
 
@@ -86,8 +86,6 @@ export const getFileIcon = (filename: string): React.ReactNode => {
       return <Html5Outlined />;
     case "text":
       return <FileTextOutlined />;
-    case "json":
-      return <CodeOutlined />;
     default:
       return <FileOutlined />;
   }

@@ -14,7 +14,7 @@ const LARGE_FILE_PREVIEW_LINES = 5000;
 interface FileContentProps {
   fileContent: string;
   fileName?: string;
-  fileFormat?: "log" | "yaml" | "json" | "python";
+  fileFormat: string;
   showFileName?: boolean;
 }
 
@@ -81,6 +81,10 @@ const FileContent: React.FC<FileContentProps> = ({
         return "text";
       case "python":
         return "python";
+      case "md":
+      case "rst":
+      case "txt":
+        return "markdown";
       default:
         return "yaml";
     }
