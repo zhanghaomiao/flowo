@@ -26,13 +26,30 @@ import React, {
 import { getLayoutInfo, type LayoutDirection } from "../../utils/graphLayout";
 import DraggableLegendPanel from "./DraggableLegendPanel";
 import LayoutControlPanel from "./LayoutControlPanel";
-import type { ProgressNodeData } from "./NodeProgressBar";
 import ProgressNode from "./NodeProgressBar";
 import { useWorkflowGraph } from "./useDag";
 
+// Type for styling properties - matches what useWorkflowGraph returns
+type NodeStylingData = {
+  statusInfo: {
+    success: string;
+    running: string;
+    error: string;
+    total: string;
+    status: string;
+  } | null;
+  isSelected: boolean;
+  isHighlighted: boolean;
+  isUnscheduled: boolean;
+  backgroundColor: string;
+  textColor: string;
+  borderColor: string;
+  boxShadow: string;
+};
+
 // Create context for styling data
 const StylingContext = createContext<{
-  nodeStyling: Record<string, ProgressNodeData>;
+  nodeStyling: Record<string, NodeStylingData>;
   layoutDirection: LayoutDirection;
 } | null>(null);
 

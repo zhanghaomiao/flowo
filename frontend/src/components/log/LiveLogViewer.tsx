@@ -1,8 +1,4 @@
-import {
-  ClearOutlined,
-  DownloadOutlined,
-  ReloadOutlined,
-} from "@ant-design/icons";
+import { ClearOutlined, DownloadOutlined } from "@ant-design/icons";
 import { Alert, Button, Modal, Space, Typography } from "antd";
 import React, { useEffect, useRef, useState } from "react";
 
@@ -27,13 +23,12 @@ const LiveLogViewer: React.FC<LiveLogViewerProps> = ({
   const isAutoScrollingRef = useRef(false); // Flag to prevent scroll detection during auto-scroll
   const lastScrollTopRef = useRef(0); // Track last scroll position to detect direction
 
-  const { status, error, isConnected, reconnect, disconnect, retryCount } =
-    useLogSSE(workflowId, {
-      enabled: visible, // Only connect when modal is visible
-      onLogLine: (logLine: string) => {
-        setLogLines((prev) => [...prev, logLine]);
-      },
-    });
+  const { status, error, isConnected, disconnect } = useLogSSE(workflowId, {
+    enabled: visible, // Only connect when modal is visible
+    onLogLine: (logLine: string) => {
+      setLogLines((prev) => [...prev, logLine]);
+    },
+  });
 
   // Auto-scroll to bottom when new logs arrive
   useEffect(() => {
@@ -154,11 +149,6 @@ const LiveLogViewer: React.FC<LiveLogViewerProps> = ({
             >
               {isConnected ? "🟢 Live" : "🔴 Disconnected"}
             </span>
-            {retryCount > 0 && (
-              <span style={{ fontSize: "12px", color: "#faad14" }}>
-                (Retry {retryCount})
-              </span>
-            )}
           </div>
           <Space size="small" style={{ marginRight: "16px" }}>
             <Button
@@ -176,13 +166,6 @@ const LiveLogViewer: React.FC<LiveLogViewerProps> = ({
               disabled={logLines.length === 0}
               title="Download logs"
             />
-            <Button
-              type="text"
-              size="small"
-              icon={<ReloadOutlined />}
-              onClick={reconnect}
-              title="Reconnect"
-            />
           </Space>
         </div>
       }
@@ -190,7 +173,6 @@ const LiveLogViewer: React.FC<LiveLogViewerProps> = ({
       onCancel={handleClose}
       width={1000}
       footer={null}
-      destroyOnClose={true}
     >
       <div
         style={{ height: "600px", display: "flex", flexDirection: "column" }}
@@ -203,11 +185,6 @@ const LiveLogViewer: React.FC<LiveLogViewerProps> = ({
             type="error"
             style={{ marginBottom: "16px" }}
             showIcon
-            action={
-              <Button size="small" onClick={reconnect}>
-                Retry
-              </Button>
-            }
           />
         )}
 
