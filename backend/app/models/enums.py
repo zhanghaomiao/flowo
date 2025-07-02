@@ -2,9 +2,9 @@ from enum import Enum
 
 
 class Status(Enum):
+    ERROR = "ERROR"
     RUNNING = "RUNNING"
     SUCCESS = "SUCCESS"
-    ERROR = "ERROR"
     WAITING = "WAITING"
     UNKNOWN = "UNKNOWN"
 

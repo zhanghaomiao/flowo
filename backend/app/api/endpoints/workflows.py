@@ -27,9 +27,7 @@ def get_all_users(db: Session = Depends(get_db)):
 @router.get("/{workflow_id}/jobs", response_model=JobListResponse)
 def get_jobs(
     workflow_id: uuid.UUID,
-    limit: int | None = Query(
-        50, ge=1, description="Maximum number of jobs to return"
-    ),
+    limit: int | None = Query(50, ge=1, description="Maximum number of jobs to return"),
     offset: int | None = Query(0, ge=0, description="Number of jobs to skip"),
     order_by_started: bool = Query(
         True, description="Order by start time (True) or ID (False)"
@@ -80,7 +78,7 @@ def get_workflows(
         None, description="Filter workflows ended before this time"
     ),
 ):
-    return WorkflowService(db).list_all_workflows_dev(
+    return WorkflowService(db).list_all_workflows(
         limit=limit,
         offset=offset,
         order_by_started=order_by_started,
@@ -95,33 +93,33 @@ def get_workflows(
 
 
 @router.get("/{workflow_id}/rule_graph", response_model=dict[str, Any])
-def get_rule_graph(workflow_id: str, db: Session = Depends(get_db)):
+def get_rule_graph(workflow_id: uuid.UUID, db: Session = Depends(get_db)):
     return WorkflowService(db).get_workflow_rule_graph_data(workflow_id)
 
 
 @router.get("/{workflow_id}/detail", response_model=WorkflowDetialResponse)
-def get_detail(workflow_id: str, db: Session = Depends(get_db)):
+def get_detail(workflow_id: uuid.UUID, db: Session = Depends(get_db)):
     return WorkflowService(db).get_detail(workflow_id=workflow_id)
 
 
 @router.get("/{workflow_id}/rule_status", response_model=dict[str, RuleStatusResponse])
-def get_rule_status(workflow_id: str, db: Session = Depends(get_db)):
+def get_rule_status(workflow_id: uuid.UUID, db: Session = Depends(get_db)):
     return WorkflowService(db).get_rule_status(workflow_id=workflow_id)
 
 
 @router.get("/{workflow_id}/snakefile")
-def get_snakefile(workflow_id: str, db: Session = Depends(get_db)):
+def get_snakefile(workflow_id: uuid.UUID, db: Session = Depends(get_db)):
     return WorkflowService(db).get_snakefile(workflow_id)
 
 
 @router.get("/{workflow_id}/configfiles", response_model=dict[str, str])
-def get_configfiles(workflow_id: str, db: Session = Depends(get_db)):
+def get_configfiles(workflow_id: uuid.UUID, db: Session = Depends(get_db)):
     return WorkflowService(db).get_configfiles(workflow_id=workflow_id)
 
 
 @router.get("/{workflow_id}/progress", response_model=dict[str, float])
 def get_progress(
-    workflow_id: str,
+    workflow_id: uuid.UUID,
     return_total_jobs_number: bool = False,
     db: Session = Depends(get_db),
 ):
@@ -137,7 +135,7 @@ def get_progress(
 
 
 @router.get("/{workflow_id}/timelines", response_model=dict[str, list])
-def get_timelines(workflow_id: str, db: Session = Depends(get_db)):
+def get_timelines(workflow_id: uuid.UUID, db: Session = Depends(get_db)):
     return WorkflowService(db).get_timelines_with_id(workflow_id=workflow_id)
 
 

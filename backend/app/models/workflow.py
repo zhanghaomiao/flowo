@@ -26,9 +26,7 @@ class Workflow(Base):
     )
     command_line: Mapped[str | None]
     dryrun: Mapped[bool]
-    rulegraph_data: Mapped[dict[str, Any] | None] = mapped_column(
-        JSON, nullable=True
-    )
+    rulegraph_data: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
     logfile: Mapped[str | None] = mapped_column(nullable=True)
     user: Mapped[str | None] = mapped_column(nullable=True)
     tags: Mapped[list[str]] = mapped_column(ARRAY(String), nullable=True)
