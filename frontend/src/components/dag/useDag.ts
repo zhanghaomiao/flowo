@@ -84,6 +84,10 @@ export const useWorkflowGraph = ({
         : memoizedGraphData;
 
     // Create base nodes with only position and layout data (no styling)
+    if (!parsedData || !parsedData.nodes || parsedData.nodes.length === 0) {
+      return { baseNodes: [], baseEdges: [] };
+    }
+
     const nodes: Node[] = parsedData.nodes.map((nodeData, index) => ({
       id: index.toString(),
       type: "progressNode",
