@@ -2,10 +2,11 @@ import {
   DeleteOutlined,
   FileTextOutlined,
   InfoCircleOutlined,
-  LinkOutlined,
+  ReloadOutlined,
   SettingOutlined,
 } from "@ant-design/icons";
 import Icon from "@ant-design/icons";
+import { useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import {
   Button,
@@ -46,6 +47,7 @@ import WorkflowSearch from "./WorkflowSearch";
 
 const WorkflowTable = () => {
   const deleteWorkflowMutation = useDeleteWorkflow();
+  const queryClient = useQueryClient();
   const [snakefileModal, setSnakefileModal] = useState<{
     visible: boolean;
     workflowId: string;
@@ -210,39 +212,22 @@ const WorkflowTable = () => {
     [],
   );
 
+  // Refresh handler
+  const handleRefresh = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ["workflows"] });
+    messageApi.open({
+      type: "success",
+      content: "Workflows refreshed successfully!",
+    });
+  }, [queryClient, messageApi]);
+
   const columns: ColumnsType<WorkflowResponse> = [
-    {
-      title: "Workflow ID",
-      dataIndex: "id",
-      key: "id",
-      width: 120,
-      fixed: "left",
-      render: (id: string) => (
-        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-          <Link
-            to="/workflow/$workflowId"
-            params={{ workflowId: id }}
-            style={{
-              color: "#1890ff",
-              textDecoration: "none",
-              fontSize: "12px",
-              fontFamily: "monospace",
-              display: "flex",
-              alignItems: "center",
-              gap: "4px",
-            }}
-          >
-            <LinkOutlined style={{ fontSize: "10px" }} />
-            <code style={{ fontSize: "12px", color: "inherit" }}>{id}</code>
-          </Link>
-        </div>
-      ),
-    },
     {
       title: "Name",
       dataIndex: "name",
       key: "name",
       width: 140,
+      fixed: "left",
       sorter: (a, b) => {
         const nameA = a.name || "";
         const nameB = b.name || "";
@@ -256,17 +241,28 @@ const WorkflowTable = () => {
         return (
           <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
             {/* Name on first row */}
-            <div
+            <Link
+              to="/workflow/$workflowId"
+              params={{ workflowId: record.id }}
               style={{
-                fontWeight: 600,
-                fontSize: "15px",
-                color: "#1f2937",
-                lineHeight: "1.3",
-                letterSpacing: "-0.01em",
+                color: "#1890ff",
+                textDecoration: "none",
+                display: "block",
               }}
             >
-              {name || "Unnamed"} ({record.total_jobs})
-            </div>
+              <div
+                style={{
+                  fontWeight: 600,
+                  fontSize: "15px",
+                  color: "#1f2937",
+                  lineHeight: "1.3",
+                  letterSpacing: "-0.01em",
+                  cursor: "pointer",
+                }}
+              >
+                {name || "Unnamed"} ({record.total_jobs})
+              </div>
+            </Link>
 
             {tags.length > 0 && (
               <div
@@ -572,6 +568,15 @@ const WorkflowTable = () => {
             name={searchName}
           />
         </div>
+        <Button
+          type="default"
+          icon={<ReloadOutlined />}
+          onClick={handleRefresh}
+          loading={isLoading}
+          size="small"
+        >
+          Refresh
+        </Button>
       </div>
 
       {sseError && (
