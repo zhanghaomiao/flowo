@@ -10,7 +10,6 @@ from datetime import datetime
 
 from fastapi import HTTPException
 from fastapi.responses import JSONResponse
-from pydantic_core.core_schema import filter_seq_schema
 from sqlalchemy import and_, case, func, select, or_
 from sqlalchemy.orm import Session
 
@@ -148,6 +147,9 @@ class WorkflowService:
                         "progress": self._get_progress(workflow.id),
                         "configfiles": bool(workflow.configfiles),
                         "snakefile": bool(workflow.snakefile),
+                        "total_jobs": self.get_workflow_run_info(
+                            workflow_id=workflow.id
+                        ).get("total", 0),
                     }
                 )
                 for workflow in workflows
@@ -233,7 +235,7 @@ class WorkflowService:
         ).first()
 
         workflow_run_info = self.get_workflow_run_info(workflow_id=workflow_id)
-        total_jobs = workflow_run_info.get("total", 0)
+        total_jobs = workflow_run_info.get("total", 1)
 
         if not result:
             completed = 0
@@ -361,6 +363,58 @@ class WorkflowService:
             )
 
         return {k: make_response(k) for k, _ in run_info.items() if k != "total"}
+
+    def pruning(self):
+        # 删除没有任何jobs的workflows
+        workflows_without_jobs = (
+            self.db_session.query(Workflow.id)
+            .outerjoin(Job, Workflow.id == Job.workflow_id)
+            .filter(Job.id == None)
+            .all()
+        )
+        deleted_workflows_count = len(workflows_without_jobs)
+        for (workflow_id,) in workflows_without_jobs:
+            self.db_session.query(Error).filter(
+                Error.workflow_id == workflow_id
+            ).delete(synchronize_session=False)
+            self.db_session.query(Workflow).filter(Workflow.id == workflow_id).delete(
+                synchronize_session=False
+            )
+
+        # 如果workflow为error，将其所有running的jobs改为error
+        jobs = (
+            self.db_session.query(Job.id)
+            .join(Workflow, Job.workflow_id == Workflow.id)
+            .filter(Job.status == "RUNNING", Workflow.status == "ERROR")
+            .distinct()
+            .all()
+        )
+        updated_error_jobs_count = len(jobs)
+        for (job_id,) in jobs:
+            self.db_session.query(Job).filter(Job.id == job_id).update(
+                {"status": "ERROR"}, synchronize_session=False
+            )
+
+        # 如果workflow为success的，将其所有的running的jobs改为success
+        jobs = (
+            self.db_session.query(Job.id)
+            .join(Workflow, Job.workflow_id == Workflow.id)
+            .filter(Job.status == "RUNNING", Workflow.status == "SUCCESS")
+            .distinct()
+            .all()
+        )
+        updated_success_jobs_count = len(jobs)
+        for (job_id,) in jobs:
+            self.db_session.query(Job).filter(Job.id == job_id).update(
+                {"status": "SUCCESS"}, synchronize_session=False
+            )
+
+        self.db_session.commit()
+
+        return {
+            "workflow": deleted_workflows_count,
+            "job": updated_error_jobs_count + updated_success_jobs_count,
+        }
 
     def get_outputs(
         self,

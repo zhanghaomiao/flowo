@@ -1,12 +1,12 @@
+from ast import DictComp
 from datetime import datetime
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from app.core.session import get_db
-from app.services import SummaryService
+from app.services import SummaryService, WorkflowService
 from app.schemas import StatusSummary, UserSummary, ResourcesSummary
 from typing import List, Dict
 import psutil
-
 
 router = APIRouter()
 
@@ -41,7 +41,7 @@ def get_status(item: Literal["job", "workflow"], db: Session = Depends(get_db)):
     return SummaryService(db).get_status(item)
 
 
-@router.get("/activity", response_model=List[List[str | int]])
+@router.get("/activity", response_model=dict[str, int])
 def get_activity(
     item: Literal["rule", "user", "tag"],
     start_at: datetime | None = None,
@@ -55,7 +55,7 @@ def get_activity(
     )
 
 
-@router.get("/rule_error", response_model=List[List[str | int | float]])
+@router.get("/rule_error", response_model=dict[str, dict])
 def get_rule_error(
     start_at: datetime | None = None,
     end_at: datetime | None = None,
@@ -67,13 +67,24 @@ def get_rule_error(
     )
 
 
-@router.get("/rule_duration", response_model=Dict[str, List[float]])
+@router.get("/rule_duration", response_model=dict[str, dict[str, float]])
 def get_rule_duration(
     start_at: datetime | None = None,
     end_at: datetime | None = None,
     limit: int = 20,
     db: Session = Depends(get_db),
 ):
-    return SummaryService(db).get_rule_duration(
-        start_at=start_at, end_at=end_at, limit=limit
+
+    data = (
+        SummaryService(db).get_rule_duration(
+            start_at=start_at, end_at=end_at, limit=limit
+        )
+        or {}
     )
+
+    return data
+
+
+@router.post("/pruning", response_model=Dict[str, int])
+def post_pruning(db: Session = Depends(get_db)):
+    return WorkflowService(db).pruning()
