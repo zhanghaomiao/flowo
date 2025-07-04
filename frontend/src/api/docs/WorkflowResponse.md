@@ -7,6 +7,7 @@ Schema for workflow response
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **id** | **string** |  | [default to undefined]
+**directory** | **string** |  | [optional] [default to undefined]
 **snakefile** | **boolean** |  | [default to undefined]
 **started_at** | **string** |  | [optional] [default to undefined]
 **end_time** | **string** |  | [optional] [default to undefined]
@@ -25,6 +26,7 @@ import { WorkflowResponse } from './api';
 
 const instance: WorkflowResponse = {
     id,
+    directory,
     snakefile,
     started_at,
     end_time,

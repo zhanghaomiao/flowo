@@ -47,12 +47,10 @@ const VirtualizedCodeViewer: React.FC<VirtualizedCodeViewerProps> = ({
   const [searchTerm, setSearchTerm] = useState("");
   const [currentMatchIndex, setCurrentMatchIndex] = useState(0);
 
-  // 将代码分割成行
   const codeLines = useMemo(() => {
     return code ? code.split("\n") : [];
   }, [code]);
 
-  // Find search matches
   const searchResults = useMemo(() => {
     if (!searchTerm.trim()) return [];
 
@@ -80,7 +78,6 @@ const VirtualizedCodeViewer: React.FC<VirtualizedCodeViewerProps> = ({
     return results;
   }, [codeLines, searchTerm]);
 
-  // Reset current match when search changes
   useEffect(() => {
     setCurrentMatchIndex(0);
   }, [searchResults]);
@@ -350,6 +347,14 @@ const VirtualizedCodeViewer: React.FC<VirtualizedCodeViewerProps> = ({
           placeholder="Search in code..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              if (searchResults.length > 0) {
+                goToNextMatch();
+              }
+            }
+          }}
           style={{
             flex: 1,
             padding: "4px 8px",

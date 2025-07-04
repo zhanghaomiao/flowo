@@ -8,8 +8,12 @@ import { Link } from "@tanstack/react-router";
 import { Button, Card, Col, Progress, Row, Statistic } from "antd";
 import React from "react";
 
-import { useWorkflow, useWorkflowTotalJobs } from "../../hooks/useQueries";
+import {
+  useWorkflowDetail,
+  useWorkflowTotalJobs,
+} from "../../hooks/useQueries";
 import { useWorkflowProgressWithSSE } from "../../hooks/useQueriesWithSSE";
+import WorkflowTag from "../tag/WorkflowTag";
 
 interface WorkflowProgressProps {
   workflowId: string;
@@ -18,7 +22,8 @@ interface WorkflowProgressProps {
 const WorkflowProgress: React.FC<WorkflowProgressProps> = ({ workflowId }) => {
   const { data: progressData } = useWorkflowProgressWithSSE(workflowId);
   const { data: totalJobsData } = useWorkflowTotalJobs(workflowId);
-  const { data: workflow } = useWorkflow(workflowId);
+  // const { data: workflow } = useWorkflow(workflowId);
+  const { data: workflow } = useWorkflowDetail(workflowId);
 
   const getProgressStatus = () => {
     if ((progressData?.failed ?? 0) > 0) return "exception";
@@ -58,16 +63,74 @@ const WorkflowProgress: React.FC<WorkflowProgressProps> = ({ workflowId }) => {
             alignItems: "center",
             alignContent: "center",
             fontWeight: "bold",
-            fontSize: "16px",
+            fontSize: "14px",
           }}
         >
-          Workflow Progress - {workflow?.name || "Unnamed"}
-          <Progress
-            percent={progressData?.progress ?? 0}
-            status={getProgressStatus()}
-          />
+          {workflow?.name || workflow?.directory}
+          {workflow?.tags && workflow.tags.length > 0 && (
+            <div
+              style={{
+                display: "flex",
+                flexWrap: "wrap",
+                justifyContent: "center",
+                gap: "2px",
+              }}
+            >
+              {workflow.tags.map((tag, index) => (
+                <WorkflowTag
+                  key={index}
+                  tag={tag}
+                  style={{
+                    fontSize: "10px",
+                    marginInlineEnd: 2,
+                    lineHeight: "16px",
+                    height: "18px",
+                  }}
+                />
+              ))}
+            </div>
+          )}
         </Col>
-        <Col span={4}>
+        <Col span={3}>
+          <div style={{ textAlign: "left" }}>
+            <div
+              style={{
+                color: "rgba(0, 0, 0, 0.45)",
+                fontSize: "14px",
+                marginBottom: "4px",
+                fontWeight: "normal",
+              }}
+            >
+              Progress
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <Progress
+                percent={progressData?.progress ?? 0}
+                status={getProgressStatus()}
+                type="circle"
+                size={25}
+                showInfo={false}
+              />
+              <span
+                style={{
+                  fontSize: "16px",
+                  fontWeight: "600",
+                  color:
+                    getProgressStatus() === "exception"
+                      ? "#ff4d4f"
+                      : getProgressStatus() === "success"
+                        ? "#52c41a"
+                        : getProgressStatus() === "active"
+                          ? "#1890ff"
+                          : "#8c8c8c",
+                }}
+              >
+                {(progressData?.progress ?? 0).toFixed(0)}%
+              </span>
+            </div>
+          </div>
+        </Col>
+        <Col span={3}>
           <Statistic
             title="Total Jobs"
             value={totalJobsData?.total}
@@ -75,7 +138,7 @@ const WorkflowProgress: React.FC<WorkflowProgressProps> = ({ workflowId }) => {
             valueStyle={{ color: "#1890ff" }}
           />
         </Col>
-        <Col span={4}>
+        <Col span={3}>
           <Statistic
             title="Completed"
             value={progressData?.completed}
@@ -83,7 +146,7 @@ const WorkflowProgress: React.FC<WorkflowProgressProps> = ({ workflowId }) => {
             valueStyle={{ color: "#52c41a" }}
           />
         </Col>
-        <Col span={4}>
+        <Col span={3}>
           <Statistic
             title="Running"
             value={progressData?.running}

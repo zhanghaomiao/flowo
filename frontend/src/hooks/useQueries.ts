@@ -2,13 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import type { JobDetailResponse, TreeDataNode } from "../api/api";
 import { Status, WorkflowDetialResponse } from "../api/api";
-import {
-  jobsApi,
-  logsApi,
-  outputsApi,
-  utilsApi,
-  workflowApi,
-} from "../api/client";
+import { jobsApi, logsApi, utilsApi, workflowApi } from "../api/client";
 import { constructApiUrl } from "../api/client";
 
 // Extended TreeDataNode interface with fileSize for Caddy server
@@ -234,37 +228,6 @@ export const useWorkflowLogs = (
     enabled,
     staleTime: 120000,
     refetchInterval: false,
-  });
-};
-
-// Custom hook for fetching a single workflow
-export const useWorkflow = (workflowId: string) => {
-  return useQuery({
-    queryKey: ["workflow", workflowId],
-    queryFn: async () => {
-      // Get the workflow by searching for it with ID
-      const response = await workflowApi.getWorkflowsApiV1WorkflowsGet(
-        1, // limit: only get 1 workflow
-        0, // offset: start from beginning
-        true, // orderByStarted
-        true, // descending
-        null, // user
-        null, // status
-      );
-      // Find the workflow with matching ID
-      const workflow = response.data.workflows?.find(
-        (w) => w.id === workflowId,
-      );
-      return workflow || null; // Return null instead of undefined if not found
-    },
-    staleTime: 30000,
-    refetchInterval: (query) => {
-      // Only refetch if workflow is running, otherwise use static data
-      const workflow = query.state.data;
-      return workflow?.status === "RUNNING" || workflow?.status === "WAITING"
-        ? 60000
-        : false;
-    },
   });
 };
 

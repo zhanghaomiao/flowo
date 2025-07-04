@@ -552,6 +552,12 @@ export interface WorkflowResponse {
     'id': string;
     /**
      * 
+     * @type {string}
+     * @memberof WorkflowResponse
+     */
+    'directory'?: string | null;
+    /**
+     * 
      * @type {boolean}
      * @memberof WorkflowResponse
      */

@@ -1,18 +1,19 @@
+import "echarts-wordcloud";
+
 import { Empty } from "antd";
 import ReactECharts from "echarts-for-react";
+import React from "react";
 
-import { getTagHexColor } from "../../utils/tagColors";
-import WorkflowTag from "../tag/WorkflowTag";
+const CHART_FONT_FAMILY =
+  "-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif";
 
 export const BarChart = ({
   data,
   title,
-  renderTag = true,
   maxLabelLength = 20, // Maximum characters to display for labels
 }: {
   data: Array<[string, number]>;
   title: string;
-  renderTag?: boolean;
   maxLabelLength?: number;
 }) => {
   if (!data || data.length === 0) {
@@ -28,11 +29,8 @@ export const BarChart = ({
   const categories = data.map(([name]) => name);
   const values = data.map(([, count]) => count);
 
-  const barColors = categories.map((category) => getTagHexColor(category));
   const maxLabelWidth = Math.max(...categories.map((cat) => cat.length));
-  const dynamicLeftMargin = renderTag
-    ? "20%"
-    : `${Math.min(Math.max(maxLabelWidth * 8, 80), 200)}px`; // Dynamic width with min/max limits
+  const dynamicLeftMargin = `${Math.min(Math.max(maxLabelWidth * 8, 80), 100)}px`; // Dynamic width with min/max limits
 
   // Function to truncate text
   const truncateText = (text: string, maxLength: number) => {
@@ -55,10 +53,12 @@ export const BarChart = ({
       nameTextStyle: {
         fontSize: 10,
         color: "#666",
+        fontFamily: CHART_FONT_FAMILY,
       },
       axisLabel: {
         fontSize: 9,
         color: "#666",
+        fontFamily: CHART_FONT_FAMILY,
       },
       axisLine: {
         lineStyle: {
@@ -75,12 +75,12 @@ export const BarChart = ({
       type: "category",
       data: categories,
       axisLabel: {
-        show: !renderTag, // Show default labels when renderTag is false
         fontSize: 11,
         color: "#333",
-        width: renderTag ? 0 : Math.min(maxLabelWidth * 8, 180), // Dynamic width
+        width: Math.min(maxLabelWidth * 8, 180), // Dynamic width
         overflow: "truncate", // Truncate long text
         ellipsis: "...", // Show ellipsis
+        fontFamily: CHART_FONT_FAMILY,
         formatter: function (value: string) {
           return truncateText(value, maxLabelLength);
         },
@@ -97,10 +97,10 @@ export const BarChart = ({
     series: [
       {
         type: "bar",
-        data: values.map((value, index) => ({
+        data: values.map((value) => ({
           value: value,
           itemStyle: {
-            color: barColors[index],
+            color: "#37a460",
           },
         })),
         barWidth: "60%",
@@ -121,77 +121,12 @@ export const BarChart = ({
     },
   };
 
-  const chartHeight = 260;
-  const gridTop = chartHeight * 0.1;
-  const gridBottom = chartHeight * 0.15;
-  const availableHeight = chartHeight - gridTop - gridBottom;
-  const categoryHeight = availableHeight / categories.length;
-
   return (
-    <div style={{ position: "relative", height: "260px", width: "100%" }}>
-      {/* WorkflowTag labels positioned as y-axis labels */}
-      {renderTag && (
-        <div
-          style={{
-            position: "absolute",
-            left: "2%",
-            top: `${gridTop}px`,
-            height: `${availableHeight}px`,
-            width: "16%", // Fixed width for tag container
-            display: "flex",
-            flexDirection: "column-reverse", // Reverse to match ECharts category order
-            justifyContent: "space-around",
-            alignItems: "flex-end",
-            zIndex: 10,
-          }}
-        >
-          {categories.map((category) => (
-            <div
-              key={category}
-              style={{
-                height: `${categoryHeight}px`,
-                width: "100%",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "flex-end",
-                paddingRight: "8px",
-                overflow: "hidden", // Hide overflow
-              }}
-              title={category} // Show full text on hover
-            >
-              <div
-                style={{
-                  maxWidth: "100%",
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  whiteSpace: "nowrap",
-                }}
-              >
-                <WorkflowTag
-                  tag={
-                    category.length > maxLabelLength
-                      ? truncateText(category, maxLabelLength)
-                      : category
-                  }
-                  style={{
-                    maxWidth: "100%",
-                    display: "inline-block",
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                  }}
-                />
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      <ReactECharts
-        option={option}
-        style={{ height: "260px", width: "100%" }}
-        opts={{ renderer: "canvas" }}
-      />
-    </div>
+    <ReactECharts
+      option={option}
+      style={{ height: "260px", width: "100%" }}
+      opts={{ renderer: "canvas" }}
+    />
   );
 };
 
@@ -249,10 +184,12 @@ export const StackedBarChart = ({
       nameTextStyle: {
         fontSize: 10,
         color: "#666",
+        fontFamily: CHART_FONT_FAMILY,
       },
       axisLabel: {
         fontSize: 9,
         color: "#666",
+        fontFamily: CHART_FONT_FAMILY,
       },
       axisLine: {
         lineStyle: {
@@ -274,6 +211,7 @@ export const StackedBarChart = ({
         width: Math.min(maxLabelWidth * 8, 180),
         overflow: "truncate",
         ellipsis: "...",
+        fontFamily: CHART_FONT_FAMILY,
         formatter: function (value: string) {
           return truncateText(value, maxLabelLength);
         },
@@ -304,7 +242,7 @@ export const StackedBarChart = ({
         stack: "total",
         data: errorData,
         itemStyle: {
-          color: "#ff4d4f",
+          color: "#e57373",
         },
         barWidth: "60%", // Same as BarChart
       },
@@ -386,10 +324,12 @@ export const BoxPlot = ({
       nameTextStyle: {
         fontSize: 10,
         color: "#666",
+        fontFamily: CHART_FONT_FAMILY,
       },
       axisLabel: {
         fontSize: 9,
         color: "#666",
+        fontFamily: CHART_FONT_FAMILY,
       },
       axisLine: {
         lineStyle: {
@@ -411,6 +351,7 @@ export const BoxPlot = ({
         width: Math.min(maxLabelWidth * 8, 180),
         overflow: "truncate",
         ellipsis: "...",
+        fontFamily: CHART_FONT_FAMILY,
       },
       axisLine: {
         lineStyle: {
@@ -459,3 +400,107 @@ export const BoxPlot = ({
     />
   );
 };
+
+export const WordCloud = React.memo(
+  ({ data, title }: { data: Array<[string, number]>; title: string }) => {
+    if (!data || data.length === 0) {
+      return (
+        <Empty
+          image={Empty.PRESENTED_IMAGE_SIMPLE}
+          description={`No ${title.toLowerCase()} data found`}
+          style={{ margin: "20px 0" }}
+        />
+      );
+    }
+
+    // Define color palette
+    const colors = [
+      "#37a460",
+      "#52c41a",
+      "#85d2ab",
+      "#73d13d",
+      "#b7eb8f",
+      "#5abc84",
+      "#95f985",
+      "#7cb305",
+      "#389e0d",
+      "#237804",
+    ];
+
+    // Create a simple hash function for consistent color assignment
+    const getHashCode = (str: string): number => {
+      let hash = 0;
+      for (let i = 0; i < str.length; i++) {
+        const char = str.charCodeAt(i);
+        hash = (hash << 5) - hash + char;
+        hash = hash & hash; // Convert to 32bit integer
+      }
+      return Math.abs(hash);
+    };
+
+    // Transform data for word cloud format with deterministic colors
+    const wordCloudData = data.map(([name, value]) => ({
+      name: name,
+      value: value,
+      textStyle: {
+        color: colors[getHashCode(name) % colors.length],
+      },
+    }));
+
+    const option = {
+      tooltip: {
+        show: true,
+        confine: true,
+        formatter: function (params: { name: string; value: number }) {
+          return `Count: ${params.value}`;
+        },
+      },
+      series: [
+        {
+          type: "wordCloud",
+          data: wordCloudData,
+          // Shape of the word cloud
+          shape: "square",
+          // Keep aspect ratio of words
+          keepAspect: false,
+          // Font configuration
+          textStyle: {
+            fontFamily: CHART_FONT_FAMILY,
+            fontWeight: "normal",
+          },
+          // Size range for words based on their values
+          sizeRange: [14, 60],
+          // Rotation range for words
+          rotationRange: [-90, 90],
+          // Rotation step
+          rotationStep: 45,
+          // Grid size for layout algorithm
+          gridSize: 8,
+          // Drawing outside of canvas will not be shown
+          drawOutOfBound: false,
+          // Shrink to fit if the word cloud is too large
+          shrinkToFit: true,
+          // Layout animation
+          layoutAnimation: true,
+          // Word spacing
+          left: "center",
+          top: "center",
+          right: null,
+          bottom: null,
+          width: "100%",
+          height: "100%",
+        },
+      ],
+    };
+
+    return (
+      <ReactECharts
+        option={option}
+        style={{ height: "260px", width: "100%" }}
+        opts={{ renderer: "canvas" }}
+      />
+    );
+  },
+);
+
+WordCloud.displayName = "WordCloud";

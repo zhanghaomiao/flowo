@@ -115,7 +115,7 @@ const ProgressNode: React.FC<NodeProps> = ({ data }) => {
         cursor: isUnscheduled ? "not-allowed" : "pointer",
         opacity: isUnscheduled ? 0.6 : 1,
         transition: "all 0.2s ease",
-        fontSize: "12px",
+        fontSize: "13px",
         fontWeight: "500",
       }}
     >
@@ -147,7 +147,7 @@ const ProgressNode: React.FC<NodeProps> = ({ data }) => {
           <div
             style={{
               fontWeight: "bold",
-              fontSize: "12px",
+              fontSize: "14px",
               lineHeight: "1.2",
               wordBreak: "break-word",
               maxWidth: "130px",

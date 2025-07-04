@@ -72,7 +72,7 @@ function RootComponent() {
           selectedKeys={[getSelectedKey()]}
         />
       </Header>
-      <Content style={{ padding: "10px", minWidth: "80%", maxWidth: "100%" }}>
+      <Content style={{ padding: "0px", minWidth: "80%", maxWidth: "100%" }}>
         <Outlet />
       </Content>
       <ReactQueryDevtools initialIsOpen={false} />

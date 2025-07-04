@@ -69,7 +69,7 @@ const FilesViewer: React.FC<FilesViewerProps> = ({
     if (!selectedFile || !fileContent[selectedFile]) {
       return (
         <Empty
-          description="Select a file to view its content"
+          description="No file content to display"
           style={{ marginTop: "50px" }}
         />
       );

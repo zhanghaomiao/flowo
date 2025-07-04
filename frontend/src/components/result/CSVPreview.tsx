@@ -106,12 +106,12 @@ export const CSVPreview: React.FC<CSVPreviewProps> = ({
   }
 
   const containerStyle = isFullscreen
-    ? { height: "100vh", padding: "24px", overflow: "hidden" }
+    ? { height: "calc(100vh - 250px)", padding: "24px", overflow: "hidden" }
     : { padding: "16px" };
 
   const scrollConfig = isFullscreen
-    ? { x: "max-content", y: "calc(100vh - 200px)" }
-    : { x: "max-content", y: 400 };
+    ? { x: "max-content", y: "calc(100vh - 320px)" }
+    : { x: "max-content", y: 500 };
 
   return (
     <div style={containerStyle}>

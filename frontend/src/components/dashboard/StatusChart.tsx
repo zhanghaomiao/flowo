@@ -61,7 +61,7 @@ export const StatusChart: React.FC<StatusChartProps> = ({
     // Error (red)
     if (data.error > 0) {
       const endAngle = currentAngle + percentages.error * 3.6;
-      gradientString += `#f5222d ${currentAngle}deg ${endAngle}deg, `;
+      gradientString += `#e57373 ${currentAngle}deg ${endAngle}deg, `;
       currentAngle = endAngle;
     }
 
@@ -196,7 +196,7 @@ export const StatusChart: React.FC<StatusChartProps> = ({
                     style={{
                       width: "12px",
                       height: "12px",
-                      backgroundColor: "#f5222d",
+                      backgroundColor: "#e57373",
                       borderRadius: "2px",
                     }}
                   />

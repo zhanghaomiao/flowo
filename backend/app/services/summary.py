@@ -209,7 +209,7 @@ class SummaryService:
 
         top_rules = [r[0] for r in self.db_session.execute(stmt_avg).all()]
         if not top_rules:
-            return []
+            return {}
 
         stmt_details = (
             select(Rule.name, cast(duration_expr, Float).label("duration_seconds"))

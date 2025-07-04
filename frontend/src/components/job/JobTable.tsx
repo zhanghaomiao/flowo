@@ -287,23 +287,23 @@ const JobTable: React.FC<JobTableProps> = ({
               height: "100%",
             }}
           >
-            <Tooltip title="View Job Details">
-              <Button
-                type="text"
-                icon={<InfoCircleOutlined />}
-                size="small"
-                onClick={() => {
-                  setJobDetailModal({ visible: true, jobId: record.id! });
-                }}
-              />
-            </Tooltip>
             <Tooltip title="View Job Logs">
               <Button
                 type="text"
-                icon={<FileTextOutlined />}
+                icon={<FileTextOutlined style={{ fontSize: 20 }} />}
                 size="small"
                 onClick={() => {
                   setJobLogsModal({ visible: true, jobId: record.id! });
+                }}
+              />
+            </Tooltip>
+            <Tooltip title="View Job Details">
+              <Button
+                type="text"
+                icon={<InfoCircleOutlined style={{ fontSize: 20 }} />}
+                size="small"
+                onClick={() => {
+                  setJobDetailModal({ visible: true, jobId: record.id! });
                 }}
               />
             </Tooltip>
