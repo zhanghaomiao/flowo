@@ -1,0 +1,20 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+build/
+.next/
+coverage/
+
+# Generated API client code
+src/api/
+
+# Generated files
+*.min.js
+*.bundle.js
+
+# Lock files
+package-lock.json
+pnpm-lock.yaml
+yarn.lock 

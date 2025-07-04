@@ -3,12 +3,10 @@ import {
   FileOutlined,
   FileTextOutlined,
 } from "@ant-design/icons";
-import { Button, Col, Empty, Modal, Row, Tooltip, Typography } from "antd";
+import { Button, Col, Empty, Modal, Row, Tooltip } from "antd";
 import React, { useEffect, useState } from "react";
 
 import FileContent from "./FileContent";
-
-const { Title } = Typography;
 
 interface FilesViewerProps {
   visible: boolean;
@@ -51,14 +49,12 @@ const FilesViewer: React.FC<FilesViewerProps> = ({
 
   const filePaths = Object.keys(fileContent);
 
-  // Set the first file as selected by default when modal opens
   useEffect(() => {
     if (visible && filePaths.length > 0 && !selectedFile) {
       setSelectedFile(filePaths[0]);
     }
   }, [visible, filePaths, selectedFile]);
 
-  // Reset selected file when modal closes
   useEffect(() => {
     if (!visible) {
       setSelectedFile(null);
@@ -92,7 +88,13 @@ const FilesViewer: React.FC<FilesViewerProps> = ({
   return (
     <Modal
       title={
-        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "2px",
+          }}
+        >
           <FileOutlined />
           <span>
             Files Viewer -{" "}
@@ -105,14 +107,17 @@ const FilesViewer: React.FC<FilesViewerProps> = ({
       footer={null}
       width={1000}
       closeIcon={<CloseOutlined />}
+      styles={{ body: { height: "75vh", padding: "2px", top: 10 } }}
     >
-      <div>
-        <Title level={5}> Files ({filePaths.length})</Title>
+      <div style={{ height: "100%", display: "flex", flexDirection: "column" }}>
+        <span style={{ fontSize: "16px", marginBottom: "10px" }}>
+          Files ({filePaths.length})
+        </span>
 
         {filePaths.length === 0 ? (
           <Empty description="No files to display" />
         ) : (
-          <Row gutter={[8, 8]} style={{ marginBottom: "20px" }}>
+          <Row gutter={[8, 8]} style={{ marginBottom: "10px" }}>
             {filePaths.map((filePath) => (
               <Col key={filePath}>
                 <Tooltip title={filePath} placement="top">
@@ -155,16 +160,6 @@ const FilesViewer: React.FC<FilesViewerProps> = ({
             ))}
           </Row>
         )}
-      </div>
-
-      <div
-        style={{
-          border: "1px solid #f0f0f0",
-          borderRadius: "6px",
-          minHeight: "300px",
-          backgroundColor: "#fafafa",
-        }}
-      >
         {renderFileContent()}
       </div>
     </Modal>

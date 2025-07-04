@@ -85,7 +85,7 @@ const WorkflowSearch: React.FC<WorkflowSearchProps> = ({
         value={tags && tags.trim() ? tags.split(",") : []}
         tagRender={(tag) => <WorkflowTag tag={tag.label as string} />}
         mode="multiple"
-        style={{ width: 130 }}
+        style={{ width: 140 }}
         size="small"
       />
 
@@ -100,15 +100,7 @@ const WorkflowSearch: React.FC<WorkflowSearchProps> = ({
       />
 
       <RangePicker
-        presets={[
-          {
-            label: (
-              <span aria-label="Current Time to End of Day">Now ~ END</span>
-            ),
-            value: () => [dayjs(), dayjs().endOf("day")], // 5.8.0+ support function
-          },
-          ...rangePresets,
-        ]}
+        presets={[...rangePresets]}
         placeholder={["Start time", "End time"]}
         allowEmpty={[true, true]}
         showTime

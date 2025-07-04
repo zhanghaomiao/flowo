@@ -6,6 +6,7 @@ import {
   LogsApi,
   UtilsApi,
   OutputsApi,
+  SummaryApi
 } from "./index";
 
 // Helper function to safely construct URLs
@@ -61,6 +62,7 @@ export const sseApi = new SseApi(configuration);
 export const logsApi = new LogsApi(configuration);
 export const utilsApi = new UtilsApi(configuration);
 export const outputsApi = new OutputsApi(configuration);
+export const summaryApi = new SummaryApi(configuration);
 
 // Export types for use in components
 export type {
@@ -69,5 +71,4 @@ export type {
   WorkflowListResponse,
   HTTPValidationError,
   ValidationError,
-  ValidationErrorLocInner,
 } from "./index";

@@ -5,14 +5,12 @@ import React from "react";
 interface LiveUpdatesIndicatorProps {
   isConnected: boolean;
   retryCount?: number;
-  onReconnect?: () => void;
   showReconnectButton?: boolean;
 }
 
 const LiveUpdatesIndicator: React.FC<LiveUpdatesIndicatorProps> = ({
   isConnected,
   retryCount = 0,
-  onReconnect,
   showReconnectButton = true,
 }) => {
   return (
@@ -28,11 +26,10 @@ const LiveUpdatesIndicator: React.FC<LiveUpdatesIndicatorProps> = ({
           </span>
         }
       />
-      {!isConnected && showReconnectButton && onReconnect && (
+      {!isConnected && showReconnectButton && (
         <Button
           type="link"
           size="small"
-          onClick={onReconnect}
           style={{ padding: "4px 8px", fontSize: "12px" }}
         >
           Reconnect SSE

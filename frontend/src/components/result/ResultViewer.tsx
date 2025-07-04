@@ -21,7 +21,7 @@ import {
   Tree,
   Typography,
 } from "antd";
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 
 import { constructApiUrl } from "../../api/client";
 import {
@@ -54,14 +54,12 @@ export const ResultViewer: React.FC<ResultViewerProps> = ({ workflowId }) => {
   const [selectedNodeData, setSelectedNodeData] =
     useState<SelectedNodeData | null>(null);
   const [isFullscreenOpen, setIsFullscreenOpen] = useState<boolean>(false);
-  const [loadedDirectories, setLoadedDirectories] = useState<Set<string>>(
-    new Set(),
-  );
 
-  // Local tree state to manage the complete tree data
+  const [loadedKeys, setLoadedKeys] = useState<React.Key[]>([]);
   const [treeData, setTreeData] = useState<AntdTreeNode[]>([]);
+  const [treeHeight, setTreeHeight] = useState<number>(400);
+  const treeContainerRef = useRef<HTMLDivElement>(null);
 
-  // Get workflow detail to get the directory
   const {
     data: workflowDetail,
     isLoading: isWorkflowLoading,
@@ -69,7 +67,6 @@ export const ResultViewer: React.FC<ResultViewerProps> = ({ workflowId }) => {
     refetch: refetchWorkflow,
   } = useWorkflowDetail(workflowId);
 
-  // Get initial directory tree from Caddy server (only root level)
   const {
     data: outputsTree,
     isLoading: isTreeLoading,
@@ -86,20 +83,17 @@ export const ResultViewer: React.FC<ResultViewerProps> = ({ workflowId }) => {
     refetchTree();
   };
 
-  // Function to update tree node with new children
   const updateTreeNode = useCallback(
     (path: string, newChildren: AntdTreeNode[]) => {
       setTreeData((prevTreeData) => {
         const updateNode = (nodes: AntdTreeNode[]): AntdTreeNode[] => {
           return nodes.map((node) => {
             if (node.fullPath === path) {
-              // Update this node with new children
               return {
                 ...node,
                 children: newChildren,
               };
             } else if (node.children) {
-              // Recursively update children
               return {
                 ...node,
                 children: updateNode(node.children),
@@ -108,7 +102,6 @@ export const ResultViewer: React.FC<ResultViewerProps> = ({ workflowId }) => {
             return node;
           });
         };
-
         return updateNode(prevTreeData);
       });
     },
@@ -118,10 +111,12 @@ export const ResultViewer: React.FC<ResultViewerProps> = ({ workflowId }) => {
   // Handle lazy loading when a directory is expanded
   const handleLoadData = useCallback(
     async (node: AntdTreeNode) => {
-      if (node.type === "directory" && !loadedDirectories.has(node.fullPath)) {
+      if (node.type === "directory" && !loadedKeys.includes(node.key)) {
         try {
           const newChildren = await lazyLoadMutation.mutateAsync(node.fullPath);
-          setLoadedDirectories((prev) => new Set(prev).add(node.fullPath));
+
+          // Mark this node as loaded in Tree component
+          setLoadedKeys((prev) => [...prev, node.key]);
 
           // Convert the new children to AntdTreeNode format and update the tree
           const convertedChildren = convertToAntdTreeData(
@@ -136,7 +131,7 @@ export const ResultViewer: React.FC<ResultViewerProps> = ({ workflowId }) => {
         }
       }
     },
-    [lazyLoadMutation, loadedDirectories, updateTreeNode],
+    [lazyLoadMutation, loadedKeys, updateTreeNode],
   );
 
   // Update tree data when initial data loads
@@ -151,7 +146,72 @@ export const ResultViewer: React.FC<ResultViewerProps> = ({ workflowId }) => {
     }
   }, [outputsTree, workflowDetail?.flowo_directory]);
 
+  useEffect(() => {
+    const updateTreeHeight = () => {
+      if (treeContainerRef.current) {
+        const containerHeight = treeContainerRef.current.clientHeight;
+        const availableHeight = containerHeight - 100;
+        setTreeHeight(Math.max(200, availableHeight));
+      }
+    };
+
+    updateTreeHeight();
+
+    window.addEventListener("resize", updateTreeHeight);
+
+    const resizeObserver = new ResizeObserver(updateTreeHeight);
+    if (treeContainerRef.current) {
+      resizeObserver.observe(treeContainerRef.current);
+    }
+
+    return () => {
+      window.removeEventListener("resize", updateTreeHeight);
+      resizeObserver.disconnect();
+    };
+  }, []);
+
   const handleExpand = (expandedKeysValue: React.Key[]) => {
+    // Find nodes that were collapsed (were in expandedKeys but not in expandedKeysValue)
+    const collapsedKeys = expandedKeys.filter(
+      (key) => !expandedKeysValue.includes(key),
+    );
+
+    // Remove collapsed nodes from loadedKeys to allow re-loading
+    // Also clean up the tree data to free memory
+    if (collapsedKeys.length > 0) {
+      // Remove from loadedKeys so Tree component will call loadData again
+      setLoadedKeys((prev) =>
+        prev.filter((key) => !collapsedKeys.includes(key)),
+      );
+
+      // Remove from our internal tracking
+      setTreeData((currentTreeData) => {
+        const removeCollapsedData = (nodes: AntdTreeNode[]): AntdTreeNode[] => {
+          return nodes.map((node) => {
+            if (
+              node.type === "directory" &&
+              collapsedKeys.includes(node.key) &&
+              node.children &&
+              node.children.length > 0
+            ) {
+              // Clear children to free memory
+              return {
+                ...node,
+                children: [], // Reset to empty array for next load
+              };
+            } else if (node.children) {
+              return {
+                ...node,
+                children: removeCollapsedData(node.children),
+              };
+            }
+            return node;
+          });
+        };
+        return removeCollapsedData(currentTreeData);
+      });
+    }
+
     setExpandedKeys(expandedKeysValue);
     setAutoExpandParent(false);
   };
@@ -206,7 +266,14 @@ export const ResultViewer: React.FC<ResultViewerProps> = ({ workflowId }) => {
     const fileSize = nodeData.fileSize ?? null;
 
     return (
-      <Space direction="vertical" style={{ width: "100%" }}>
+      <div
+        style={{
+          width: "100%",
+          display: "flex",
+          flexDirection: "column",
+          height: "100%",
+        }}
+      >
         <div
           style={{
             display: "flex",
@@ -249,17 +316,16 @@ export const ResultViewer: React.FC<ResultViewerProps> = ({ workflowId }) => {
         </div>
 
         {type === "file" && (
-          <div style={{ marginTop: 16 }}>
-            <div
-              style={{
-                marginTop: 8,
-                border: "1px solid #f0f0f0",
-                borderRadius: "4px",
-                padding: "8px",
-              }}
-            >
-              <FilePreview nodeData={selectedNodeData} />
-            </div>
+          <div
+            style={{
+              marginTop: 8,
+              flex: 1,
+              border: "1px solid #f0f0f0",
+              borderRadius: "4px",
+              padding: "8px",
+            }}
+          >
+            <FilePreview nodeData={selectedNodeData} />
           </div>
         )}
 
@@ -290,7 +356,7 @@ export const ResultViewer: React.FC<ResultViewerProps> = ({ workflowId }) => {
             </ul>
           </div>
         )}
-      </Space>
+      </div>
     );
   };
 
@@ -358,11 +424,10 @@ export const ResultViewer: React.FC<ResultViewerProps> = ({ workflowId }) => {
     }
 
     return (
-      <Splitter style={{ height: "100%" }}>
+      <Splitter style={{ overflow: "auto", height: "100%" }}>
         <Splitter.Panel defaultSize="30%" min="20%" max="40%">
           <Card
             style={{
-              height: "100%",
               overflow: "auto",
               background: "#fafafa",
               border: "none",
@@ -372,6 +437,7 @@ export const ResultViewer: React.FC<ResultViewerProps> = ({ workflowId }) => {
             <Tree
               showIcon
               loadData={handleLoadData}
+              loadedKeys={loadedKeys}
               onExpand={handleExpand}
               expandedKeys={expandedKeys}
               autoExpandParent={autoExpandParent}
@@ -382,19 +448,16 @@ export const ResultViewer: React.FC<ResultViewerProps> = ({ workflowId }) => {
                 overflow: "auto",
                 background: "#fafafa",
               }}
+              height={treeHeight}
             />
           </Card>
         </Splitter.Panel>
-        <Splitter.Panel>
+        <Splitter.Panel style={{ height: "100%" }}>
           <Card
             style={{
               height: "100%",
-              padding: "2px",
-              overflow: "auto",
-              background: "#fafafa",
-              borderRadius: "4px",
-              border: "1px solid #f0f0f0",
             }}
+            styles={{ body: { height: "100%" } }}
           >
             {renderPreview()}
           </Card>
@@ -404,7 +467,15 @@ export const ResultViewer: React.FC<ResultViewerProps> = ({ workflowId }) => {
   };
 
   return (
-    <div style={{ height: "100%" }}>
+    <div
+      ref={treeContainerRef}
+      style={{
+        flex: 1,
+        display: "flex",
+        flexDirection: "column",
+        height: "100%",
+      }}
+    >
       <div
         style={{
           display: "flex",

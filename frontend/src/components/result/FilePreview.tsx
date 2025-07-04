@@ -1,7 +1,9 @@
-import { Alert, Image, Spin, Typography } from "antd";
+import { Alert, Image, Spin } from "antd";
 import React, { useState } from "react";
 
 import { constructApiUrl } from "../../api/client";
+import FileContent from "../code/FileContent";
+import { CSVPreview, FullscreenCSVPreview } from "./CSVPreview";
 import {
   formatFileSize,
   getFileExtension,
@@ -10,8 +12,6 @@ import {
   shouldShowPreviewWarning,
 } from "./FileUtils";
 import type { SelectedNodeData } from "./types";
-
-const { Paragraph } = Typography;
 
 // Image Preview Component
 export const ImagePreview: React.FC<{ src: string; alt: string }> = ({
@@ -31,6 +31,7 @@ export const ImagePreview: React.FC<{ src: string; alt: string }> = ({
       alt={alt}
       style={{ maxWidth: "60%", maxHeight: "60%" }}
       fallback="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMIAAADDCAYAAADQvc6UAAABRWlDQ1BJQ0MgUHJvZmlsZQAAKJFjYGASSSwoyGFhYGDIzSspCnJ3UoiIjFJgf8LAwSDCIMogwMCcmFxc4BgQ4ANUwgCjUcG3awyMIPqyLsis7PPOq3QdDFcvjV3jOD1boQVTPQrgSkktTgbSf4A4LbmgqISBgTEFyFYuLykAsTuAbJEioKOA7DkgdjqEvQHEToKwj4DVhAQ5A9k3gGyB5IxEoBmML4BsnSQk8XQkNtReEOBxcfXxUQg1Mjc0dyHgXNJBSWpFCYh2zi+oLMpMzyhRcASGUqqCZ16yno6CkYGRAQMDKMwhqj/fAIcloxgHQqxAjIHBEugw5sUIsSQpBobtQPdLciLEVJYzMPBHMDBsayhILEqEO4DxG0txmrERhM29nYGBddr//5/DGRjYNRkY/l7////39v///y4Dmn+LgeHANwDrkl1AuO+pmgAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAwqADAAQAAAABAAAAwwAAAAD9b/HnAAAHlklEQVR4Ae3dP3Yk1RUG8A+1CC4iIOcnkcIaYAjhvQ=="
+      preview={false}
     />
   </div>
 );
@@ -59,52 +60,11 @@ export const TextPreview: React.FC<{ src: string }> = ({ src }) => {
   }
 
   return (
-    <div style={{ maxHeight: "400px", overflow: "auto" }}>
-      <Paragraph>
-        <pre style={{ whiteSpace: "pre-wrap", fontSize: "12px" }}>
-          {content}
-        </pre>
-      </Paragraph>
-    </div>
-  );
-};
-
-// JSON Preview Component
-export const JsonPreview: React.FC<{ src: string }> = ({ src }) => {
-  const [content, setContent] = useState<Record<string, unknown> | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
-
-  React.useEffect(() => {
-    fetch(src)
-      .then((response) => response.json())
-      .then((json) => {
-        setContent(json);
-        setLoading(false);
-      })
-      .catch((error) => {
-        console.error("Error loading JSON file:", error);
-        setContent({ error: "Failed to load JSON content" });
-        setLoading(false);
-      });
-  }, [src]);
-
-  if (loading) {
-    return <Spin />;
-  }
-
-  return (
-    <div style={{ maxHeight: "400px", overflow: "auto" }}>
-      <pre
-        style={{
-          fontSize: "12px",
-          background: "#f5f5f5",
-          padding: "8px",
-          borderRadius: "4px",
-        }}
-      >
-        {JSON.stringify(content, null, 2)}
-      </pre>
-    </div>
+    <FileContent
+      fileContent={content}
+      showFileName={false}
+      fileFormat={getFileExtension(src)}
+    />
   );
 };
 
@@ -141,6 +101,7 @@ export const FullscreenImagePreview: React.FC<{ src: string; alt: string }> = ({
       alt={alt}
       style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }}
       fallback="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMIAAADDCAYAAADQvc6UAE..."
+      preview={false}
     />
   </div>
 );
@@ -167,60 +128,7 @@ export const FullscreenTextPreview: React.FC<{ src: string }> = ({ src }) => {
     return <Spin />;
   }
 
-  return (
-    <div style={{ height: "100%", overflow: "auto" }}>
-      <Paragraph>
-        <pre
-          style={{
-            whiteSpace: "pre-wrap",
-            fontSize: "14px",
-            fontFamily: "monospace",
-          }}
-        >
-          {content}
-        </pre>
-      </Paragraph>
-    </div>
-  );
-};
-
-export const FullscreenJsonPreview: React.FC<{ src: string }> = ({ src }) => {
-  const [content, setContent] = useState<Record<string, unknown> | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
-
-  React.useEffect(() => {
-    fetch(src)
-      .then((response) => response.json())
-      .then((json) => {
-        setContent(json);
-        setLoading(false);
-      })
-      .catch((error) => {
-        console.error("Error loading JSON file:", error);
-        setContent({ error: "Failed to load JSON content" });
-        setLoading(false);
-      });
-  }, [src]);
-
-  if (loading) {
-    return <Spin />;
-  }
-
-  return (
-    <div style={{ height: "100%", overflow: "auto" }}>
-      <pre
-        style={{
-          fontSize: "14px",
-          background: "#f5f5f5",
-          padding: "16px",
-          borderRadius: "4px",
-          fontFamily: "monospace",
-        }}
-      >
-        {JSON.stringify(content, null, 2)}
-      </pre>
-    </div>
-  );
+  return <FileContent fileContent={content} showFileName={false} />;
 };
 
 export const FullscreenPdfPreview: React.FC<{ src: string }> = ({ src }) => (
@@ -297,12 +205,12 @@ const renderPreviewContent = (
       return <ImagePreview src={fileUrl} alt={title} />;
     case "text":
       return <TextPreview src={fileUrl} />;
-    case "json":
-      return <JsonPreview src={fileUrl} />;
     case "pdf":
       return <PdfPreview src={fileUrl} />;
     case "html":
       return <HtmlPreview src={fileUrl} />;
+    case "csv":
+      return <CSVPreview src={fileUrl} />;
     default:
       return (
         <Alert
@@ -373,12 +281,12 @@ const renderFullscreenContent = (
       return <FullscreenImagePreview src={fileUrl} alt={title} />;
     case "text":
       return <FullscreenTextPreview src={fileUrl} />;
-    case "json":
-      return <FullscreenJsonPreview src={fileUrl} />;
     case "pdf":
       return <FullscreenPdfPreview src={fileUrl} />;
     case "html":
       return <FullscreenHtmlPreview src={fileUrl} />;
+    case "csv":
+      return <FullscreenCSVPreview src={fileUrl} />;
     default:
       return (
         <Alert

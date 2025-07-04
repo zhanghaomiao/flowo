@@ -49,6 +49,9 @@ createRoot(document.getElementById("root")!).render(
             Layout: {
               headerHeight: 45,
             },
+            Card: {
+              bodyPadding: 4,
+            },
           },
         }}
       >

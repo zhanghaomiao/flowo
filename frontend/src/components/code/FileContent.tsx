@@ -1,20 +1,20 @@
 import { ExclamationCircleOutlined } from "@ant-design/icons";
 import { Alert, Switch, Typography } from "antd";
 import React, { useMemo, useState } from "react";
-import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
-import { oneLight } from "react-syntax-highlighter/dist/esm/styles/prism";
+
+import VirtualizedCodeViewer from "./VirtualizedCodeViewer";
 
 const { Text } = Typography;
 
 // Constants for performance optimization
 const MAX_FILE_SIZE_FOR_HIGHLIGHTING = 100 * 1024; // 100KB
-const MAX_LINES_FOR_HIGHLIGHTING = 1000;
-const LARGE_FILE_PREVIEW_LINES = 1000;
+const MAX_LINES_FOR_HIGHLIGHTING = 5000;
+const LARGE_FILE_PREVIEW_LINES = 5000;
 
 interface FileContentProps {
   fileContent: string;
   fileName?: string;
-  fileFormat?: "log" | "yaml" | "json";
+  fileFormat: string;
   showFileName?: boolean;
 }
 
@@ -79,14 +79,27 @@ const FileContent: React.FC<FileContentProps> = ({
         return "yaml";
       case "log":
         return "text";
+      case "python":
+        return "python";
+      case "md":
+      case "rst":
+      case "txt":
+        return "markdown";
       default:
         return "yaml";
     }
   };
 
   return (
-    <div style={{ maxHeight: "60vh", overflow: "auto" }}>
-      {/* File header with name and copy button */}
+    <div
+      style={{
+        height: "100%",
+        maxHeight: "100%",
+        overflow: "hidden",
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
       {showFileName && (
         <div
           style={{
@@ -98,6 +111,7 @@ const FileContent: React.FC<FileContentProps> = ({
             padding: "8px 12px",
             backgroundColor: "#f5f5f5",
             borderRadius: "4px",
+            flexShrink: 0,
           }}
         >
           {showFileName && fileName && (
@@ -143,12 +157,18 @@ const FileContent: React.FC<FileContentProps> = ({
           type="warning"
           icon={<ExclamationCircleOutlined />}
           showIcon
-          style={{ marginBottom: "16px" }}
+          style={{ marginBottom: "16px", flexShrink: 0 }}
         />
       )}
 
-      {/* File content */}
-      <div>
+      <div
+        style={{
+          flex: 1,
+          minHeight: 0,
+          display: "flex",
+          flexDirection: "column",
+        }}
+      >
         {fileAnalysis.shouldSkipHighlighting ? (
           <div
             style={{
@@ -162,30 +182,24 @@ const FileContent: React.FC<FileContentProps> = ({
               lineHeight: "1.5",
               border: "1px solid #dee2e6",
               borderRadius: "4px",
+              flex: 1,
+              overflow: "auto",
             }}
           >
             {previewContent}
           </div>
         ) : (
-          <SyntaxHighlighter
-            language={getLanguageFromFormat()}
-            customStyle={{
-              fontSize: "12px",
-              fontFamily: 'Monaco, Menlo, "Ubuntu Mono", Consolas, monospace',
-            }}
-            style={oneLight}
-            showInlineLineNumbers={false}
-            lineProps={{ style: { flexWrap: "wrap" } }}
-            showLineNumbers={true}
-            lineNumberStyle={{
-              color: "#999",
-              fontSize: "12px",
-              paddingRight: "10px",
-              userSelect: "none",
-            }}
-          >
-            {fileContent || ""}
-          </SyntaxHighlighter>
+          <div style={{ height: "100%", minHeight: "50px" }}>
+            <VirtualizedCodeViewer
+              code={fileContent || ""}
+              language={getLanguageFromFormat()}
+              theme="light"
+              fontSize={12}
+              showLineNumbers={true}
+              wrapLines={true}
+              wrapLongLines={true}
+            />
+          </div>
         )}
       </div>
     </div>

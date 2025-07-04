@@ -68,5 +68,5 @@ export interface FileTypes {
   pdfs: string[];
   html: string[];
   text: string[];
-  json: string[];
+  csv: string[];
 }

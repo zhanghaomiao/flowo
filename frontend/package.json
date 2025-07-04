@@ -19,15 +19,20 @@
     "@tanstack/react-router": "^1.120.15",
     "@tanstack/react-router-devtools": "^1.120.13",
     "@types/react-syntax-highlighter": "^15.5.13",
+    "@types/react-virtualized": "^9.22.2",
     "@xyflow/react": "^12.6.4",
     "antd": "^5.25.4",
     "axios": "^1.9.0",
     "dagre": "^0.8.5",
     "dayjs": "^1.11.13",
+    "echarts": "^5.6.0",
+    "echarts-for-react": "^3.0.2",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "react-google-charts": "^5.2.1",
-    "react-syntax-highlighter": "^15.6.1"
+    "react-syntax-highlighter": "^15.6.1",
+    "react-syntax-highlighter-virtualized-renderer": "^1.1.0",
+    "react-virtualized": "^9.22.6"
   },
   "devDependencies": {
     "@eslint/js": "^9.25.0",
