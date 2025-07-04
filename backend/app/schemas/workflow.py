@@ -8,6 +8,7 @@ class WorkflowResponse(BaseModel):
     """Schema for workflow response"""
 
     id: uuid.UUID
+    directory: str | None = None
     snakefile: bool
     started_at: datetime | None = None
     end_time: datetime | None = None
@@ -17,6 +18,7 @@ class WorkflowResponse(BaseModel):
     configfiles: bool
     tags: list[str] | None = None
     progress: float | None = None
+    total_jobs: int
 
     model_config = ConfigDict(from_attributes=True)
 

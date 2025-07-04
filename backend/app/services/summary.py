@@ -56,7 +56,7 @@ class SummaryService:
                 [wf.run_info.get("total", 0) for wf in workflows if wf.run_info]
             )
             stmt = select(
-                func.count().label("total"),
+                # func.count().label("total"),
                 func.count().filter(Job.status == "SUCCESS").label("success"),
                 func.count().filter(Job.status == "ERROR").label("error"),
                 func.count().filter(Job.status == "RUNNING").label("running"),
@@ -68,7 +68,10 @@ class SummaryService:
             running = result.running or 0
 
             return StatusSummary(
-                total=total, success=success, error=error, running=running
+                total=success + error + running,
+                success=success,
+                error=error,
+                running=running,
             )
 
     def get_activity(
@@ -82,7 +85,7 @@ class SummaryService:
             stmt = (
                 select(Rule.name, func.count(Job.id).label("job_count"))
                 .join(Job, Rule.id == Job.rule_id)
-                .where(Job.status == "SUCCESS")
+                .where(Job.status == "SUCCESS", Rule.name != "all")
                 .group_by(Rule.name)
                 .order_by(desc("job_count"))
             )
@@ -97,7 +100,7 @@ class SummaryService:
 
             results = self.db_session.execute(stmt.limit(limit)).all()
 
-            return [[name, count] for name, count in results]
+            return {name: count for name, count in results}
 
         elif item == "user":
             stmt = (
@@ -116,7 +119,7 @@ class SummaryService:
 
             results = self.db_session.execute(stmt.limit(limit)).all()
 
-            return [[user, count] for user, count in results]
+            return {user: count for user, count in results}
 
         if item == "tag":
             stmt = select(Workflow).where(Workflow.run_info.is_not(None))
@@ -134,7 +137,7 @@ class SummaryService:
 
             top_tags = tag_counter.most_common(limit)
 
-            return [[tag, count] for tag, count in top_tags]
+            return {tag: count for tag, count in top_tags}
 
     def get_rule_error(
         self,
@@ -170,15 +173,11 @@ class SummaryService:
 
         results = self.db_session.execute(stmt).all()
 
-        return [
-            [
-                rule_name,
-                total,
-                error,
-                round(ratio, 4) if ratio is not None else 0.0,
-            ]
-            for rule_name, total, error, ratio in results
-        ]
+        return {
+            rule_name: {"total": total, "error": error}
+            for rule_name, total, error, _ in results
+            if error
+        }
 
     def get_rule_duration(
         self,
@@ -186,9 +185,11 @@ class SummaryService:
         end_at: datetime | None,
         limit: int = 20,
     ):
+        # max, min, q4, q1, media
         conditions = [
             Job.status == "SUCCESS",
             Job.end_time.is_not(None),
+            Rule.name != "all",
         ]
         if start_at:
             conditions.append(Job.started_at >= start_at)
@@ -210,25 +211,66 @@ class SummaryService:
         top_rules = [r[0] for r in self.db_session.execute(stmt_avg).all()]
         if not top_rules:
             return []
-
         stmt_details = (
-            select(Rule.name, cast(duration_expr, Float).label("duration_seconds"))
+            select(
+                Rule.name,
+                func.min(cast(duration_expr, Float)).label("min_duration"),
+                func.percentile_cont(0.25)
+                .within_group(cast(duration_expr, Float))
+                .label("q1_duration"),
+                func.percentile_cont(0.5)
+                .within_group(cast(duration_expr, Float))
+                .label("median_duration"),
+                func.percentile_cont(0.75)
+                .within_group(cast(duration_expr, Float))
+                .label("q3_duration"),
+                func.max(cast(duration_expr, Float)).label("max_duration"),
+            )
             .join(Job, Rule.id == Job.rule_id)
             .where(and_(*conditions, Rule.name.in_(top_rules)))
+            .group_by(Rule.name)
         )
 
         results = self.db_session.execute(stmt_details).all()
 
-        durations_map = defaultdict(list)
-        for rule_name, dur_sec in results:
-            durations_map[rule_name].append(round(dur_sec / 60, 2))
+        durations_map = defaultdict(dict)
+        for result in results:
+            (
+                rule_name,
+                min_duration,
+                q1_duration,
+                median_duration,
+                q3_duration,
+                max_duration,
+            ) = result
 
-        sorted_durations_map = dict(
-            sorted(
+            iqr_duration = q3_duration - q1_duration
+            max_ = q3_duration + 1.5 * iqr_duration
+            min_ = q1_duration - 1.5 * iqr_duration
+
+            if max_ < max_duration:
+                max_duration = max_
+
+            if min_ > min_duration:
+                min_duration = min_
+
+            durations_map[rule_name] = {
+                "q1": round(q1_duration / 60, 2),
+                "median": round(median_duration / 60, 2),
+                "q3": round(q3_duration / 60, 2),
+                "max": round(max_duration / 60, 2),
+                "min": round(min_duration / 60, 2),
+                # "iqr_duration": iqr_duration / 60,
+                # "max_": max_ / 60,
+                # "min_": min_ / 60,
+            }
+
+        sorted_durations_map = {
+            k: v
+            for k, v in sorted(
                 durations_map.items(),
-                key=lambda item: sum(item[1]) / len(item[1]),
+                key=lambda item: item[1]["median"],
                 reverse=True,
             )
-        )
-
+        }
         return sorted_durations_map
