@@ -54,6 +54,7 @@ type NodeStylingData = {
 const StylingContext = createContext<{
   nodeStyling: Record<string, NodeStylingData>;
   layoutDirection: LayoutDirection;
+  isFullscreen: boolean;
 } | null>(null);
 
 // Wrapper component that provides styling context to nodes
@@ -73,6 +74,7 @@ const StyledProgressNode: React.FC<NodeProps> = (props) => {
         ...props.data,
         ...nodeStyle,
         layoutDirection: stylingContext.layoutDirection,
+        isFullscreen: stylingContext.isFullscreen,
       }}
     />
   );
@@ -196,8 +198,9 @@ const WorkflowGraphInner: React.FC<WorkflowGraphProps> = ({
     () => ({
       nodeStyling,
       layoutDirection,
+      isFullscreen,
     }),
-    [nodeStyling, layoutDirection],
+    [nodeStyling, layoutDirection, isFullscreen],
   );
 
   const handleNodeClick = useCallback(

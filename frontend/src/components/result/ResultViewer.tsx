@@ -27,6 +27,7 @@ import { constructApiUrl } from "../../api/client";
 import {
   useCaddyDirectoryTree,
   useLazyDirectoryLoad,
+  useRuleOutput,
   useWorkflowDetail,
 } from "../../hooks/useQueries";
 import { FilePreview, renderFullscreenPreview } from "./FilePreview";
@@ -47,7 +48,10 @@ import type {
 
 const { Text } = Typography;
 
-export const ResultViewer: React.FC<ResultViewerProps> = ({ workflowId }) => {
+export const ResultViewer: React.FC<ResultViewerProps> = ({
+  workflowId,
+  selectedRule,
+}) => {
   const [selectedKeys, setSelectedKeys] = useState<React.Key[]>([]);
   const [expandedKeys, setExpandedKeys] = useState<React.Key[]>([]);
   const [autoExpandParent, setAutoExpandParent] = useState<boolean>(false);
@@ -73,6 +77,13 @@ export const ResultViewer: React.FC<ResultViewerProps> = ({ workflowId }) => {
     error: treeError,
     refetch: refetchTree,
   } = useCaddyDirectoryTree(workflowDetail?.flowo_directory || null);
+
+  const {
+    data: ruleOutput,
+    isLoading: isRuleOutputLoading,
+    error: ruleOutputError,
+    refetch: refetchRuleOutput,
+  } = useRuleOutput(workflowId, selectedRule || "");
 
   // Lazy loading mutation
   const lazyLoadMutation = useLazyDirectoryLoad();

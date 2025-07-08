@@ -232,7 +232,10 @@ function WorkflowDetail() {
                         flexDirection: "column",
                       }}
                     >
-                      <ResultViewer workflowId={workflowId} />
+                      <ResultViewer
+                        workflowId={workflowId}
+                        selectedRule={selectedRule}
+                      />
                     </div>
                   )}
                 </div>

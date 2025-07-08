@@ -2,7 +2,13 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import type { JobDetailResponse, TreeDataNode } from "../api/api";
 import { Status, WorkflowDetialResponse } from "../api/api";
-import { jobsApi, logsApi, utilsApi, workflowApi } from "../api/client";
+import {
+  jobsApi,
+  logsApi,
+  outputsApi,
+  utilsApi,
+  workflowApi,
+} from "../api/client";
 import { constructApiUrl } from "../api/client";
 
 // Extended TreeDataNode interface with fileSize for Caddy server
@@ -435,5 +441,23 @@ export const useLazyDirectoryLoad = () => {
     onSuccess: (data, directoryPath) => {
       queryClient.setQueryData(["caddyDirectoryTree", directoryPath], data);
     },
+  });
+};
+
+// export const useRule
+export const useRuleOutput = (workflowId: string, ruleName: string) => {
+  return useQuery({
+    queryKey: ["ruleOutput", workflowId, ruleName],
+    queryFn: async () => {
+      const response =
+        await outputsApi.getJobOutputsApiV1OutputsWorkflowIdRuleOutputsGet(
+          workflowId,
+          ruleName,
+        );
+      return response.data;
+    },
+    staleTime: 60000,
+    refetchInterval: 300000,
+    enabled: !!workflowId && !!ruleName,
   });
 };

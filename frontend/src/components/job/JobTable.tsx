@@ -169,14 +169,6 @@ const JobTable: React.FC<JobTableProps> = ({
       sorter: (a, b) => (a.threads ?? 0) - (b.threads ?? 0),
     },
     {
-      title: "Priority",
-      dataIndex: "priority",
-      key: "priority",
-      width: 30,
-      render: (priority: number | null) => priority ?? "-",
-      sorter: (a, b) => (a.priority ?? 0) - (b.priority ?? 0),
-    },
-    {
       title: "Wildcards",
       dataIndex: "wildcards",
       width: 150,
