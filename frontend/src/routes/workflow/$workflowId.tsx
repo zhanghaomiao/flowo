@@ -234,7 +234,7 @@ function WorkflowDetail() {
                     >
                       <ResultViewer
                         workflowId={workflowId}
-                        selectedRule={selectedRule}
+                        selectedRule={selectedRule || undefined}
                       />
                     </div>
                   )}

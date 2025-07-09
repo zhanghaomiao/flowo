@@ -553,21 +553,11 @@ export const ResultViewer: React.FC<ResultViewerProps> = ({
           Refresh
         </Button>
         <Text type="secondary" style={{ fontSize: "12px" }}>
-          Showing: {ALL_SUPPORTED_EXTENSIONS.join(", ")}
+          {selectedRule
+            ? `Rule Output: ${selectedRule} - This directory tree shows the output files declared in the snakefile of this rule.`
+            : `Showing: ${ALL_SUPPORTED_EXTENSIONS.join(", ")}`}
         </Text>
       </div>
-
-      {selectedRule && (
-        <div style={{ marginBottom: "16px" }}>
-          <Alert
-            message={`Rule Output: ${selectedRule}`}
-            description="This directory tree shows the output files declared in the snakefile of this rule."
-            type="info"
-            showIcon
-            style={{ marginBottom: "8px" }}
-          />
-        </div>
-      )}
 
       {renderContent()}
 
