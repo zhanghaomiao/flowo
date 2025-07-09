@@ -1,5 +1,4 @@
 import { FolderOutlined } from "@ant-design/icons";
-import React from "react";
 
 import type { TreeDataNode } from "../../api/api";
 import { getFileIcon, isSupportedFile } from "./FileUtils";
@@ -33,7 +32,6 @@ export const filterSupportedFiles = (
     .filter(Boolean) as (TreeDataNode & { fileSize?: number | null })[];
 };
 
-// Convert API TreeDataNode to Antd Tree format with filtering and lazy loading support
 export const convertToAntdTreeData = (
   nodes: (TreeDataNode & { fileSize?: number | null })[],
   parentPath = "",
@@ -86,4 +84,68 @@ export const convertToAntdTreeData = (
 const getFileExtension = (filename: string): string => {
   const parts = filename.split(".");
   return parts.length > 1 ? parts[parts.length - 1].toLowerCase() : "";
+};
+
+// Convert array of file paths to tree structure for rule output
+export const convertRuleOutputToTreeData = (
+  filePaths: string[],
+  basepath: string | null = null,
+): AntdTreeNode[] => {
+  const treeMap = new Map<string, AntdTreeNode>();
+
+  filePaths.forEach((filePath) => {
+    const parts = filePath.split("/");
+    let currentPath = "";
+
+    parts.forEach((part, index) => {
+      const isFile = index === parts.length - 1;
+      const parentPath = currentPath;
+      currentPath = parentPath ? `${parentPath}/${part}` : part;
+
+      if (!treeMap.has(currentPath)) {
+        const fileExtension = isFile ? getFileExtension(part) : "";
+
+        const node: AntdTreeNode = {
+          title: part,
+          key: currentPath,
+          icon: isFile ? getFileIcon(part) : <FolderOutlined />,
+          children: isFile ? undefined : [],
+          isLeaf: isFile,
+          fullPath: basepath ? `${basepath}/${currentPath}` : currentPath,
+          type: isFile ? "file" : "directory",
+          fileExtension,
+          nodeData: {
+            title: part,
+            key: currentPath,
+            isLeaf: isFile,
+            children: isFile ? undefined : [],
+            fileSize: null,
+          },
+        };
+
+        treeMap.set(currentPath, node);
+
+        // Add to parent's children if parent exists
+        if (parentPath && treeMap.has(parentPath)) {
+          const parent = treeMap.get(parentPath)!;
+          if (
+            parent.children &&
+            !parent.children.some((child) => child.key === currentPath)
+          ) {
+            parent.children.push(node);
+          }
+        }
+      }
+    });
+  });
+
+  // Return only root level nodes
+  const rootNodes: AntdTreeNode[] = [];
+  treeMap.forEach((node, path) => {
+    if (!path.includes("/")) {
+      rootNodes.push(node);
+    }
+  });
+
+  return rootNodes;
 };

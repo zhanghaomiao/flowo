@@ -151,7 +151,7 @@
             query download=*
         }
         header @download {
-            Content-Disposition "attachment"
+            Content-Disposition "attachment; filename=\"{path.base}\""
         }
     }
 

@@ -85,7 +85,7 @@ services:
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
       TZ: ${TZ:-Asia/Shanghai}
     volumes:
-      - ${FLOWO_WORKING_PATH:-.}:/work_dir
+      - ${FLOWO_WORKING_PATH:-.}:/work_dir:ro
     ports:
       - "${BACKEND_PORT:-8000}:80"
     depends_on:
