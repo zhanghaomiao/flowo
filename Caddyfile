@@ -149,9 +149,10 @@
         # Force download for files when 'download' query parameter is present
         @download {
             query download=*
+            path_regexp filename "([^/]+)$"
         }
         header @download {
-            Content-Disposition "attachment; filename=\"{path.base}\""
+            Content-Disposition "attachment; filename=\"{re.filename.1}\""
         }
     }
 

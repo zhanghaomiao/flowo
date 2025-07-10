@@ -466,15 +466,9 @@ const WorkflowTable = () => {
                   }
                   size="small"
                   onClick={() => handleShowSnakefile(record.id)}
-                  style={{
-                    color: "#1890ff",
-                    padding: "0px",
-                  }}
                 />
               </Tooltip>
-
-              {/* Config files button */}
-              {record.configfiles && (
+              {record.configfiles ? (
                 <Tooltip title="View Config Files">
                   <Button
                     type="text"
@@ -487,8 +481,19 @@ const WorkflowTable = () => {
                     }}
                   />
                 </Tooltip>
+              ) : (
+                <Tooltip title="No Config Files">
+                  <Button
+                    type="text"
+                    icon={<SettingOutlined style={{ fontSize: 22 }} />}
+                    size="small"
+                    style={{
+                      color: "#e8e8e8",
+                      padding: "0px",
+                    }}
+                  />
+                </Tooltip>
               )}
-
               {/* Log file button */}
               {record.started_at && (
                 <Tooltip title="View Workflow Logs">
@@ -506,7 +511,6 @@ const WorkflowTable = () => {
                   />
                 </Tooltip>
               )}
-
               {/* Workflow detail button */}
               <Tooltip title="View Workflow Detail">
                 <Button
@@ -539,7 +543,7 @@ const WorkflowTable = () => {
         return (
           <Popconfirm
             title="Delete Workflow"
-            description={`Are you sure you want to delete workflow: ${record.id}?`}
+            description={`Are you sure you want to delete workflow: "${record.name}" with user: ${record.user}?`}
             onConfirm={() => handleDeleteWorkflow(record.id)}
             okText="Yes"
             cancelText="No"

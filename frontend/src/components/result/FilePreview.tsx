@@ -128,7 +128,13 @@ export const FullscreenTextPreview: React.FC<{ src: string }> = ({ src }) => {
     return <Spin />;
   }
 
-  return <FileContent fileContent={content} showFileName={false} />;
+  return (
+    <FileContent
+      fileContent={content}
+      showFileName={false}
+      fileFormat={getFileExtension(src)}
+    />
+  );
 };
 
 export const FullscreenPdfPreview: React.FC<{ src: string }> = ({ src }) => (

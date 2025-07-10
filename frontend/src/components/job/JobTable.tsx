@@ -15,7 +15,7 @@ import { useWorkflowJobsWithSSE } from "../../hooks/useQueriesWithSSE";
 import { formatDateCompact, getStatusColor } from "../../utils/formatters";
 import FilesViewer from "../code/FilesViewer";
 import FileViewer from "../code/FileViewer";
-import { DurationCell } from "../common/common";
+import { calculateDuration, DurationCell } from "../common/common";
 import LiveUpdatesIndicator from "../LiveUpdatesIndicator";
 
 interface JobTableProps {
@@ -159,6 +159,11 @@ const JobTable: React.FC<JobTableProps> = ({
       key: "duration",
       width: 40,
       render: (_, record) => <DurationCell record={record} />,
+      sorter: (a, b) => {
+        const durationA = calculateDuration(a);
+        const durationB = calculateDuration(b);
+        return durationA - durationB;
+      },
     },
     {
       title: "Threads",

@@ -331,7 +331,10 @@ export const useWorkflowDetail = (
 };
 
 // New hook for querying Caddy server directory listing
-export const useCaddyDirectoryTree = (directory: string | null) => {
+export const useCaddyDirectoryTree = (
+  directory: string | null,
+  enabled: boolean = true,
+) => {
   return useQuery<Array<CaddyTreeDataNode>>({
     queryKey: ["caddyDirectoryTree", directory],
     queryFn: async () => {
@@ -383,7 +386,7 @@ export const useCaddyDirectoryTree = (directory: string | null) => {
 
       return nodes;
     },
-    enabled: !!directory,
+    enabled,
     staleTime: 120000,
     refetchInterval: 600000,
     refetchOnWindowFocus: false,

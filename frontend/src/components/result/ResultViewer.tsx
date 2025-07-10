@@ -3,7 +3,6 @@ import "./ResultViewer.css";
 import {
   DownloadOutlined,
   EyeOutlined,
-  FolderOutlined,
   FullscreenOutlined,
   ReloadOutlined,
 } from "@ant-design/icons";
@@ -17,7 +16,6 @@ import {
   Space,
   Spin,
   Splitter,
-  Tag,
   Tree,
   Typography,
 } from "antd";
@@ -31,12 +29,15 @@ import {
   useWorkflowDetail,
 } from "../../hooks/useQueries";
 import { FilePreview, renderFullscreenPreview } from "./FilePreview";
-import { convertRuleOutputToTreeData, convertToAntdTreeData } from "./FileTree";
+import {
+  combineRuleOutputWithDirectoryContent,
+  convertRuleOutputToTreeData,
+  convertToAntdTreeData,
+} from "./FileTree";
 import {
   ALL_SUPPORTED_EXTENSIONS,
   formatFileSize,
   getFileIcon,
-  getFileTypeCategory,
   isFileTooLargeForPreview,
 } from "./FileUtils";
 import type {
@@ -64,6 +65,12 @@ export const ResultViewer: React.FC<ResultViewerProps> = ({
   const [selectedNodeData, setSelectedNodeData] =
     useState<SelectedNodeData | null>(null);
   const [isFullscreenOpen, setIsFullscreenOpen] = useState<boolean>(false);
+  const [loadedDirectoryPath, setLoadedDirectoryPath] = useState<string | null>(
+    null,
+  );
+  const [loadedDirectories, setLoadedDirectories] = useState<Set<string>>(
+    new Set(),
+  );
 
   const [loadedKeys, setLoadedKeys] = useState<React.Key[]>([]);
   const [treeData, setTreeData] = useState<AntdTreeNode[]>([]);
@@ -82,7 +89,10 @@ export const ResultViewer: React.FC<ResultViewerProps> = ({
     isLoading: isTreeLoading,
     error: treeError,
     refetch: refetchTree,
-  } = useCaddyDirectoryTree(workflowDetail?.flowo_directory || null);
+  } = useCaddyDirectoryTree(
+    workflowDetail?.flowo_directory || null,
+    !!workflowDetail,
+  );
 
   const {
     data: ruleOutput,
@@ -90,6 +100,14 @@ export const ResultViewer: React.FC<ResultViewerProps> = ({
     error: ruleOutputError,
     refetch: refetchRuleOutput,
   } = useRuleOutput(workflowId, selectedRule || "");
+
+  // Hook for loading directory content when rule is selected
+  const {
+    data: directoryContent,
+    error: directoryContentError,
+    refetch: refetchDirectoryContent,
+    isLoading: isDirectoryContentLoading,
+  } = useCaddyDirectoryTree(loadedDirectoryPath, !!loadedDirectoryPath);
 
   // Lazy loading mutation
   const lazyLoadMutation = useLazyDirectoryLoad();
@@ -102,6 +120,9 @@ export const ResultViewer: React.FC<ResultViewerProps> = ({
       refetchRuleOutput();
     } else {
       refetchTree();
+    }
+    if (directoryContentError) {
+      refetchDirectoryContent();
     }
   };
 
@@ -156,23 +177,25 @@ export const ResultViewer: React.FC<ResultViewerProps> = ({
     [lazyLoadMutation, loadedKeys, updateTreeNode],
   );
 
-  // Update tree data when initial data loads
   React.useEffect(() => {
-    // Reset state when switching modes
     setSelectedKeys([]);
     setExpandedKeys([]);
     setSelectedNodeData(null);
+    setLoadedDirectoryPath(null);
+    setLoadedDirectories(new Set());
 
     if (selectedRule && ruleOutput && ruleOutput.length > 0) {
       // Use rule output data to build tree
       const validPaths = ruleOutput.filter(
         (path): path is string => path !== null,
       );
-      const ruleTreeData = convertRuleOutputToTreeData(
+
+      const treeData = convertRuleOutputToTreeData(
         validPaths,
         workflowDetail?.flowo_directory,
       );
-      setTreeData(ruleTreeData);
+
+      setTreeData(treeData);
     } else if (outputsTree && outputsTree.length > 0) {
       // Use regular workflow output tree
       const initialTreeData = convertToAntdTreeData(
@@ -186,6 +209,51 @@ export const ResultViewer: React.FC<ResultViewerProps> = ({
       setTreeData([]);
     }
   }, [outputsTree, workflowDetail?.flowo_directory, selectedRule, ruleOutput]);
+
+  // Handle combining directory content with rule output after directory is loaded
+  React.useEffect(() => {
+    if (
+      selectedRule &&
+      ruleOutput &&
+      ruleOutput.length > 0 &&
+      loadedDirectoryPath &&
+      directoryContent &&
+      directoryContent.length > 0
+    ) {
+      const newTreeData = combineRuleOutputWithDirectoryContent(
+        treeData,
+        loadedDirectoryPath,
+        directoryContent,
+      );
+
+      setTreeData(newTreeData);
+    }
+  }, [
+    directoryContent,
+    loadedDirectoryPath,
+    ruleOutput,
+    selectedRule,
+    workflowDetail?.flowo_directory,
+  ]);
+
+  // Handler for loading directory content when rule is selected
+  const handleLoadDirectoryContent = useCallback(() => {
+    if (
+      selectedRule &&
+      selectedNodeData &&
+      selectedNodeData.type === "directory"
+    ) {
+      const directoryPath = selectedNodeData.fullPath;
+      if (loadedDirectories.has(directoryPath)) return;
+      setLoadedDirectoryPath(directoryPath);
+      setLoadedDirectories((prev) => new Set(prev).add(directoryPath));
+    }
+  }, [selectedRule, selectedNodeData, loadedDirectories]);
+
+  React.useEffect(() => {
+    setLoadedDirectories(new Set());
+    setLoadedDirectoryPath(null);
+  }, [selectedRule]);
 
   useEffect(() => {
     const updateTreeHeight = () => {
@@ -218,10 +286,7 @@ export const ResultViewer: React.FC<ResultViewerProps> = ({
         (key) => !expandedKeysValue.includes(key),
       );
 
-      // Remove collapsed nodes from loadedKeys to allow re-loading
-      // Also clean up the tree data to free memory
       if (collapsedKeys.length > 0) {
-        // Remove from loadedKeys so Tree component will call loadData again
         setLoadedKeys((prev) =>
           prev.filter((key) => !collapsedKeys.includes(key)),
         );
@@ -307,7 +372,6 @@ export const ResultViewer: React.FC<ResultViewerProps> = ({
     }
 
     const { nodeData, fullPath, type } = selectedNodeData;
-    const hasChildren = nodeData.children && nodeData.children.length > 0;
     const fileSize = nodeData.fileSize ?? null;
 
     return (
@@ -373,32 +437,18 @@ export const ResultViewer: React.FC<ResultViewerProps> = ({
             <FilePreview nodeData={selectedNodeData} />
           </div>
         )}
-
-        {type === "directory" && hasChildren && nodeData.children && (
+        {type === "directory" && selectedRule && (
           <div>
             <Text strong>Contents:</Text>
-            <ul style={{ marginTop: 8, paddingLeft: 20 }}>
-              {nodeData.children.slice(0, 10).map((child) => (
-                <li key={child.key} style={{ marginBottom: 4 }}>
-                  {child.isLeaf ? (
-                    getFileIcon(child.title || "")
-                  ) : (
-                    <FolderOutlined />
-                  )}{" "}
-                  {child.title}
-                  {child.isLeaf && (
-                    <Tag style={{ marginLeft: 8 }}>
-                      {getFileTypeCategory(child.title || "")}
-                    </Tag>
-                  )}
-                </li>
-              ))}
-              {nodeData.children.length > 10 && (
-                <li style={{ color: "#888" }}>
-                  ... and {nodeData.children.length - 10} more items
-                </li>
-              )}
-            </ul>
+            <Button
+              type="text"
+              icon={<ReloadOutlined />}
+              onClick={handleLoadDirectoryContent}
+              loading={isDirectoryContentLoading}
+              style={{ marginLeft: 8 }}
+            >
+              Load all contents
+            </Button>
           </div>
         )}
       </div>
