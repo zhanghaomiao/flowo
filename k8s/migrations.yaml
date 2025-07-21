@@ -1,0 +1,88 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: alembic-migrations
+  namespace: flowo
+  labels:
+    app: alembic-migrations
+spec:
+  template:
+    metadata:
+      labels:
+        app: alembic-migrations
+    spec:
+      restartPolicy: OnFailure
+      initContainers:
+      - name: wait-for-postgres
+        image: hub.miaodocker.space:8443/library/postgres:15-alpine
+        command:
+        - sh
+        - -c
+        - |
+          until pg_isready -h postgresql -p 5432 -U $(POSTGRES_USER); do
+            echo "Waiting for PostgreSQL to be ready..."
+            sleep 2
+          done
+        env:
+        - name: POSTGRES_USER
+          valueFrom:
+            secretKeyRef:
+              name: flowo-secrets
+              key: postgres-user
+      containers:
+      - name: alembic-migrations
+        image: flowo-backend:latest  # Use locally built image
+        imagePullPolicy: Never
+        env:
+        - name: POSTGRES_DB
+          valueFrom:
+            secretKeyRef:
+              name: flowo-secrets
+              key: postgres-db
+        - name: POSTGRES_USER
+          valueFrom:
+            secretKeyRef:
+              name: flowo-secrets
+              key: postgres-user
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: flowo-secrets
+              key: postgres-password
+        - name: POSTGRES_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: flowo-config
+              key: POSTGRES_HOST
+        - name: POSTGRES_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: flowo-config
+              key: POSTGRES_PORT
+        - name: PYTHONPATH
+          value: "/app"
+        - name: PYTHONUNBUFFERED
+          value: "1"
+        - name: TZ
+          valueFrom:
+            configMapKeyRef:
+              name: flowo-config
+              key: TZ
+        workingDir: /app
+        command:
+        - sh
+        - -c
+        - |
+          echo 'Checking if database has already been initialized...'
+          EXISTS=$(psql postgresql://$POSTGRES_USER:$POSTGRES_PASSWORD@$POSTGRES_HOST:$POSTGRES_PORT/$POSTGRES_DB -tAc "SELECT to_regclass('alembic_version')")
+          if [ "$EXISTS" = "alembic_version" ]; then
+            echo '✅ Database already initialized. Skipping migration.'
+          else
+            echo '1. Running Alembic migrations to create tables...'
+            uv run alembic upgrade head
+            echo '✅ Tables created successfully!'
+            echo '2. Running init-db scripts to create triggers and functions...'
+            psql postgresql://$POSTGRES_USER:$POSTGRES_PASSWORD@$POSTGRES_HOST:$POSTGRES_PORT/$POSTGRES_DB -f /app/scripts/01-triggers-functions.sql
+            echo '✅ Triggers and functions created successfully!'
+            echo '🎉 Database setup completed!'
+          fi
