@@ -81,7 +81,7 @@ services:
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
       TZ: ${TZ:-Asia/Shanghai}
     volumes:
-      - ${FLOWO_WORKING_PATH:-.}:/work_dir
+      - ${FLOWO_WORKING_PATH:-.}:/work_dir:ro
       - ./backend/app:/app/app
     ports:
       - "${BACKEND_PORT:-8000}:80"

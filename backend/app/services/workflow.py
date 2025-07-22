@@ -1,4 +1,4 @@
-import code
+from argparse import FileType
 import os
 import uuid
 from collections import Counter, defaultdict
@@ -12,8 +12,9 @@ from fastapi import HTTPException
 from fastapi.responses import JSONResponse
 from sqlalchemy import and_, case, func, select, or_
 from sqlalchemy.orm import Session
-
-from ..models import Error, Job, Status, Workflow
+from ..models.enums import FileType
+import logging
+from ..models import Error, Job, Status, Workflow, Rule, File
 from ..schemas import (
     RuleStatusResponse,
     TreeDataNode,
@@ -427,6 +428,21 @@ class WorkflowService:
             raise HTTPException(status_code=404, detail="directory not found")
 
         return build_tree_with_anytree(directory, max_depth=max_depth)
+
+    def get_rule_outputs(self, workflow_id: uuid.UUID, rule_name: str):
+
+        query = (
+            select(File.path)
+            .join(Job)
+            .join(Rule)
+            .where(
+                Job.workflow_id == workflow_id,
+                Rule.name == rule_name,
+                File.file_type == FileType.OUTPUT,
+            )
+        )
+
+        return self.db_session.execute(query).scalars().all()
 
     def delete_workflow(self, workflow_id: uuid.UUID):
         self.db_session.query(Error).filter(Error.workflow_id == workflow_id).delete()

@@ -1,6 +1,6 @@
 from collections import Counter, defaultdict
 from datetime import datetime
-
+import math
 from datetime import datetime
 from typing import Literal
 
@@ -255,14 +255,11 @@ class SummaryService:
                 min_duration = min_
 
             durations_map[rule_name] = {
-                "q1": round(q1_duration / 60, 2),
-                "median": round(median_duration / 60, 2),
-                "q3": round(q3_duration / 60, 2),
-                "max": round(max_duration / 60, 2),
-                "min": round(min_duration / 60, 2),
-                # "iqr_duration": iqr_duration / 60,
-                # "max_": max_ / 60,
-                # "min_": min_ / 60,
+                "q1": round(math.log(q1_duration / 60 + 1), 2),
+                "median": round(math.log(median_duration / 60 + 1), 2),
+                "q3": round(math.log(q3_duration / 60 + 1), 2),
+                "max": round(math.log(max_duration / 60 + 1), 2),
+                "min": round(math.log(min_duration / 60 + 1), 2),
             }
 
         sorted_durations_map = {
