@@ -44,7 +44,7 @@ docker push your-registry/flowo-backend:latest
 
 # Build frontend image
 cd ../frontend
-docker build -t your-registry/flowo-frontend:latest .
+docker build -t your-registry/flowo-frontend:latest  --build-arg VITE_API_BASE_PATH=http://flowo.irep.com .
 docker push your-registry/flowo-frontend:latest
 ```
 
@@ -61,8 +61,6 @@ Before deploying, update the secrets in `configmap.yaml`:
 
 ```bash
 # Encode your secrets in base64
-echo -n "your_database_name" | base64
-echo -n "your_database_user" | base64
 echo -n "your_database_password" | base64
 ```
 

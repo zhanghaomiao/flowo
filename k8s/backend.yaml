@@ -17,8 +17,8 @@ spec:
     spec:
       containers:
       - name: flowo-backend
-        image: flowo-backend:latest  # Use locally built image
-        imagePullPolicy: Never
+        image: 172.16.3.223:5000/iremeta/flowo:v1
+        imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 80
         env:
@@ -88,7 +88,7 @@ spec:
       volumes:
       - name: work-dir
         hostPath:
-          path: /data/flowo-working  # Adjust this path as needed
+          path: /share_gpu/flowo  # Adjust this path as needed
           type: DirectoryOrCreate
 ---
 apiVersion: v1

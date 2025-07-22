@@ -83,6 +83,7 @@ spec:
   - port: 5432
     targetPort: 5432
     protocol: TCP
+    nodePort: 30032  # Optional: specify a NodePort if needed
   selector:
     app: postgresql
-  type: ClusterIP
+  type: NodePort

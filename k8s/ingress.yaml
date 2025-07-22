@@ -4,7 +4,6 @@ metadata:
   name: flowo-ingress
   namespace: flowo
   annotations:
-    cert-manager.io/cluster-issuer: "letsencrypt-prod"  # Optional: for SSL certificates
     nginx.ingress.kubernetes.io/ssl-redirect: "false"  # Disable SSL redirect for local
     nginx.ingress.kubernetes.io/proxy-body-size: "100m"
     nginx.ingress.kubernetes.io/proxy-read-timeout: "600"
@@ -12,7 +11,7 @@ metadata:
 spec:
   ingressClassName: nginx
   rules:
-  - host: flowo.dashboard.com  # Fixed typo: dashborad -> dashboard
+  - host: flowo.irep.com  # Fixed typo: dashborad -> dashboard
     http:
       paths:
       - path: /
@@ -22,7 +21,3 @@ spec:
             name: caddy
             port:
               number: 80
-  tls:  # Optional: for SSL certificates
-  - hosts:
-    - flowo.dashboard.com
-    secretName: flowo-tls

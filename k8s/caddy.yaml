@@ -9,7 +9,7 @@ data:
     # 
     # This configuration provides:
     # 1. Reverse proxy for /api/v1/* requests to the backend service
-    # 2. Static file server for /work_dir with caching for images, PDFs, and HTML files
+    # 2. Static file server for /files with caching for images, PDFs, and HTML files
 
     # Default site configuration
     :80 {
@@ -52,9 +52,9 @@ data:
             }
         }
 
-        # Handle /work_dir requests - serve static files
-        handle /work_dir/* {
-            uri strip_prefix /work_dir
+        # Handle /files requests - serve static files
+        handle /files/* {
+            uri strip_prefix /files
             file_server {
                 root /work_dir
                 browse
@@ -86,7 +86,7 @@ data:
                 X-Frame-Options "DENY"
                 X-XSS-Protection "1; mode=block"
                 Referrer-Policy "strict-origin-when-cross-origin"
-                Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' ws: wss:; frame-ancestors 'none';"
+                Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.gstatic.com; style-src 'self' 'unsafe-inline' https://www.gstatic.com; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' ws: wss:; frame-ancestors 'none';"
             }
         }
 
@@ -165,7 +165,7 @@ spec:
           name: caddy-config
       - name: work-dir
         hostPath:
-          path: /data/flowo-working  # Adjust this path as needed
+          path: /share_gpu/flowo  
           type: DirectoryOrCreate
       - name: caddy-data
         persistentVolumeClaim:
@@ -193,4 +193,4 @@ spec:
     protocol: TCP
   selector:
     app: caddy
-  type: LoadBalancer
+  type: ClusterIP

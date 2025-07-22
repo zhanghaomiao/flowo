@@ -25,4 +25,3 @@ data:
   TZ: "Asia/Shanghai"
   CADDY_PORT: "80"
   VITE_DISABLE_SSE: "false"
-  VITE_API_BASE_PATH: "http://dashborad.flowo.com"
