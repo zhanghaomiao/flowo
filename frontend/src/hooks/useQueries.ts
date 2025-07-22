@@ -237,37 +237,6 @@ export const useWorkflowLogs = (
   });
 };
 
-// Custom hook for fetching a single workflow
-export const useWorkflow = (workflowId: string) => {
-  return useQuery({
-    queryKey: ["workflow", workflowId],
-    queryFn: async () => {
-      // Get the workflow by searching for it with ID
-      const response = await workflowApi.getWorkflowsApiV1WorkflowsGet(
-        1, // limit: only get 1 workflow
-        0, // offset: start from beginning
-        true, // orderByStarted
-        true, // descending
-        null, // user
-        null, // status
-      );
-      // Find the workflow with matching ID
-      const workflow = response.data.workflows?.find(
-        (w) => w.id === workflowId,
-      );
-      return workflow || null; // Return null instead of undefined if not found
-    },
-    staleTime: 30000,
-    refetchInterval: (query) => {
-      // Only refetch if workflow is running, otherwise use static data
-      const workflow = query.state.data;
-      return workflow?.status === "RUNNING" || workflow?.status === "WAITING"
-        ? 60000
-        : false;
-    },
-  });
-};
-
 export const useWorkflowTimeline = (workflowId: string) => {
   return useQuery({
     queryKey: ["workflowTimeline", workflowId],
@@ -362,7 +331,10 @@ export const useWorkflowDetail = (
 };
 
 // New hook for querying Caddy server directory listing
-export const useCaddyDirectoryTree = (directory: string | null) => {
+export const useCaddyDirectoryTree = (
+  directory: string | null,
+  enabled: boolean = true,
+) => {
   return useQuery<Array<CaddyTreeDataNode>>({
     queryKey: ["caddyDirectoryTree", directory],
     queryFn: async () => {
@@ -414,7 +386,7 @@ export const useCaddyDirectoryTree = (directory: string | null) => {
 
       return nodes;
     },
-    enabled: !!directory,
+    enabled,
     staleTime: 120000,
     refetchInterval: 600000,
     refetchOnWindowFocus: false,
@@ -472,5 +444,23 @@ export const useLazyDirectoryLoad = () => {
     onSuccess: (data, directoryPath) => {
       queryClient.setQueryData(["caddyDirectoryTree", directoryPath], data);
     },
+  });
+};
+
+// export const useRule
+export const useRuleOutput = (workflowId: string, ruleName: string) => {
+  return useQuery({
+    queryKey: ["ruleOutput", workflowId, ruleName],
+    queryFn: async () => {
+      const response =
+        await outputsApi.getJobOutputsApiV1OutputsWorkflowIdRuleOutputsGet(
+          workflowId,
+          ruleName,
+        );
+      return response.data;
+    },
+    staleTime: 60000,
+    refetchInterval: 300000,
+    enabled: !!workflowId && !!ruleName,
   });
 };

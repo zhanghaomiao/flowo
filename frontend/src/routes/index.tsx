@@ -10,7 +10,7 @@ export const Route = createFileRoute("/")({
 function Index() {
   return (
     <SSEManagerProvider>
-      <div style={{ width: "90%", margin: "0 auto" }}>
+      <div style={{ width: "96%", margin: "0 auto" }}>
         <WorkflowTable />
       </div>
     </SSEManagerProvider>

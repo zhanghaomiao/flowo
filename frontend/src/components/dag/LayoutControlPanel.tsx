@@ -51,6 +51,7 @@ const LayoutControlPanel: React.FC<LayoutControlPanelProps> = ({
             </Tooltip>
           </Radio.Group>
         </div>
+
         {selectedRule && (
           <div
             style={{

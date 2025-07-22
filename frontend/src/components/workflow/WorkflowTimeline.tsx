@@ -269,11 +269,9 @@ const WorkflowTimeline: React.FC<WorkflowTimelineProps> = ({
 
   // Google Charts options
   const ganttOptions = useMemo(() => {
-    // Calculate dynamic height based on data
-    const taskCount = ganttData.length - 1; // Subtract header row
-    const minHeight = 400;
-    const taskHeight = 31;
-    const calculatedHeight = Math.max(minHeight, taskCount * taskHeight);
+    const taskCount = ganttData.length - 1;
+    const taskHeight = 30;
+    const calculatedHeight = Math.max(200, taskCount * taskHeight) + 40;
 
     const resourcesInCurrentData = new Set<string>();
     for (let i = 1; i < ganttData.length; i++) {

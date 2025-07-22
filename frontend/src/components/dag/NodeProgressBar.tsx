@@ -9,17 +9,28 @@ const MultiProgressBar = ({
   success,
   running,
   error,
+  isFullscreen = false,
 }: {
   total: number;
   success: number;
   running: number;
   error: number;
+  isFullscreen?: boolean;
 }) => {
   const waiting = total - success - running - error;
   const successPercent = (success / total) * 100;
   const runningPercent = (running / total) * 100;
   const errorPercent = (error / total) * 100;
   const waitingPercent = (waiting / total) * 100;
+
+  // Configure tooltip for fullscreen mode
+  const tooltipProps = isFullscreen
+    ? {
+        getPopupContainer: () =>
+          (document.fullscreenElement as HTMLElement) || document.body,
+        zIndex: 99999,
+      }
+    : {};
 
   return (
     <div style={{ display: "flex", alignItems: "center", width: "100%" }}>
@@ -34,26 +45,26 @@ const MultiProgressBar = ({
         }}
       >
         {success > 0 && (
-          <Tooltip title={`Success: ${success}`}>
+          <Tooltip title={`Success: ${success}`} {...tooltipProps}>
             <div
               style={{ width: `${successPercent}%`, background: "#37a460" }}
             />
           </Tooltip>
         )}
         {running > 0 && (
-          <Tooltip title={`Running: ${running}`}>
+          <Tooltip title={`Running: ${running}`} {...tooltipProps}>
             <div
               style={{ width: `${runningPercent}%`, background: "#85d2ab" }}
             />
           </Tooltip>
         )}
         {error > 0 && (
-          <Tooltip title={`Error: ${error}`}>
+          <Tooltip title={`Error: ${error}`} {...tooltipProps}>
             <div style={{ width: `${errorPercent}%`, background: "#f5222d" }} />
           </Tooltip>
         )}
         {waiting > 0 && (
-          <Tooltip title={`Waiting: ${waiting}`}>
+          <Tooltip title={`Waiting: ${waiting}`} {...tooltipProps}>
             <div
               style={{ width: `${waitingPercent}%`, background: "#d9d9d9" }}
             />
@@ -83,6 +94,7 @@ export interface ProgressNodeData {
   borderColor: string;
   boxShadow: string;
   layoutDirection: string;
+  isFullscreen?: boolean;
 }
 
 // Custom React Flow node component
@@ -97,9 +109,19 @@ const ProgressNode: React.FC<NodeProps> = ({ data }) => {
     borderColor,
     boxShadow,
     layoutDirection,
+    isFullscreen = false,
   } = nodeData;
 
   const isHorizontal = layoutDirection === "LR";
+
+  // Configure tooltip for fullscreen mode
+  const tooltipProps = isFullscreen
+    ? {
+        getPopupContainer: () =>
+          (document.fullscreenElement as HTMLElement) || document.body,
+        zIndex: 99999,
+      }
+    : {};
 
   return (
     <div
@@ -115,7 +137,7 @@ const ProgressNode: React.FC<NodeProps> = ({ data }) => {
         cursor: isUnscheduled ? "not-allowed" : "pointer",
         opacity: isUnscheduled ? 0.6 : 1,
         transition: "all 0.2s ease",
-        fontSize: "12px",
+        fontSize: "13px",
         fontWeight: "500",
       }}
     >
@@ -143,11 +165,11 @@ const ProgressNode: React.FC<NodeProps> = ({ data }) => {
         }}
       >
         {/* Rule Name */}
-        <Tooltip title={`Rule: ${rule}`} placement="top">
+        <Tooltip title={`Rule: ${rule}`} placement="top" {...tooltipProps}>
           <div
             style={{
               fontWeight: "bold",
-              fontSize: "12px",
+              fontSize: "14px",
               lineHeight: "1.2",
               wordBreak: "break-word",
               maxWidth: "130px",
@@ -165,6 +187,7 @@ const ProgressNode: React.FC<NodeProps> = ({ data }) => {
               success={statusInfo.success}
               running={statusInfo.running}
               error={statusInfo.error}
+              isFullscreen={isFullscreen}
             />
           </div>
         )}

@@ -15,7 +15,7 @@ import { useWorkflowJobsWithSSE } from "../../hooks/useQueriesWithSSE";
 import { formatDateCompact, getStatusColor } from "../../utils/formatters";
 import FilesViewer from "../code/FilesViewer";
 import FileViewer from "../code/FileViewer";
-import { DurationCell } from "../common/common";
+import { calculateDuration, DurationCell } from "../common/common";
 import LiveUpdatesIndicator from "../LiveUpdatesIndicator";
 
 interface JobTableProps {
@@ -159,6 +159,11 @@ const JobTable: React.FC<JobTableProps> = ({
       key: "duration",
       width: 40,
       render: (_, record) => <DurationCell record={record} />,
+      sorter: (a, b) => {
+        const durationA = calculateDuration(a);
+        const durationB = calculateDuration(b);
+        return durationA - durationB;
+      },
     },
     {
       title: "Threads",
@@ -167,14 +172,6 @@ const JobTable: React.FC<JobTableProps> = ({
       width: 30,
       render: (threads: number | null) => threads ?? "-",
       sorter: (a, b) => (a.threads ?? 0) - (b.threads ?? 0),
-    },
-    {
-      title: "Priority",
-      dataIndex: "priority",
-      key: "priority",
-      width: 30,
-      render: (priority: number | null) => priority ?? "-",
-      sorter: (a, b) => (a.priority ?? 0) - (b.priority ?? 0),
     },
     {
       title: "Wildcards",
@@ -287,23 +284,23 @@ const JobTable: React.FC<JobTableProps> = ({
               height: "100%",
             }}
           >
-            <Tooltip title="View Job Details">
-              <Button
-                type="text"
-                icon={<InfoCircleOutlined />}
-                size="small"
-                onClick={() => {
-                  setJobDetailModal({ visible: true, jobId: record.id! });
-                }}
-              />
-            </Tooltip>
             <Tooltip title="View Job Logs">
               <Button
                 type="text"
-                icon={<FileTextOutlined />}
+                icon={<FileTextOutlined style={{ fontSize: 20 }} />}
                 size="small"
                 onClick={() => {
                   setJobLogsModal({ visible: true, jobId: record.id! });
+                }}
+              />
+            </Tooltip>
+            <Tooltip title="View Job Details">
+              <Button
+                type="text"
+                icon={<InfoCircleOutlined style={{ fontSize: 20 }} />}
+                size="small"
+                onClick={() => {
+                  setJobDetailModal({ visible: true, jobId: record.id! });
                 }}
               />
             </Tooltip>

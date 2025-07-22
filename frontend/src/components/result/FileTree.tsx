@@ -1,8 +1,8 @@
 import { FolderOutlined } from "@ant-design/icons";
-import React from "react";
 
 import type { TreeDataNode } from "../../api/api";
 import { getFileIcon, isSupportedFile } from "./FileUtils";
+import { getFileExtension } from "./ResultViewer";
 import type { AntdTreeNode } from "./types";
 
 // Filter tree nodes to only include supported files and directories
@@ -33,7 +33,6 @@ export const filterSupportedFiles = (
     .filter(Boolean) as (TreeDataNode & { fileSize?: number | null })[];
 };
 
-// Convert API TreeDataNode to Antd Tree format with filtering and lazy loading support
 export const convertToAntdTreeData = (
   nodes: (TreeDataNode & { fileSize?: number | null })[],
   parentPath = "",
@@ -82,8 +81,131 @@ export const convertToAntdTreeData = (
   });
 };
 
-// Get file extension from filename (duplicate from FileUtils for tree-specific use)
-const getFileExtension = (filename: string): string => {
-  const parts = filename.split(".");
-  return parts.length > 1 ? parts[parts.length - 1].toLowerCase() : "";
+// Convert array of file paths to tree structure for rule output
+export const convertRuleOutputToTreeData = (
+  filePaths: string[],
+  basepath: string | null = null,
+): AntdTreeNode[] => {
+  const treeMap = new Map<string, AntdTreeNode>();
+
+  filePaths.forEach((filePath) => {
+    const parts = filePath.split("/");
+    let currentPath = "";
+
+    parts.forEach((part, index) => {
+      const isFile = index === parts.length - 1;
+      const parentPath = currentPath;
+      currentPath = parentPath ? `${parentPath}/${part}` : part;
+
+      if (!treeMap.has(currentPath)) {
+        const fileExtension = isFile ? getFileExtension(part) : "";
+
+        const node: AntdTreeNode = {
+          title: part,
+          key: currentPath,
+          icon: isFile ? getFileIcon(part) : <FolderOutlined />,
+          children: isFile ? undefined : [],
+          isLeaf: isFile,
+          fullPath: basepath ? `${basepath}/${currentPath}` : currentPath,
+          type: isFile ? "file" : "directory",
+          fileExtension,
+          nodeData: {
+            title: part,
+            key: currentPath,
+            isLeaf: isFile,
+            children: isFile ? undefined : [],
+            fileSize: null,
+          },
+        };
+
+        treeMap.set(currentPath, node);
+
+        // Add to parent's children if parent exists
+        if (parentPath && treeMap.has(parentPath)) {
+          const parent = treeMap.get(parentPath)!;
+          if (
+            parent.children &&
+            !parent.children.some((child) => child.key === currentPath)
+          ) {
+            parent.children.push(node);
+          }
+        }
+      }
+    });
+  });
+
+  // Return only root level nodes
+  const rootNodes: AntdTreeNode[] = [];
+  treeMap.forEach((node, path) => {
+    if (!path.includes("/")) {
+      rootNodes.push(node);
+    }
+  });
+
+  return rootNodes;
+};
+
+// Function to combine rule output tree with directory content
+export const combineRuleOutputWithDirectoryContent = (
+  ruleTreeData: AntdTreeNode[],
+  directoryPath: string,
+  directoryContent: Array<TreeDataNode & { fileSize?: number | null }>,
+): AntdTreeNode[] => {
+  // Filter directory content to only include files (not directories)
+  const filesOnly = directoryContent.filter((item) => item.isLeaf);
+
+  // Find the directory node in the rule tree
+  const findAndUpdateNode = (nodes: AntdTreeNode[]): AntdTreeNode[] => {
+    return nodes.map((node) => {
+      if (node.fullPath === directoryPath && node.type === "directory") {
+        // Convert directory content to AntdTreeNode format (files only)
+        const additionalFiles = filesOnly.map((item) => ({
+          title: item.title || "",
+          key: `${directoryPath}/${item.title || ""}`,
+          icon: getFileIcon(item.title || ""),
+          children: undefined,
+          isLeaf: true,
+          fullPath: `${directoryPath}/${item.title || ""}`,
+          type: "file" as const,
+          fileExtension: getFileExtension(item.title || ""),
+          nodeData: {
+            title: item.title || "",
+            key: item.key,
+            isLeaf: true,
+            children: undefined,
+            fileSize: item.fileSize,
+          },
+        })) as AntdTreeNode[];
+
+        // Get existing children
+        const existingChildren = node.children || [];
+
+        // Add new files that don't already exist (check by file path)
+        const combinedChildren = [...existingChildren];
+        additionalFiles.forEach((newFile) => {
+          if (
+            !combinedChildren.some(
+              (existing) => existing.fullPath === newFile.fullPath,
+            )
+          ) {
+            combinedChildren.push(newFile);
+          }
+        });
+
+        return {
+          ...node,
+          children: combinedChildren,
+        };
+      } else if (node.children && node.children.length > 0) {
+        // Recursively check children
+        return {
+          ...node,
+          children: findAndUpdateNode(node.children),
+        };
+      }
+      return node;
+    });
+  };
+
+  return findAndUpdateNode(ruleTreeData);
 };

@@ -5,6 +5,7 @@ import type { TreeDataNode } from "../../api/api";
 export interface ResultViewerProps {
   workflowId: string;
   initialMaxDepth?: number;
+  selectedRule?: string;
 }
 
 export interface AntdTreeNode {

@@ -8,8 +8,8 @@ import {
 import { summaryApi } from "../../api/client";
 import { useSSE } from "../../hooks/useSSE";
 
-const DASHBOARD_STALE_TIME = 3000;
-const DASHBOARD_REFETCH_INTERVAL = 3000;
+const DASHBOARD_STALE_TIME = 5000;
+const DASHBOARD_REFETCH_INTERVAL = 5000;
 
 // Hook for Running Workflows (running/total)
 export const useRunningWorkflows = () => {
@@ -84,8 +84,13 @@ export const useActivity = (
     },
     select: (data: { [key: string]: number }) =>
       Object.entries(data).map(([name, count]) => [name, count]),
-    staleTime: DASHBOARD_STALE_TIME,
-    refetchInterval: DASHBOARD_REFETCH_INTERVAL,
+    // staleTime: DASHBOARD_STALE_TIME,
+    // refetchInterval: DASHBOARD_REFETCH_INTERVAL,
+    staleTime: Infinity,
+    refetchInterval: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    refetchOnMount: false,
   });
 };
 
@@ -181,6 +186,16 @@ export const useSSEStatus = () => {
   };
 };
 
+// Separate hook for tag activity (independent of dashboard updates)
+export const useTagActivity = () => {
+  return useActivity(
+    GetActivityApiV1SummaryActivityGetItemEnum.Tag,
+    null,
+    null,
+    10,
+  );
+};
+
 // Combined hook for all dashboard metrics
 export const useDashboardMetrics = () => {
   const workflowStats = useRunningWorkflows();
@@ -188,12 +203,6 @@ export const useDashboardMetrics = () => {
   const userStats = useRunningUsers();
   const systemStats = useSystemResources();
   const sseStatus = useSSEStatus();
-  const tagActivity = useActivity(
-    GetActivityApiV1SummaryActivityGetItemEnum.Tag,
-    null,
-    null,
-    10,
-  );
   const ruleActivity = useActivity(
     GetActivityApiV1SummaryActivityGetItemEnum.Rule,
     null,
@@ -311,12 +320,6 @@ export const useDashboardMetrics = () => {
       connectionState: sseStatus.status,
       lastMessage: sseStatus.lastMessage,
       error: sseStatus.error,
-    },
-
-    tagActivity: {
-      data: tagActivity.data || [],
-      loading: tagActivity.isLoading,
-      error: tagActivity.error,
     },
 
     ruleActivity: {

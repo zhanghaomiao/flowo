@@ -38,9 +38,15 @@ export const formatDateCompact = (dateString: string | null) => {
 };
 
 export const formatDuration = (duration: number) => {
-  const minutes = Math.floor(duration / 60000);
+  // Handle negative durations or invalid values
+  if (duration < 0 || !Number.isFinite(duration)) {
+    return "00:00:00";
+  }
+
+  const hours = Math.floor(duration / 3600000);
+  const minutes = Math.floor((duration % 3600000) / 60000);
   const seconds = Math.floor((duration % 60000) / 1000);
-  return `${minutes}:${seconds.toString().padStart(2, "0")}`;
+  return `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
 };
 
 // Get status color for workflow Status enum

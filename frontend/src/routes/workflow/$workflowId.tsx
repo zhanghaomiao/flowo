@@ -15,8 +15,10 @@ import JobTable from "../../components/job/JobTable";
 import { ResultViewer } from "../../components/result/ResultViewer";
 import WorkflowProgress from "../../components/workflow/WorkflowProgress";
 import WorkflowTimeline from "../../components/workflow/WorkflowTimeline";
-import { useWorkflow } from "../../hooks/useQueries";
-import { useWorkflowSnakefile } from "../../hooks/useQueries";
+import {
+  useWorkflowDetail,
+  useWorkflowSnakefile,
+} from "../../hooks/useQueries";
 import { SSEManagerProvider } from "../../hooks/useSSEManager.tsx";
 import { useWorkflowState } from "../../hooks/useWorkflowState";
 
@@ -38,7 +40,7 @@ function WorkflowDetail() {
     handleJobSelect,
   } = useWorkflowState();
 
-  const { data: workflow } = useWorkflow(workflowId);
+  const { data: workflow } = useWorkflowDetail(workflowId);
   const [enableSnakefile, setEnableSnakefile] = useState(false);
 
   // Enable snakefile when activeTab is "code"
@@ -59,8 +61,8 @@ function WorkflowDetail() {
 
   return (
     <SSEManagerProvider>
-      <div style={{ width: "90%", margin: "0 auto" }}>
-        <div style={{ marginBottom: "10px" }}>
+      <div style={{ width: "96%", margin: "0 auto" }}>
+        <div style={{ margin: "10px 0" }}>
           <WorkflowProgress workflowId={workflowId} />
         </div>
 
@@ -230,7 +232,10 @@ function WorkflowDetail() {
                         flexDirection: "column",
                       }}
                     >
-                      <ResultViewer workflowId={workflowId} />
+                      <ResultViewer
+                        workflowId={workflowId}
+                        selectedRule={selectedRule || undefined}
+                      />
                     </div>
                   )}
                 </div>

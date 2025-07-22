@@ -1,9 +1,11 @@
 import "@xyflow/react/dist/style.css";
 
+import { FullscreenExitOutlined, FullscreenOutlined } from "@ant-design/icons";
 import type { Node, NodeProps } from "@xyflow/react";
 import {
   Background,
   ConnectionMode,
+  ControlButton,
   Controls,
   MiniMap,
   Panel,
@@ -13,6 +15,7 @@ import {
   useNodesState,
   useReactFlow,
 } from "@xyflow/react";
+import { Tooltip } from "antd";
 import React, {
   createContext,
   useCallback,
@@ -51,6 +54,7 @@ type NodeStylingData = {
 const StylingContext = createContext<{
   nodeStyling: Record<string, NodeStylingData>;
   layoutDirection: LayoutDirection;
+  isFullscreen: boolean;
 } | null>(null);
 
 // Wrapper component that provides styling context to nodes
@@ -70,6 +74,7 @@ const StyledProgressNode: React.FC<NodeProps> = (props) => {
         ...props.data,
         ...nodeStyle,
         layoutDirection: stylingContext.layoutDirection,
+        isFullscreen: stylingContext.isFullscreen,
       }}
     />
   );
@@ -97,6 +102,7 @@ const WorkflowGraphInner: React.FC<WorkflowGraphProps> = ({
 }) => {
   const [layoutDirection, setLayoutDirection] = useState<LayoutDirection>("TB");
   const [forceLayoutRecalc, setForceLayoutRecalc] = useState(0);
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const isFittingView = useRef(false);
 
   // Use the custom hook for graph data
@@ -123,6 +129,40 @@ const WorkflowGraphInner: React.FC<WorkflowGraphProps> = ({
 
   const [nodes, setNodes, onNodesChange] = useNodesState(flowNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(flowEdges);
+
+  // Handle fullscreen changes
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+
+      // Fit view after fullscreen change with a small delay
+      setTimeout(() => {
+        if (reactFlowInstance) {
+          reactFlowInstance.fitView({ duration: 300 });
+        }
+      }, 100);
+    };
+
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    return () => {
+      document.removeEventListener("fullscreenchange", handleFullscreenChange);
+    };
+  }, [reactFlowInstance]);
+
+  // Handle fullscreen toggle
+  const handleToggleFullscreen = useCallback(async () => {
+    if (!containerRef.current) return;
+
+    try {
+      if (!document.fullscreenElement) {
+        await containerRef.current.requestFullscreen();
+      } else {
+        await document.exitFullscreen();
+      }
+    } catch (error) {
+      console.error("Error toggling fullscreen:", error);
+    }
+  }, []);
 
   // Update nodes and edges when they change
   useEffect(() => {
@@ -158,8 +198,9 @@ const WorkflowGraphInner: React.FC<WorkflowGraphProps> = ({
     () => ({
       nodeStyling,
       layoutDirection,
+      isFullscreen,
     }),
-    [nodeStyling, layoutDirection],
+    [nodeStyling, layoutDirection, isFullscreen],
   );
 
   const handleNodeClick = useCallback(
@@ -278,13 +319,21 @@ const WorkflowGraphInner: React.FC<WorkflowGraphProps> = ({
   }
 
   return (
-    <div ref={containerRef} style={{ height: "100%", position: "relative" }}>
-      <DraggableLegendPanel />
+    <div
+      ref={containerRef}
+      style={{
+        height: isFullscreen ? "100vh" : "100%",
+        width: isFullscreen ? "100vw" : "100%",
+        position: "relative",
+        backgroundColor: isFullscreen ? "#fafafa" : "transparent",
+      }}
+    >
+      {!isFullscreen && <DraggableLegendPanel />}
       <div
         style={{
-          height: "96%",
-          border: "1px solid #d9d9d9",
-          borderRadius: "6px",
+          height: isFullscreen ? "100%" : "96%",
+          border: isFullscreen ? "none" : "1px solid #d9d9d9",
+          borderRadius: isFullscreen ? "0" : "6px",
         }}
       >
         <StylingContext.Provider value={stylingContext}>
@@ -307,7 +356,19 @@ const WorkflowGraphInner: React.FC<WorkflowGraphProps> = ({
             maxZoom={2}
           >
             <Background />
-            <Controls onFitView={handleFitView} />
+            <Controls onFitView={handleFitView}>
+              <Tooltip
+                title={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}
+              >
+                <ControlButton onClick={handleToggleFullscreen}>
+                  {isFullscreen ? (
+                    <FullscreenExitOutlined />
+                  ) : (
+                    <FullscreenOutlined />
+                  )}
+                </ControlButton>
+              </Tooltip>
+            </Controls>
             <MiniMap
               style={{
                 height: 80,
@@ -328,18 +389,20 @@ const WorkflowGraphInner: React.FC<WorkflowGraphProps> = ({
         </StylingContext.Provider>
       </div>
 
-      <div
-        style={{
-          marginTop: "8px",
-          fontSize: "11px",
-          color: "#666",
-          textAlign: "center",
-        }}
-      >
-        Layout: {getLayoutInfo(layoutDirection).name}{" "}
-        {getLayoutInfo(layoutDirection).icon} • Click nodes to filter jobs •
-        Drag to reposition
-      </div>
+      {!isFullscreen && (
+        <div
+          style={{
+            marginTop: "8px",
+            fontSize: "11px",
+            color: "#666",
+            textAlign: "center",
+          }}
+        >
+          Layout: {getLayoutInfo(layoutDirection).name}{" "}
+          {getLayoutInfo(layoutDirection).icon} • Click nodes to filter jobs •
+          Drag to reposition
+        </div>
+      )}
     </div>
   );
 };

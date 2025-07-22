@@ -15,18 +15,20 @@ import {
   Col,
   message,
   Popconfirm,
+  Progress,
   Row,
   Space,
   Statistic,
-  Typography,
 } from "antd";
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 
-import { BarChart, BoxPlot, StackedBarChart } from "./Chart";
+import { BarChart, BoxPlot, StackedBarChart, WordCloud } from "./Chart";
 import { StatusChart } from "./StatusChart";
-import { useDashboardMetrics, useDatabasePruning } from "./useDashboardMetrics";
-
-const { Title } = Typography;
+import {
+  useDashboardMetrics,
+  useDatabasePruning,
+  useTagActivity,
+} from "./useDashboardMetrics";
 
 export const DashboardLayout: React.FC = () => {
   const [messageApi, contextHolder] = message.useMessage();
@@ -42,11 +44,15 @@ export const DashboardLayout: React.FC = () => {
     sseStatus,
     workflowChartData,
     jobChartData,
-    tagActivity,
     ruleActivity,
     ruleError,
     ruleDuration,
   } = useDashboardMetrics();
+
+  const tagActivity = useTagActivity();
+  const tagActivityData = useMemo(() => {
+    return tagActivity.data || [];
+  }, [tagActivity.data]);
 
   const handleReload = async () => {
     setIsReloading(true);
@@ -76,7 +82,7 @@ export const DashboardLayout: React.FC = () => {
   };
 
   return (
-    <div style={{ padding: "22px", background: "#f5f5f5", minHeight: "90vh" }}>
+    <div style={{ padding: "12px", background: "#f5f5f5", minHeight: "90vh" }}>
       {contextHolder}
       <div
         style={{
@@ -86,13 +92,9 @@ export const DashboardLayout: React.FC = () => {
           marginBottom: "24px",
         }}
       >
-        <div>
-          <Title level={2} style={{ margin: 0, color: "#1890ff" }}>
-            Flowo Dashboard
-          </Title>
-        </div>
-
-        <div>
+        <div
+          style={{ width: "100%", display: "flex", justifyContent: "flex-end" }}
+        >
           <Space>
             <Button
               type="default"
@@ -240,15 +242,35 @@ export const DashboardLayout: React.FC = () => {
                 <Alert message="Failed to load" type="error" showIcon />
               </div>
             ) : (
-              <Statistic
-                title="CPU Usage"
-                value={`${Math.round(cpuUsage.used)}/${Math.round(cpuUsage.total)}`}
-                suffix="cores"
-                prefix={<CloudServerOutlined />}
-                valueStyle={{ color: "#722ed1", textAlign: "center" }}
-                style={{ textAlign: "center" }}
-                loading={cpuUsage.loading}
-              />
+              <div style={{ padding: "8px 8px", textAlign: "center" }}>
+                <div
+                  style={{
+                    marginBottom: "8px",
+                    fontSize: "14px",
+                    color: "#666",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                  }}
+                >
+                  <div style={{ display: "flex", alignItems: "center" }}>
+                    <CloudServerOutlined
+                      style={{ marginRight: "6px", color: "#722ed1" }}
+                    />
+                    CPU Usage
+                  </div>
+                  <span style={{ fontWeight: "bold", color: "#722ed1" }}>
+                    {Math.round(cpuUsage.used)}/{Math.round(cpuUsage.total)}{" "}
+                    cores
+                  </span>
+                </div>
+                <Progress
+                  percent={Math.round((cpuUsage.used / cpuUsage.total) * 100)}
+                  strokeColor="#722ed1"
+                  size="small"
+                  showInfo={false}
+                />
+              </div>
             )}
           </Card>
         </Col>
@@ -260,15 +282,37 @@ export const DashboardLayout: React.FC = () => {
                 <Alert message="Failed to load" type="error" showIcon />
               </div>
             ) : (
-              <Statistic
-                title="Memory Usage"
-                value={`${Math.round(memoryUsage.used)}/${Math.round(memoryUsage.total)}`}
-                suffix="GB"
-                prefix={<DatabaseOutlined />}
-                valueStyle={{ color: "#13c2c2", textAlign: "center" }}
-                style={{ textAlign: "center" }}
-                loading={memoryUsage.loading}
-              />
+              <div style={{ padding: "8px 8px" }}>
+                <div
+                  style={{
+                    marginBottom: "8px",
+                    fontSize: "14px",
+                    color: "#666",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                  }}
+                >
+                  <div style={{ display: "flex", alignItems: "center" }}>
+                    <DatabaseOutlined
+                      style={{ marginRight: "6px", color: "#13c2c2" }}
+                    />
+                    Memory Usage
+                  </div>
+                  <span style={{ fontWeight: "bold", color: "#13c2c2" }}>
+                    {Math.round(memoryUsage.used)}/
+                    {Math.round(memoryUsage.total)} GB
+                  </span>
+                </div>
+                <Progress
+                  percent={Math.round(
+                    (memoryUsage.used / memoryUsage.total) * 100,
+                  )}
+                  strokeColor="#13c2c2"
+                  size="small"
+                  showInfo={false}
+                />
+              </div>
             )}
           </Card>
         </Col>
@@ -323,13 +367,10 @@ export const DashboardLayout: React.FC = () => {
         <Col xs={24} lg={8}>
           <Card
             title="Tag Activity"
-            loading={tagActivity.loading}
+            loading={tagActivity.isLoading}
             style={{ height: "350px", width: "100%" }}
           >
-            <BarChart
-              data={tagActivity.data as [string, number][]}
-              title="Tags"
-            />
+            <WordCloud data={tagActivityData} title="Tags" />
           </Card>
         </Col>
       </Row>
@@ -337,7 +378,7 @@ export const DashboardLayout: React.FC = () => {
       <Row gutter={[16, 16]} style={{ marginBottom: "24px" }}>
         <Col xs={24} lg={8}>
           <Card
-            title="Rule Activity"
+            title="Rule Activity (10 most active rules)"
             loading={ruleActivity.loading}
             style={{ height: "350px", width: "100%" }}
           >

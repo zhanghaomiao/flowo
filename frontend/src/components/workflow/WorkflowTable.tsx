@@ -226,7 +226,7 @@ const WorkflowTable = () => {
       title: "Name",
       dataIndex: "name",
       key: "name",
-      width: 200,
+      width: 250,
       fixed: "left",
       sorter: (a, b) => {
         const nameA = a.name || "";
@@ -235,8 +235,8 @@ const WorkflowTable = () => {
       },
       render: (name: string | null, record: WorkflowResponse) => {
         const tags = record.tags || [];
-        const displayTags = tags.slice(0, 3);
-        const extraTagsCount = tags.length - 3;
+        const displayTags = tags.slice(0, 5);
+        const extraTagsCount = tags.length - 5;
 
         return (
           <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
@@ -253,14 +253,23 @@ const WorkflowTable = () => {
               <div
                 style={{
                   fontWeight: 600,
-                  fontSize: "15px",
-                  color: "#1f2937",
+                  fontSize: "14px",
+                  color: "#1890ff",
                   lineHeight: "1.3",
                   letterSpacing: "-0.01em",
                   cursor: "pointer",
+                  transition: "all 0.2s ease",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.color = "#40a9ff";
+                  e.currentTarget.style.textDecoration = "underline";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.color = "#1890ff";
+                  e.currentTarget.style.textDecoration = "none";
                 }}
               >
-                {name || "Unnamed"} ({record.total_jobs})
+                {name || record.directory} ({record.total_jobs})
               </div>
             </Link>
 
@@ -333,7 +342,8 @@ const WorkflowTable = () => {
       title: "User",
       dataIndex: "user",
       key: "user",
-      width: 60,
+      align: "right",
+      width: 35,
       filters: usersData?.map((user) => ({ text: user!, value: user! })) ?? [],
       filteredValue: user ? [user] : null,
       onFilter: (value, record) => record.user === value,
@@ -347,7 +357,8 @@ const WorkflowTable = () => {
       title: "Status",
       dataIndex: "status",
       key: "status",
-      width: 50,
+      width: 40,
+      align: "right",
       render: (status: Status) => (
         <Tag
           color={getStatusColor(status)}
@@ -369,7 +380,8 @@ const WorkflowTable = () => {
       title: "Started time",
       dataIndex: "started_at",
       key: "started_at",
-      width: 80,
+      width: 60,
+      align: "right",
       render: (startedAt: string | null) => formatDateCompact(startedAt),
       sorter: (a, b) => {
         const dateA = a.started_at ? new Date(a.started_at).getTime() : 0;
@@ -381,7 +393,8 @@ const WorkflowTable = () => {
       title: "End Time",
       dataIndex: "end_time",
       key: "end_time",
-      width: 80,
+      align: "right",
+      width: 60,
       render: (endTime: string | null) => formatDateCompact(endTime),
       sorter: (a, b) => {
         const dateA = a.end_time ? new Date(a.end_time).getTime() : 0;
@@ -390,16 +403,18 @@ const WorkflowTable = () => {
       },
     },
     {
-      title: "Duration (min:sec)",
+      title: "Duration",
       dataIndex: "duration",
       key: "duration",
-      width: 40,
+      width: 30,
+      align: "right",
       render: (_, record) => <DurationCell record={record} />,
     },
     {
       title: "Progress",
       key: "progress",
-      width: 40,
+      width: 25,
+      align: "right",
       render: (_, record) => {
         // const percent = getWorkflowProgressPercent(record.status as Status)
         const progressStatus = getWorkflowProgressStatus(
@@ -410,7 +425,7 @@ const WorkflowTable = () => {
             style={{
               display: "flex",
               alignItems: "center",
-              justifyContent: "center",
+              justifyContent: "flex-end",
               width: "100%",
               height: "100%",
             }}
@@ -426,9 +441,9 @@ const WorkflowTable = () => {
       },
     },
     {
-      title: "Actions",
-      key: "actions",
-      width: 120,
+      title: "Files",
+      key: "files",
+      width: 40,
       align: "center",
       render: (_, record) => {
         return (
@@ -436,66 +451,71 @@ const WorkflowTable = () => {
             style={{
               display: "flex",
               alignItems: "center",
-              justifyContent: "center",
+              justifyContent: "flex-end",
+              gap: "2px",
               width: "100%",
               height: "100%",
             }}
           >
-            <Space size="small">
+            <Space size={2}>
               <Tooltip title="View Snakefile">
                 <Button
                   type="text"
                   icon={
-                    <Icon component={SnakemakeIcon} style={{ fontSize: 20 }} />
+                    <Icon component={SnakemakeIcon} style={{ fontSize: 22 }} />
                   }
                   size="small"
                   onClick={() => handleShowSnakefile(record.id)}
-                  style={{
-                    color: "#1890ff",
-                    padding: "2px",
-                  }}
                 />
               </Tooltip>
-
-              {/* Config files button */}
-              {record.configfiles && (
+              {record.configfiles ? (
                 <Tooltip title="View Config Files">
                   <Button
                     type="text"
-                    icon={<SettingOutlined style={{ fontSize: 20 }} />}
+                    icon={<SettingOutlined style={{ fontSize: 22 }} />}
                     size="small"
                     onClick={() => handleShowConfig(record.id)}
                     style={{
                       color: "#52c41a",
-                      padding: "2px",
+                      padding: "0px",
+                    }}
+                  />
+                </Tooltip>
+              ) : (
+                <Tooltip title="No Config Files">
+                  <Button
+                    type="text"
+                    icon={<SettingOutlined style={{ fontSize: 22 }} />}
+                    size="small"
+                    style={{
+                      color: "#e8e8e8",
+                      padding: "0px",
                     }}
                   />
                 </Tooltip>
               )}
-
               {/* Log file button */}
               {record.started_at && (
                 <Tooltip title="View Workflow Logs">
                   <Button
                     type="text"
-                    icon={<FileTextOutlined style={{ fontSize: 20 }} />}
+                    icon={<FileTextOutlined style={{ fontSize: 22 }} />}
                     size="small"
                     onClick={() =>
                       handleShowLogs(record.id, record.status as Status)
                     }
                     style={{
                       color: "#fa8c16",
-                      padding: "2px",
+                      padding: "0px",
                     }}
                   />
                 </Tooltip>
               )}
-
               {/* Workflow detail button */}
               <Tooltip title="View Workflow Detail">
                 <Button
                   type="text"
-                  icon={<InfoCircleOutlined style={{ fontSize: 20 }} />}
+                  icon={<InfoCircleOutlined style={{ fontSize: 22 }} />}
                   size="small"
                   onClick={() =>
                     setWorkflowDetailModal({
@@ -505,35 +525,43 @@ const WorkflowTable = () => {
                   }
                   style={{
                     color: "#1890ff",
-                    padding: "2px",
+                    padding: "0px",
                   }}
                 />
               </Tooltip>
-
-              {/* Delete button */}
-              <Popconfirm
-                title="Delete Workflow"
-                description={`Are you sure you want to delete workflow: ${record.id}?`}
-                onConfirm={() => handleDeleteWorkflow(record.id)}
-                okText="Yes"
-                cancelText="No"
-                okButtonProps={{
-                  danger: true,
-                  loading: deleteWorkflowMutation.isPending,
-                }}
-                placement="topLeft"
-                disabled={deleteWorkflowMutation.isPending}
-              >
-                <Button
-                  type="text"
-                  icon={<DeleteOutlined style={{ fontSize: 20 }} />}
-                  size="small"
-                  danger
-                  style={{ padding: "2px" }}
-                />
-              </Popconfirm>
             </Space>
           </div>
+        );
+      },
+    },
+    {
+      title: "Delete",
+      key: "delete",
+      width: 20,
+      align: "center",
+      render: (_, record) => {
+        return (
+          <Popconfirm
+            title="Delete Workflow"
+            description={`Are you sure you want to delete workflow: "${record.name}" with user: ${record.user}?`}
+            onConfirm={() => handleDeleteWorkflow(record.id)}
+            okText="Yes"
+            cancelText="No"
+            okButtonProps={{
+              danger: true,
+              loading: deleteWorkflowMutation.isPending,
+            }}
+            placement="topLeft"
+            disabled={deleteWorkflowMutation.isPending}
+          >
+            <Button
+              type="text"
+              icon={<DeleteOutlined style={{ fontSize: 20 }} />}
+              size="small"
+              danger
+              style={{ padding: "2px" }}
+            />
+          </Popconfirm>
         );
       },
     },
@@ -551,7 +579,7 @@ const WorkflowTable = () => {
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-          <h3 style={{ margin: 0 }}>
+          <h3 style={{ margin: "4px 0" }}>
             Workflows ({workflowsData?.total ?? 0} total, showing{" "}
             {workflows.length})
           </h3>
@@ -640,7 +668,6 @@ const WorkflowTable = () => {
         }}
         scroll={{ x: 1200 }}
         size="small"
-        bordered
         style={{ backgroundColor: "white" }}
         onRow={() => ({
           style: { cursor: "pointer" },
