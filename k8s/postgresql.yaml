@@ -1,0 +1,89 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgresql
+  namespace: flowo
+  labels:
+    app: postgresql
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgresql
+  template:
+    metadata:
+      labels:
+        app: postgresql
+    spec:
+      containers:
+      - name: postgresql
+        image: hub.miaodocker.space:8443/library/postgres:15-alpine
+        ports:
+        - containerPort: 5432
+        env:
+        - name: POSTGRES_DB
+          valueFrom:
+            secretKeyRef:
+              name: flowo-secrets
+              key: postgres-db
+        - name: POSTGRES_USER
+          valueFrom:
+            secretKeyRef:
+              name: flowo-secrets
+              key: postgres-user
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: flowo-secrets
+              key: postgres-password
+        - name: POSTGRES_HOST_AUTH_METHOD
+          value: "trust"
+        - name: TZ
+          valueFrom:
+            configMapKeyRef:
+              name: flowo-config
+              key: TZ
+        volumeMounts:
+        - name: postgres-storage
+          mountPath: /var/lib/postgresql/data
+        livenessProbe:
+          exec:
+            command:
+            - sh
+            - -c
+            - 'pg_isready -U "$POSTGRES_USER" -d "$POSTGRES_DB"'
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 5
+        readinessProbe:
+          exec:
+            command:
+            - sh
+            - -c
+            - 'pg_isready -U "$POSTGRES_USER" -d "$POSTGRES_DB"'
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+      volumes:
+      - name: postgres-storage
+        persistentVolumeClaim:
+          claimName: postgres-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgresql
+  namespace: flowo
+  labels:
+    app: postgresql
+spec:
+  ports:
+  - port: 5432
+    targetPort: 5432
+    protocol: TCP
+    nodePort: 30032  # Optional: specify a NodePort if needed
+  selector:
+    app: postgresql
+  type: NodePort

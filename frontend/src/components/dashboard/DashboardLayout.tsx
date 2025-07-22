@@ -385,7 +385,6 @@ export const DashboardLayout: React.FC = () => {
             <BarChart
               data={ruleActivity.data as [string, number][]}
               title="Rules"
-              renderTag={false}
             />
           </Card>
         </Col>

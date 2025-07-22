@@ -1,0 +1,108 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: flowo-backend
+  namespace: flowo
+  labels:
+    app: flowo-backend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: flowo-backend
+  template:
+    metadata:
+      labels:
+        app: flowo-backend
+    spec:
+      containers:
+      - name: flowo-backend
+        image: 172.16.3.223:5000/iremeta/flowo:v1
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 80
+        env:
+        - name: POSTGRES_DB
+          valueFrom:
+            secretKeyRef:
+              name: flowo-secrets
+              key: postgres-db
+        - name: POSTGRES_USER
+          valueFrom:
+            secretKeyRef:
+              name: flowo-secrets
+              key: postgres-user
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: flowo-secrets
+              key: postgres-password
+        - name: POSTGRES_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: flowo-config
+              key: POSTGRES_HOST
+        - name: POSTGRES_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: flowo-config
+              key: POSTGRES_PORT
+        - name: LOG_LEVEL
+          valueFrom:
+            configMapKeyRef:
+              name: flowo-config
+              key: LOG_LEVEL
+        - name: TZ
+          valueFrom:
+            configMapKeyRef:
+              name: flowo-config
+              key: TZ
+        volumeMounts:
+        - name: work-dir
+          mountPath: /work_dir
+          readOnly: true
+        livenessProbe:
+          httpGet:
+            path: /docs
+            port: 80
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /docs
+            port: 80
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        command: ["uv", "run", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "80"]
+      volumes:
+      - name: work-dir
+        hostPath:
+          path: /share_gpu/flowo  # Adjust this path as needed
+          type: DirectoryOrCreate
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: flowo-backend
+  namespace: flowo
+  labels:
+    app: flowo-backend
+spec:
+  ports:
+  - port: 80
+    targetPort: 80
+    protocol: TCP
+  selector:
+    app: flowo-backend
+  type: ClusterIP
