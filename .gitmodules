@@ -1,0 +1,9 @@
+[submodule ".github/actions/checkout"]
+	path = .github/actions/checkout
+	url = https://gitea.miaonas.fun:14443/actions/checkout.git
+[submodule ".github/actions/setup-buildx-action"]
+	path = .github/actions/setup-buildx-action
+	url = https://gitea.miaonas.fun:14443/actions/setup-buildx-action.git
+[submodule ".github/actions/build-push-action"]
+	path = .github/actions/build-push-action
+	url = https://gitea.miaonas.fun:14443/actions/build-push-action.git

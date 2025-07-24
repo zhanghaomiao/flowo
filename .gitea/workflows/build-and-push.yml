@@ -15,11 +15,11 @@ jobs:
   build-backend:
     runs-on: ubuntu-latest
     steps:
-      - uses: /share/apps/container/gitea/.github/actions/checkout
-      - uses: /share/apps/container/gitea/.github/actions/setup-buildx-action
+      - uses: .github/actions/checkout
+      - uses: .github/actions/setup-buildx-action
 
       - name: Build and push backend
-        uses: /share/apps/container/gitea/.github/actions/build-push-action
+        uses: .github/actions/build-push-action
         with:
           context: ./backend
           file: ./backend/Dockerfile
