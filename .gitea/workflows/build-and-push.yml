@@ -15,11 +15,11 @@ jobs:
   build-backend:
     runs-on: ubuntu-latest
     steps:
-      - uses: ./.github/actions/checkout
-      - uses: ./.github/actions/setup-buildx-action
+      - uses: http://gitea.miaonas.fun:14443/actions/checkout@v4
+      - uses: http://gitea.miaonas.fun:14443/docker/setup-buildx-action@v3
 
       - name: Build and push backend
-        uses: ./.github/actions/build-push-action
+        uses: http://gitea.miaonas.fun:14443/docker/build-push-action@v3
         with:
           context: ./backend
           file: ./backend/Dockerfile
