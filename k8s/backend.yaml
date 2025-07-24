@@ -18,7 +18,7 @@ spec:
       containers:
       - name: flowo-backend
         image: 172.16.3.223:5000/iremeta/flowo:v1
-        imagePullPolicy: IfNotPresent
+        imagePullPolicy: Always
         ports:
         - containerPort: 80
         env:
