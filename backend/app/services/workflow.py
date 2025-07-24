@@ -448,3 +448,10 @@ class WorkflowService:
         self.db_session.query(Error).filter(Error.workflow_id == workflow_id).delete()
         self.db_session.query(Workflow).filter(Workflow.id == workflow_id).delete()
         self.db_session.commit()
+
+    def get_workflow_id_by_name(self, workflow_name) -> uuid.UUID | None:
+        query = self.db_session.query(Workflow.id).filter(
+            Workflow.name == workflow_name
+        )
+        print(workflow_name)
+        return self.db_session.execute(query).scalars().one_or_none()

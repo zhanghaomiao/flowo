@@ -151,3 +151,11 @@ def delete_workflow(workflow_id: uuid.UUID, db: Session = Depends(get_db)):
             status_code=500,
             detail="Failed to delete workflow: " + str(e),
         ) from e
+
+
+@router.get("/workflow_id_by_name/{name}")
+def get_workflow_id_by_name(
+    name: str, db: Session = Depends(get_db)
+) -> uuid.UUID | str:
+    workflow_id = WorkflowService(db).get_workflow_id_by_name(name)
+    return workflow_id if workflow_id else ""
