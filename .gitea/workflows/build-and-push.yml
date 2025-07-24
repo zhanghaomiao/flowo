@@ -15,18 +15,11 @@ jobs:
   build-backend:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-
-      - uses: docker/setup-buildx-action@v3
-
-      - uses: docker/login-action@v3
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
+      - uses: /share/apps/container/gitea/.github/actions/checkout
+      - uses: /share/apps/container/gitea/.github/actions/setup-buildx-action
 
       - name: Build and push backend
-        uses: docker/build-push-action@v5
+        uses: /share/apps/container/gitea/.github/actions/build-push-action
         with:
           context: ./backend
           file: ./backend/Dockerfile
