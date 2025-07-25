@@ -19,7 +19,10 @@ jobs:
       - uses: https://gitea.miaonas.fun:14443/actions/setup-buildx-action@v3
         with:
           driver-opts: image=hub.miaodocker.space:8443/moby/buildkit:buildx-stable-1
-          buildkitd-flags: --insecure-registry=172.16.3.223:5000
+          buildkitd-config-inline: |
+            [registry."172.16.3.223:5000"]
+              http = true
+
       - name: Build and push backend
         uses: https://gitea.miaonas.fun:14443/actions/build-push-action@v3
         with:
