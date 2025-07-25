@@ -1,0 +1,61 @@
+name: Simple Docker Build and Push
+
+on:
+  push:
+    branches:
+      - release
+
+env:
+  REGISTRY: 172.16.3.223:5000
+  BACKEND_IMAGE: iremeta/flowo
+  FRONTEND_IMAGE: iremeta/flowo-frontend
+  IMAGE_TAG: ${{ github.sha }}
+
+jobs:
+  build-backend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: https://gitea.miaonas.fun:14443/actions/checkout@v4
+      - uses: https://gitea.miaonas.fun:14443/actions/setup-buildx-action@v3
+        with:
+          driver-opts: image=hub.miaodocker.space:8443/moby/buildkit:buildx-stable-1
+          buildkitd-config-inline: |
+            [registry."172.16.3.223:5000"]
+              http = true
+
+      - name: Build and push backend
+        uses: https://gitea.miaonas.fun:14443/actions/build-push-action@v3
+        with:
+          context: ./backend
+          file: ./backend/Dockerfile
+          push: true
+          tags: | 
+            ${{ env.REGISTRY }}/${{ env.BACKEND_IMAGE }}:${{ env.IMAGE_TAG }}
+            ${{ env.REGISTRY }}/${{ env.BACKEND_IMAGE }}:latest
+          platforms: linux/amd64
+          cache-from: type=registry,ref=172.16.3.223:5000/build/flowo:buildcache
+          cache-to: type=registry,ref=172.16.3.223:5000/build/flowo:buildcache,mode=max
+
+  # build-frontend:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v4
+
+  #     - uses: docker/setup-buildx-action@v3
+
+  #     # - uses: docker/login-action@v3
+  #     #   with:
+  #     #     registry: ${{ env.REGISTRY }}
+  #     #     username: ${{ secrets.DOCKER_USERNAME }}
+  #     #     password: ${{ secrets.DOCKER_PASSWORD }}
+
+  #     - name: Build and push frontend
+  #       uses: docker/build-push-action@v5
+  #       with:
+  #         context: ./frontend
+  #         file: ./frontend/Dockerfile
+  #         push: true
+  #         tags: ${{ env.REGISTRY }}/${{ env.FRONTEND_IMAGE }}:${{ env.IMAGE_TAG }}
+  #         platforms: linux/amd64
+  #         cache-from: type=gha
+  #         cache-to: type=gha,mode=max
