@@ -15,11 +15,14 @@ jobs:
   build-backend:
     runs-on: ubuntu-latest
     steps:
+      - name: setup insecure registry
+        run: |
+          echo '{"insecure-registries":["172.16.3.223:5000"]}' | sudo tee /etc/docker/daemon.json
+          sudo systemctl restart docker
       - uses: https://gitea.miaonas.fun:14443/actions/checkout@v4
       - uses: https://gitea.miaonas.fun:14443/actions/setup-buildx-action@v3
         with:
           driver-opts: image=hub.miaodocker.space:8443/moby/buildkit:buildx-stable-1
-
       - name: Build and push backend
         uses: https://gitea.miaonas.fun:14443/actions/build-push-action@v3
         with:
@@ -28,8 +31,6 @@ jobs:
           push: true
           tags: ${{ env.REGISTRY }}/${{ env.BACKEND_IMAGE }}:${{ env.IMAGE_TAG }}
           platforms: linux/amd64
-          build-args: |
-            --insecure-registry=172.16.3.223:5000
 
   # build-frontend:
   #   runs-on: ubuntu-latest
