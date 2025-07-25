@@ -1,5 +1,6 @@
 # Multi-stage build for frontend
-FROM hub.miaodocker.space:8443/library/node:20-alpine AS build
+# FROM hub.miaodocker.space:8443/library/node:20-alpine AS build
+FROM 172.16.3.223:5000/library/node:20 AS build
 
 # Install pnpm
 RUN npm install -g pnpm

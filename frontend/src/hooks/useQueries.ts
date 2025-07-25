@@ -464,3 +464,18 @@ export const useRuleOutput = (workflowId: string, ruleName: string) => {
     enabled: !!workflowId && !!ruleName,
   });
 };
+
+export const useWorkFlowIdByName = (name: string) => {
+  return useQuery({
+    queryKey: ["workflowIdByName", name],
+    queryFn: async () => {
+      if (!name) return null;
+      const response =
+        await workflowApi.getWorkflowIdByNameApiV1WorkflowsByNameNameGet(name);
+      return response.data && response.data !== "" ? response.data : null;
+    },
+    staleTime: 60000,
+    refetchInterval: false,
+    enabled: !!name,
+  });
+};

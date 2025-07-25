@@ -10,7 +10,7 @@
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
     "preview": "vite preview",
-    "generate-api": "openapi-generator-cli generate -i http://127.0.0.1:8000/api/v1/openapi.json -g typescript-axios -o src/api",
+    "generate-api": "openapi-generator-cli generate -i http://127.0.0.1:3100/api/v1/openapi.json -g typescript-axios -o src/api",
     "generate-serverapi": "openapi-generator-cli generate -i http://172.16.3.223:3100/api/v1/openapi.json -g typescript-axios -o src/api"
   },
   "dependencies": {

@@ -153,7 +153,7 @@ def delete_workflow(workflow_id: uuid.UUID, db: Session = Depends(get_db)):
         ) from e
 
 
-@router.get("/workflow_id_by_name/{name}")
+@router.get("/by_name/{name}", response_model=uuid.UUID | str)
 def get_workflow_id_by_name(
     name: str, db: Session = Depends(get_db)
 ) -> uuid.UUID | str:

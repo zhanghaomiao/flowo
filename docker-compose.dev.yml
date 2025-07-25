@@ -1,0 +1,26 @@
+services:
+  flowo-backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: flowo-backend-dev
+    env_file:
+      - .env
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-flowo_logs}
+      POSTGRES_USER: ${POSTGRES_USER:-flowo}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-flowo_password}
+      POSTGRES_HOST: postgresql
+      POSTGRES_PORT: ${POSTGRES_PORT:-5432}
+      LOG_LEVEL: DEBUG
+      TZ: ${TZ:-Asia/Shanghai}
+    volumes:
+      - ./backend:/app
+      - ${FLOWO_WORKING_PATH:-.}:/work_dir:ro
+    depends_on:
+      alembic-migrations:
+        condition: service_completed_successfully
+    networks:
+      - flowo-network
+    restart: unless-stopped
+    command: sleep infinity

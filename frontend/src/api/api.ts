@@ -252,6 +252,13 @@ export interface JobResponse {
 /**
  * 
  * @export
+ * @interface ResponseGetWorkflowIdByNameApiV1WorkflowsByNameNameGet
+ */
+export interface ResponseGetWorkflowIdByNameApiV1WorkflowsByNameNameGet {
+}
+/**
+ * 
+ * @export
  * @interface RuleStatusResponse
  */
 export interface RuleStatusResponse {
@@ -2730,6 +2737,40 @@ export const WorkflowApiAxiosParamCreator = function (configuration?: Configurat
         },
         /**
          * 
+         * @summary Get Workflow Id By Name
+         * @param {string} name 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getWorkflowIdByNameApiV1WorkflowsByNameNameGet: async (name: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'name' is not null or undefined
+            assertParamExists('getWorkflowIdByNameApiV1WorkflowsByNameNameGet', 'name', name)
+            const localVarPath = `/api/v1/workflows/by_name/{name}`
+                .replace(`{${"name"}}`, encodeURIComponent(String(name)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Get Workflows
          * @param {number | null} [limit] Maximum number of workflows to return
          * @param {number | null} [offset] Number of workflows to skip
@@ -2960,6 +3001,19 @@ export const WorkflowApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Get Workflow Id By Name
+         * @param {string} name 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async getWorkflowIdByNameApiV1WorkflowsByNameNameGet(name: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<ResponseGetWorkflowIdByNameApiV1WorkflowsByNameNameGet>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.getWorkflowIdByNameApiV1WorkflowsByNameNameGet(name, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['WorkflowApi.getWorkflowIdByNameApiV1WorkflowsByNameNameGet']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
          * @summary Get Workflows
          * @param {number | null} [limit] Maximum number of workflows to return
          * @param {number | null} [offset] Number of workflows to skip
@@ -3095,6 +3149,16 @@ export const WorkflowApiFactory = function (configuration?: Configuration, baseP
          */
         getTimelinesApiV1WorkflowsWorkflowIdTimelinesGet(workflowId: string, options?: RawAxiosRequestConfig): AxiosPromise<{ [key: string]: Array<any>; }> {
             return localVarFp.getTimelinesApiV1WorkflowsWorkflowIdTimelinesGet(workflowId, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @summary Get Workflow Id By Name
+         * @param {string} name 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getWorkflowIdByNameApiV1WorkflowsByNameNameGet(name: string, options?: RawAxiosRequestConfig): AxiosPromise<ResponseGetWorkflowIdByNameApiV1WorkflowsByNameNameGet> {
+            return localVarFp.getWorkflowIdByNameApiV1WorkflowsByNameNameGet(name, options).then((request) => request(axios, basePath));
         },
         /**
          * 
@@ -3249,6 +3313,18 @@ export class WorkflowApi extends BaseAPI {
      */
     public getTimelinesApiV1WorkflowsWorkflowIdTimelinesGet(workflowId: string, options?: RawAxiosRequestConfig) {
         return WorkflowApiFp(this.configuration).getTimelinesApiV1WorkflowsWorkflowIdTimelinesGet(workflowId, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @summary Get Workflow Id By Name
+     * @param {string} name 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof WorkflowApi
+     */
+    public getWorkflowIdByNameApiV1WorkflowsByNameNameGet(name: string, options?: RawAxiosRequestConfig) {
+        return WorkflowApiFp(this.configuration).getWorkflowIdByNameApiV1WorkflowsByNameNameGet(name, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**

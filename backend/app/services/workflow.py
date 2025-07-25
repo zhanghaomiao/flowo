@@ -453,5 +453,4 @@ class WorkflowService:
         query = self.db_session.query(Workflow.id).filter(
             Workflow.name == workflow_name
         )
-        print(workflow_name)
-        return self.db_session.execute(query).scalars().one_or_none()
+        return self.db_session.execute(query).scalars().first()
