@@ -471,7 +471,7 @@ export const useWorkFlowIdByName = (name: string) => {
     queryFn: async () => {
       if (!name) return null;
       const response =
-        await workflowApi.getWorkflowIdByNameApiV1WorkflowsByNameNameGet(name);
+        await workflowApi.getWorkflowIdByNameApiV1WorkflowsByNameGet(name);
       return response.data && response.data !== "" ? response.data : null;
     },
     staleTime: 60000,

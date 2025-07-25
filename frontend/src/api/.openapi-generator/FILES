@@ -11,7 +11,7 @@ docs/JobResponse.md
 docs/JobsApi.md
 docs/LogsApi.md
 docs/OutputsApi.md
-docs/ResponseGetWorkflowIdByNameApiV1WorkflowsByNameNameGet.md
+docs/ResponseGetWorkflowIdByNameApiV1WorkflowsByNameGet.md
 docs/RuleStatusResponse.md
 docs/SseApi.md
 docs/Status.md

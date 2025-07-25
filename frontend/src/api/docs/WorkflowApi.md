@@ -14,7 +14,7 @@ All URIs are relative to *http://localhost*
 |[**getRuleStatusApiV1WorkflowsWorkflowIdRuleStatusGet**](#getrulestatusapiv1workflowsworkflowidrulestatusget) | **GET** /api/v1/workflows/{workflow_id}/rule_status | Get Rule Status|
 |[**getSnakefileApiV1WorkflowsWorkflowIdSnakefileGet**](#getsnakefileapiv1workflowsworkflowidsnakefileget) | **GET** /api/v1/workflows/{workflow_id}/snakefile | Get Snakefile|
 |[**getTimelinesApiV1WorkflowsWorkflowIdTimelinesGet**](#gettimelinesapiv1workflowsworkflowidtimelinesget) | **GET** /api/v1/workflows/{workflow_id}/timelines | Get Timelines|
-|[**getWorkflowIdByNameApiV1WorkflowsByNameNameGet**](#getworkflowidbynameapiv1workflowsbynamenameget) | **GET** /api/v1/workflows/by_name/{name} | Get Workflow Id By Name|
+|[**getWorkflowIdByNameApiV1WorkflowsByNameGet**](#getworkflowidbynameapiv1workflowsbynameget) | **GET** /api/v1/workflows/by_name | Get Workflow Id By Name|
 |[**getWorkflowsApiV1WorkflowsGet**](#getworkflowsapiv1workflowsget) | **GET** /api/v1/workflows/ | Get Workflows|
 
 # **deleteWorkflowApiV1WorkflowsWorkflowIdDelete**
@@ -540,8 +540,8 @@ No authorization required
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
-# **getWorkflowIdByNameApiV1WorkflowsByNameNameGet**
-> ResponseGetWorkflowIdByNameApiV1WorkflowsByNameNameGet getWorkflowIdByNameApiV1WorkflowsByNameNameGet()
+# **getWorkflowIdByNameApiV1WorkflowsByNameGet**
+> ResponseGetWorkflowIdByNameApiV1WorkflowsByNameGet getWorkflowIdByNameApiV1WorkflowsByNameGet()
 
 
 ### Example
@@ -555,9 +555,9 @@ import {
 const configuration = new Configuration();
 const apiInstance = new WorkflowApi(configuration);
 
-let name: string; // (default to undefined)
+let name: string; //Workflow name to search for (default to undefined)
 
-const { status, data } = await apiInstance.getWorkflowIdByNameApiV1WorkflowsByNameNameGet(
+const { status, data } = await apiInstance.getWorkflowIdByNameApiV1WorkflowsByNameGet(
     name
 );
 ```
@@ -566,12 +566,12 @@ const { status, data } = await apiInstance.getWorkflowIdByNameApiV1WorkflowsByNa
 
 |Name | Type | Description  | Notes|
 |------------- | ------------- | ------------- | -------------|
-| **name** | [**string**] |  | defaults to undefined|
+| **name** | [**string**] | Workflow name to search for | defaults to undefined|
 
 
 ### Return type
 
-**ResponseGetWorkflowIdByNameApiV1WorkflowsByNameNameGet**
+**ResponseGetWorkflowIdByNameApiV1WorkflowsByNameGet**
 
 ### Authorization
 

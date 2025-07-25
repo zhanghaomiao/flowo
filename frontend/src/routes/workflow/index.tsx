@@ -10,7 +10,7 @@ export const Route = createFileRoute('/workflow/')({
   component: RouteComponent,
   validateSearch(search: Record<string, string>): WorkflowSearchParams {
     return {
-      name: search.name,
+      name: search.name ? decodeURIComponent(search.name) : '',
     }
   },
 })
