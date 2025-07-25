@@ -6,7 +6,10 @@ export const Route = createFileRoute("/about")({
 
 function About() {
   return (
-    <div style={{ padding: "20px", maxWidth: "800px", margin: "0 auto" }}>
+    <div style={{
+      padding: "20px", maxWidth: "800px", margin: "0 auto",
+      display: "flex", flexDirection: "column", alignItems: "center"
+    }}>
       <p>This is a frontend application for monitoring workflow executions.</p>
       <ul>
         <li>View workflow execution history</li>

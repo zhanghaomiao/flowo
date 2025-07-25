@@ -98,3 +98,5 @@ jobs:
           platforms: linux/amd64
           cache-from: type=registry,ref=172.16.3.223:5000/build/flowo-frontend:buildcache
           cache-to: type=registry,ref=172.16.3.223:5000/build/flowo-frontend:buildcache,mode=max
+          build-args: |
+            VITE_API_BASE_PATH=http://flowo.irep.com
