@@ -55,7 +55,7 @@ jobs:
       - uses: https://gitea.miaonas.fun:14443/actions/checkout@v4
       - uses: https://gitea.miaonas.fun:14443/actions/setup-buildx-action@v3
         with:
-          driver-opts: image=hub.miaodocker.space:8443/moby/buildkit:buildx-stable-1
+          driver-opts: image=172.16.3.223:5000/moby/buildkit:buildx-stable-1
           buildkitd-config-inline: |
             [registry."172.16.3.223:5000"]
               http = true
@@ -81,7 +81,7 @@ jobs:
       - uses: https://gitea.miaonas.fun:14443/actions/checkout@v4
       - uses: https://gitea.miaonas.fun:14443/actions/setup-buildx-action@v3
         with:
-          driver-opts: image=hub.miaodocker.space:8443/moby/buildkit:buildx-stable-1
+          driver-opts: image=172.16.3.223:5000/moby/buildkit:buildx-stable-1
           buildkitd-config-inline: |
             [registry."172.16.3.223:5000"]
               http = true
