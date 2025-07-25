@@ -6,8 +6,7 @@ export const Route = createFileRoute("/about")({
 
 function About() {
   return (
-    <div>
-      <h2>About FlowO</h2>
+    <div style={{ padding: "20px" }}>
       <p>This is a frontend application for monitoring workflow executions.</p>
       <ul>
         <li>View workflow execution history</li>

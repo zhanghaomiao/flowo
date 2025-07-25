@@ -29,7 +29,8 @@ ENV VITE_DISABLE_SSE=${VITE_DISABLE_SSE}
 RUN pnpm run build
 
 # Production stage
-FROM hub.miaodocker.space:8443/library/nginx:alpine
+FROM 172.16.3.223:5000/library/nginx:1.17
+#FROM hub.miaodocker.space:8443/library/nginx:alpine
 
 # Copy built files to nginx
 COPY --from=build /app/dist /usr/share/nginx/html
