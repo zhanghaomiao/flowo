@@ -28,8 +28,8 @@ jobs:
           push: true
           tags: ${{ env.REGISTRY }}/${{ env.BACKEND_IMAGE }}:${{ env.IMAGE_TAG }}
           platforms: linux/amd64
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          build-args: |
+            --insecure-registry=172.16.3.223:5000
 
   # build-frontend:
   #   runs-on: ubuntu-latest
