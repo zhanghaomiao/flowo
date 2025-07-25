@@ -226,7 +226,7 @@ const WorkflowTable = () => {
       title: "Name",
       dataIndex: "name",
       key: "name",
-      width: 250,
+      width: 240,
       fixed: "left",
       sorter: (a, b) => {
         const nameA = a.name || "";
@@ -414,9 +414,9 @@ const WorkflowTable = () => {
       title: "Progress",
       key: "progress",
       width: 25,
+      fixed: "right",
       align: "right",
       render: (_, record) => {
-        // const percent = getWorkflowProgressPercent(record.status as Status)
         const progressStatus = getWorkflowProgressStatus(
           record.status as Status,
         );
