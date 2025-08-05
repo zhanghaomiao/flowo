@@ -10,8 +10,8 @@ on:
       - ".github/workflows/**"
 
 env:
-  BACKEND_IMAGE: flowo/flowo-backend
-  FRONTEND_IMAGE: flowo/flowo-frontend
+  BACKEND_IMAGE: flowo-backend
+  FRONTEND_IMAGE: flowo-frontend
   IMAGE_TAG: ${{ github.sha }}
 
 jobs:
