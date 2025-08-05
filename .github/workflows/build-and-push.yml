@@ -28,21 +28,29 @@ jobs:
       - name: Detect changes
         id: changes
         run: |
-          if git diff --name-only HEAD~1 HEAD | grep -q '^backend/app/'; then
-            echo "backend=true" >> $GITHUB_OUTPUT
-            echo "Backend changes detected"
-          else
-            echo "backend=false" >> $GITHUB_OUTPUT
-            echo "No backend changes detected"
+          changed_files=$(git diff --name-only HEAD~1 HEAD)
+
+          echo "$changed_files"
+
+          backend_changed=false
+          frontend_changed=false
+
+          if echo "$changed_files" | grep -qE '^backend/app/'; then
+            backend_changed=true
           fi
 
-          if git diff --name-only HEAD~1 HEAD | grep -q '^frontend/src/'; then
-            echo "frontend=true" >> $GITHUB_OUTPUT
-            echo "Frontend changes detected"
-          else
-            echo "frontend=false" >> $GITHUB_OUTPUT
-            echo "No frontend changes detected"
+          if echo "$changed_files" | grep -qE '^frontend/src/'; then
+            frontend_changed=true
           fi
+
+          if echo "$changed_files" | grep -qE '^\.github/workflows/'; then
+            backend_changed=true
+            frontend_changed=true
+            echo "Workflow changes detected, triggering both builds"
+          fi
+
+          echo "backend=$backend_changed" >> $GITHUB_OUTPUT
+          echo "frontend=$frontend_changed" >> $GITHUB_OUTPUT
 
   build-backend:
     runs-on: ubuntu-latest
