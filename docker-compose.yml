@@ -1,0 +1,154 @@
+services:
+  postgresql:
+    image: postgres:15-alpine
+    container_name: flowo-postgres
+    env_file:
+      - .env
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-flowo_logs}
+      POSTGRES_USER: ${POSTGRES_USER:-flowo}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-flowo_password}
+      POSTGRES_HOST_AUTH_METHOD: trust
+      TZ: ${TZ:-Asia/Shanghai}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - flowo-network
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${POSTGRES_USER:-flowo} -d ${POSTGRES_DB:-flowo_logs}",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # Alembic database migrations
+  alembic-migrations:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: flowo-migrations
+    env_file:
+      - .env
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-flowo_logs}
+      POSTGRES_USER: ${POSTGRES_USER:-flowo}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-flowo_password}
+      POSTGRES_HOST: postgresql
+      POSTGRES_PORT: ${POSTGRES_PORT:-5432}
+      PYTHONPATH: /app
+      PYTHONUNBUFFERED: 1
+      TZ: ${TZ:-Asia/Shanghai}
+    depends_on:
+      postgresql:
+        condition: service_healthy
+    networks:
+      - flowo-network
+    working_dir: /app
+    command:
+      - sh
+      - -c
+      - |
+        echo 'Checking if database has already been initialized...'
+        EXISTS=$$(psql postgresql://$$POSTGRES_USER:$$POSTGRES_PASSWORD@$$POSTGRES_HOST:$$POSTGRES_PORT/$$POSTGRES_DB -tAc "SELECT to_regclass('alembic_version')")
+        if [ "$$EXISTS" = "alembic_version" ]; then
+          echo '✅ Database already initialized. Skipping migration.'
+        else
+          echo '1. Running Alembic migrations to create tables...'
+          uv run alembic upgrade head
+          echo '✅ Tables created successfully!'
+          echo '2. Running init-db scripts to create triggers and functions...'
+          psql postgresql://$$POSTGRES_USER:$$POSTGRES_PASSWORD@$$POSTGRES_HOST:$$POSTGRES_PORT/$$POSTGRES_DB -f /app/scripts/01-triggers-functions.sql
+          echo '✅ Triggers and functions created successfully!'
+          echo '🎉 Database setup completed!'
+        fi
+    restart: "no"
+
+  flowo-backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: flowo-backend
+    env_file:
+      - .env
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-flowo_logs}
+      POSTGRES_USER: ${POSTGRES_USER:-flowo}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-flowo_password}
+      POSTGRES_HOST: postgresql
+      POSTGRES_PORT: ${POSTGRES_PORT:-5432}
+      TZ: ${TZ:-Asia/Shanghai}
+    volumes:
+      - ${FLOWO_WORKING_PATH:-.}:/work_dir:ro
+    depends_on:
+      alembic-migrations:
+        condition: service_completed_successfully
+    networks:
+      - flowo-network
+    restart: unless-stopped
+    command: uv run uvicorn app.main:app --host 0.0.0.0 --port 80
+
+  flowo-frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_BASE_PATH: ${VITE_API_BASE_PATH:-http://localhost:3100}
+        VITE_DISABLE_SSE: ${VITE_DISABLE_SSE:-false}
+    container_name: frontend
+    environment:
+      TZ: ${TZ:-Asia/Shanghai}
+    networks:
+      - flowo-network
+    restart: unless-stopped
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "wget",
+          "--no-verbose",
+          "--tries=1",
+          "--spider",
+          "http://localhost/health",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  caddy:
+    image: caddy:2-alpine
+    container_name: caddy
+    environment:
+      TZ: ${TZ:-Asia/Shanghai}
+    env_file:
+      - .env
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - ${FLOWO_WORKING_PATH:-.}:/work_dir:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    ports:
+      - "${CADDY_PORT:-80}:80"
+    depends_on:
+      - flowo-backend
+      - flowo-frontend
+    networks:
+      - flowo-network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+    driver: local
+  caddy_data:
+    driver: local
+  caddy_config:
+    driver: local
+
+networks:
+  flowo-network:
+    driver: bridge

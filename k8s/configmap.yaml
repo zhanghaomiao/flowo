@@ -1,0 +1,26 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: flowo-secrets
+  namespace: flowo
+type: Opaque
+stringData:
+  # Raw values for database and user
+  postgres-db: flowo_logs
+  postgres-user: flowo_user
+data:
+  # Base64-encoded password
+  postgres-password: Zmxvd29fcGFzcw== # flowo_pass
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: flowo-config
+  namespace: flowo
+data:
+  POSTGRES_HOST: "postgresql"
+  POSTGRES_PORT: "5432"
+  BACKEND_PORT: "8000"
+  TZ: "Asia/Shanghai"
+  CADDY_PORT: "80"
+  VITE_DISABLE_SSE: "false"

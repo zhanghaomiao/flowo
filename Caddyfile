@@ -1,0 +1,189 @@
+# Caddyfile for flowo Logger Plugin PostgreSQL
+# 
+# This configuration provides:
+# 1. Reverse proxy for /api/v1/* requests to the backend service
+# 2. Static file server for /work_dir with caching for images, PDFs, and HTML files
+
+# Default site configuration
+:80 {
+    # Enable access logs
+    log {
+        output stdout
+        format console
+    }
+
+    # Handle API requests - proxy to backend
+    handle /api/v1/* {
+        reverse_proxy flowo-backend
+        
+        # Apply security headers to API routes
+        header {
+            -Server
+            X-Content-Type-Options "nosniff"
+            Referrer-Policy "strict-origin-when-cross-origin"
+        }
+    }
+
+    handle /docs* {
+        reverse_proxy flowo-backend
+        
+        # Apply security headers to docs routes
+        header {
+            -Server
+            X-Content-Type-Options "nosniff"
+            Referrer-Policy "strict-origin-when-cross-origin"
+        }
+    }
+
+    # Handle static file serving for work directory
+    handle_path /files/* {
+        # Handle CORS preflight requests
+        @options {
+            method OPTIONS
+        }
+        header @options {
+            Access-Control-Allow-Origin "*"
+            Access-Control-Allow-Methods "GET, HEAD, OPTIONS"
+            Access-Control-Allow-Headers "Origin, X-Requested-With, Content-Type, Accept, Authorization, Cache-Control"
+            Access-Control-Max-Age "86400"
+        }
+        respond @options 200
+        
+        root * /work_dir
+        file_server {
+            browse
+            hide .snakemake *.smk flowo_logs
+        }
+        
+        # Set caching headers for different file types
+        @images {
+            path *.jpg *.jpeg *.png *.gif *.bmp *.svg *.webp *.ico
+        }
+        header @images {
+            Cache-Control "public, max-age=86400"  # 1 day cache
+            Vary "Accept-Encoding"
+            # CORS headers for image files
+            Access-Control-Allow-Origin "*"
+            Access-Control-Allow-Methods "GET, HEAD, OPTIONS"
+            Access-Control-Allow-Headers "Origin, X-Requested-With, Content-Type, Accept, Authorization, Cache-Control"
+        }
+
+        @pdfs {
+            path *.pdf
+        }
+        header @pdfs {
+            Cache-Control "public, max-age=3600"   # 1 hour cache
+            Content-Type "application/pdf"
+            # Allow PDFs to be embedded in iframes for preview
+            -X-Frame-Options
+            # Disable range requests for PDF files to ensure full content delivery
+            Accept-Ranges "none"
+            # CORS headers for PDF files
+            Access-Control-Allow-Origin "*"
+            Access-Control-Allow-Methods "GET, HEAD, OPTIONS"
+            Access-Control-Allow-Headers "Origin, X-Requested-With, Content-Type, Accept, Authorization, Cache-Control"
+        }
+
+        @html {
+            path *.html *.htm
+        }
+        header @html {
+            Cache-Control "public, max-age=1800"   # 30 minutes cache
+            Content-Type "text/html; charset=utf-8"
+            # Allow HTML files to be embedded in iframes for preview
+            -X-Frame-Options
+            # Disable range requests for HTML files to ensure full content delivery
+            Accept-Ranges "none"
+            # CORS headers for HTML files
+            Access-Control-Allow-Origin "*"
+            Access-Control-Allow-Methods "GET, HEAD, OPTIONS"
+            Access-Control-Allow-Headers "Origin, X-Requested-With, Content-Type, Accept, Authorization, Cache-Control"
+        }
+        @text {
+            path *.txt *.log *.md *.rst
+        }
+        header @text {
+            Cache-Control "public, max-age=300"    # 5 minutes cache
+            Content-Type "text/plain; charset=utf-8"
+            # CORS headers for text files
+            Access-Control-Allow-Origin "*"
+            Access-Control-Allow-Methods "GET, HEAD, OPTIONS"
+            Access-Control-Allow-Headers "Origin, X-Requested-With, Content-Type, Accept, Authorization, Cache-Control"
+        }
+
+        @json {
+            path *.json
+        }
+        header @json {
+            Cache-Control "public, max-age=300"    # 5 minutes cache
+            Content-Type "application/json; charset=utf-8"
+            # CORS headers for JSON files
+            Access-Control-Allow-Origin "*"
+            Access-Control-Allow-Methods "GET, HEAD, OPTIONS"
+            Access-Control-Allow-Headers "Origin, X-Requested-With, Content-Type, Accept, Authorization, Cache-Control"
+        }
+
+        @csv {
+            path *.csv *.tsv
+        }
+        header @csv {
+            Cache-Control "public, max-age=3600"    
+            Content-Type "text/csv; charset=utf-8"
+            # CORS headers for CSV files
+            Access-Control-Allow-Origin "*"
+            Access-Control-Allow-Methods "GET, HEAD, OPTIONS"
+            Access-Control-Allow-Headers "Origin, X-Requested-With, Content-Type, Accept, Authorization, Cache-Control"
+        }
+
+
+        # Remove X-Frame-Options for all files to allow iframe embedding
+        # Add CORS headers for cross-origin file access
+        header {
+            -X-Frame-Options
+            Access-Control-Allow-Origin "*"
+            Access-Control-Allow-Methods "GET, HEAD, OPTIONS"
+            Access-Control-Allow-Headers "Origin, X-Requested-With, Content-Type, Accept, Authorization, Cache-Control"
+            Access-Control-Max-Age "86400"
+        }
+
+        # Force download for files when 'download' query parameter is present
+        @download {
+            query download=*
+            path_regexp filename "([^/]+)$"
+        }
+        header @download {
+            Content-Disposition "attachment; filename=\"{re.filename.1}\""
+        }
+    }
+
+    # Handle frontend application - proxy to frontend service
+    handle {
+        reverse_proxy flowo-frontend:80
+        
+        # Apply security headers only to frontend routes
+        header {
+            # Remove server identification
+            -Server
+            # Add security headers
+            X-Frame-Options "SAMEORIGIN"
+            X-Content-Type-Options "nosniff"
+            Referrer-Policy "strict-origin-when-cross-origin"
+        }
+    }
+
+    # Enable compression
+    encode gzip zstd
+
+    # Custom error pages
+    handle_errors {
+        @404 {
+            expression {http.error.status_code} == 404
+        }
+        respond @404 "File not found" 404
+        
+        @5xx {
+            expression {http.error.status_code} >= 500
+        }
+        respond @5xx "Server error" {http.error.status_code}
+    }
+} 
