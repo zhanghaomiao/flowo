@@ -11,15 +11,8 @@ Unleash the power of automation and monitoring with a fresh, interactive experie
 - ⚡ **Real-time Monitoring:**
   Flowo uses Server-Sent Events (SSE) and PostgreSQL's LISTEN/NOTIFY mechanism for instant workflow updates. The frontend refreshes automatically – just sit back and watch the magic happen!
 
-<<<<<<< HEAD
 - 🚀 **Efficient Data Fetching:**
   With smart polling (every 5 seconds) and debouncing, Flowo keeps your data up-to-date without overloading the network. Fast, efficient, and always fresh.
-=======
-1. **PostgreSQL Container** starts first and becomes healthy
-2. **Alembic Migration Service** runs `alembic upgrade head` to create table schemas  
-3. **Same Service** then executes `init-db/01-triggers-functions.sql` to create functions and triggers
-4. **Application Services** (backend, monitor) start only after both migrations complete successfully
->>>>>>> ef59c4d1de0ba99f56739f01379cab7e024d8a2a
 
 - 🔍 **Search & Filtering:**
   Find what you need in a snap! Search and filter workflows by name, tags, or user. Delete workflows from the database with a click (no worries, your files are safe).
