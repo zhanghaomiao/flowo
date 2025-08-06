@@ -29,9 +29,7 @@ services:
 
   # Alembic database migrations
   alembic-migrations:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
+    image: haomiao/flowo-backend:latest
     container_name: flowo-migrations
     env_file:
       - .env
@@ -70,9 +68,7 @@ services:
     restart: "no"
 
   flowo-backend:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
+    image: haomiao/flowo-backend:latest
     container_name: flowo-backend
     env_file:
       - .env
@@ -94,12 +90,7 @@ services:
     command: uv run uvicorn app.main:app --host 0.0.0.0 --port 80
 
   flowo-frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-      args:
-        VITE_API_BASE_PATH: http://${DOMAIN:-localhost}:${PORT:-3100}
-        VITE_DISABLE_SSE: ${VITE_DISABLE_SSE:-false}
+    image: haomiao/flowo-frontend:latest
     container_name: frontend
     environment:
       TZ: ${TZ:-Asia/Shanghai}

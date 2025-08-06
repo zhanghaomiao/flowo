@@ -157,7 +157,7 @@
     }
 
     # Handle frontend application - proxy to frontend service
-    handle {
+    handle  {
         reverse_proxy flowo-frontend:80
         
         # Apply security headers only to frontend routes
