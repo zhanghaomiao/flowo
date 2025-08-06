@@ -102,7 +102,6 @@ To start Flowo:
 ```sh
 docker compose -f docker-compose.yml up -d
 ```
-
 Open http://localhost:your_port in your browser.
 
 
