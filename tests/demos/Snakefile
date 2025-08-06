@@ -1,0 +1,58 @@
+# Snakefile
+
+# Define the final output file for the workflow
+rule all:
+    input:
+        "results/output.txt"
+
+# Step 1: Simulate a process with random sleep using bash's $RANDOM
+rule step1:
+    output:
+        "results/step1.txt"
+    shell:
+        """
+        sleep $((RANDOM % 11 + 10))  # Sleep for a random time between 10 and 20 seconds
+        echo 'Step 1 completed' > {output}
+        """
+
+# Step 2: Simulate a process with random sleep using bash's $RANDOM
+rule step2:
+    input:
+        "results/step1.txt"
+    output:
+        "results/step2.txt"
+    shell:
+        """
+        sleep $((RANDOM % 11 + 10))  # Sleep for a random time between 10 and 20 seconds
+        echo 'Step 2 completed' > {output}
+        """
+
+# Step 3: Simulate splitting and creating multiple files with random sleep
+rule split_step:
+    input:
+        "results/step2.txt"
+    output:
+        "results/part1.txt",
+        "results/part2.txt",
+        "results/part3.txt"
+    shell:
+        """
+        sleep $((RANDOM % 11 + 10))  # Sleep for a random time between 10 and 20 seconds
+        echo 'Splitting step: part 1' > {output[0]}
+        echo 'Splitting step: part 2' > {output[1]}
+        echo 'Splitting step: part 3' > {output[2]}
+        """
+
+# Final Step: Simulate final output creation with random sleep
+rule final_step:
+    input:
+        "results/part1.txt",
+        "results/part2.txt",
+        "results/part3.txt"
+    output:
+        "results/output.txt"
+    shell:
+        """
+        sleep $((RANDOM % 11 + 10))  # Sleep for a random time between 10 and 20 seconds
+        echo 'Final step completed' > {output}
+        """
