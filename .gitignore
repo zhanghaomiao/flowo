@@ -166,7 +166,7 @@ pgdata/
 postgres-data/
 
 # Docker
-.dockerignore
+# .dockerignore
 docker-compose.override.yml
 
 # Logs
