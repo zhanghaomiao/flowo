@@ -1,4 +1,4 @@
-FROM node:20 AS build
+FROM node:22-alpine AS build
 
 # Install pnpm
 RUN npm install -g pnpm
@@ -27,7 +27,7 @@ ENV VITE_DISABLE_SSE=${VITE_DISABLE_SSE}
 RUN pnpm run build
 
 # Production stage
-FROM nginx:1.17
+FROM nginx:alpine
 
 # Copy built files to nginx
 COPY --from=build /app/dist /usr/share/nginx/html
