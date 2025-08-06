@@ -12,7 +12,7 @@ This project uses a **hybrid approach** for database schema management:
 ### Migration Flow
 
 1. **PostgreSQL Container** starts first and becomes healthy
-2. **Alembic Migration Service** runs `alembic upgrade head` to create table schemas
+2. **Alembic Migration Service** runs `alembic upgrade head` to create table schemas  
 3. **Same Service** then executes `init-db/01-triggers-functions.sql` to create functions and triggers
 4. **Application Services** (backend, monitor) start only after both migrations complete successfully
 
@@ -68,7 +68,6 @@ alembic upgrade head
 ## Architecture Options
 
 ### Option 1: Separate Monitoring Service (Recommended)
-
 **File**: `docker-compose.yml`
 
 ```bash
@@ -80,20 +79,17 @@ docker-compose up -d
 ```
 
 **Services:**
-
 - `postgresql`: PostgreSQL database server
 - `snakemake-backend`: Main Snakemake application
 - `db-monitor`: Dedicated monitoring service (lightweight Python container)
 
 **Benefits:**
-
 - Clear separation of concerns
 - Independent scaling and restart policies
 - Lightweight monitoring container
 - Easy to disable monitoring if needed
 
 ### Option 2: Integrated Monitoring (Alternative)
-
 **File**: `docker-compose.integrated.yml`
 
 ```bash
@@ -102,12 +98,10 @@ docker-compose -f docker-compose.integrated.yml up -d
 ```
 
 **Services:**
-
 - `postgresql`: PostgreSQL database server
 - `snakemake-backend`: Combined application and monitoring service
 
 **Benefits:**
-
 - Fewer containers to manage
 - Shared resources and logs
 - Simpler networking
@@ -127,6 +121,7 @@ POSTGRES_PORT=5432
 REPO_PATH=./
 BACKEND_PORT=8000
 SNAKEMAKE_CORES=4
+LOG_LEVEL=INFO
 
 # Monitoring (for integrated setup)
 ENABLE_DB_MONITORING=true
@@ -135,9 +130,7 @@ ENABLE_DB_MONITORING=true
 ## Database Monitoring Features
 
 ### Automatic Change Detection
-
 The setup includes PostgreSQL triggers and functions that automatically:
-
 - Log all INSERT, UPDATE, DELETE operations
 - Send real-time notifications via PostgreSQL LISTEN/NOTIFY
 - Track which specific fields changed
@@ -152,16 +145,14 @@ The setup includes PostgreSQL triggers and functions that automatically:
 ### Database Schema
 
 The system creates these main tables:
-
 - `workflow_runs`: Snakemake workflow execution records
-- `job_executions`: Individual job/rule execution records
+- `job_executions`: Individual job/rule execution records  
 - `log_entries`: Detailed log messages
 - `change_notifications`: Audit trail of all changes
 
 ## Usage Examples
 
 ### Start the Full Setup
-
 ```bash
 # Copy example environment
 cp .env.example .env
@@ -177,7 +168,6 @@ docker-compose logs -f
 ```
 
 ### Monitor Database Changes
-
 ```bash
 # View monitoring logs
 docker-compose logs -f db-monitor
@@ -198,7 +188,7 @@ Connect to the database and insert test data:
 docker-compose exec postgresql psql -U snakemake -d snakemake_logs
 
 -- Insert a test workflow
-INSERT INTO workflow_runs (workflow_name, status)
+INSERT INTO workflow_runs (workflow_name, status) 
 VALUES ('test_workflow', 'running');
 
 -- Check notifications were created
@@ -207,11 +197,11 @@ SELECT * FROM change_notifications ORDER BY timestamp DESC LIMIT 5;
 
 ## Container Size Comparison
 
-| Container Type  | Base Image         | Size   | Purpose                               |
-| --------------- | ------------------ | ------ | ------------------------------------- |
-| Original (❌)   | postgres:15-alpine | ~280MB | Full PostgreSQL server for monitoring |
-| Improved (✅)   | python:3.12-alpine | ~150MB | Only PostgreSQL client tools          |
-| Integrated (✅) | python:3.12-slim   | ~200MB | Combined app + monitoring             |
+| Container Type | Base Image | Size | Purpose |
+|---------------|------------|------|---------|
+| Original (❌) | postgres:15-alpine | ~280MB | Full PostgreSQL server for monitoring |
+| Improved (✅) | python:3.12-alpine | ~150MB | Only PostgreSQL client tools |
+| Integrated (✅) | python:3.12-slim | ~200MB | Combined app + monitoring |
 
 ## Why the Original Design Was Problematic
 
@@ -220,14 +210,13 @@ The initial setup used `postgres:15-alpine` for both database and monitoring ser
 ```yaml
 # ❌ Problematic - both use same heavy image
 postgresql:
-  image: postgres:15-alpine # ~280MB, runs PostgreSQL server
-
+  image: postgres:15-alpine  # ~280MB, runs PostgreSQL server
+  
 db-monitor:
-  image: postgres:15-alpine # ~280MB, only needs psql client
+  image: postgres:15-alpine  # ~280MB, only needs psql client
 ```
 
 **Issues:**
-
 1. **Resource waste**: Monitoring container loads full PostgreSQL server
 2. **Security**: Unnecessary services running in monitoring container
 3. **Confusion**: Same image for different purposes
@@ -236,21 +225,19 @@ db-monitor:
 ## Improved Solutions
 
 ### Solution 1: Lightweight Monitoring Container
-
 ```yaml
 # ✅ Better - dedicated lightweight monitoring
 db-monitor:
   build:
-    dockerfile: Dockerfile.monitor # python:3.12-alpine + psql client
+    dockerfile: Dockerfile.monitor  # python:3.12-alpine + psql client
 ```
 
 ### Solution 2: Integrated Services
-
 ```yaml
 # ✅ Alternative - single container with supervisor
 snakemake-backend:
   build:
-    dockerfile: Dockerfile.integrated # Combined app + monitoring
+    dockerfile: Dockerfile.integrated  # Combined app + monitoring
 ```
 
 ## Security Considerations
@@ -266,13 +253,11 @@ snakemake-backend:
 ### Common Issues
 
 1. **Permission denied on monitoring scripts**:
-
    ```bash
    chmod +x monitor/*.sh monitor/*.py
    ```
 
 2. **Database connection errors**:
-
    ```bash
    # Check if PostgreSQL is ready
    docker-compose exec postgresql pg_isready

@@ -140,6 +140,7 @@ POSTGRES_PORT=5432
 # DATABASE_URL=postgresql://user:pass@host:port/dbname
 
 # Application Configuration
+LOG_LEVEL=INFO
 ENABLE_DB_MONITORING=true
 ```
 
@@ -150,13 +151,11 @@ ENABLE_DB_MONITORING=true
 If you get import errors, ensure:
 
 1. **Package is installed correctly**:
-
    ```bash
    uv pip list | grep snakemake-logger-plugin
    ```
 
 2. **Python path is correct**:
-
    ```python
    import sys
    print(sys.path)
@@ -170,11 +169,10 @@ If you get import errors, ensure:
 ### Database Connection Issues
 
 1. **Test database connection**:
-
    ```python
    from snakemake_logger_plugin_postgresql.core.config import settings
    from sqlalchemy import create_engine
-
+   
    engine = create_engine(settings.SQLALCHEMY_DATABASE_URI)
    with engine.connect() as conn:
        result = conn.execute("SELECT 1")
@@ -189,7 +187,6 @@ If you get import errors, ensure:
 ### Alembic Issues
 
 1. **Reset migrations**:
-
    ```bash
    # Remove alembic_version table and start fresh
    alembic stamp base
@@ -260,4 +257,4 @@ snakemake-logger-plugin-postgresql/
 2. **Run database migrations** with Alembic
 3. **Test the installation** with the verification code above
 4. **Use with Snakemake** workflows
-5. **Monitor your workflows** through the PostgreSQL database
+5. **Monitor your workflows** through the PostgreSQL database 

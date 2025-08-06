@@ -114,65 +114,65 @@ spec:
         app: caddy
     spec:
       containers:
-        - name: caddy
-          image: caddy:2-alpine
-          ports:
-            - containerPort: 80
-            - containerPort: 443
-          env:
-            - name: TZ
-              valueFrom:
-                configMapKeyRef:
-                  name: flowo-config
-                  key: TZ
-          volumeMounts:
-            - name: caddy-config
-              mountPath: /etc/caddy/Caddyfile
-              subPath: Caddyfile
-            - name: work-dir
-              mountPath: /work_dir
-              readOnly: true
-            - name: caddy-data
-              mountPath: /data
-            - name: caddy-config-vol
-              mountPath: /config
-          livenessProbe:
-            httpGet:
-              path: /health
-              port: 80
-            initialDelaySeconds: 30
-            periodSeconds: 10
-            timeoutSeconds: 5
-            failureThreshold: 3
-          readinessProbe:
-            httpGet:
-              path: /health
-              port: 80
-            initialDelaySeconds: 10
-            periodSeconds: 5
-            timeoutSeconds: 3
-            failureThreshold: 3
-          resources:
-            requests:
-              memory: "64Mi"
-              cpu: "100m"
-            limits:
-              memory: "128Mi"
-              cpu: "200m"
-      volumes:
+      - name: caddy
+        image: hub.miaodocker.space:8443/library/caddy:2-alpine
+        ports:
+        - containerPort: 80
+        - containerPort: 443
+        env:
+        - name: TZ
+          valueFrom:
+            configMapKeyRef:
+              name: flowo-config
+              key: TZ
+        volumeMounts:
         - name: caddy-config
-          configMap:
-            name: caddy-config
+          mountPath: /etc/caddy/Caddyfile
+          subPath: Caddyfile
         - name: work-dir
-          hostPath:
-            path: /share_gpu/flowo
-            type: DirectoryOrCreate
+          mountPath: /work_dir
+          readOnly: true
         - name: caddy-data
-          persistentVolumeClaim:
-            claimName: caddy-data-pvc
+          mountPath: /data
         - name: caddy-config-vol
-          persistentVolumeClaim:
-            claimName: caddy-config-pvc
+          mountPath: /config
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 80
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 80
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "100m"
+          limits:
+            memory: "128Mi"
+            cpu: "200m"
+      volumes:
+      - name: caddy-config
+        configMap:
+          name: caddy-config
+      - name: work-dir
+        hostPath:
+          path: /share_gpu/flowo  
+          type: DirectoryOrCreate
+      - name: caddy-data
+        persistentVolumeClaim:
+          claimName: caddy-data-pvc
+      - name: caddy-config-vol
+        persistentVolumeClaim:
+          claimName: caddy-config-pvc
 ---
 apiVersion: v1
 kind: Service
@@ -183,14 +183,14 @@ metadata:
     app: caddy
 spec:
   ports:
-    - name: http
-      port: 80
-      targetPort: 80
-      protocol: TCP
-    - name: https
-      port: 443
-      targetPort: 443
-      protocol: TCP
+  - name: http
+    port: 80
+    targetPort: 80
+    protocol: TCP
+  - name: https
+    port: 443
+    targetPort: 443
+    protocol: TCP
   selector:
     app: caddy
   type: ClusterIP
