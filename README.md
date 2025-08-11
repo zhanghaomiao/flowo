@@ -82,7 +82,7 @@ FLOWO_WORKING_PATH=/path/to/flowo_project_dir  # ⚠️ Important: set this to y
 Start the Flowo web service:
 
 ```sh
-docker compose -f docker-compose.release.yml up -d
+docker compose -f docker-compose.yml up -d
 ```
 
 Open [http://localhost:3100](http://localhost:3100) in your browser.  
