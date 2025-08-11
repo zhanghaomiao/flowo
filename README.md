@@ -43,6 +43,7 @@ Unleash the power of automation and monitoring with a fresh, interactive experie
 ## 🚦 Installation
 
 - **Requirements:**  
+  - 🐧 Linux system
   - 🐳 Docker  
   - 🐍 snakemake >= 9.6.2
 
