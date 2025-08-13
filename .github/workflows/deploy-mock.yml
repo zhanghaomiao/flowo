@@ -56,7 +56,7 @@ jobs:
       - name: Build for GitHub Pages
         working-directory: ./frontend
         env:
-          VITE_API_BASE_PATH: "zhanghaomiao.github.io/flowo/"
+          VITE_API_BASE_PATH: "/flowo/"
           VITE_DISABLE_SSE: "true"
           NODE_ENV: production
         run: |
