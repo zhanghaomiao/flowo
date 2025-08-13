@@ -41,6 +41,7 @@ const router = createRouter({
     queryClient,
   },
   defaultPreload: "intent",
+  basepath: import.meta.env.BASE_URL, // Use the base path from Vite config
 });
 
 // Register the router instance for type safety
