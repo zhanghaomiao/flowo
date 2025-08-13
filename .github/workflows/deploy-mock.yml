@@ -47,7 +47,7 @@ jobs:
 
       - name: Install dependencies
         working-directory: ./frontend
-        run: pnpm install --frozen-lockfile
+        run: pnpm install .
 
       - name: Build for GitHub Pages
         working-directory: ./frontend
