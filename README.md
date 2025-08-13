@@ -4,6 +4,8 @@ Welcome to **Flowo** – your real-time Snakemake workflow dashboard!
 
 Unleash the power of automation and monitoring with a fresh, interactive experience.
 
+**Demo page: [flowo online](zhanghaomiao.github.io/flowo)**
+
 ---
 
 ## ✨ Features
@@ -43,6 +45,7 @@ Unleash the power of automation and monitoring with a fresh, interactive experie
 ## 🚦 Installation
 
 - **Requirements:**  
+  - 🐧 Linux system
   - 🐳 Docker  
   - 🐍 snakemake >= 9.6.2
 
@@ -134,7 +137,7 @@ Let's test with a demo project:
 cd /path/to/flowo_project_dir
 mkdir demo                # Create a demo project folder
 cd demo
-wget https://github.com/zhanghaomiao/flowo/tree/main/tests/demos/Snakefile
+wget https://raw.githubusercontent.com/zhanghaomiao/flowo/refs/heads/main/tests/demos/Snakefile
 # Run snakemake with flowo logger
 snakemake -s Snakefile --cores all --logger flowo --config flowo_project_name="hello flowo" flowo_tags="tagA,tagB,tagC"
 ```
