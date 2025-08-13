@@ -49,6 +49,10 @@ jobs:
         working-directory: ./frontend
         run: pnpm install .
 
+      - name: Generate MSW Service Worker
+        working-directory: ./frontend
+        run: npx msw init ./public --save
+
       - name: Build for GitHub Pages
         working-directory: ./frontend
         env:
