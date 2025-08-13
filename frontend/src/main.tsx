@@ -16,6 +16,9 @@ async function enableMocking() {
 
   // 启动 worker
   return worker.start({
+    serviceWorker: {
+      url: '${import.meta.env.BASE_URL}mockServiceWorker.js'
+    },
     onUnhandledRequest: 'bypass',
   })
 }
