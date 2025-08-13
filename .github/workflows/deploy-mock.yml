@@ -5,14 +5,17 @@ on:
     branches:
       - mock
     paths:
-      - "frontend/**"
+      - "frontend/src/**"
+      - "frontend/public/**"
       - ".github/workflows/deploy-mock.yml"
 
+# Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
 permissions:
   contents: read
   pages: write
   id-token: write
 
+# Allow only one concurrent deployment
 concurrency:
   group: "pages"
   cancel-in-progress: false
@@ -35,7 +38,9 @@ jobs:
           version: 8
 
       - name: Get pnpm store directory
-        run: echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
 
       - name: Setup pnpm cache
         uses: actions/cache@v4
@@ -47,20 +52,35 @@ jobs:
 
       - name: Install dependencies
         working-directory: ./frontend
-        run: pnpm install .
+        run: pnpm install
 
-      - name: Generate MSW Service Worker
+      - name: Initialize MSW
         working-directory: ./frontend
-        run: npx msw init ./public --save
+        run: |
+          # Initialize MSW in public directory first
+          npx msw init public --save
+          # Copy to src for development
+          cp public/mockServiceWorker.js src/
 
       - name: Build for GitHub Pages
         working-directory: ./frontend
         env:
-          VITE_API_BASE_PATH: "/flowo/"
+          VITE_API_BASE_PATH: ""
           VITE_DISABLE_SSE: "true"
+          VITE_ENABLE_MSW: "true"
           NODE_ENV: production
         run: |
+          # Build the static files
           pnpm run build
+
+          # Ensure MSW worker is in the dist directory
+          if [ ! -f "dist/mockServiceWorker.js" ]; then
+            echo "Copying MSW service worker to dist..."
+            cp public/mockServiceWorker.js dist/
+          fi
+
+          # Verify the file exists
+          ls -la dist/mockServiceWorker.js
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
@@ -68,7 +88,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: ./frontend/dist
+          path: "./frontend/dist"
 
   deploy:
     environment:
