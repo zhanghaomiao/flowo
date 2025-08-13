@@ -154,10 +154,10 @@ const WorkflowTable = () => {
   // Handle workflow deletion
   const handleDeleteWorkflow = async (workflowId: string) => {
     try {
-      await deleteWorkflowMutation.mutateAsync(workflowId);
+      const response = await deleteWorkflowMutation.mutateAsync(workflowId);
       messageApi.open({
         type: "success",
-        content: `Workflow ${workflowId} deleted successfully!`,
+        content: response?.message || `Workflow ${workflowId} deleted successfully!`,
       });
     } catch (error) {
       console.error("Failed to delete workflow:", error);

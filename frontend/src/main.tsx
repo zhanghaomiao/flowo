@@ -7,9 +7,19 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 
 import { routeTree } from "./routeTree.gen";
-// SSEProvider removed - now using direct SSE hooks
 
-// Create a client
+
+// 启动 MSW（仅在开发环境）
+async function enableMocking() {
+  console.log('🔄 Starting MSW to intercept API requests...')
+  const { worker } = await import('./mocks/browser')
+
+  // 启动 worker
+  return worker.start({
+    onUnhandledRequest: 'bypass',
+  })
+}
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -37,26 +47,28 @@ declare module "@tanstack/react-router" {
   }
 }
 
-createRoot(document.getElementById("root")!).render(
-  <StrictMode>
-    <QueryClientProvider client={queryClient}>
-      <ConfigProvider
-        theme={{
-          components: {
-            Tree: {
-              indentSize: 12,
+enableMocking().then(() => {
+  createRoot(document.getElementById("root")!).render(
+    <StrictMode>
+      <QueryClientProvider client={queryClient}>
+        <ConfigProvider
+          theme={{
+            components: {
+              Tree: {
+                indentSize: 12,
+              },
+              Layout: {
+                headerHeight: 45,
+              },
+              Card: {
+                bodyPadding: 4,
+              },
             },
-            Layout: {
-              headerHeight: 45,
-            },
-            Card: {
-              bodyPadding: 4,
-            },
-          },
-        }}
-      >
-        <RouterProvider router={router} />
-      </ConfigProvider>
-    </QueryClientProvider>
-  </StrictMode>,
-);
+          }}
+        >
+          <RouterProvider router={router} />
+        </ConfigProvider>
+      </QueryClientProvider>
+    </StrictMode>,
+  );
+})

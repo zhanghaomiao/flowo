@@ -22,7 +22,8 @@ const LiveUpdatesIndicator: React.FC<LiveUpdatesIndicatorProps> = ({
             <WifiOutlined style={{ marginRight: "4px" }} />
             {isConnected
               ? "Live Updates"
-              : `Disconnected${retryCount > 0 ? ` (${retryCount} retries)` : ""}`}
+              // : `Disconnected${retryCount > 0 ? ` (${retryCount} retries)` : ""}`}
+              : 'Disabeld for the demo purpose'}
           </span>
         }
       />

@@ -220,8 +220,8 @@ export const useDashboardMetrics = () => {
       total: workflowStats.data?.total || 0,
       percentage: workflowStats.data?.total
         ? Math.round(
-            (workflowStats.data.running / workflowStats.data.total) * 100,
-          )
+          (workflowStats.data.running / workflowStats.data.total) * 100,
+        )
         : 0,
       loading: workflowStats.isLoading,
       error: workflowStats.error,
@@ -279,11 +279,11 @@ export const useDashboardMetrics = () => {
       percentage:
         systemStats.data?.cpu_total_cores && systemStats.data?.cpu_idle_cores
           ? Math.round(
-              ((systemStats.data.cpu_total_cores -
-                systemStats.data.cpu_idle_cores) /
-                systemStats.data.cpu_total_cores) *
-                100,
-            )
+            ((systemStats.data.cpu_total_cores -
+              systemStats.data.cpu_idle_cores) /
+              systemStats.data.cpu_total_cores) *
+            100,
+          )
           : 0,
       loading: systemStats.isLoading,
       error: systemStats.error,
@@ -294,21 +294,21 @@ export const useDashboardMetrics = () => {
       used:
         systemStats.data?.mem_total_GB && systemStats.data?.mem_available_GB
           ? Math.round(
-              (systemStats.data.mem_total_GB -
-                systemStats.data.mem_available_GB) *
-                100,
-            ) / 100
+            (systemStats.data.mem_total_GB -
+              systemStats.data.mem_available_GB) *
+            100,
+          ) / 100
           : 0,
       total: systemStats.data?.mem_total_GB || 0,
       left: systemStats.data?.mem_available_GB || 0,
       percentage:
         systemStats.data?.mem_total_GB && systemStats.data?.mem_available_GB
           ? Math.round(
-              ((systemStats.data.mem_total_GB -
-                systemStats.data.mem_available_GB) /
-                systemStats.data.mem_total_GB) *
-                100,
-            )
+            ((systemStats.data.mem_total_GB -
+              systemStats.data.mem_available_GB) /
+              systemStats.data.mem_total_GB) *
+            100,
+          )
           : 0,
       loading: systemStats.isLoading,
       error: systemStats.error,
