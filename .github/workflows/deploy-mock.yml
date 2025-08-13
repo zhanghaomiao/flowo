@@ -5,8 +5,7 @@ on:
     branches:
       - mock
     paths:
-      - "frontend/src/**"
-      - "frontend/public/**"
+      - "frontend/**"
       - ".github/workflows/deploy-mock.yml"
 
 permissions:
