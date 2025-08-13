@@ -4,6 +4,8 @@ Welcome to **Flowo** – your real-time Snakemake workflow dashboard!
 
 Unleash the power of automation and monitoring with a fresh, interactive experience.
 
+**Demo page: [flowo online](zhanghaomiao.github.io/flowo)**
+
 ---
 
 ## ✨ Features
