@@ -152,6 +152,8 @@ export const handlers = [
     const user = url.searchParams.get('user')
     const name = url.searchParams.get('name')
     const tags = url.searchParams.get('tags')
+    const start_at = url.searchParams.get('start_at')
+    const end_at = url.searchParams.get('end_at')
 
     let filteredWorkflows = [...mockWorkflows]
 
@@ -172,6 +174,17 @@ export const handlers = [
         w.tags?.some(tag => tag.includes(tags))
       )
     }
+
+    if (start_at) {
+      const startedAtDate = new Date(start_at)
+      filteredWorkflows = filteredWorkflows.filter(w => new Date(w.started_at) >= startedAtDate)
+    }
+
+    if (end_at) {
+      const endAtDate = new Date(end_at)
+      filteredWorkflows = filteredWorkflows.filter(w => new Date(w.end_time) <= endAtDate)
+    }
+    console.log("end_at is:", end_at)
 
     const total = filteredWorkflows.length
     const paginatedWorkflows = filteredWorkflows.slice(offset, offset + limit)
