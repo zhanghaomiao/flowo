@@ -18,7 +18,9 @@ COPY . .
 
 # Set production environment variables - these must be set at build time
 ARG VITE_DISABLE_SSE=false
-ARG VITE_API_BASE_PATH=localhost:3100
+# Default to empty string (relative path) - frontend will use same origin
+# This works with Caddy reverse proxy setup
+ARG VITE_API_BASE_PATH=
 
 ENV VITE_API_BASE_PATH=${VITE_API_BASE_PATH}
 ENV VITE_DISABLE_SSE=${VITE_DISABLE_SSE}

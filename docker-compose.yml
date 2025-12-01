@@ -40,7 +40,7 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-flowo}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-flowo_password}
       POSTGRES_HOST: postgresql
-      POSTGRES_PORT: ${POSTGRES_PORT:-5432}
+      POSTGRES_PORT: 5432
       PYTHONPATH: /app
       PYTHONUNBUFFERED: 1
       TZ: ${TZ:-Asia/Shanghai}
@@ -81,7 +81,9 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-flowo}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-flowo_password}
       POSTGRES_HOST: postgresql
-      POSTGRES_PORT: ${POSTGRES_PORT:-5432}
+      # Use internal port 5432 for container-to-container communication
+      # POSTGRES_PORT in .env is only for external port mapping
+      POSTGRES_PORT: 5432
       TZ: ${TZ:-Asia/Shanghai}
     volumes:
       - ${FLOWO_WORKING_PATH:-.}:/work_dir:ro
@@ -98,7 +100,9 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
       args:
-        VITE_API_BASE_PATH: http://${DOMAIN:-localhost}:${PORT:-3100}
+        # Use relative path in production - Caddy will proxy /api/v1/* to backend
+        # Only set absolute URL for development when VITE_API_BASE_PATH is explicitly provided
+        VITE_API_BASE_PATH: ${VITE_API_BASE_PATH:-}
         VITE_DISABLE_SSE: ${VITE_DISABLE_SSE:-false}
     container_name: frontend
     environment:

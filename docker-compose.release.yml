@@ -77,7 +77,9 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-flowo}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-flowo_password}
       POSTGRES_HOST: postgresql
-      POSTGRES_PORT: ${POSTGRES_PORT:-5432}
+      # Use internal port 5432 for container-to-container communication
+      # POSTGRES_PORT in .env is only for external port mapping
+      POSTGRES_PORT: 5432
       TZ: ${TZ:-Asia/Shanghai}
     volumes:
       - ${FLOWO_WORKING_PATH:-.}:/work_dir:ro

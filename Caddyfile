@@ -5,6 +5,7 @@
 # 2. Static file server for /work_dir with caching for images, PDFs, and HTML files
 
 # Default site configuration
+# Note: Caddy listens on port 80 internally, but the external port is mapped via docker-compose
 :80 {
     # Enable access logs
     log {

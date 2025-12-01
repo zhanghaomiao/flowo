@@ -139,7 +139,10 @@ mkdir demo                # Create a demo project folder
 cd demo
 wget https://raw.githubusercontent.com/zhanghaomiao/flowo/refs/heads/main/tests/demos/Snakefile
 # Run snakemake with flowo logger
-snakemake -s Snakefile --cores all --logger flowo --config flowo_project_name="hello flowo" flowo_tags="tagA,tagB,tagC"
+snakemake \
+    --logger flowo \
+    --logger-flowo-name=your_project_name \
+    --logger-flowo-tags="tagA,tagB,tagC"
 ```
 
 Now, check out your workflow in the Flowo web! Good luck! 🍀
