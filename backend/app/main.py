@@ -3,10 +3,23 @@ from contextlib import asynccontextmanager
 import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.routing import APIRoute
 
 from app.api import api_router
 from app.api.endpoints.sse import get_sse_manager
 from app.core.config import settings
+
+
+def use_route_names_as_operation_ids(app: FastAPI) -> None:
+    """
+    Simplify operation IDs so that generated API clients have simpler function
+    names.
+
+    Should be called only after all routes have been added.
+    """
+    for route in app.routes:
+        if isinstance(route, APIRoute):
+            route.operation_id = route.name  # in this case, 'read_items'
 
 
 @asynccontextmanager
@@ -34,6 +47,7 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.BACKEND_CORS_ORIGINS,
@@ -42,7 +56,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 app.include_router(api_router, prefix=settings.API_V1_STR)
+use_route_names_as_operation_ids(app)
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)

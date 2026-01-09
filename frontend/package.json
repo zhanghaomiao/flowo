@@ -11,7 +11,8 @@
     "format": "prettier --write .",
     "preview": "vite preview",
     "generate-api": "openapi-generator-cli generate -i http://127.0.0.1:3100/api/v1/openapi.json -g typescript-axios -o src/api",
-    "generate-serverapi": "openapi-generator-cli generate -i http://172.16.3.223:3100/api/v1/openapi.json -g typescript-axios -o src/api"
+    "generate-serverapi": "openapi-generator-cli generate -i http://172.16.3.223:3100/api/v1/openapi.json -g typescript-axios -o src/api",
+    "generate-client": "openapi-ts"
   },
   "dependencies": {
     "@ant-design/icons": "^6.0.0",
@@ -37,6 +38,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.25.0",
+    "@hey-api/openapi-ts": "0.90.2",
     "@openapitools/openapi-generator-cli": "^2.20.2",
     "@tanstack/react-query-devtools": "^5.80.2",
     "@tanstack/router-plugin": "^1.120.15",
