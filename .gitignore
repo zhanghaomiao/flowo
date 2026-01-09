@@ -260,3 +260,4 @@ temp/
 docker-compose.jm.yml
 .gitea/** 
 k8s/
+*.code-workspace
