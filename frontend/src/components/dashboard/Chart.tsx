@@ -1,8 +1,7 @@
-import "echarts-wordcloud";
-
-import { Empty } from "antd";
-import ReactECharts from "echarts-for-react";
-import React from "react";
+import { Empty } from 'antd';
+import ReactECharts from 'echarts-for-react';
+import 'echarts-wordcloud';
+import React from 'react';
 
 const CHART_FONT_FAMILY =
   "-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif";
@@ -21,7 +20,7 @@ export const BarChart = ({
       <Empty
         image={Empty.PRESENTED_IMAGE_SIMPLE}
         description={`No ${title.toLowerCase()} data found`}
-        style={{ margin: "20px 0" }}
+        style={{ margin: '20px 0' }}
       />
     );
   }
@@ -35,51 +34,51 @@ export const BarChart = ({
   // Function to truncate text
   const truncateText = (text: string, maxLength: number) => {
     if (text.length <= maxLength) return text;
-    return text.substring(0, maxLength - 3) + "...";
+    return text.substring(0, maxLength - 3) + '...';
   };
 
   const option = {
     grid: {
       left: dynamicLeftMargin,
-      right: "10%",
-      top: "10%",
-      bottom: "15%",
+      right: '10%',
+      top: '10%',
+      bottom: '15%',
     },
     xAxis: {
-      type: "value",
-      name: "Count",
-      nameLocation: "middle",
+      type: 'value',
+      name: 'Count',
+      nameLocation: 'middle',
       nameGap: 30,
       nameTextStyle: {
         fontSize: 10,
-        color: "#666",
+        color: '#666',
         fontFamily: CHART_FONT_FAMILY,
       },
       axisLabel: {
         fontSize: 9,
-        color: "#666",
+        color: '#666',
         fontFamily: CHART_FONT_FAMILY,
       },
       axisLine: {
         lineStyle: {
-          color: "#e8e8e8",
+          color: '#e8e8e8',
         },
       },
       splitLine: {
         lineStyle: {
-          color: "#f0f0f0",
+          color: '#f0f0f0',
         },
       },
     },
     yAxis: {
-      type: "category",
+      type: 'category',
       data: categories,
       axisLabel: {
         fontSize: 11,
-        color: "#333",
+        color: '#333',
         width: Math.min(maxLabelWidth * 8, 180), // Dynamic width
-        overflow: "truncate", // Truncate long text
-        ellipsis: "...", // Show ellipsis
+        overflow: 'truncate', // Truncate long text
+        ellipsis: '...', // Show ellipsis
         fontFamily: CHART_FONT_FAMILY,
         formatter: function (value: string) {
           return truncateText(value, maxLabelLength);
@@ -87,7 +86,7 @@ export const BarChart = ({
       },
       axisLine: {
         lineStyle: {
-          color: "#e8e8e8",
+          color: '#e8e8e8',
         },
       },
       axisTick: {
@@ -96,23 +95,23 @@ export const BarChart = ({
     },
     series: [
       {
-        type: "bar",
+        type: 'bar',
         data: values.map((value) => ({
           value: value,
           itemStyle: {
-            color: "#37a460",
+            color: '#37a460',
           },
         })),
-        barWidth: "60%",
+        barWidth: '60%',
         label: {
           show: false,
         },
       },
     ],
     tooltip: {
-      trigger: "axis",
+      trigger: 'axis',
       axisPointer: {
-        type: "shadow",
+        type: 'shadow',
       },
       formatter: function (params: Array<{ name: string; value: number }>) {
         const data = params[0];
@@ -124,8 +123,8 @@ export const BarChart = ({
   return (
     <ReactECharts
       option={option}
-      style={{ height: "260px", width: "100%" }}
-      opts={{ renderer: "canvas" }}
+      style={{ height: '260px', width: '100%' }}
+      opts={{ renderer: 'canvas' }}
     />
   );
 };
@@ -148,7 +147,7 @@ export const StackedBarChart = ({
       <Empty
         image={Empty.PRESENTED_IMAGE_SIMPLE}
         description={`No ${title.toLowerCase()} data found`}
-        style={{ margin: "20px 0" }}
+        style={{ margin: '20px 0' }}
       />
     );
   }
@@ -163,54 +162,54 @@ export const StackedBarChart = ({
   // Function to truncate text
   const truncateText = (text: string, maxLength: number) => {
     if (text.length <= maxLength) return text;
-    return text.substring(0, maxLength - 3) + "...";
+    return text.substring(0, maxLength - 3) + '...';
   };
 
   const option = {
     grid: {
       left: dynamicLeftMargin,
-      right: "10%",
-      top: "10%", // Same as BarChart
-      bottom: "15%",
+      right: '10%',
+      top: '10%', // Same as BarChart
+      bottom: '15%',
     },
     legend: {
       show: false,
     },
     xAxis: {
-      type: "value",
-      name: "Count",
-      nameLocation: "middle",
+      type: 'value',
+      name: 'Count',
+      nameLocation: 'middle',
       nameGap: 30,
       nameTextStyle: {
         fontSize: 10,
-        color: "#666",
+        color: '#666',
         fontFamily: CHART_FONT_FAMILY,
       },
       axisLabel: {
         fontSize: 9,
-        color: "#666",
+        color: '#666',
         fontFamily: CHART_FONT_FAMILY,
       },
       axisLine: {
         lineStyle: {
-          color: "#e8e8e8",
+          color: '#e8e8e8',
         },
       },
       splitLine: {
         lineStyle: {
-          color: "#f0f0f0",
+          color: '#f0f0f0',
         },
       },
     },
     yAxis: {
-      type: "category",
+      type: 'category',
       data: categories,
       axisLabel: {
         fontSize: 11,
-        color: "#333",
+        color: '#333',
         width: Math.min(maxLabelWidth * 8, 180),
-        overflow: "truncate",
-        ellipsis: "...",
+        overflow: 'truncate',
+        ellipsis: '...',
         fontFamily: CHART_FONT_FAMILY,
         formatter: function (value: string) {
           return truncateText(value, maxLabelLength);
@@ -218,7 +217,7 @@ export const StackedBarChart = ({
       },
       axisLine: {
         lineStyle: {
-          color: "#e8e8e8",
+          color: '#e8e8e8',
         },
       },
       axisTick: {
@@ -227,30 +226,30 @@ export const StackedBarChart = ({
     },
     series: [
       {
-        name: "Success",
-        type: "bar",
-        stack: "total",
+        name: 'Success',
+        type: 'bar',
+        stack: 'total',
         data: successData,
         itemStyle: {
-          color: "#37a460",
+          color: '#37a460',
         },
-        barWidth: "60%", // Same as BarChart
+        barWidth: '60%', // Same as BarChart
       },
       {
-        name: "Error",
-        type: "bar",
-        stack: "total",
+        name: 'Error',
+        type: 'bar',
+        stack: 'total',
         data: errorData,
         itemStyle: {
-          color: "#e57373",
+          color: '#e57373',
         },
-        barWidth: "60%", // Same as BarChart
+        barWidth: '60%', // Same as BarChart
       },
     ],
     tooltip: {
-      trigger: "axis",
+      trigger: 'axis',
       axisPointer: {
-        type: "shadow",
+        type: 'shadow',
       },
       formatter: function (
         params: Array<{ name: string; value: number; seriesName: string }>,
@@ -270,8 +269,8 @@ export const StackedBarChart = ({
   return (
     <ReactECharts
       option={option}
-      style={{ height: "260px", width: "100%" }}
-      opts={{ renderer: "svg" }}
+      style={{ height: '260px', width: '100%' }}
+      opts={{ renderer: 'svg' }}
     />
   );
 };
@@ -288,7 +287,7 @@ export const BoxPlot = ({
       <Empty
         image={Empty.PRESENTED_IMAGE_SIMPLE}
         description={`No ${title.toLowerCase()} data found`}
-        style={{ margin: "20px 0" }}
+        style={{ margin: '20px 0' }}
       />
     );
   }
@@ -312,50 +311,50 @@ export const BoxPlot = ({
   const option = {
     grid: {
       left: dynamicLeftMargin,
-      top: "5%",
-      right: "10%",
-      bottom: "15%",
+      top: '5%',
+      right: '10%',
+      bottom: '15%',
     },
     xAxis: {
-      type: "value",
-      name: "Duration (minutes)",
-      nameLocation: "middle",
+      type: 'value',
+      name: 'Duration (minutes)',
+      nameLocation: 'middle',
       nameGap: 30,
       nameTextStyle: {
         fontSize: 10,
-        color: "#666",
+        color: '#666',
         fontFamily: CHART_FONT_FAMILY,
       },
       axisLabel: {
         fontSize: 9,
-        color: "#666",
+        color: '#666',
         fontFamily: CHART_FONT_FAMILY,
       },
       axisLine: {
         lineStyle: {
-          color: "#e8e8e8",
+          color: '#e8e8e8',
         },
       },
       splitLine: {
         lineStyle: {
-          color: "#f0f0f0",
+          color: '#f0f0f0',
         },
       },
     },
     yAxis: {
-      type: "category",
+      type: 'category',
       data: categories,
       axisLabel: {
         fontSize: 11,
-        color: "#333",
+        color: '#333',
         width: Math.min(maxLabelWidth * 8, 180),
-        overflow: "truncate",
-        ellipsis: "...",
+        overflow: 'truncate',
+        ellipsis: '...',
         fontFamily: CHART_FONT_FAMILY,
       },
       axisLine: {
         lineStyle: {
-          color: "#e8e8e8",
+          color: '#e8e8e8',
         },
       },
       axisTick: {
@@ -364,19 +363,19 @@ export const BoxPlot = ({
     },
     series: [
       {
-        name: "Rule Duration",
-        type: "boxplot",
+        name: 'Rule Duration',
+        type: 'boxplot',
         data: boxPlotData,
         itemStyle: {
-          borderColor: "#5abc84",
+          borderColor: '#5abc84',
           borderWidth: 1.5,
-          color: "rgba(90, 188, 132, 0.2)",
+          color: 'rgba(90, 188, 132, 0.2)',
         },
-        boxWidth: ["7%", "50%"],
+        boxWidth: ['7%', '50%'],
       },
     ],
     tooltip: {
-      trigger: "item",
+      trigger: 'item',
       formatter: function (params: { data: number[]; dataIndex: number }) {
         const data = params.data;
         const categoryName = categories[params.dataIndex];
@@ -395,8 +394,8 @@ export const BoxPlot = ({
   return (
     <ReactECharts
       option={option}
-      style={{ height: "260px", width: "100%" }}
-      opts={{ renderer: "svg" }}
+      style={{ height: '260px', width: '100%' }}
+      opts={{ renderer: 'svg' }}
     />
   );
 };
@@ -408,23 +407,23 @@ export const WordCloud = React.memo(
         <Empty
           image={Empty.PRESENTED_IMAGE_SIMPLE}
           description={`No ${title.toLowerCase()} data found`}
-          style={{ margin: "20px 0" }}
+          style={{ margin: '20px 0' }}
         />
       );
     }
 
     // Define color palette
     const colors = [
-      "#37a460",
-      "#52c41a",
-      "#85d2ab",
-      "#73d13d",
-      "#b7eb8f",
-      "#5abc84",
-      "#95f985",
-      "#7cb305",
-      "#389e0d",
-      "#237804",
+      '#37a460',
+      '#52c41a',
+      '#85d2ab',
+      '#73d13d',
+      '#b7eb8f',
+      '#5abc84',
+      '#95f985',
+      '#7cb305',
+      '#389e0d',
+      '#237804',
     ];
 
     // Create a simple hash function for consistent color assignment
@@ -457,16 +456,16 @@ export const WordCloud = React.memo(
       },
       series: [
         {
-          type: "wordCloud",
+          type: 'wordCloud',
           data: wordCloudData,
           // Shape of the word cloud
-          shape: "square",
+          shape: 'square',
           // Keep aspect ratio of words
           keepAspect: false,
           // Font configuration
           textStyle: {
             fontFamily: CHART_FONT_FAMILY,
-            fontWeight: "normal",
+            fontWeight: 'normal',
           },
           // Size range for words based on their values
           sizeRange: [14, 60],
@@ -483,12 +482,12 @@ export const WordCloud = React.memo(
           // Layout animation
           layoutAnimation: true,
           // Word spacing
-          left: "center",
-          top: "center",
+          left: 'center',
+          top: 'center',
           right: null,
           bottom: null,
-          width: "100%",
-          height: "100%",
+          width: '100%',
+          height: '100%',
         },
       ],
     };
@@ -496,11 +495,11 @@ export const WordCloud = React.memo(
     return (
       <ReactECharts
         option={option}
-        style={{ height: "260px", width: "100%" }}
-        opts={{ renderer: "canvas" }}
+        style={{ height: '260px', width: '100%' }}
+        opts={{ renderer: 'canvas' }}
       />
     );
   },
 );
 
-WordCloud.displayName = "WordCloud";
+WordCloud.displayName = 'WordCloud';

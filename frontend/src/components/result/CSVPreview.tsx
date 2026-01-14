@@ -1,6 +1,6 @@
-import { Spin, Table } from "antd";
-import type { ColumnsType } from "antd/es/table";
-import React, { useState } from "react";
+import { Spin, Table } from 'antd';
+import type { ColumnsType } from 'antd/es/table';
+import React, { useState } from 'react';
 
 // Interfaces for CSV/TSV data
 interface TableRowData {
@@ -14,13 +14,13 @@ interface CSVPreviewProps {
 }
 
 const parseCSVTSV = (text: string, delimiter: string) => {
-  const lines = text.trim().split("\n");
+  const lines = text.trim().split('\n');
   if (lines.length === 0) return { columns: [], data: [] };
 
   // Use first line as headers
   const headers = lines[0]
     .split(delimiter)
-    .map((header) => header.trim().replace(/^"|"$/g, ""));
+    .map((header) => header.trim().replace(/^"|"$/g, ''));
 
   // Create columns for Ant Design Table
   const tableColumns: ColumnsType<TableRowData> = headers.map(
@@ -39,11 +39,11 @@ const parseCSVTSV = (text: string, delimiter: string) => {
     .map((line, rowIndex) => {
       const values = line
         .split(delimiter)
-        .map((value) => value.trim().replace(/^"|"$/g, ""));
+        .map((value) => value.trim().replace(/^"|"$/g, ''));
       const row: TableRowData = { key: rowIndex };
 
       values.forEach((value, colIndex) => {
-        row[`col_${colIndex}`] = value || "";
+        row[`col_${colIndex}`] = value || '';
       });
 
       return row;
@@ -61,21 +61,21 @@ export const CSVPreview: React.FC<CSVPreviewProps> = ({
   const [data, setData] = useState<TableRowData[]>([]);
   const [columns, setColumns] = useState<ColumnsType<TableRowData>>([]);
   const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string>("");
+  const [error, setError] = useState<string>('');
 
   React.useEffect(() => {
     setLoading(true);
-    setError("");
+    setError('');
 
     fetch(src)
       .then((response) => response.text())
       .then((text) => {
         // Determine delimiter based on file extension or content analysis
         const isTSV =
-          src.toLowerCase().includes(".tsv") ||
-          (text.includes("\t") &&
-            text.split("\t").length > text.split(",").length);
-        const delimiter = isTSV ? "\t" : ",";
+          src.toLowerCase().includes('.tsv') ||
+          (text.includes('\t') &&
+            text.split('\t').length > text.split(',').length);
+        const delimiter = isTSV ? '\t' : ',';
 
         const { columns: parsedColumns, data: parsedData } = parseCSVTSV(
           text,
@@ -87,8 +87,8 @@ export const CSVPreview: React.FC<CSVPreviewProps> = ({
         setLoading(false);
       })
       .catch((error) => {
-        console.error("Error loading CSV/TSV file:", error);
-        setError("Error loading file content");
+        console.error('Error loading CSV/TSV file:', error);
+        setError('Error loading file content');
         setLoading(false);
       });
   }, [src]);
@@ -98,20 +98,20 @@ export const CSVPreview: React.FC<CSVPreviewProps> = ({
   }
 
   if (error) {
-    return <div style={{ color: "red", padding: "16px" }}>{error}</div>;
+    return <div style={{ color: 'red', padding: '16px' }}>{error}</div>;
   }
 
   if (data.length === 0) {
-    return <div style={{ padding: "16px" }}>No data to display</div>;
+    return <div style={{ padding: '16px' }}>No data to display</div>;
   }
 
   const containerStyle = isFullscreen
-    ? { height: "calc(100vh - 250px)", padding: "24px", overflow: "hidden" }
-    : { padding: "16px" };
+    ? { height: 'calc(100vh - 250px)', padding: '24px', overflow: 'hidden' }
+    : { padding: '16px' };
 
   const scrollConfig = isFullscreen
-    ? { x: "max-content", y: "calc(100vh - 320px)" }
-    : { x: "max-content", y: 500 };
+    ? { x: 'max-content', y: 'calc(100vh - 320px)' }
+    : { x: 'max-content', y: 500 };
 
   return (
     <div style={containerStyle}>

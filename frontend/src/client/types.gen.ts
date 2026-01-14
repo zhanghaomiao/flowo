@@ -929,10 +929,14 @@ export type GetSnakefileError = GetSnakefileErrors[keyof GetSnakefileErrors];
 
 export type GetSnakefileResponses = {
     /**
+     * Response Get Snakefile Api V1 Workflows  Workflow Id  Snakefile Get
+     *
      * Successful Response
      */
-    200: unknown;
+    200: string;
 };
+
+export type GetSnakefileResponse = GetSnakefileResponses[keyof GetSnakefileResponses];
 
 export type GetConfigfilesData = {
     body?: never;
@@ -1258,17 +1262,11 @@ export type StreamEventsData = {
     path?: never;
     query?: {
         /**
-         * Filters
+         * Workflow Ids
          *
-         * Comma-separated list of table names to filter (e.g., 'workflows,jobs'). Use 'all' for all tables.
+         * Current visible workflow IDs
          */
-        filters?: string | null;
-        /**
-         * Workflow Id
-         *
-         * Workflow ID to filter events for a specific workflow.
-         */
-        workflow_id?: string | null;
+        workflow_ids?: string | null;
     };
     url: '/api/v1/sse/events';
 };
@@ -1283,90 +1281,6 @@ export type StreamEventsErrors = {
 export type StreamEventsError = StreamEventsErrors[keyof StreamEventsErrors];
 
 export type StreamEventsResponses = {
-    /**
-     * Successful Response
-     */
-    200: unknown;
-};
-
-export type SseHealthCheckData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/api/v1/sse/health';
-};
-
-export type SseHealthCheckResponses = {
-    /**
-     * Successful Response
-     */
-    200: unknown;
-};
-
-export type GetSseStatsData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/api/v1/sse/stats';
-};
-
-export type GetSseStatsResponses = {
-    /**
-     * Successful Response
-     */
-    200: unknown;
-};
-
-export type SendTestNotificationData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/api/v1/sse/test-notification';
-};
-
-export type SendTestNotificationResponses = {
-    /**
-     * Successful Response
-     */
-    200: unknown;
-};
-
-export type DebugConnectionsData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/api/v1/sse/debug/connections';
-};
-
-export type DebugConnectionsResponses = {
-    /**
-     * Successful Response
-     */
-    200: unknown;
-};
-
-export type CleanupConnectionsData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/api/v1/sse/cleanup-connections';
-};
-
-export type CleanupConnectionsResponses = {
-    /**
-     * Successful Response
-     */
-    200: unknown;
-};
-
-export type ForceReconnectData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/api/v1/sse/reconnect';
-};
-
-export type ForceReconnectResponses = {
     /**
      * Successful Response
      */
@@ -1396,10 +1310,16 @@ export type GetWorkflowLogsError = GetWorkflowLogsErrors[keyof GetWorkflowLogsEr
 
 export type GetWorkflowLogsResponses = {
     /**
+     * Response Get Workflow Logs Api V1 Logs  Workflow Id  Get
+     *
      * Successful Response
      */
-    200: unknown;
+    200: {
+        [key: string]: string;
+    };
 };
+
+export type GetWorkflowLogsResponse = GetWorkflowLogsResponses[keyof GetWorkflowLogsResponses];
 
 export type StreamWorkflowLogsSseData = {
     body?: never;

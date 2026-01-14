@@ -1,14 +1,17 @@
-import type { Edge, Node } from "@xyflow/react";
-import { MarkerType, Position } from "@xyflow/react";
-import { useMemo } from "react";
-
-import type { RuleStatusResponse } from "../../api/api";
-import { useWorkflowRuleGraph } from "../../hooks/useQueries";
-import { useRuleStatusWithSSE } from "../../hooks/useQueriesWithSSE";
 import {
-  getLayoutedElements,
+  getRuleGraphOptions,
+  getRuleStatusOptions,
+} from '@/client/@tanstack/react-query.gen';
+import type { RuleStatusResponse } from '@/client/types.gen';
+import { useQuery } from '@tanstack/react-query';
+import type { Edge, Node } from '@xyflow/react';
+import { MarkerType, Position } from '@xyflow/react';
+import { useMemo } from 'react';
+
+import {
   type LayoutDirection,
-} from "../../utils/graphLayout";
+  getLayoutedElements,
+} from '../../utils/graphLayout';
 
 interface GraphData {
   nodes: Array<{
@@ -26,11 +29,11 @@ const NODE_WIDTH = 150;
 const NODE_HEIGHT = 60;
 
 const STATUS_COLORS: Record<string, string> = {
-  unscheduled: "#E0E0E0",
-  SUCCESS: "#C8E6C9",
-  RUNNING: "#BBDEFB",
-  ERROR: "#FFCDD2",
-  WAITING: "#FFECB3",
+  unscheduled: '#E0E0E0',
+  SUCCESS: '#C8E6C9',
+  RUNNING: '#BBDEFB',
+  ERROR: '#FFCDD2',
+  WAITING: '#FFECB3',
 };
 
 interface UseWorkflowGraphProps {
@@ -52,13 +55,17 @@ export const useWorkflowGraph = ({
     data: graphData,
     isLoading: isGraphLoading,
     error: graphError,
-  } = useWorkflowRuleGraph(workflowId);
+  } = useQuery({
+    ...getRuleGraphOptions({ path: { workflow_id: workflowId } }),
+  });
 
   const {
     data: ruleStatus,
     isLoading: isRuleStatusLoading,
     error: ruleStatusError,
-  } = useRuleStatusWithSSE(workflowId);
+  } = useQuery({
+    ...getRuleStatusOptions({ path: { workflow_id: workflowId } }),
+  });
 
   // Memoize the rule status to prevent unnecessary re-renders
   const memoizedRuleStatus = useMemo(
@@ -79,7 +86,7 @@ export const useWorkflowGraph = ({
     }
 
     const parsedData: GraphData =
-      typeof memoizedGraphData === "string"
+      typeof memoizedGraphData === 'string'
         ? JSON.parse(memoizedGraphData)
         : memoizedGraphData;
 
@@ -90,7 +97,7 @@ export const useWorkflowGraph = ({
 
     const nodes: Node[] = parsedData.nodes.map((nodeData, index) => ({
       id: index.toString(),
-      type: "progressNode",
+      type: 'progressNode',
       position: { x: 0, y: 0 }, // Will be set by layout algorithm
       data: {
         rule: nodeData.rule,
@@ -99,8 +106,8 @@ export const useWorkflowGraph = ({
         // Styling will be handled separately
       },
       sourcePosition:
-        layoutDirection === "LR" ? Position.Right : Position.Bottom,
-      targetPosition: layoutDirection === "LR" ? Position.Left : Position.Top,
+        layoutDirection === 'LR' ? Position.Right : Position.Bottom,
+      targetPosition: layoutDirection === 'LR' ? Position.Left : Position.Top,
     }));
 
     // Create edges
@@ -108,16 +115,16 @@ export const useWorkflowGraph = ({
       id: `edge-${index}`,
       source: link.source.toString(),
       target: link.target.toString(),
-      type: "smoothstep",
+      type: 'smoothstep',
       animated: true,
       markerEnd: {
         type: MarkerType.ArrowClosed,
         width: 20,
         height: 20,
-        color: "#1890ff",
+        color: '#1890ff',
       },
       style: {
-        stroke: "#1890ff",
+        stroke: '#1890ff',
         strokeWidth: 2,
       },
     }));
@@ -180,17 +187,17 @@ export const useWorkflowGraph = ({
         statusInfo = memoizedRuleStatus[ruleName];
       }
 
-      let textColor = "#000000";
-      let borderColor = "#1890ff";
-      let boxShadow = "none";
+      let textColor = '#000000';
+      let borderColor = '#1890ff';
+      let boxShadow = 'none';
 
       if (isSelected) {
-        backgroundColor = "#1890ff";
-        textColor = "#ffffff";
+        backgroundColor = '#1890ff';
+        textColor = '#ffffff';
       } else if (isHighlighted) {
-        backgroundColor = "#fff7e6";
-        borderColor = "#faad14";
-        boxShadow = "0 0 10px rgba(250, 173, 20, 0.5)";
+        backgroundColor = '#fff7e6';
+        borderColor = '#faad14';
+        boxShadow = '0 0 10px rgba(250, 173, 20, 0.5)';
       }
 
       styling[ruleName] = {

@@ -1,15 +1,12 @@
-import "./index.css";
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { RouterProvider, createRouter } from '@tanstack/react-router';
+import { ConfigProvider } from 'antd';
+import { StrictMode } from 'react';
+import { createRoot } from 'react-dom/client';
 
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { createRouter, RouterProvider } from "@tanstack/react-router";
-import { ConfigProvider } from "antd";
-import { StrictMode } from "react";
-import { createRoot } from "react-dom/client";
+import './index.css';
+import { routeTree } from './routeTree.gen';
 
-import { routeTree } from "./routeTree.gen";
-// SSEProvider removed - now using direct SSE hooks
-
-// Create a client
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -27,17 +24,17 @@ const router = createRouter({
   context: {
     queryClient,
   },
-  defaultPreload: "intent",
+  defaultPreload: 'intent',
 });
 
 // Register the router instance for type safety
-declare module "@tanstack/react-router" {
+declare module '@tanstack/react-router' {
   interface Register {
     router: typeof router;
   }
 }
 
-createRoot(document.getElementById("root")!).render(
+createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
       <ConfigProvider

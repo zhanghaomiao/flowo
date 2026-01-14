@@ -1,3 +1,4 @@
+import logging
 from contextlib import asynccontextmanager
 
 import uvicorn
@@ -6,8 +7,12 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.routing import APIRoute
 
 from app.api import api_router
-from app.api.endpoints.sse import get_sse_manager
 from app.core.config import settings
+from app.core.pg_listener import pg_listener
+
+# 配置日志 - 放在所有导入之前
+# 在所有导入之后，配置日志
+logging.basicConfig(level=logging.INFO, format="%(levelname)s:%(name)s:%(message)s")
 
 
 def use_route_names_as_operation_ids(app: FastAPI) -> None:
@@ -24,21 +29,9 @@ def use_route_names_as_operation_ids(app: FastAPI) -> None:
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    try:
-        sse_manager = await get_sse_manager()
-        await sse_manager.connect_to_database()
-        print("SSE service initialized successfully")
-    except Exception as e:
-        print(f"Failed to initialize SSE service: {e}")
-
+    await pg_listener.connect()
     yield
-
-    try:
-        sse_manager = await get_sse_manager()
-        await sse_manager.disconnect_from_database()
-        print("SSE service shut down successfully")
-    except Exception as e:
-        print(f"Error shutting down SSE service: {e}")
+    await pg_listener.disconnect()
 
 
 app = FastAPI(
@@ -61,4 +54,4 @@ app.include_router(api_router, prefix=settings.API_V1_STR)
 use_route_names_as_operation_ids(app)
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host="0.0.0.0", port=8000, log_level="debug")

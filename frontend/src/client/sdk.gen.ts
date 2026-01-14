@@ -2,7 +2,7 @@
 
 import type { Client, Options as Options2, TDataShape } from './client';
 import { client } from './client.gen';
-import type { CleanupConnectionsData, CleanupConnectionsResponses, DebugConnectionsData, DebugConnectionsResponses, DeleteWorkflowData, DeleteWorkflowErrors, DeleteWorkflowResponses, ForceReconnectData, ForceReconnectResponses, GetActivityData, GetActivityErrors, GetActivityResponses, GetAllTagsData, GetAllTagsResponses, GetAllUsersData, GetAllUsersResponses, GetConfigfilesData, GetConfigfilesErrors, GetConfigfilesResponses, GetDetailData, GetDetailErrors, GetDetailResponses, GetJobData, GetJobErrors, GetJobOutputsData, GetJobOutputsErrors, GetJobOutputsResponses, GetJobResponses, GetJobsData, GetJobsErrors, GetJobsResponses, GetLogsData, GetLogsErrors, GetLogsResponses, GetOutputsData, GetOutputsErrors, GetOutputsResponses, GetProgressData, GetProgressErrors, GetProgressResponses, GetRuleDurationData, GetRuleDurationErrors, GetRuleDurationResponses, GetRuleErrorData, GetRuleErrorErrors, GetRuleErrorResponses, GetRuleGraphData, GetRuleGraphErrors, GetRuleGraphResponses, GetRuleStatusData, GetRuleStatusErrors, GetRuleStatusResponses, GetSnakefileData, GetSnakefileErrors, GetSnakefileResponses, GetSseStatsData, GetSseStatsResponses, GetStatusData, GetStatusErrors, GetStatusResponses, GetSystemResourcesData, GetSystemResourcesResponses, GetTimelinesData, GetTimelinesErrors, GetTimelinesResponses, GetUserSummaryData, GetUserSummaryResponses, GetWorkflowIdByNameData, GetWorkflowIdByNameErrors, GetWorkflowIdByNameResponses, GetWorkflowLogsData, GetWorkflowLogsErrors, GetWorkflowLogsResponses, GetWorkflowsData, GetWorkflowsErrors, GetWorkflowsResponses, PostPruningData, PostPruningResponses, SendTestNotificationData, SendTestNotificationResponses, SseHealthCheckData, SseHealthCheckResponses, StreamEventsData, StreamEventsErrors, StreamEventsResponses, StreamWorkflowLogsSseData, StreamWorkflowLogsSseErrors, StreamWorkflowLogsSseResponses } from './types.gen';
+import type { DeleteWorkflowData, DeleteWorkflowErrors, DeleteWorkflowResponses, GetActivityData, GetActivityErrors, GetActivityResponses, GetAllTagsData, GetAllTagsResponses, GetAllUsersData, GetAllUsersResponses, GetConfigfilesData, GetConfigfilesErrors, GetConfigfilesResponses, GetDetailData, GetDetailErrors, GetDetailResponses, GetJobData, GetJobErrors, GetJobOutputsData, GetJobOutputsErrors, GetJobOutputsResponses, GetJobResponses, GetJobsData, GetJobsErrors, GetJobsResponses, GetLogsData, GetLogsErrors, GetLogsResponses, GetOutputsData, GetOutputsErrors, GetOutputsResponses, GetProgressData, GetProgressErrors, GetProgressResponses, GetRuleDurationData, GetRuleDurationErrors, GetRuleDurationResponses, GetRuleErrorData, GetRuleErrorErrors, GetRuleErrorResponses, GetRuleGraphData, GetRuleGraphErrors, GetRuleGraphResponses, GetRuleStatusData, GetRuleStatusErrors, GetRuleStatusResponses, GetSnakefileData, GetSnakefileErrors, GetSnakefileResponses, GetStatusData, GetStatusErrors, GetStatusResponses, GetSystemResourcesData, GetSystemResourcesResponses, GetTimelinesData, GetTimelinesErrors, GetTimelinesResponses, GetUserSummaryData, GetUserSummaryResponses, GetWorkflowIdByNameData, GetWorkflowIdByNameErrors, GetWorkflowIdByNameResponses, GetWorkflowLogsData, GetWorkflowLogsErrors, GetWorkflowLogsResponses, GetWorkflowsData, GetWorkflowsErrors, GetWorkflowsResponses, PostPruningData, PostPruningResponses, StreamEventsData, StreamEventsErrors, StreamEventsResponses, StreamWorkflowLogsSseData, StreamWorkflowLogsSseErrors, StreamWorkflowLogsSseResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean> = Options2<TData, ThrowOnError> & {
     /**
@@ -140,45 +140,8 @@ export const getAllTags = <ThrowOnError extends boolean = false>(options?: Optio
 
 /**
  * Stream Events
- *
- * Server-Sent Events endpoint for real-time database notifications.
- *
- * 客户端可以连接此端点接收实时通知:
- * - GET /api/v1/sse/events - 接收所有表变化
- * - GET /api/v1/sse/events?filters=workflows - 只接收workflows表变化
- * - GET /api/v1/sse/events?filters=jobs&workflow_id=123 - 接收workflows和jobs表变化
  */
 export const streamEvents = <ThrowOnError extends boolean = false>(options?: Options<StreamEventsData, ThrowOnError>) => (options?.client ?? client).get<StreamEventsResponses, StreamEventsErrors, ThrowOnError>({ url: '/api/v1/sse/events', ...options });
-
-/**
- * Sse Health Check
- */
-export const sseHealthCheck = <ThrowOnError extends boolean = false>(options?: Options<SseHealthCheckData, ThrowOnError>) => (options?.client ?? client).get<SseHealthCheckResponses, unknown, ThrowOnError>({ url: '/api/v1/sse/health', ...options });
-
-/**
- * Get Sse Stats
- */
-export const getSseStats = <ThrowOnError extends boolean = false>(options?: Options<GetSseStatsData, ThrowOnError>) => (options?.client ?? client).get<GetSseStatsResponses, unknown, ThrowOnError>({ url: '/api/v1/sse/stats', ...options });
-
-/**
- * Send Test Notification
- */
-export const sendTestNotification = <ThrowOnError extends boolean = false>(options?: Options<SendTestNotificationData, ThrowOnError>) => (options?.client ?? client).post<SendTestNotificationResponses, unknown, ThrowOnError>({ url: '/api/v1/sse/test-notification', ...options });
-
-/**
- * Debug Connections
- */
-export const debugConnections = <ThrowOnError extends boolean = false>(options?: Options<DebugConnectionsData, ThrowOnError>) => (options?.client ?? client).get<DebugConnectionsResponses, unknown, ThrowOnError>({ url: '/api/v1/sse/debug/connections', ...options });
-
-/**
- * Cleanup Connections
- */
-export const cleanupConnections = <ThrowOnError extends boolean = false>(options?: Options<CleanupConnectionsData, ThrowOnError>) => (options?.client ?? client).post<CleanupConnectionsResponses, unknown, ThrowOnError>({ url: '/api/v1/sse/cleanup-connections', ...options });
-
-/**
- * Force Reconnect
- */
-export const forceReconnect = <ThrowOnError extends boolean = false>(options?: Options<ForceReconnectData, ThrowOnError>) => (options?.client ?? client).post<ForceReconnectResponses, unknown, ThrowOnError>({ url: '/api/v1/sse/reconnect', ...options });
 
 /**
  * Get Workflow Logs

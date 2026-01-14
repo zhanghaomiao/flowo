@@ -5,14 +5,13 @@ from pathlib import Path
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import StreamingResponse
 
-from app.core.logger import logger
 from app.core.session import get_db
 from app.models.workflow import Workflow
 
 router = APIRouter()
 
 
-@router.get("/{workflow_id}")
+@router.get("/{workflow_id}", response_model=dict[str, str])
 async def get_workflow_logs(workflow_id: str):
     session = next(get_db())
     try:
@@ -95,8 +94,6 @@ async def stream_workflow_logs_sse(workflow_id: str):
                 stderr=asyncio.subprocess.PIPE,
             )
 
-            logger.info(f"Started SSE tail -f for {log_file_path}")
-
             # 发送连接确认
             yield f"event: connected\ndata: Connected to {workflow_id}\n\n"
 
@@ -112,14 +109,12 @@ async def stream_workflow_logs_sse(workflow_id: str):
                     yield f"event: logs.{workflow_id}\ndata: {log_line}\n\n"
 
         except Exception as e:
-            logger.error(f"Error in SSE log stream: {e}")
             yield f"event: error\ndata: {str(e)}\n\n"
         finally:
             if process:
                 try:
                     process.terminate()
                     await process.wait()
-                    logger.info(f"Terminated SSE tail process for {log_file_path}")
                 except Exception:
                     pass
 

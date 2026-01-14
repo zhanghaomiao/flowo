@@ -1,14 +1,14 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState } from 'react';
 
-import type { JobResponse, WorkflowResponse } from "../../api";
-import { formatDuration } from "../../utils/formatters";
+import type { JobResponse, WorkflowResponse } from '../../api';
+import { formatDuration } from '../../utils/formatters';
 
 // Utility function to calculate duration in milliseconds
 export const calculateDuration = (
   record: WorkflowResponse | JobResponse,
   currentTime?: number,
 ): number => {
-  if (record.status === "ERROR") {
+  if (record.status === 'ERROR') {
     return Infinity;
   }
 
@@ -22,7 +22,7 @@ export const calculateDuration = (
       ? new Date(record.end_time).getTime()
       : currentTime || Date.now();
 
-    if (record.status === "RUNNING") {
+    if (record.status === 'RUNNING') {
       endTime = currentTime || Date.now();
     }
 
@@ -39,7 +39,7 @@ export const DurationCell: React.FC<{
 
   useEffect(() => {
     // Only set up timer for running workflows
-    if (record.status === "RUNNING" && record.started_at) {
+    if (record.status === 'RUNNING' && record.started_at) {
       const timer = setInterval(() => {
         setCurrentTime(Date.now());
       }, 1000); // Update every second
@@ -50,7 +50,7 @@ export const DurationCell: React.FC<{
 
   const duration = calculateDuration(record, currentTime);
 
-  if (record.status === "ERROR") {
+  if (record.status === 'ERROR') {
     return <span>-</span>;
   }
 

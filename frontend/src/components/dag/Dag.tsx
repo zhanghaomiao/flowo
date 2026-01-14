@@ -1,7 +1,5 @@
-import "@xyflow/react/dist/style.css";
-
-import { FullscreenExitOutlined, FullscreenOutlined } from "@ant-design/icons";
-import type { Node, NodeProps } from "@xyflow/react";
+import { FullscreenExitOutlined, FullscreenOutlined } from '@ant-design/icons';
+import type { Node, NodeProps } from '@xyflow/react';
 import {
   Background,
   ConnectionMode,
@@ -14,8 +12,9 @@ import {
   useEdgesState,
   useNodesState,
   useReactFlow,
-} from "@xyflow/react";
-import { Tooltip } from "antd";
+} from '@xyflow/react';
+import '@xyflow/react/dist/style.css';
+import { Tooltip } from 'antd';
 import React, {
   createContext,
   useCallback,
@@ -24,13 +23,13 @@ import React, {
   useMemo,
   useRef,
   useState,
-} from "react";
+} from 'react';
 
-import { getLayoutInfo, type LayoutDirection } from "../../utils/graphLayout";
-import DraggableLegendPanel from "./DraggableLegendPanel";
-import LayoutControlPanel from "./LayoutControlPanel";
-import ProgressNode from "./NodeProgressBar";
-import { useWorkflowGraph } from "./useDag";
+import { type LayoutDirection, getLayoutInfo } from '../../utils/graphLayout';
+import DraggableLegendPanel from './DraggableLegendPanel';
+import LayoutControlPanel from './LayoutControlPanel';
+import ProgressNode from './NodeProgressBar';
+import { useWorkflowGraph } from './useDag';
 
 // Type for styling properties - matches what useWorkflowGraph returns
 type NodeStylingData = {
@@ -100,7 +99,7 @@ const WorkflowGraphInner: React.FC<WorkflowGraphProps> = ({
   onClearRule,
   highlightedRule,
 }) => {
-  const [layoutDirection, setLayoutDirection] = useState<LayoutDirection>("TB");
+  const [layoutDirection, setLayoutDirection] = useState<LayoutDirection>('TB');
   const [forceLayoutRecalc, setForceLayoutRecalc] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const isFittingView = useRef(false);
@@ -143,9 +142,9 @@ const WorkflowGraphInner: React.FC<WorkflowGraphProps> = ({
       }, 100);
     };
 
-    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
     return () => {
-      document.removeEventListener("fullscreenchange", handleFullscreenChange);
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
     };
   }, [reactFlowInstance]);
 
@@ -160,7 +159,7 @@ const WorkflowGraphInner: React.FC<WorkflowGraphProps> = ({
         await document.exitFullscreen();
       }
     } catch (error) {
-      console.error("Error toggling fullscreen:", error);
+      console.error('Error toggling fullscreen:', error);
     }
   }, []);
 
@@ -266,12 +265,12 @@ const WorkflowGraphInner: React.FC<WorkflowGraphProps> = ({
     return (
       <div
         style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          background: "#fafafa",
-          border: "1px dashed #d9d9d9",
-          borderRadius: "6px",
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          background: '#fafafa',
+          border: '1px dashed #d9d9d9',
+          borderRadius: '6px',
         }}
       >
         <div>Loading workflow graph...</div>
@@ -283,18 +282,18 @@ const WorkflowGraphInner: React.FC<WorkflowGraphProps> = ({
     return (
       <div
         style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          background: "#fff2f0",
-          border: "1px solid #ffccc7",
-          borderRadius: "6px",
-          color: "#ff4d4f",
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          background: '#fff2f0',
+          border: '1px solid #ffccc7',
+          borderRadius: '6px',
+          color: '#ff4d4f',
         }}
       >
         <div>
-          Error loading graph:{" "}
-          {error instanceof Error ? error.message : "Unknown error"}
+          Error loading graph:{' '}
+          {error instanceof Error ? error.message : 'Unknown error'}
         </div>
       </div>
     );
@@ -304,13 +303,13 @@ const WorkflowGraphInner: React.FC<WorkflowGraphProps> = ({
     return (
       <div
         style={{
-          height: "400px",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          background: "#fafafa",
-          border: "1px dashed #d9d9d9",
-          borderRadius: "6px",
+          height: '400px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          background: '#fafafa',
+          border: '1px dashed #d9d9d9',
+          borderRadius: '6px',
         }}
       >
         <div>No workflow graph data available</div>
@@ -322,18 +321,18 @@ const WorkflowGraphInner: React.FC<WorkflowGraphProps> = ({
     <div
       ref={containerRef}
       style={{
-        height: isFullscreen ? "100vh" : "100%",
-        width: isFullscreen ? "100vw" : "100%",
-        position: "relative",
-        backgroundColor: isFullscreen ? "#fafafa" : "transparent",
+        height: isFullscreen ? '100vh' : '100%',
+        width: isFullscreen ? '100vw' : '100%',
+        position: 'relative',
+        backgroundColor: isFullscreen ? '#fafafa' : 'transparent',
       }}
     >
       {!isFullscreen && <DraggableLegendPanel />}
       <div
         style={{
-          height: isFullscreen ? "100%" : "96%",
-          border: isFullscreen ? "none" : "1px solid #d9d9d9",
-          borderRadius: isFullscreen ? "0" : "6px",
+          height: isFullscreen ? '100%' : '96%',
+          border: isFullscreen ? 'none' : '1px solid #d9d9d9',
+          borderRadius: isFullscreen ? '0' : '6px',
         }}
       >
         <StylingContext.Provider value={stylingContext}>
@@ -358,7 +357,7 @@ const WorkflowGraphInner: React.FC<WorkflowGraphProps> = ({
             <Background />
             <Controls onFitView={handleFitView}>
               <Tooltip
-                title={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}
+                title={isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen'}
               >
                 <ControlButton onClick={handleToggleFullscreen}>
                   {isFullscreen ? (
@@ -392,13 +391,13 @@ const WorkflowGraphInner: React.FC<WorkflowGraphProps> = ({
       {!isFullscreen && (
         <div
           style={{
-            marginTop: "8px",
-            fontSize: "11px",
-            color: "#666",
-            textAlign: "center",
+            marginTop: '8px',
+            fontSize: '11px',
+            color: '#666',
+            textAlign: 'center',
           }}
         >
-          Layout: {getLayoutInfo(layoutDirection).name}{" "}
+          Layout: {getLayoutInfo(layoutDirection).name}{' '}
           {getLayoutInfo(layoutDirection).icon} • Click nodes to filter jobs •
           Drag to reposition
         </div>

@@ -1,51 +1,33 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-
 import {
-  GetActivityApiV1SummaryActivityGetItemEnum,
-  StatusSummary,
-  UserSummary,
-} from "../../api/api";
-import { summaryApi } from "../../api/client";
-import { useSSE } from "../../hooks/useSSE";
+  getActivityOptions,
+  getRuleErrorOptions,
+  getStatusOptions,
+  getSystemResourcesOptions,
+  getUserSummaryOptions,
+} from '@/client/@tanstack/react-query.gen';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 const DASHBOARD_STALE_TIME = 5000;
 const DASHBOARD_REFETCH_INTERVAL = 5000;
 
-// Hook for Running Workflows (running/total)
 export const useRunningWorkflows = () => {
-  return useQuery<StatusSummary>({
-    queryKey: ["running-workflows"],
-    queryFn: async () => {
-      const response =
-        await summaryApi.getStatusApiV1SummaryStatusGet("workflow");
-      return response.data;
-    },
+  return useQuery({
+    ...getStatusOptions({ query: { item: 'workflow' } }),
     staleTime: DASHBOARD_STALE_TIME,
     refetchInterval: DASHBOARD_REFETCH_INTERVAL,
   });
 };
 
-// Hook for Running Jobs (running/total)
 export const useRunningJobs = () => {
-  return useQuery<StatusSummary>({
-    queryKey: ["running-jobs"],
-    queryFn: async () => {
-      const response = await summaryApi.getStatusApiV1SummaryStatusGet("job");
-      return response.data;
-    },
+  return useQuery({
+    ...getStatusOptions({ query: { item: 'job' } }),
     staleTime: DASHBOARD_STALE_TIME,
     refetchInterval: DASHBOARD_REFETCH_INTERVAL,
   });
 };
-
-// Hook for Running Users (running/total)
 export const useRunningUsers = () => {
-  return useQuery<UserSummary>({
-    queryKey: ["running-users"],
-    queryFn: async () => {
-      const response = await summaryApi.getUserSummaryApiV1SummaryUserGet();
-      return response.data;
-    },
+  return useQuery({
+    ...getUserSummaryOptions(),
     staleTime: DASHBOARD_STALE_TIME,
     refetchInterval: DASHBOARD_REFETCH_INTERVAL,
   });
@@ -53,148 +35,122 @@ export const useRunningUsers = () => {
 
 // Combined hook for System Resources (CPU + Memory)
 export const useSystemResources = () => {
-  return useQuery<{ [key: string]: number }>({
-    queryKey: ["system-resources"],
-    queryFn: async () => {
-      const response =
-        await summaryApi.getSystemResourcesApiV1SummaryResourcesGet();
-      return response.data;
-    },
+  return useQuery({
+    ...getSystemResourcesOptions(),
     staleTime: DASHBOARD_STALE_TIME,
     refetchInterval: DASHBOARD_REFETCH_INTERVAL,
   });
 };
 
-export const useActivity = (
-  type: GetActivityApiV1SummaryActivityGetItemEnum,
-  start: string | null,
-  end: string | null,
-  limit: number,
-) => {
-  return useQuery<{ [key: string]: number }, Error, Array<[string, number]>>({
-    queryKey: ["activity", start, end, limit, type],
-    queryFn: async () => {
-      const response = await summaryApi.getActivityApiV1SummaryActivityGet(
-        type,
-        start,
-        end,
-        limit,
-      );
-      return response.data;
-    },
-    select: (data: { [key: string]: number }) =>
-      Object.entries(data).map(([name, count]) => [name, count]),
-    // staleTime: DASHBOARD_STALE_TIME,
-    // refetchInterval: DASHBOARD_REFETCH_INTERVAL,
-    staleTime: Infinity,
-    refetchInterval: false,
-    refetchOnWindowFocus: false,
-    refetchOnReconnect: false,
-    refetchOnMount: false,
-  });
-};
+// export const useActivity = (
+//   type: GetActivityApiV1SummaryActivityGetItemEnum,
+//   start: string | null,
+//   end: string | null,
+//   limit: number,
+// ) => {
+//   return useQuery<{ [key: string]: number }, Error, Array<[string, number]>>({
+//     ...getActivityOptions({query: {item: type, start_at: start, end_at: end, limit: limit}}),
+//     select: (data: { [key: string]: number }) =>
+//       Object.entries(data).map(([name, count]) => [name, count]),
+//     // staleTime: DASHBOARD_STALE_TIME,
+//     // refetchInterval: DASHBOARD_REFETCH_INTERVAL,
+//     staleTime: Infinity,
+//     refetchInterval: false,
+//     refetchOnWindowFocus: false,
+//     refetchOnReconnect: false,
+//     refetchOnMount: false,
+//   });
+// };
 
-export const useRuleError = (
-  start: string | null,
-  end: string | null,
-  limit: number,
-) => {
-  return useQuery<
-    { [key: string]: { [key: string]: number } },
-    Error,
-    Array<{ name: string; total: number; error: number }>
-  >({
-    queryKey: ["rule-error", start, end, limit],
-    queryFn: async () => {
-      const response = await summaryApi.getRuleErrorApiV1SummaryRuleErrorGet(
-        start,
-        end,
-        limit,
-      );
-      return response.data;
-    },
-    select: (data: { [key: string]: { [key: string]: number } }) => {
-      const result: { name: string; total: number; error: number }[] = [];
-      for (const [name, counts] of Object.entries(data)) {
-        result.push({ name, total: counts.total, error: counts.error });
-      }
-      return result;
-    },
-    staleTime: DASHBOARD_STALE_TIME,
-    refetchInterval: DASHBOARD_REFETCH_INTERVAL,
-  });
-};
+// export const useRuleError = (
+//   start: string | null,
+//   end: string | null,
+//   limit: number,
+// ) => {
+//   return useQuery({
+//     ...getRuleErrorOptions({query: {start_at: start, end_at: end, limit: limit}}),
+//     select: (data: GetRuleErrorResponse) => {
+//       return Object.entries(data).map(([name, counts]) => ({
+//         name: name,
+//         total: counts.total,
+//         error: counts.error,
+//       }));
+//     },
+//     staleTime: DASHBOARD_STALE_TIME,
+//     refetchInterval: DASHBOARD_REFETCH_INTERVAL,
+//   });
+// };
 
-export const useRuleDuration = (
-  start: string | null,
-  end: string | null,
-  limit: number,
-) => {
-  return useQuery<{ [key: string]: { [key: string]: number } }>({
-    queryKey: ["rule-duration", start, end, limit],
-    queryFn: async () => {
-      const response =
-        await summaryApi.getRuleDurationApiV1SummaryRuleDurationGet(
-          start,
-          end,
-          limit,
-        );
-      return response.data;
-    },
-    staleTime: DASHBOARD_STALE_TIME,
-    refetchInterval: DASHBOARD_REFETCH_INTERVAL,
-  });
-};
+// export const useRuleDuration = (
+//   start: string | null,
+//   end: string | null,
+//   limit: number,
+// ) => {
+//   return useQuery<{ [key: string]: { [key: string]: number } }>({
+//     queryKey: ["rule-duration", start, end, limit],
+//     queryFn: async () => {
+//       const response =
+//         await summaryApi.getRuleDurationApiV1SummaryRuleDurationGet(
+//           start,
+//           end,
+//           limit,
+//         );
+//       return response.data;
+//     },
+//     staleTime: DASHBOARD_STALE_TIME,
+//     refetchInterval: DASHBOARD_REFETCH_INTERVAL,
+//   });
+// };
 
-export const useDatabasePruning = () => {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: async () => {
-      const response = await summaryApi.postPruningApiV1SummaryPruningPost();
-      return response.data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["rule-duration"] });
-      queryClient.invalidateQueries({ queryKey: ["running-workflows"] });
-      queryClient.invalidateQueries({ queryKey: ["running-jobs"] });
-      queryClient.invalidateQueries({ queryKey: ["rule-error"] });
-      queryClient.invalidateQueries({ queryKey: ["activity"] });
-      queryClient.invalidateQueries({ queryKey: ["rule-duration"] });
-    },
-    onError: () => {
-      console.error("Database pruning failed");
-    },
-  });
-};
+// export const useDatabasePruning = () => {
+//   const queryClient = useQueryClient();
+//   return useMutation({
+//     mutationFn: async () => {
+//       const response = await summaryApi.postPruningApiV1SummaryPruningPost();
+//       return response.data;
+//     },
+//     onSuccess: () => {
+//       queryClient.invalidateQueries({ queryKey: ["rule-duration"] });
+//       queryClient.invalidateQueries({ queryKey: ["running-workflows"] });
+//       queryClient.invalidateQueries({ queryKey: ["running-jobs"] });
+//       queryClient.invalidateQueries({ queryKey: ["rule-error"] });
+//       queryClient.invalidateQueries({ queryKey: ["activity"] });
+//       queryClient.invalidateQueries({ queryKey: ["rule-duration"] });
+//     },
+//     onError: () => {
+//       console.error("Database pruning failed");
+//     },
+//   });
+// };
 
-// Hook for SSE Connection Status
-export const useSSEStatus = () => {
-  const { data, status, error, isConnected } = useSSE({
-    filters: "workflow,job,rule",
-  });
+// // Hook for SSE Connection Status
+// export const useSSEStatus = () => {
+//   const { data, status, error, isConnected } = useSSE({
+//     filters: "workflow,job,rule",
+//   });
 
-  return {
-    isConnected,
-    status,
-    lastMessage: data,
-    error,
-    connectionStatus: isConnected
-      ? "Connected"
-      : error
-        ? "Error"
-        : "Connecting",
-  };
-};
+//   return {
+//     isConnected,
+//     status,
+//     lastMessage: data,
+//     error,
+//     connectionStatus: isConnected
+//       ? "Connected"
+//       : error
+//         ? "Error"
+//         : "Connecting",
+//   };
+// };
 
-// Separate hook for tag activity (independent of dashboard updates)
-export const useTagActivity = () => {
-  return useActivity(
-    GetActivityApiV1SummaryActivityGetItemEnum.Tag,
-    null,
-    null,
-    10,
-  );
-};
+// // Separate hook for tag activity (independent of dashboard updates)
+// export const useTagActivity = () => {
+//   return useActivity(
+//     GetActivityApiV1SummaryActivityGetItemEnum.Tag,
+//     null,
+//     null,
+//     10,
+//   );
+// };
 
 // Combined hook for all dashboard metrics
 export const useDashboardMetrics = () => {
@@ -203,12 +159,15 @@ export const useDashboardMetrics = () => {
   const userStats = useRunningUsers();
   const systemStats = useSystemResources();
   const sseStatus = useSSEStatus();
-  const ruleActivity = useActivity(
-    GetActivityApiV1SummaryActivityGetItemEnum.Rule,
-    null,
-    null,
-    10,
-  );
+  const ruleActivity = useQuery({
+    ...getActivityOptions({ query: { item: 'rule' } }),
+    select: (data: GetActivityResponse) => {
+      return Object.entries(data).map(([name, count]) => ({
+        name: name,
+        count: count,
+      }));
+    },
+  });
 
   const ruleError = useRuleError(null, null, 10);
   const ruleDuration = useRuleDuration(null, null, 10);

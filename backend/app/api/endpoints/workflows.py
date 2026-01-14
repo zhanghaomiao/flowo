@@ -107,7 +107,7 @@ def get_rule_status(workflow_id: uuid.UUID, db: Session = Depends(get_db)):
     return WorkflowService(db).get_rule_status(workflow_id=workflow_id)
 
 
-@router.get("/{workflow_id}/snakefile")
+@router.get("/{workflow_id}/snakefile", response_model=str)
 def get_snakefile(workflow_id: uuid.UUID, db: Session = Depends(get_db)):
     return WorkflowService(db).get_snakefile(workflow_id)
 

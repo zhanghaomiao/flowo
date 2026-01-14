@@ -17,10 +17,10 @@ const getSSEConfig = (): SSEConfig => {
   // Check environment variables for SSE configuration
   const env = import.meta.env;
   const isSSEDisabled =
-    env?.VITE_DISABLE_SSE === "true" || env?.VITE_DISABLE_SSE === "1";
+    env?.VITE_DISABLE_SSE === 'true' || env?.VITE_DISABLE_SSE === '1';
 
   console.log(
-    "isSSEDisabled",
+    'isSSEDisabled',
     isSSEDisabled,
     env?.VITE_DISABLE_SSE,
     env?.VITE_SSE_RECONNECT_INTERVAL,
@@ -29,8 +29,8 @@ const getSSEConfig = (): SSEConfig => {
 
   return {
     enabled: !isSSEDisabled,
-    reconnectInterval: parseInt(env?.VITE_SSE_RECONNECT_INTERVAL || "3000"),
-    maxRetries: parseInt(env?.VITE_SSE_MAX_RETRIES || "5"),
+    reconnectInterval: parseInt(env?.VITE_SSE_RECONNECT_INTERVAL || '3000'),
+    maxRetries: parseInt(env?.VITE_SSE_MAX_RETRIES || '5'),
   };
 };
 

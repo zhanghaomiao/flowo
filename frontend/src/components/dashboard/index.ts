@@ -1,2 +1,2 @@
-export { DashboardLayout } from "./DashboardLayout";
-export { StatusChart } from "./StatusChart";
+export { DashboardLayout } from './DashboardLayout';
+export { StatusChart } from './StatusChart';

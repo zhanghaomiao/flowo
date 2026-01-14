@@ -1,39 +1,58 @@
 import {
+  getDetailOptions,
+  getProgressOptions,
+} from '@/client/@tanstack/react-query.gen';
+import WorkflowTag from '@/components/tag/WorkflowTag';
+import {
   ArrowLeftOutlined,
   CheckCircleOutlined,
   ClockCircleOutlined,
   SyncOutlined,
-} from "@ant-design/icons";
-import { Link } from "@tanstack/react-router";
-import { Button, Card, Col, Progress, Row, Statistic } from "antd";
-import React from "react";
-
-import {
-  useWorkflowDetail,
-  useWorkflowTotalJobs,
-} from "../../hooks/useQueries";
-import { useWorkflowProgressWithSSE } from "../../hooks/useQueriesWithSSE";
-import WorkflowTag from "../tag/WorkflowTag";
+} from '@ant-design/icons';
+import { useQuery } from '@tanstack/react-query';
+import { Link } from '@tanstack/react-router';
+import { Button, Card, Col, Progress, Row, Statistic } from 'antd';
+import React from 'react';
 
 interface WorkflowProgressProps {
   workflowId: string;
 }
 
 const WorkflowProgress: React.FC<WorkflowProgressProps> = ({ workflowId }) => {
-  const { data: progressData } = useWorkflowProgressWithSSE(workflowId);
-  const { data: totalJobsData } = useWorkflowTotalJobs(workflowId);
-  // const { data: workflow } = useWorkflow(workflowId);
-  const { data: workflow } = useWorkflowDetail(workflowId);
+  const { data: progressData } = useQuery({
+    ...getProgressOptions({
+      path: {
+        workflow_id: workflowId,
+      },
+    }),
+  });
+  const { data: totalJobsData } = useQuery({
+    ...getProgressOptions({
+      path: {
+        workflow_id: workflowId,
+      },
+      query: {
+        return_total_jobs_number: true,
+      },
+    }),
+  });
+  const { data: workflow } = useQuery({
+    ...getDetailOptions({
+      path: {
+        workflow_id: workflowId,
+      },
+    }),
+  });
 
   const getProgressStatus = () => {
-    if ((progressData?.failed ?? 0) > 0) return "exception";
-    if ((progressData?.running ?? 0) > 0) return "active";
+    if ((progressData?.failed ?? 0) > 0) return 'exception';
+    if ((progressData?.running ?? 0) > 0) return 'active';
     if (
       ((progressData?.completed ?? 0) / (progressData?.total ?? 1)) * 100 ===
       100
     )
-      return "success";
-    return "normal";
+      return 'success';
+    return 'normal';
   };
 
   return (
@@ -46,9 +65,9 @@ const WorkflowProgress: React.FC<WorkflowProgressProps> = ({ workflowId }) => {
               icon={<ArrowLeftOutlined />}
               size="large"
               style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
               }}
             >
               Back
@@ -58,22 +77,22 @@ const WorkflowProgress: React.FC<WorkflowProgressProps> = ({ workflowId }) => {
         <Col
           span={10}
           style={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            alignContent: "center",
-            fontWeight: "bold",
-            fontSize: "14px",
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            alignContent: 'center',
+            fontWeight: 'bold',
+            fontSize: '14px',
           }}
         >
           {workflow?.name || workflow?.directory}
           {workflow?.tags && workflow.tags.length > 0 && (
             <div
               style={{
-                display: "flex",
-                flexWrap: "wrap",
-                justifyContent: "center",
-                gap: "2px",
+                display: 'flex',
+                flexWrap: 'wrap',
+                justifyContent: 'center',
+                gap: '2px',
               }}
             >
               {workflow.tags.map((tag, index) => (
@@ -81,10 +100,10 @@ const WorkflowProgress: React.FC<WorkflowProgressProps> = ({ workflowId }) => {
                   key={index}
                   tag={tag}
                   style={{
-                    fontSize: "10px",
+                    fontSize: '10px',
                     marginInlineEnd: 2,
-                    lineHeight: "16px",
-                    height: "18px",
+                    lineHeight: '16px',
+                    height: '18px',
                   }}
                 />
               ))}
@@ -92,18 +111,18 @@ const WorkflowProgress: React.FC<WorkflowProgressProps> = ({ workflowId }) => {
           )}
         </Col>
         <Col span={3}>
-          <div style={{ textAlign: "left" }}>
+          <div style={{ textAlign: 'left' }}>
             <div
               style={{
-                color: "rgba(0, 0, 0, 0.45)",
-                fontSize: "14px",
-                marginBottom: "4px",
-                fontWeight: "normal",
+                color: 'rgba(0, 0, 0, 0.45)',
+                fontSize: '14px',
+                marginBottom: '4px',
+                fontWeight: 'normal',
               }}
             >
               Progress
             </div>
-            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <Progress
                 percent={progressData?.progress ?? 0}
                 status={getProgressStatus()}
@@ -113,16 +132,16 @@ const WorkflowProgress: React.FC<WorkflowProgressProps> = ({ workflowId }) => {
               />
               <span
                 style={{
-                  fontSize: "16px",
-                  fontWeight: "600",
+                  fontSize: '16px',
+                  fontWeight: '600',
                   color:
-                    getProgressStatus() === "exception"
-                      ? "#ff4d4f"
-                      : getProgressStatus() === "success"
-                        ? "#52c41a"
-                        : getProgressStatus() === "active"
-                          ? "#1890ff"
-                          : "#8c8c8c",
+                    getProgressStatus() === 'exception'
+                      ? '#ff4d4f'
+                      : getProgressStatus() === 'success'
+                        ? '#52c41a'
+                        : getProgressStatus() === 'active'
+                          ? '#1890ff'
+                          : '#8c8c8c',
                 }}
               >
                 {(progressData?.progress ?? 0).toFixed(0)}%
@@ -135,7 +154,7 @@ const WorkflowProgress: React.FC<WorkflowProgressProps> = ({ workflowId }) => {
             title="Total Jobs"
             value={totalJobsData?.total}
             prefix={<ClockCircleOutlined />}
-            valueStyle={{ color: "#1890ff" }}
+            valueStyle={{ color: '#1890ff' }}
           />
         </Col>
         <Col span={3}>
@@ -143,7 +162,7 @@ const WorkflowProgress: React.FC<WorkflowProgressProps> = ({ workflowId }) => {
             title="Completed"
             value={progressData?.completed}
             prefix={<CheckCircleOutlined />}
-            valueStyle={{ color: "#52c41a" }}
+            valueStyle={{ color: '#52c41a' }}
           />
         </Col>
         <Col span={3}>
@@ -151,7 +170,7 @@ const WorkflowProgress: React.FC<WorkflowProgressProps> = ({ workflowId }) => {
             title="Running"
             value={progressData?.running}
             prefix={<SyncOutlined spin={(progressData?.running ?? 0) > 0} />}
-            valueStyle={{ color: "#1890ff" }}
+            valueStyle={{ color: '#1890ff' }}
           />
         </Col>
       </Row>

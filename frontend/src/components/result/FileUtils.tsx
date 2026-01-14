@@ -5,10 +5,10 @@ import {
   FilePdfOutlined,
   FileTextOutlined,
   Html5Outlined,
-} from "@ant-design/icons";
-import React from "react";
+} from '@ant-design/icons';
+import React from 'react';
 
-import type { FileSizeThresholds, FileTypes } from "./types";
+import type { FileSizeThresholds, FileTypes } from './types';
 
 // File size thresholds (in bytes) - different limits for different file types
 export const FILE_SIZE_THRESHOLDS: FileSizeThresholds = {
@@ -36,11 +36,11 @@ export const FILE_SIZE_THRESHOLDS: FileSizeThresholds = {
 
 // File type configuration based on Caddyfile
 export const FILE_TYPES: FileTypes = {
-  images: ["jpg", "jpeg", "png", "gif", "bmp", "svg", "webp", "ico"],
-  pdfs: ["pdf"],
-  html: ["html", "htm"],
-  text: ["txt", "log", "md", "rst", "json", "yaml"],
-  csv: ["csv", "tsv"],
+  images: ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'svg', 'webp', 'ico'],
+  pdfs: ['pdf'],
+  html: ['html', 'htm'],
+  text: ['txt', 'log', 'md', 'rst', 'json', 'yaml'],
+  csv: ['csv', 'tsv'],
 };
 
 export const ALL_SUPPORTED_EXTENSIONS = [
@@ -53,8 +53,8 @@ export const ALL_SUPPORTED_EXTENSIONS = [
 
 // Get file extension from filename
 export const getFileExtension = (filename: string): string => {
-  const parts = filename.split(".");
-  return parts.length > 1 ? parts[parts.length - 1].toLowerCase() : "";
+  const parts = filename.split('.');
+  return parts.length > 1 ? parts[parts.length - 1].toLowerCase() : '';
 };
 
 // Check if file is supported
@@ -66,25 +66,25 @@ export const isSupportedFile = (filename: string): boolean => {
 // Get file type category
 export const getFileTypeCategory = (filename: string): string => {
   const ext = getFileExtension(filename);
-  if (FILE_TYPES.images.includes(ext)) return "image";
-  if (FILE_TYPES.pdfs.includes(ext)) return "pdf";
-  if (FILE_TYPES.html.includes(ext)) return "html";
-  if (FILE_TYPES.text.includes(ext)) return "text";
-  if (FILE_TYPES.csv.includes(ext)) return "csv";
-  return "unknown";
+  if (FILE_TYPES.images.includes(ext)) return 'image';
+  if (FILE_TYPES.pdfs.includes(ext)) return 'pdf';
+  if (FILE_TYPES.html.includes(ext)) return 'html';
+  if (FILE_TYPES.text.includes(ext)) return 'text';
+  if (FILE_TYPES.csv.includes(ext)) return 'csv';
+  return 'unknown';
 };
 
 // Get appropriate icon for file type
 export const getFileIcon = (filename: string): React.ReactNode => {
   const category = getFileTypeCategory(filename);
   switch (category) {
-    case "image":
+    case 'image':
       return <FileImageOutlined />;
-    case "pdf":
+    case 'pdf':
       return <FilePdfOutlined />;
-    case "html":
+    case 'html':
       return <Html5Outlined />;
-    case "text":
+    case 'text':
       return <FileTextOutlined />;
     default:
       return <FileOutlined />;
@@ -93,9 +93,9 @@ export const getFileIcon = (filename: string): React.ReactNode => {
 
 // Format file size for display
 export const formatFileSize = (bytes: number | null): string => {
-  if (bytes === null || bytes === undefined) return "Unknown";
+  if (bytes === null || bytes === undefined) return 'Unknown';
 
-  const units = ["B", "KB", "MB", "GB", "TB"];
+  const units = ['B', 'KB', 'MB', 'GB', 'TB'];
   let size = bytes;
   let unitIndex = 0;
 
@@ -111,11 +111,11 @@ export const formatFileSize = (bytes: number | null): string => {
 export const getFileThresholds = (filename: string) => {
   const category = getFileTypeCategory(filename);
   switch (category) {
-    case "pdf":
+    case 'pdf':
       return FILE_SIZE_THRESHOLDS.pdf;
-    case "html":
+    case 'html':
       return FILE_SIZE_THRESHOLDS.html;
-    case "image":
+    case 'image':
       return FILE_SIZE_THRESHOLDS.image;
     default:
       return FILE_SIZE_THRESHOLDS.default;

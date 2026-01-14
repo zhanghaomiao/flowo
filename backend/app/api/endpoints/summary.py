@@ -1,16 +1,15 @@
-from ast import DictComp
 from datetime import datetime
+from typing import Literal
+
+import psutil
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
+
 from app.core.session import get_db
+from app.schemas import ResourcesSummary, StatusSummary, UserSummary
 from app.services import SummaryService, WorkflowService
-from app.schemas import StatusSummary, UserSummary, ResourcesSummary
-from typing import List, Dict
-import psutil
 
 router = APIRouter()
-
-from typing import Literal
 
 
 @router.get("/resources")
@@ -49,7 +48,6 @@ def get_activity(
     limit: int = 20,
     db: Session = Depends(get_db),
 ):
-
     return SummaryService(db).get_activity(
         item=item, start_at=start_at, end_at=end_at, limit=limit
     )
@@ -74,7 +72,6 @@ def get_rule_duration(
     limit: int = 20,
     db: Session = Depends(get_db),
 ):
-
     data = (
         SummaryService(db).get_rule_duration(
             start_at=start_at, end_at=end_at, limit=limit
@@ -85,6 +82,6 @@ def get_rule_duration(
     return data
 
 
-@router.post("/pruning", response_model=Dict[str, int])
+@router.post("/pruning", response_model=dict[str, int])
 def post_pruning(db: Session = Depends(get_db)):
     return WorkflowService(db).pruning()

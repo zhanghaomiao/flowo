@@ -1,58 +1,58 @@
-import "./ResultViewer.css";
-
+// import { constructApiUrl } from '../../api/client';
+import { client } from '@/client/client.gen';
 import {
   DownloadOutlined,
   EyeOutlined,
   FullscreenOutlined,
   ReloadOutlined,
-} from "@ant-design/icons";
+} from '@ant-design/icons';
 import {
   Alert,
   Button,
   Card,
   Empty,
-  message,
   Modal,
   Space,
   Spin,
   Splitter,
   Tree,
   Typography,
-} from "antd";
-import React, { useCallback, useEffect, useRef, useState } from "react";
+  message,
+} from 'antd';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 
-import { constructApiUrl } from "../../api/client";
 import {
   useCaddyDirectoryTree,
   useLazyDirectoryLoad,
   useRuleOutput,
   useWorkflowDetail,
-} from "../../hooks/useQueries";
-import { FilePreview, renderFullscreenPreview } from "./FilePreview";
+} from '../../hooks/useQueries';
+import { FilePreview, renderFullscreenPreview } from './FilePreview';
 import {
   combineRuleOutputWithDirectoryContent,
   convertRuleOutputToTreeData,
   convertToAntdTreeData,
-} from "./FileTree";
+} from './FileTree';
 import {
   ALL_SUPPORTED_EXTENSIONS,
   formatFileSize,
   getFileIcon,
   isFileTooLargeForPreview,
-} from "./FileUtils";
+} from './FileUtils';
+import './ResultViewer.css';
 import type {
   AntdTreeNode,
   ResultViewerProps,
   SelectedNodeData,
   TreeSelectInfo,
-} from "./types";
+} from './types';
 
 const { Text } = Typography;
 
 // Get file extension from filename
 export const getFileExtension = (filename: string): string => {
-  const parts = filename.split(".");
-  return parts.length > 1 ? parts[parts.length - 1].toLowerCase() : "";
+  const parts = filename.split('.');
+  return parts.length > 1 ? parts[parts.length - 1].toLowerCase() : '';
 };
 
 export const ResultViewer: React.FC<ResultViewerProps> = ({
@@ -99,7 +99,7 @@ export const ResultViewer: React.FC<ResultViewerProps> = ({
     isLoading: isRuleOutputLoading,
     error: ruleOutputError,
     refetch: refetchRuleOutput,
-  } = useRuleOutput(workflowId, selectedRule || "");
+  } = useRuleOutput(workflowId, selectedRule || '');
 
   // Hook for loading directory content when rule is selected
   const {
@@ -154,7 +154,7 @@ export const ResultViewer: React.FC<ResultViewerProps> = ({
   // Handle lazy loading when a directory is expanded
   const handleLoadData = useCallback(
     async (node: AntdTreeNode) => {
-      if (node.type === "directory" && !loadedKeys.includes(node.key)) {
+      if (node.type === 'directory' && !loadedKeys.includes(node.key)) {
         try {
           const newChildren = await lazyLoadMutation.mutateAsync(node.fullPath);
 
@@ -169,7 +169,7 @@ export const ResultViewer: React.FC<ResultViewerProps> = ({
           );
           updateTreeNode(node.fullPath, convertedChildren);
         } catch (error) {
-          console.error("Failed to load directory:", error);
+          console.error('Failed to load directory:', error);
           message.error(`Failed to load directory: ${node.title}`);
         }
       }
@@ -200,7 +200,7 @@ export const ResultViewer: React.FC<ResultViewerProps> = ({
       // Use regular workflow output tree
       const initialTreeData = convertToAntdTreeData(
         outputsTree,
-        workflowDetail?.flowo_directory || "",
+        workflowDetail?.flowo_directory || '',
         handleLoadData,
       );
       setTreeData(initialTreeData);
@@ -241,7 +241,7 @@ export const ResultViewer: React.FC<ResultViewerProps> = ({
     if (
       selectedRule &&
       selectedNodeData &&
-      selectedNodeData.type === "directory"
+      selectedNodeData.type === 'directory'
     ) {
       const directoryPath = selectedNodeData.fullPath;
       if (loadedDirectories.has(directoryPath)) return;
@@ -266,7 +266,7 @@ export const ResultViewer: React.FC<ResultViewerProps> = ({
 
     updateTreeHeight();
 
-    window.addEventListener("resize", updateTreeHeight);
+    window.addEventListener('resize', updateTreeHeight);
 
     const resizeObserver = new ResizeObserver(updateTreeHeight);
     if (treeContainerRef.current) {
@@ -274,7 +274,7 @@ export const ResultViewer: React.FC<ResultViewerProps> = ({
     }
 
     return () => {
-      window.removeEventListener("resize", updateTreeHeight);
+      window.removeEventListener('resize', updateTreeHeight);
       resizeObserver.disconnect();
     };
   }, []);
@@ -298,7 +298,7 @@ export const ResultViewer: React.FC<ResultViewerProps> = ({
           ): AntdTreeNode[] => {
             return nodes.map((node) => {
               if (
-                node.type === "directory" &&
+                node.type === 'directory' &&
                 collapsedKeys.includes(node.key) &&
                 node.children &&
                 node.children.length > 0
@@ -346,17 +346,19 @@ export const ResultViewer: React.FC<ResultViewerProps> = ({
 
   const handleDownload = (fullPath: string, filename: string) => {
     try {
-      const downloadUrl = constructApiUrl(`/files/${fullPath}?download=true`);
-      const link = document.createElement("a");
+      const downloadUrl = client.buildUrl({
+        url: `/files/${fullPath}?download=true`,
+      });
+      const link = document.createElement('a');
       link.href = downloadUrl;
       link.download = filename;
-      link.style.display = "none";
+      link.style.display = 'none';
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       message.success(`Downloading ${filename}`);
     } catch (error) {
-      console.error("Download failed:", error);
+      console.error('Download failed:', error);
       message.error(`Failed to download ${filename}`);
     }
   };
@@ -365,7 +367,7 @@ export const ResultViewer: React.FC<ResultViewerProps> = ({
     if (!selectedNodeData) {
       return (
         <Empty
-          image={<EyeOutlined style={{ fontSize: 48, color: "#d9d9d9" }} />}
+          image={<EyeOutlined style={{ fontSize: 48, color: '#d9d9d9' }} />}
           description="Select a file to preview"
         />
       );
@@ -377,22 +379,22 @@ export const ResultViewer: React.FC<ResultViewerProps> = ({
     return (
       <div
         style={{
-          width: "100%",
-          display: "flex",
-          flexDirection: "column",
-          height: "100%",
+          width: '100%',
+          display: 'flex',
+          flexDirection: 'column',
+          height: '100%',
         }}
       >
         <div
           style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
           }}
         >
           <div>
-            <Text strong style={{ fontSize: "16px" }}>
-              {getFileIcon(nodeData.title || "")} {nodeData.title}
+            <Text strong style={{ fontSize: '16px' }}>
+              {getFileIcon(nodeData.title || '')} {nodeData.title}
             </Text>
             {fileSize && (
               <Text type="secondary" style={{ marginLeft: 8 }}>
@@ -401,17 +403,17 @@ export const ResultViewer: React.FC<ResultViewerProps> = ({
             )}
           </div>
 
-          {type === "file" && (
+          {type === 'file' && (
             <Space>
               <Button
                 type="primary"
                 icon={<DownloadOutlined />}
-                onClick={() => handleDownload(fullPath, nodeData.title || "")}
+                onClick={() => handleDownload(fullPath, nodeData.title || '')}
                 size="small"
               >
                 Download
               </Button>
-              {!isFileTooLargeForPreview(fileSize, nodeData.title || "") && (
+              {!isFileTooLargeForPreview(fileSize, nodeData.title || '') && (
                 <Button
                   icon={<FullscreenOutlined />}
                   onClick={handleFullscreenOpen}
@@ -424,20 +426,20 @@ export const ResultViewer: React.FC<ResultViewerProps> = ({
           )}
         </div>
 
-        {type === "file" && (
+        {type === 'file' && (
           <div
             style={{
               marginTop: 8,
               flex: 1,
-              border: "1px solid #f0f0f0",
-              borderRadius: "4px",
-              padding: "8px",
+              border: '1px solid #f0f0f0',
+              borderRadius: '4px',
+              padding: '8px',
             }}
           >
             <FilePreview nodeData={selectedNodeData} />
           </div>
         )}
-        {type === "directory" && selectedRule && (
+        {type === 'directory' && selectedRule && (
           <div>
             <Text strong>Contents:</Text>
             <Button
@@ -458,9 +460,9 @@ export const ResultViewer: React.FC<ResultViewerProps> = ({
   const renderContent = () => {
     if (isLoading) {
       return (
-        <div style={{ textAlign: "center", padding: "50px" }}>
+        <div style={{ textAlign: 'center', padding: '50px' }}>
           <Spin size="large" />
-          <div style={{ marginTop: "16px" }}>Loading workflow outputs...</div>
+          <div style={{ marginTop: '16px' }}>Loading workflow outputs...</div>
         </div>
       );
     }
@@ -472,7 +474,7 @@ export const ResultViewer: React.FC<ResultViewerProps> = ({
           description={
             error instanceof Error
               ? error.message
-              : "Failed to load workflow outputs"
+              : 'Failed to load workflow outputs'
           }
           type="error"
           showIcon
@@ -526,7 +528,7 @@ export const ResultViewer: React.FC<ResultViewerProps> = ({
       return (
         <Alert
           message="No Supported Files Found"
-          description={`No supported file types found. Supported types: ${ALL_SUPPORTED_EXTENSIONS.join(", ")}`}
+          description={`No supported file types found. Supported types: ${ALL_SUPPORTED_EXTENSIONS.join(', ')}`}
           type="warning"
           showIcon
         />
@@ -534,14 +536,14 @@ export const ResultViewer: React.FC<ResultViewerProps> = ({
     }
 
     return (
-      <Splitter style={{ overflow: "auto", height: "100%" }}>
+      <Splitter style={{ overflow: 'auto', height: '100%' }}>
         <Splitter.Panel defaultSize="30%" min="20%" max="40%">
           <Card
             style={{
-              overflow: "auto",
-              background: "#fafafa",
-              border: "none",
-              textAlign: "left",
+              overflow: 'auto',
+              background: '#fafafa',
+              border: 'none',
+              textAlign: 'left',
             }}
           >
             <Tree
@@ -555,19 +557,19 @@ export const ResultViewer: React.FC<ResultViewerProps> = ({
               selectedKeys={selectedKeys}
               treeData={treeData}
               style={{
-                overflow: "auto",
-                background: "#fafafa",
+                overflow: 'auto',
+                background: '#fafafa',
               }}
               height={treeHeight}
             />
           </Card>
         </Splitter.Panel>
-        <Splitter.Panel style={{ height: "100%" }}>
+        <Splitter.Panel style={{ height: '100%' }}>
           <Card
             style={{
-              height: "100%",
+              height: '100%',
             }}
-            styles={{ body: { height: "100%" } }}
+            styles={{ body: { height: '100%' } }}
           >
             {renderPreview()}
           </Card>
@@ -581,17 +583,17 @@ export const ResultViewer: React.FC<ResultViewerProps> = ({
       ref={treeContainerRef}
       style={{
         flex: 1,
-        display: "flex",
-        flexDirection: "column",
-        height: "100%",
+        display: 'flex',
+        flexDirection: 'column',
+        height: '100%',
       }}
     >
       <div
         style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          padding: "16px 0",
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          padding: '16px 0',
         }}
       >
         <Button
@@ -602,10 +604,10 @@ export const ResultViewer: React.FC<ResultViewerProps> = ({
         >
           Refresh
         </Button>
-        <Text type="secondary" style={{ fontSize: "12px" }}>
+        <Text type="secondary" style={{ fontSize: '12px' }}>
           {selectedRule
             ? `Rule Output: ${selectedRule} - This directory tree shows the output files declared in the snakefile of this rule.`
-            : `Showing: ${ALL_SUPPORTED_EXTENSIONS.join(", ")}`}
+            : `Showing: ${ALL_SUPPORTED_EXTENSIONS.join(', ')}`}
         </Text>
       </div>
 
@@ -615,7 +617,7 @@ export const ResultViewer: React.FC<ResultViewerProps> = ({
         title={
           selectedNodeData
             ? `${selectedNodeData.nodeData.title}`
-            : "File Preview"
+            : 'File Preview'
         }
         open={isFullscreenOpen}
         onCancel={handleFullscreenClose}
@@ -630,7 +632,7 @@ export const ResultViewer: React.FC<ResultViewerProps> = ({
               selectedNodeData &&
               handleDownload(
                 selectedNodeData.fullPath,
-                selectedNodeData.nodeData.title || "",
+                selectedNodeData.nodeData.title || '',
               )
             }
           >
@@ -641,9 +643,9 @@ export const ResultViewer: React.FC<ResultViewerProps> = ({
           </Button>,
         ]}
       >
-        <div style={{ height: "80vh", overflow: "auto" }}>
+        <div style={{ height: '80vh', overflow: 'auto' }}>
           {selectedNodeData &&
-            selectedNodeData.type === "file" &&
+            selectedNodeData.type === 'file' &&
             renderFullscreenPreview(selectedNodeData)}
         </div>
       </Modal>

@@ -1,6 +1,6 @@
-import React from "react";
+import React from 'react';
 
-import type { TreeDataNode } from "../../api/api";
+import type { TreeDataNode } from '../../api/api';
 
 export interface ResultViewerProps {
   workflowId: string;
@@ -15,7 +15,7 @@ export interface AntdTreeNode {
   children?: AntdTreeNode[];
   isLeaf: boolean;
   fullPath: string;
-  type: "file" | "directory";
+  type: 'file' | 'directory';
   fileExtension: string;
   nodeData: TreeDataNode & { fileSize?: number | null };
   loadData?: () => Promise<void>;
@@ -28,13 +28,13 @@ export interface SelectedNodeData {
   children?: AntdTreeNode[];
   isLeaf: boolean;
   fullPath: string;
-  type: "file" | "directory";
+  type: 'file' | 'directory';
   fileExtension: string;
   nodeData: TreeDataNode & { fileSize?: number | null };
 }
 
 export interface TreeSelectInfo {
-  event: "select";
+  event: 'select';
   selected: boolean;
   node: SelectedNodeData;
   selectedNodes: SelectedNodeData[];

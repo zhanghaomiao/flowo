@@ -1,17 +1,17 @@
-import { Alert, Image, Spin } from "antd";
-import React, { useState } from "react";
+import { Alert, Image, Spin } from 'antd';
+import React, { useState } from 'react';
 
-import { constructApiUrl } from "../../api/client";
-import FileContent from "../code/FileContent";
-import { CSVPreview, FullscreenCSVPreview } from "./CSVPreview";
+import { constructApiUrl } from '../../api/client';
+import FileContent from '../code/FileContent';
+import { CSVPreview, FullscreenCSVPreview } from './CSVPreview';
 import {
   formatFileSize,
   getFileExtension,
   getFileTypeCategory,
   isFileTooLargeForPreview,
   shouldShowPreviewWarning,
-} from "./FileUtils";
-import type { SelectedNodeData } from "./types";
+} from './FileUtils';
+import type { SelectedNodeData } from './types';
 
 // Image Preview Component
 export const ImagePreview: React.FC<{ src: string; alt: string }> = ({
@@ -20,16 +20,16 @@ export const ImagePreview: React.FC<{ src: string; alt: string }> = ({
 }) => (
   <div
     style={{
-      textAlign: "center",
-      display: "flex",
-      justifyContent: "center",
-      alignItems: "center",
+      textAlign: 'center',
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
     }}
   >
     <Image
       src={src}
       alt={alt}
-      style={{ maxWidth: "60%", maxHeight: "60%" }}
+      style={{ maxWidth: '60%', maxHeight: '60%' }}
       fallback="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMIAAADDCAYAAADQvc6UAAABRWlDQ1BJQ0MgUHJvZmlsZQAAKJFjYGASSSwoyGFhYGDIzSspCnJ3UoiIjFJgf8LAwSDCIMogwMCcmFxc4BgQ4ANUwgCjUcG3awyMIPqyLsis7PPOq3QdDFcvjV3jOD1boQVTPQrgSkktTgbSf4A4LbmgqISBgTEFyFYuLykAsTuAbJEioKOA7DkgdjqEvQHEToKwj4DVhAQ5A9k3gGyB5IxEoBmML4BsnSQk8XQkNtReEOBxcfXxUQg1Mjc0dyHgXNJBSWpFCYh2zi+oLMpMzyhRcASGUqqCZ16yno6CkYGRAQMDKMwhqj/fAIcloxgHQqxAjIHBEugw5sUIsSQpBobtQPdLciLEVJYzMPBHMDBsayhILEqEO4DxG0txmrERhM29nYGBddr//5/DGRjYNRkY/l7////39v///y4Dmn+LgeHANwDrkl1AuO+pmgAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAwqADAAQAAAABAAAAwwAAAAD9b/HnAAAHlklEQVR4Ae3dP3Yk1RUG8A+1CC4iIOcnkcIaYAjhvQ=="
       preview={false}
     />
@@ -38,7 +38,7 @@ export const ImagePreview: React.FC<{ src: string; alt: string }> = ({
 
 // Text Preview Component
 export const TextPreview: React.FC<{ src: string }> = ({ src }) => {
-  const [content, setContent] = useState<string>("");
+  const [content, setContent] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(true);
 
   React.useEffect(() => {
@@ -49,8 +49,8 @@ export const TextPreview: React.FC<{ src: string }> = ({ src }) => {
         setLoading(false);
       })
       .catch((error) => {
-        console.error("Error loading text file:", error);
-        setContent("Error loading file content");
+        console.error('Error loading text file:', error);
+        setContent('Error loading file content');
         setLoading(false);
       });
   }, [src]);
@@ -70,10 +70,10 @@ export const TextPreview: React.FC<{ src: string }> = ({ src }) => {
 
 // PDF Preview Component
 export const PdfPreview: React.FC<{ src: string }> = ({ src }) => (
-  <div style={{ height: "calc(100vh - 450px)" }}>
+  <div style={{ height: 'calc(100vh - 450px)' }}>
     <iframe
       src={src}
-      style={{ width: "100%", height: "100%", border: "none" }}
+      style={{ width: '100%', height: '100%', border: 'none' }}
       title="PDF Preview"
     />
   </div>
@@ -81,10 +81,10 @@ export const PdfPreview: React.FC<{ src: string }> = ({ src }) => (
 
 // HTML Preview Component
 export const HtmlPreview: React.FC<{ src: string }> = ({ src }) => (
-  <div style={{ height: "calc(100vh - 350px)" }}>
+  <div style={{ height: 'calc(100vh - 350px)' }}>
     <iframe
       src={src}
-      style={{ width: "100%", height: "100%", border: "1px solid #d9d9d9" }}
+      style={{ width: '100%', height: '100%', border: '1px solid #d9d9d9' }}
       title="HTML Preview"
     />
   </div>
@@ -95,11 +95,11 @@ export const FullscreenImagePreview: React.FC<{ src: string; alt: string }> = ({
   src,
   alt,
 }) => (
-  <div style={{ textAlign: "center", height: "100%" }}>
+  <div style={{ textAlign: 'center', height: '100%' }}>
     <Image
       src={src}
       alt={alt}
-      style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }}
+      style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }}
       fallback="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMIAAADDCAYAAADQvc6UAE..."
       preview={false}
     />
@@ -107,7 +107,7 @@ export const FullscreenImagePreview: React.FC<{ src: string; alt: string }> = ({
 );
 
 export const FullscreenTextPreview: React.FC<{ src: string }> = ({ src }) => {
-  const [content, setContent] = useState<string>("");
+  const [content, setContent] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(true);
 
   React.useEffect(() => {
@@ -118,8 +118,8 @@ export const FullscreenTextPreview: React.FC<{ src: string }> = ({ src }) => {
         setLoading(false);
       })
       .catch((error) => {
-        console.error("Error loading text file:", error);
-        setContent("Error loading file content");
+        console.error('Error loading text file:', error);
+        setContent('Error loading file content');
         setLoading(false);
       });
   }, [src]);
@@ -138,20 +138,20 @@ export const FullscreenTextPreview: React.FC<{ src: string }> = ({ src }) => {
 };
 
 export const FullscreenPdfPreview: React.FC<{ src: string }> = ({ src }) => (
-  <div style={{ height: "100%" }}>
+  <div style={{ height: '100%' }}>
     <iframe
       src={src}
-      style={{ width: "100%", height: "100%", border: "none" }}
+      style={{ width: '100%', height: '100%', border: 'none' }}
       title="PDF Preview"
     />
   </div>
 );
 
 export const FullscreenHtmlPreview: React.FC<{ src: string }> = ({ src }) => (
-  <div style={{ height: "100%" }}>
+  <div style={{ height: '100%' }}>
     <iframe
       src={src}
-      style={{ width: "100%", height: "100%", border: "1px solid #d9d9d9" }}
+      style={{ width: '100%', height: '100%', border: '1px solid #d9d9d9' }}
       title="HTML Preview"
     />
   </div>
@@ -163,14 +163,14 @@ export const FilePreview: React.FC<{ nodeData: SelectedNodeData }> = ({
 }) => {
   const { fullPath, type, nodeData: data } = nodeData;
 
-  if (type !== "file") return null;
+  if (type !== 'file') return null;
 
   const fileUrl = constructApiUrl(`/files/${fullPath}`);
-  const category = getFileTypeCategory(data.title || "");
+  const category = getFileTypeCategory(data.title || '');
   const fileSize = data.fileSize || 0;
 
   // Check if file is too large for preview
-  if (isFileTooLargeForPreview(fileSize, data.title || "")) {
+  if (isFileTooLargeForPreview(fileSize, data.title || '')) {
     return (
       <Alert
         message="File Too Large for Preview"
@@ -182,7 +182,7 @@ export const FilePreview: React.FC<{ nodeData: SelectedNodeData }> = ({
   }
 
   // Show warning for large files
-  if (shouldShowPreviewWarning(fileSize, data.title || "")) {
+  if (shouldShowPreviewWarning(fileSize, data.title || '')) {
     return (
       <div>
         <Alert
@@ -192,12 +192,12 @@ export const FilePreview: React.FC<{ nodeData: SelectedNodeData }> = ({
           showIcon
           style={{ marginBottom: 16 }}
         />
-        {renderPreviewContent(category, fileUrl, data.title || "")}
+        {renderPreviewContent(category, fileUrl, data.title || '')}
       </div>
     );
   }
 
-  return renderPreviewContent(category, fileUrl, data.title || "");
+  return renderPreviewContent(category, fileUrl, data.title || '');
 };
 
 // Render preview content based on file type
@@ -207,15 +207,15 @@ const renderPreviewContent = (
   title: string,
 ) => {
   switch (category) {
-    case "image":
+    case 'image':
       return <ImagePreview src={fileUrl} alt={title} />;
-    case "text":
+    case 'text':
       return <TextPreview src={fileUrl} />;
-    case "pdf":
+    case 'pdf':
       return <PdfPreview src={fileUrl} />;
-    case "html":
+    case 'html':
       return <HtmlPreview src={fileUrl} />;
-    case "csv":
+    case 'csv':
       return <CSVPreview src={fileUrl} />;
     default:
       return (
@@ -233,18 +233,18 @@ const renderPreviewContent = (
 export const renderFullscreenPreview = (nodeData: SelectedNodeData) => {
   const { fullPath, nodeData: data } = nodeData;
   const fileUrl = constructApiUrl(`/files/${fullPath}`);
-  const category = getFileTypeCategory(data.title || "");
+  const category = getFileTypeCategory(data.title || '');
   const fileSize = data.fileSize || 0;
 
   // Check if file is too large for preview
-  if (isFileTooLargeForPreview(fileSize, data.title || "")) {
+  if (isFileTooLargeForPreview(fileSize, data.title || '')) {
     return (
       <div
         style={{
-          height: "100%",
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
+          height: '100%',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
         }}
       >
         <Alert
@@ -252,14 +252,14 @@ export const renderFullscreenPreview = (nodeData: SelectedNodeData) => {
           description={`This file (${formatFileSize(fileSize)}) is too large to preview safely. Please download it instead.`}
           type="warning"
           showIcon
-          style={{ maxWidth: "500px" }}
+          style={{ maxWidth: '500px' }}
         />
       </div>
     );
   }
 
   // Show warning for large files
-  if (shouldShowPreviewWarning(fileSize, data.title || "")) {
+  if (shouldShowPreviewWarning(fileSize, data.title || '')) {
     return (
       <div>
         <Alert
@@ -269,12 +269,12 @@ export const renderFullscreenPreview = (nodeData: SelectedNodeData) => {
           showIcon
           style={{ marginBottom: 16 }}
         />
-        {renderFullscreenContent(category, fileUrl, data.title || "")}
+        {renderFullscreenContent(category, fileUrl, data.title || '')}
       </div>
     );
   }
 
-  return renderFullscreenContent(category, fileUrl, data.title || "");
+  return renderFullscreenContent(category, fileUrl, data.title || '');
 };
 
 const renderFullscreenContent = (
@@ -283,15 +283,15 @@ const renderFullscreenContent = (
   title: string,
 ) => {
   switch (category) {
-    case "image":
+    case 'image':
       return <FullscreenImagePreview src={fileUrl} alt={title} />;
-    case "text":
+    case 'text':
       return <FullscreenTextPreview src={fileUrl} />;
-    case "pdf":
+    case 'pdf':
       return <FullscreenPdfPreview src={fileUrl} />;
-    case "html":
+    case 'html':
       return <FullscreenHtmlPreview src={fileUrl} />;
-    case "csv":
+    case 'csv':
       return <FullscreenCSVPreview src={fileUrl} />;
     default:
       return (

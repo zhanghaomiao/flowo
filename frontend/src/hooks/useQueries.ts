@@ -1,22 +1,31 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-
-import type { JobDetailResponse, TreeDataNode } from "../api/api";
-import { Status, WorkflowDetialResponse } from "../api/api";
+import type { JobDetailResponse, TreeDataNode } from '@/api/api';
+import { Status, WorkflowDetialResponse } from '@/api/api';
 import {
-  jobsApi,
-  logsApi,
-  outputsApi,
-  utilsApi,
-  workflowApi,
-} from "../api/client";
-import { constructApiUrl } from "../api/client";
+  deleteWorkflowMutation,
+  getAllTagsOptions,
+  getAllUsersOptions,
+  getConfigfilesOptions,
+  getDetailOptions,
+  getJobOptions,
+  getJobsOptions,
+  getLogsOptions,
+  getOutputsOptions,
+  getProgressOptions,
+  getRuleGraphOptions,
+  getSnakefileOptions,
+  getTimelinesOptions,
+  getWorkflowLogsOptions,
+  getWorkflowsOptions,
+} from '@/client/@tanstack/react-query.gen';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+
+import { constructApiUrl } from '../api/client';
 
 // Extended TreeDataNode interface with fileSize for Caddy server
 interface CaddyTreeDataNode extends TreeDataNode {
   fileSize?: number | null;
 }
 
-// Custom hook for fetching workflows with pagination support
 export const useWorkflows = (params?: {
   limit?: number | null;
   offset?: number | null;
@@ -30,105 +39,49 @@ export const useWorkflows = (params?: {
   endAt?: string | null;
 }) => {
   return useQuery({
-    queryKey: ["workflows", params],
-    queryFn: async () => {
-      const response = await workflowApi.getWorkflowsApiV1WorkflowsGet(
-        params?.limit ?? 20,
-        params?.offset ?? 0,
-        params?.orderByStarted ?? true,
-        params?.descending ?? true,
-        params?.user ?? null,
-        params?.status ?? null,
-        params?.tags ?? null,
-        params?.name ?? null,
-        params?.startedAt ?? null,
-        params?.endAt ?? null,
-      );
-      return response.data;
-    },
-    staleTime: 30000,
-    refetchInterval: 60000,
-    placeholderData: (previousData) => previousData,
+    ...getWorkflowsOptions({
+      query: {
+        limit: params?.limit ?? 20,
+        offset: params?.offset ?? 0,
+        order_by_started: params?.orderByStarted ?? true,
+        descending: params?.descending ?? true,
+        user: params?.user ?? null,
+        status: params?.status ?? null,
+        tags: params?.tags ?? null,
+        name: params?.name ?? null,
+        start_at: params?.startedAt ?? null,
+        end_at: params?.endAt ?? null,
+      },
+    }),
   });
 };
 
-// Custom hook for deleting workflows (IMPROVED VERSION)
 export const useDeleteWorkflow = () => {
-  const queryClient = useQueryClient();
-
   return useMutation({
-    mutationFn: async (workflowId: string) => {
-      const response =
-        await workflowApi.deleteWorkflowApiV1WorkflowsWorkflowIdDelete(
-          workflowId,
-        );
-      return response.data;
-    },
-    onSuccess: () => {
-      // Invalidate and refetch workflow queries after successful deletion
-      queryClient.invalidateQueries({ queryKey: ["sse", "workflows"] });
-      queryClient.invalidateQueries({ queryKey: ["workflows"] });
-    },
-    onError: (error, workflowId) => {
-      console.error(`Error deleting workflow ${workflowId}:`, error);
-    },
-  });
-};
-
-// Custom hook for fetching workflows with pagination (for table)
-export const useWorkflowsPaginated = (
-  page: number = 1,
-  pageSize: number = 20,
-  orderByStarted: boolean = true,
-  descending: boolean = true,
-) => {
-  const offset = (page - 1) * pageSize;
-
-  return useQuery({
-    queryKey: [
-      "workflows",
-      "paginated",
-      { page, pageSize, orderByStarted, descending },
-    ],
-    queryFn: async () => {
-      const response = await workflowApi.getWorkflowsApiV1WorkflowsGet(
-        pageSize,
-        offset,
-        orderByStarted,
-        descending,
-      );
-      return response.data;
-    },
-    staleTime: 30000,
-    placeholderData: (previousData) => previousData,
+    ...deleteWorkflowMutation(),
   });
 };
 
 export const useWorkflowTotalJobs = (workflowId: string) => {
-  return useQuery<{ [key: string]: number }>({
-    queryKey: ["workflowTotalJobs", workflowId],
-    queryFn: async () => {
-      const response =
-        await workflowApi.getProgressApiV1WorkflowsWorkflowIdProgressGet(
-          workflowId,
-          true, // returnTotalJobsNumber
-        );
-      return response.data as { [key: string]: number };
-    },
-    staleTime: 60000,
-    refetchInterval: 300000, // 5分钟
+  return useQuery({
+    ...getProgressOptions({
+      path: {
+        workflow_id: workflowId,
+      },
+      query: {
+        return_total_jobs_number: true,
+      },
+    }),
   });
 };
 
-// Custom hook for fetching a specific job
 export const useJob = (jobId: number, enabled: boolean = true) => {
   return useQuery({
-    queryKey: ["job", jobId],
-    queryFn: async () => {
-      const response = await jobsApi.getJobApiV1JobsJobIdDetailGet(jobId);
-      return response.data;
-    },
-    enabled,
+    ...getJobOptions({
+      path: {
+        job_id: jobId,
+      },
+    }),
   });
 };
 
@@ -143,80 +96,54 @@ export const useWorkflowJobs = (
   enabled: boolean = true,
 ) => {
   return useQuery({
-    queryKey: [
-      "workflowJobs",
-      workflowId,
-      { limit, offset, orderByStarted, descending, ruleName, status },
-    ],
-    queryFn: async () => {
-      const response = await workflowApi.getJobsApiV1WorkflowsWorkflowIdJobsGet(
-        workflowId,
+    ...getJobsOptions({
+      path: {
+        workflow_id: workflowId,
+      },
+      query: {
         limit,
         offset,
-        orderByStarted,
+        order_by_started: orderByStarted,
         descending,
-        ruleName,
-        status as Status,
-      );
-      return response.data;
-    },
-    staleTime: 30000,
-    refetchInterval: 60000,
+        rule_name: ruleName,
+        status: status as Status,
+      },
+    }),
     enabled,
   });
 };
 
-// Custom hook for fetching workflow rule graph
 export const useWorkflowRuleGraph = (
   workflowId: string,
   enabled: boolean = true,
 ) => {
   return useQuery({
-    queryKey: ["workflowRuleGraph", workflowId],
-    queryFn: async () => {
-      const response =
-        await workflowApi.getRuleGraphApiV1WorkflowsWorkflowIdRuleGraphGet(
-          workflowId,
-        );
-      return response.data;
-    },
+    ...getRuleGraphOptions({
+      path: {
+        workflow_id: workflowId,
+      },
+    }),
     enabled,
-    staleTime: 600000,
-    refetchInterval: false,
-    refetchOnWindowFocus: false,
   });
 };
 
-// Custom hook for fetching workflow Snakefile content
 export const useWorkflowSnakefile = (
   workflowId: string,
   enabled: boolean = true,
 ) => {
   return useQuery({
-    queryKey: ["workflowSnakefile", workflowId],
-    queryFn: async () => {
-      const response =
-        await workflowApi.getSnakefileApiV1WorkflowsWorkflowIdSnakefileGet(
-          workflowId,
-        );
-      return response.data;
-    },
+    ...getSnakefileOptions({
+      path: {
+        workflow_id: workflowId,
+      },
+    }),
     enabled,
-    staleTime: 600000,
-    refetchInterval: false,
-    refetchOnWindowFocus: false,
   });
 };
 
 export const useWorkFlowUsers = () => {
   return useQuery({
-    queryKey: ["workflowUsers"],
-    queryFn: async () => {
-      const response = await workflowApi.getAllUsersApiV1WorkflowsUsersGet();
-      return response.data;
-    },
-    staleTime: 600000,
-    refetchInterval: false,
+    ...getAllUsersOptions(),
   });
 };
 
@@ -225,30 +152,22 @@ export const useWorkflowLogs = (
   enabled: boolean = true,
 ) => {
   return useQuery({
-    queryKey: ["workflowLogs", workflowId],
-    queryFn: async () => {
-      const response =
-        await logsApi.getWorkflowLogsApiV1LogsWorkflowIdGet(workflowId);
-      return response.data;
-    },
+    ...getWorkflowLogsOptions({
+      path: {
+        workflow_id: workflowId,
+      },
+    }),
     enabled,
-    staleTime: 120000,
-    refetchInterval: false,
   });
 };
 
 export const useWorkflowTimeline = (workflowId: string) => {
   return useQuery({
-    queryKey: ["workflowTimeline", workflowId],
-    queryFn: async () => {
-      const response =
-        await workflowApi.getTimelinesApiV1WorkflowsWorkflowIdTimelinesGet(
-          workflowId,
-        );
-      return response.data;
-    },
-    staleTime: 60000,
-    refetchInterval: 300000,
+    ...getTimelinesOptions({
+      path: {
+        workflow_id: workflowId,
+      },
+    }),
   });
 };
 
@@ -257,57 +176,40 @@ export const useWorkflowConfig = (
   enabled: boolean = true,
 ) => {
   return useQuery({
-    queryKey: ["workflowConfig", workflowId],
-    queryFn: async () => {
-      const response =
-        await workflowApi.getConfigfilesApiV1WorkflowsWorkflowIdConfigfilesGet(
-          workflowId,
-        );
-      return response.data;
-    },
+    ...getConfigfilesOptions({
+      path: {
+        workflow_id: workflowId,
+      },
+    }),
     enabled,
-    staleTime: 600000,
-    refetchInterval: false,
-    refetchOnWindowFocus: false,
   });
 };
 
 export const useJobDetail = (jobId: number, enabled: boolean = true) => {
-  return useQuery<JobDetailResponse>({
-    queryKey: ["jobDetail", jobId],
-    queryFn: async () => {
-      const response = await jobsApi.getJobApiV1JobsJobIdDetailGet(jobId);
-      return response.data as JobDetailResponse;
-    },
-    staleTime: 60000,
-    refetchInterval: false,
+  return useQuery({
+    ...getJobOptions({
+      path: {
+        job_id: jobId,
+      },
+    }),
     enabled,
   });
 };
 
 export const useJobLogs = (jobId: number, enabled: boolean = true) => {
-  return useQuery<Record<string, string>>({
-    queryKey: ["jobLogs", jobId],
-    queryFn: async () => {
-      const response = await jobsApi.getLogsApiV1JobsJobIdLogsGet(jobId);
-      return response.data as Record<string, string>;
-    },
+  return useQuery({
+    ...getLogsOptions({
+      path: {
+        job_id: jobId,
+      },
+    }),
     enabled,
-    staleTime: 60000,
-    refetchInterval: 300000,
   });
 };
 
 export const useAllTags = () => {
-  return useQuery<string[]>({
-    queryKey: ["allTags"],
-    queryFn: async () => {
-      const response = await utilsApi.getAllTagsApiV1UtilsTagsGet();
-      return response.data as string[];
-    },
-    staleTime: 600000,
-    refetchInterval: false,
-    refetchOnWindowFocus: false,
+  return useQuery({
+    ...getAllTagsOptions(),
   });
 };
 
@@ -315,28 +217,22 @@ export const useWorkflowDetail = (
   workflowId: string,
   enabled: boolean = true,
 ) => {
-  return useQuery<WorkflowDetialResponse>({
-    queryKey: ["workflowDetail", workflowId],
-    queryFn: async () => {
-      const response =
-        await workflowApi.getDetailApiV1WorkflowsWorkflowIdDetailGet(
-          workflowId,
-        );
-      return response.data;
-    },
-    staleTime: 60000,
-    refetchInterval: 300000,
+  return useQuery({
+    ...getDetailOptions({
+      path: {
+        workflow_id: workflowId,
+      },
+    }),
     enabled,
   });
 };
 
-// New hook for querying Caddy server directory listing
 export const useCaddyDirectoryTree = (
   directory: string | null,
   enabled: boolean = true,
 ) => {
   return useQuery<Array<CaddyTreeDataNode>>({
-    queryKey: ["caddyDirectoryTree", directory],
+    queryKey: ['caddyDirectoryTree', directory],
     queryFn: async () => {
       if (!directory) {
         return [];
@@ -344,7 +240,7 @@ export const useCaddyDirectoryTree = (
 
       const response = await fetch(constructApiUrl(`/files/${directory}`), {
         headers: {
-          Accept: "application/json",
+          Accept: 'application/json',
         },
       });
 
@@ -359,7 +255,7 @@ export const useCaddyDirectoryTree = (
       if (Array.isArray(jsonData)) {
         for (const item of jsonData) {
           // Skip parent directory links
-          if (item.name === ".." || item.name === ".") {
+          if (item.name === '..' || item.name === '.') {
             continue;
           }
 
@@ -368,7 +264,7 @@ export const useCaddyDirectoryTree = (
           nodes.push({
             title: item.name,
             key: `${directory}/${item.name}`,
-            icon: isDirectory ? "folder" : "file",
+            icon: isDirectory ? 'folder' : 'file',
             children: isDirectory ? [] : undefined,
             isLeaf: !isDirectory,
             fileSize: isDirectory ? null : item.size || null,
@@ -381,7 +277,7 @@ export const useCaddyDirectoryTree = (
         const bIsDir = !b.isLeaf;
         if (aIsDir && !bIsDir) return -1;
         if (!aIsDir && bIsDir) return 1;
-        return (a.title || "").localeCompare(b.title || "");
+        return (a.title || '').localeCompare(b.title || '');
       });
 
       return nodes;
@@ -401,7 +297,7 @@ export const useLazyDirectoryLoad = () => {
     mutationFn: async (directoryPath: string) => {
       const response = await fetch(constructApiUrl(`/files/${directoryPath}`), {
         headers: {
-          Accept: "application/json",
+          Accept: 'application/json',
         },
       });
 
@@ -414,7 +310,7 @@ export const useLazyDirectoryLoad = () => {
 
       if (Array.isArray(jsonData)) {
         for (const item of jsonData) {
-          if (item.name === ".." || item.name === ".") {
+          if (item.name === '..' || item.name === '.') {
             continue;
           }
 
@@ -423,7 +319,7 @@ export const useLazyDirectoryLoad = () => {
           nodes.push({
             title: item.name,
             key: `${directoryPath}/${item.name}`,
-            icon: isDirectory ? "folder" : "file",
+            icon: isDirectory ? 'folder' : 'file',
             children: isDirectory ? [] : undefined,
             isLeaf: !isDirectory,
             fileSize: isDirectory ? null : item.size || null,
@@ -436,13 +332,13 @@ export const useLazyDirectoryLoad = () => {
         const bIsDir = !b.isLeaf;
         if (aIsDir && !bIsDir) return -1;
         if (!aIsDir && bIsDir) return 1;
-        return (a.title || "").localeCompare(b.title || "");
+        return (a.title || '').localeCompare(b.title || '');
       });
 
       return nodes;
     },
     onSuccess: (data, directoryPath) => {
-      queryClient.setQueryData(["caddyDirectoryTree", directoryPath], data);
+      queryClient.setQueryData(['caddyDirectoryTree', directoryPath], data);
     },
   });
 };
@@ -450,7 +346,7 @@ export const useLazyDirectoryLoad = () => {
 // export const useRule
 export const useRuleOutput = (workflowId: string, ruleName: string) => {
   return useQuery({
-    queryKey: ["ruleOutput", workflowId, ruleName],
+    queryKey: ['ruleOutput', workflowId, ruleName],
     queryFn: async () => {
       const response =
         await outputsApi.getJobOutputsApiV1OutputsWorkflowIdRuleOutputsGet(
@@ -467,12 +363,12 @@ export const useRuleOutput = (workflowId: string, ruleName: string) => {
 
 export const useWorkFlowIdByName = (name: string) => {
   return useQuery({
-    queryKey: ["workflowIdByName", name],
+    queryKey: ['workflowIdByName', name],
     queryFn: async () => {
       if (!name) return null;
       const response =
         await workflowApi.getWorkflowIdByNameApiV1WorkflowsByNameGet(name);
-      return response.data && response.data !== "" ? response.data : null;
+      return response.data && response.data !== '' ? response.data : null;
     },
     staleTime: 60000,
     refetchInterval: false,

@@ -1,7 +1,7 @@
-import { Tag } from "antd";
-import React from "react";
+import { Tag } from 'antd';
+import React from 'react';
 
-import { getTagColor } from "../../utils/tagColors";
+import { getTagColor } from '../../utils/tagColors';
 
 interface WorkflowTagProps {
   tag: string;
@@ -22,7 +22,7 @@ const WorkflowTag: React.FC<WorkflowTagProps> = ({ tag, style, onClick }) => {
       style={{
         ...style,
         marginInlineEnd: 2,
-        cursor: onClick ? "pointer" : "default",
+        cursor: onClick ? 'pointer' : 'default',
       }}
       onClick={handleClick}
     >

@@ -1,8 +1,8 @@
-import { ClearOutlined, DownloadOutlined } from "@ant-design/icons";
-import { Alert, Button, Modal, Space, Typography } from "antd";
-import React, { useEffect, useRef, useState } from "react";
+import { ClearOutlined, DownloadOutlined } from '@ant-design/icons';
+import { Alert, Button, Modal, Space, Typography } from 'antd';
+import React, { useEffect, useRef, useState } from 'react';
 
-import { useLogSSE } from "../../hooks/useSSE";
+import { useLogSSE } from '../../hooks/useSSE';
 
 const { Text } = Typography;
 
@@ -71,10 +71,10 @@ const LiveLogViewer: React.FC<LiveLogViewerProps> = ({
   };
 
   const handleDownloadLogs = () => {
-    const logContent = logLines.join("\n");
-    const blob = new Blob([logContent], { type: "text/plain" });
+    const logContent = logLines.join('\n');
+    const blob = new Blob([logContent], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
+    const a = document.createElement('a');
     a.href = url;
     a.download = `workflow-${workflowId}-logs.txt`;
     document.body.appendChild(a);
@@ -97,14 +97,14 @@ const LiveLogViewer: React.FC<LiveLogViewerProps> = ({
       if (scrollTop < lastScrollTop) {
         // User scrolled UP - disable auto-scroll
         if (autoScroll) {
-          console.log("🚫 User scrolled up - disabling auto-scroll");
+          console.log('🚫 User scrolled up - disabling auto-scroll');
           setAutoScroll(false);
         }
       } else if (scrollTop > lastScrollTop) {
         // User scrolled DOWN - check if near bottom
         const distanceFromBottom = scrollHeight - (scrollTop + clientHeight);
         if (!autoScroll && distanceFromBottom < 50) {
-          console.log("✅ User scrolled near bottom - re-enabling auto-scroll");
+          console.log('✅ User scrolled near bottom - re-enabling auto-scroll');
           setAutoScroll(true);
         }
       }
@@ -113,13 +113,13 @@ const LiveLogViewer: React.FC<LiveLogViewerProps> = ({
       lastScrollTopRef.current = scrollTop;
 
       // Simple debug info
-      console.log("Scroll:", {
+      console.log('Scroll:', {
         direction:
           scrollTop > lastScrollTop
-            ? "↓"
+            ? '↓'
             : scrollTop < lastScrollTop
-              ? "↑"
-              : "-",
+              ? '↑'
+              : '-',
         autoScroll,
         distanceFromBottom: Math.round(
           scrollHeight - (scrollTop + clientHeight),
@@ -133,24 +133,24 @@ const LiveLogViewer: React.FC<LiveLogViewerProps> = ({
       title={
         <div
           style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
           }}
         >
-          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <span>Live Workflow Logs - {workflowId}</span>
             <span
               style={{
-                fontSize: "12px",
-                color: isConnected ? "#52c41a" : "#ff4d4f",
-                fontWeight: "normal",
+                fontSize: '12px',
+                color: isConnected ? '#52c41a' : '#ff4d4f',
+                fontWeight: 'normal',
               }}
             >
-              {isConnected ? "🟢 Live" : "🔴 Disconnected"}
+              {isConnected ? '🟢 Live' : '🔴 Disconnected'}
             </span>
           </div>
-          <Space size="small" style={{ marginRight: "16px" }}>
+          <Space size="small" style={{ marginRight: '16px' }}>
             <Button
               type="text"
               size="small"
@@ -175,7 +175,7 @@ const LiveLogViewer: React.FC<LiveLogViewerProps> = ({
       footer={null}
     >
       <div
-        style={{ height: "600px", display: "flex", flexDirection: "column" }}
+        style={{ height: '600px', display: 'flex', flexDirection: 'column' }}
       >
         {/* Status indicators */}
         {error && (
@@ -183,16 +183,16 @@ const LiveLogViewer: React.FC<LiveLogViewerProps> = ({
             message="SSE Connection Error"
             description={error}
             type="error"
-            style={{ marginBottom: "16px" }}
+            style={{ marginBottom: '16px' }}
             showIcon
           />
         )}
 
-        {status === "connecting" && (
+        {status === 'connecting' && (
           <Alert
             message="Connecting to live logs..."
             type="info"
-            style={{ marginBottom: "16px" }}
+            style={{ marginBottom: '16px' }}
             showIcon
           />
         )}
@@ -201,16 +201,16 @@ const LiveLogViewer: React.FC<LiveLogViewerProps> = ({
         {!autoScroll && (
           <div
             style={{
-              position: "absolute",
-              bottom: "80px",
-              right: "24px",
+              position: 'absolute',
+              bottom: '80px',
+              right: '24px',
               zIndex: 1000,
-              backgroundColor: "#1890ff",
-              color: "white",
-              padding: "4px 8px",
-              borderRadius: "4px",
-              fontSize: "12px",
-              cursor: "pointer",
+              backgroundColor: '#1890ff',
+              color: 'white',
+              padding: '4px 8px',
+              borderRadius: '4px',
+              fontSize: '12px',
+              cursor: 'pointer',
             }}
             onClick={() => {
               setAutoScroll(true);
@@ -230,30 +230,30 @@ const LiveLogViewer: React.FC<LiveLogViewerProps> = ({
           onScroll={handleScrollChange}
           style={{
             flex: 1,
-            backgroundColor: "#1e1e1e",
-            color: "#d4d4d4",
-            padding: "16px",
+            backgroundColor: '#1e1e1e',
+            color: '#d4d4d4',
+            padding: '16px',
             fontFamily:
               'Monaco, Menlo, "Ubuntu Mono", consolas, "source-code-pro", monospace',
-            fontSize: "12px",
-            overflow: "auto",
-            whiteSpace: "pre-wrap",
-            border: "1px solid #d9d9d9",
-            borderRadius: "6px",
-            lineHeight: "1.4",
+            fontSize: '12px',
+            overflow: 'auto',
+            whiteSpace: 'pre-wrap',
+            border: '1px solid #d9d9d9',
+            borderRadius: '6px',
+            lineHeight: '1.4',
           }}
         >
           {logLines.length > 0 ? (
             logLines.map((line, index) => (
-              <div key={index} style={{ marginBottom: "2px" }}>
+              <div key={index} style={{ marginBottom: '2px' }}>
                 {line}
               </div>
             ))
           ) : (
-            <Text type="secondary" style={{ color: "#888" }}>
+            <Text type="secondary" style={{ color: '#888' }}>
               {isConnected
-                ? "Waiting for logs..."
-                : "Not connected to log stream"}
+                ? 'Waiting for logs...'
+                : 'Not connected to log stream'}
             </Text>
           )}
         </div>
@@ -261,19 +261,19 @@ const LiveLogViewer: React.FC<LiveLogViewerProps> = ({
         {/* Status bar */}
         <div
           style={{
-            padding: "8px 0",
-            borderTop: "1px solid #d9d9d9",
-            fontSize: "12px",
-            color: "#666",
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
+            padding: '8px 0',
+            borderTop: '1px solid #d9d9d9',
+            fontSize: '12px',
+            color: '#666',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
           }}
         >
           <span>
             {logLines.length} lines | Status: {status}
           </span>
-          <span>Auto-scroll: {autoScroll ? "ON" : "OFF"}</span>
+          <span>Auto-scroll: {autoScroll ? 'ON' : 'OFF'}</span>
         </div>
       </div>
     </Modal>

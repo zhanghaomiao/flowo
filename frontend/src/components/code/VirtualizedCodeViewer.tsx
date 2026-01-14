@@ -4,21 +4,21 @@ import React, {
   useMemo,
   useRef,
   useState,
-} from "react";
-import SyntaxHighlighter from "react-syntax-highlighter";
-import { a11yLight } from "react-syntax-highlighter/dist/esm/styles/hljs";
+} from 'react';
+import SyntaxHighlighter from 'react-syntax-highlighter';
+import { a11yLight } from 'react-syntax-highlighter/dist/esm/styles/hljs';
 import {
   AutoSizer,
   CellMeasurer,
   CellMeasurerCache,
   List,
   ListRowProps,
-} from "react-virtualized";
+} from 'react-virtualized';
 
 interface VirtualizedCodeViewerProps {
   code: string;
   language?: string;
-  theme?: "light" | "dark";
+  theme?: 'light' | 'dark';
   fontSize?: number;
   showLineNumbers?: boolean;
   wrapLines?: boolean;
@@ -35,8 +35,8 @@ interface SearchResult {
 
 const VirtualizedCodeViewer: React.FC<VirtualizedCodeViewerProps> = ({
   code,
-  language = "python",
-  theme = "light",
+  language = 'python',
+  theme = 'light',
   fontSize = 12,
   showLineNumbers = true,
   wrapLines = true,
@@ -44,11 +44,11 @@ const VirtualizedCodeViewer: React.FC<VirtualizedCodeViewerProps> = ({
   maxWidth,
 }) => {
   // Search state
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchTerm, setSearchTerm] = useState('');
   const [currentMatchIndex, setCurrentMatchIndex] = useState(0);
 
   const codeLines = useMemo(() => {
-    return code ? code.split("\n") : [];
+    return code ? code.split('\n') : [];
   }, [code]);
 
   const searchResults = useMemo(() => {
@@ -173,9 +173,9 @@ const VirtualizedCodeViewer: React.FC<VirtualizedCodeViewerProps> = ({
           <span
             key={`${lineIndex}-${match.startIndex}`}
             style={{
-              backgroundColor: isCurrentMatch ? "#ff6b35" : "#ffeb3b",
-              color: isCurrentMatch ? "white" : "black",
-              fontWeight: isCurrentMatch ? "bold" : "normal",
+              backgroundColor: isCurrentMatch ? '#ff6b35' : '#ffeb3b',
+              color: isCurrentMatch ? 'white' : 'black',
+              fontWeight: isCurrentMatch ? 'bold' : 'normal',
             }}
           >
             {matchText}
@@ -213,25 +213,25 @@ const VirtualizedCodeViewer: React.FC<VirtualizedCodeViewerProps> = ({
               ref={registerChild}
               style={{
                 ...style,
-                display: "flex",
-                alignItems: "flex-start",
+                display: 'flex',
+                alignItems: 'flex-start',
                 fontFamily: 'Monaco, Menlo, "Ubuntu Mono", Consolas, monospace',
                 fontSize: `${fontSize}px`,
-                lineHeight: "1.5",
-                whiteSpace: wrapLines ? "pre-wrap" : "pre",
-                wordBreak: wrapLines ? "break-word" : "normal",
-                padding: "2px 0",
+                lineHeight: '1.5',
+                whiteSpace: wrapLines ? 'pre-wrap' : 'pre',
+                wordBreak: wrapLines ? 'break-word' : 'normal',
+                padding: '2px 0',
               }}
             >
               {showLineNumbers && (
                 <div
                   style={{
-                    minWidth: "40px",
-                    paddingRight: "0px",
-                    paddingLeft: "8px",
-                    color: theme === "dark" ? "#666" : "#999",
-                    textAlign: "right",
-                    userSelect: "none",
+                    minWidth: '40px',
+                    paddingRight: '0px',
+                    paddingLeft: '8px',
+                    color: theme === 'dark' ? '#666' : '#999',
+                    textAlign: 'right',
+                    userSelect: 'none',
                     flexShrink: 0,
                   }}
                 >
@@ -241,9 +241,9 @@ const VirtualizedCodeViewer: React.FC<VirtualizedCodeViewerProps> = ({
               <div
                 style={{
                   flex: 1,
-                  paddingRight: "8px",
+                  paddingRight: '8px',
                   maxWidth: maxWidth ? `${maxWidth}px` : undefined,
-                  overflow: wrapLines ? "visible" : "hidden",
+                  overflow: wrapLines ? 'visible' : 'hidden',
                 }}
               >
                 {searchTerm.trim() ? (
@@ -251,10 +251,10 @@ const VirtualizedCodeViewer: React.FC<VirtualizedCodeViewerProps> = ({
                     style={{
                       fontFamily:
                         'Monaco, Menlo, "Ubuntu Mono", Consolas, monospace',
-                      fontSize: "inherit",
-                      lineHeight: "inherit",
-                      whiteSpace: wrapLines ? "pre-wrap" : "pre",
-                      wordBreak: wrapLines ? "break-word" : "normal",
+                      fontSize: 'inherit',
+                      lineHeight: 'inherit',
+                      whiteSpace: wrapLines ? 'pre-wrap' : 'pre',
+                      wordBreak: wrapLines ? 'break-word' : 'normal',
                     }}
                   >
                     {highlightText(line, index)}
@@ -266,10 +266,10 @@ const VirtualizedCodeViewer: React.FC<VirtualizedCodeViewerProps> = ({
                     customStyle={{
                       margin: 0,
                       padding: 0,
-                      background: "transparent",
-                      fontSize: "inherit",
-                      fontFamily: "inherit",
-                      lineHeight: "inherit",
+                      background: 'transparent',
+                      fontSize: 'inherit',
+                      fontFamily: 'inherit',
+                      lineHeight: 'inherit',
                     }}
                     wrapLines={wrapLines}
                     wrapLongLines={wrapLongLines}
@@ -304,10 +304,10 @@ const VirtualizedCodeViewer: React.FC<VirtualizedCodeViewerProps> = ({
     return (
       <div
         style={{
-          padding: "20px",
-          textAlign: "center",
-          color: "#999",
-          fontStyle: "italic",
+          padding: '20px',
+          textAlign: 'center',
+          color: '#999',
+          fontStyle: 'italic',
         }}
       >
         No content to display.
@@ -320,25 +320,25 @@ const VirtualizedCodeViewer: React.FC<VirtualizedCodeViewerProps> = ({
       ref={containerRef}
       className="code-viewer-container"
       style={{
-        height: "100%",
-        width: "100%",
-        backgroundColor: theme === "dark" ? "#282c34" : "#fafafa",
-        border: "1px solid #d9d9d9",
-        borderRadius: "4px",
-        overflow: "hidden",
-        display: "flex",
-        flexDirection: "column",
+        height: '100%',
+        width: '100%',
+        backgroundColor: theme === 'dark' ? '#282c34' : '#fafafa',
+        border: '1px solid #d9d9d9',
+        borderRadius: '4px',
+        overflow: 'hidden',
+        display: 'flex',
+        flexDirection: 'column',
       }}
     >
       {/* Search Bar */}
       <div
         style={{
-          padding: "8px 12px",
-          borderBottom: "1px solid #d9d9d9",
-          backgroundColor: theme === "dark" ? "#21252b" : "#f5f5f5",
-          display: "flex",
-          alignItems: "center",
-          gap: "8px",
+          padding: '8px 12px',
+          borderBottom: '1px solid #d9d9d9',
+          backgroundColor: theme === 'dark' ? '#21252b' : '#f5f5f5',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px',
           flexShrink: 0,
         }}
       >
@@ -348,7 +348,7 @@ const VirtualizedCodeViewer: React.FC<VirtualizedCodeViewerProps> = ({
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           onKeyDown={(e) => {
-            if (e.key === "Enter") {
+            if (e.key === 'Enter') {
               e.preventDefault();
               if (searchResults.length > 0) {
                 goToNextMatch();
@@ -357,10 +357,10 @@ const VirtualizedCodeViewer: React.FC<VirtualizedCodeViewerProps> = ({
           }}
           style={{
             flex: 1,
-            padding: "4px 8px",
-            border: "1px solid #d9d9d9",
-            borderRadius: "4px",
-            fontSize: "12px",
+            padding: '4px 8px',
+            border: '1px solid #d9d9d9',
+            borderRadius: '4px',
+            fontSize: '12px',
             fontFamily: 'Monaco, Menlo, "Ubuntu Mono", Consolas, monospace',
           }}
         />
@@ -368,9 +368,9 @@ const VirtualizedCodeViewer: React.FC<VirtualizedCodeViewerProps> = ({
           <>
             <span
               style={{
-                fontSize: "12px",
-                color: theme === "dark" ? "#ccc" : "#666",
-                minWidth: "60px",
+                fontSize: '12px',
+                color: theme === 'dark' ? '#ccc' : '#666',
+                minWidth: '60px',
               }}
             >
               {currentMatchIndex + 1} of {searchResults.length}
@@ -379,12 +379,12 @@ const VirtualizedCodeViewer: React.FC<VirtualizedCodeViewerProps> = ({
               onClick={goToPrevMatch}
               disabled={searchResults.length === 0}
               style={{
-                padding: "2px 6px",
-                border: "1px solid #d9d9d9",
-                borderRadius: "3px",
-                backgroundColor: "white",
-                cursor: "pointer",
-                fontSize: "12px",
+                padding: '2px 6px',
+                border: '1px solid #d9d9d9',
+                borderRadius: '3px',
+                backgroundColor: 'white',
+                cursor: 'pointer',
+                fontSize: '12px',
               }}
             >
               ↑
@@ -393,12 +393,12 @@ const VirtualizedCodeViewer: React.FC<VirtualizedCodeViewerProps> = ({
               onClick={goToNextMatch}
               disabled={searchResults.length === 0}
               style={{
-                padding: "2px 6px",
-                border: "1px solid #d9d9d9",
-                borderRadius: "3px",
-                backgroundColor: "white",
-                cursor: "pointer",
-                fontSize: "12px",
+                padding: '2px 6px',
+                border: '1px solid #d9d9d9',
+                borderRadius: '3px',
+                backgroundColor: 'white',
+                cursor: 'pointer',
+                fontSize: '12px',
               }}
             >
               ↓
@@ -421,7 +421,7 @@ const VirtualizedCodeViewer: React.FC<VirtualizedCodeViewerProps> = ({
               rowRenderer={rowRenderer}
               overscanRowCount={5}
               style={{
-                outline: "none",
+                outline: 'none',
               }}
             />
           )}

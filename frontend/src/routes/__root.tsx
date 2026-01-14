@@ -2,31 +2,31 @@ import {
   DashboardOutlined,
   HomeOutlined,
   QuestionCircleOutlined,
-} from "@ant-design/icons";
-import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
+} from '@ant-design/icons';
+import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import {
-  createRootRoute,
   Link,
   Outlet,
+  createRootRoute,
   useLocation,
-} from "@tanstack/react-router";
-import { Layout, Menu } from "antd";
+} from '@tanstack/react-router';
+import { Layout, Menu } from 'antd';
 
 const { Header, Content } = Layout;
 
 const menuItems = [
   {
-    key: "/",
+    key: '/',
     icon: <HomeOutlined />,
     label: <Link to="/">Workflows</Link>,
   },
   {
-    key: "/dashboard",
+    key: '/dashboard',
     icon: <DashboardOutlined />,
     label: <Link to="/dashboard">Dashboard</Link>,
   },
   {
-    key: "/about",
+    key: '/about',
     icon: <QuestionCircleOutlined />,
     label: <Link to="/about">About</Link>,
   },
@@ -38,28 +38,28 @@ function RootComponent() {
   // Determine the selected menu key based on current pathname
   const getSelectedKey = () => {
     const pathname = location.pathname;
-    if (pathname === "/") return "/";
-    if (pathname.startsWith("/dashboard")) return "/dashboard";
-    if (pathname.startsWith("/about")) return "/about";
+    if (pathname === '/') return '/';
+    if (pathname.startsWith('/dashboard')) return '/dashboard';
+    if (pathname.startsWith('/about')) return '/about';
     // For workflow detail pages (/workflow/xxx), don't highlight any menu item
-    return "";
+    return '';
   };
 
   return (
-    <Layout style={{ minHeight: "100vh", width: "100%" }}>
+    <Layout style={{ minHeight: '100vh', width: '100%' }}>
       <Header
         style={{
-          display: "flex",
-          alignItems: "center",
-          padding: "0 12px",
+          display: 'flex',
+          alignItems: 'center',
+          padding: '0 12px',
         }}
       >
         <div
           style={{
-            color: "white",
-            fontSize: "18px",
-            fontWeight: "bold",
-            marginRight: "24px",
+            color: 'white',
+            fontSize: '18px',
+            fontWeight: 'bold',
+            marginRight: '24px',
           }}
         >
           FlowO
@@ -72,7 +72,7 @@ function RootComponent() {
           selectedKeys={[getSelectedKey()]}
         />
       </Header>
-      <Content style={{ padding: "0px", minWidth: "80%", maxWidth: "100%" }}>
+      <Content style={{ padding: '0px', minWidth: '80%', maxWidth: '100%' }}>
         <Outlet />
       </Content>
       <ReactQueryDevtools initialIsOpen={false} />

@@ -1,7 +1,7 @@
-import type { NodeProps } from "@xyflow/react";
-import { Handle, Position } from "@xyflow/react";
-import { Tooltip } from "antd";
-import React, { memo } from "react";
+import type { NodeProps } from '@xyflow/react';
+import { Handle, Position } from '@xyflow/react';
+import { Tooltip } from 'antd';
+import React, { memo } from 'react';
 
 // Multi-progress bar component for showing job status breakdown
 const MultiProgressBar = ({
@@ -33,40 +33,40 @@ const MultiProgressBar = ({
     : {};
 
   return (
-    <div style={{ display: "flex", alignItems: "center", width: "100%" }}>
+    <div style={{ display: 'flex', alignItems: 'center', width: '100%' }}>
       <div
         style={{
-          display: "flex",
-          width: "100%",
+          display: 'flex',
+          width: '100%',
           height: 8,
           borderRadius: 0,
-          overflow: "hidden",
-          border: "1px solid #000000",
+          overflow: 'hidden',
+          border: '1px solid #000000',
         }}
       >
         {success > 0 && (
           <Tooltip title={`Success: ${success}`} {...tooltipProps}>
             <div
-              style={{ width: `${successPercent}%`, background: "#37a460" }}
+              style={{ width: `${successPercent}%`, background: '#37a460' }}
             />
           </Tooltip>
         )}
         {running > 0 && (
           <Tooltip title={`Running: ${running}`} {...tooltipProps}>
             <div
-              style={{ width: `${runningPercent}%`, background: "#85d2ab" }}
+              style={{ width: `${runningPercent}%`, background: '#85d2ab' }}
             />
           </Tooltip>
         )}
         {error > 0 && (
           <Tooltip title={`Error: ${error}`} {...tooltipProps}>
-            <div style={{ width: `${errorPercent}%`, background: "#f5222d" }} />
+            <div style={{ width: `${errorPercent}%`, background: '#f5222d' }} />
           </Tooltip>
         )}
         {waiting > 0 && (
           <Tooltip title={`Waiting: ${waiting}`} {...tooltipProps}>
             <div
-              style={{ width: `${waitingPercent}%`, background: "#d9d9d9" }}
+              style={{ width: `${waitingPercent}%`, background: '#d9d9d9' }}
             />
           </Tooltip>
         )}
@@ -112,7 +112,7 @@ const ProgressNode: React.FC<NodeProps> = ({ data }) => {
     isFullscreen = false,
   } = nodeData;
 
-  const isHorizontal = layoutDirection === "LR";
+  const isHorizontal = layoutDirection === 'LR';
 
   // Configure tooltip for fullscreen mode
   const tooltipProps = isFullscreen
@@ -129,16 +129,16 @@ const ProgressNode: React.FC<NodeProps> = ({ data }) => {
         background: backgroundColor,
         color: textColor,
         border: `2px solid ${borderColor}`,
-        borderRadius: "8px",
-        padding: "12px",
-        minWidth: "160px",
-        minHeight: "60px",
+        borderRadius: '8px',
+        padding: '12px',
+        minWidth: '160px',
+        minHeight: '60px',
         boxShadow,
-        cursor: isUnscheduled ? "not-allowed" : "pointer",
+        cursor: isUnscheduled ? 'not-allowed' : 'pointer',
         opacity: isUnscheduled ? 0.6 : 1,
-        transition: "all 0.2s ease",
-        fontSize: "13px",
-        fontWeight: "500",
+        transition: 'all 0.2s ease',
+        fontSize: '13px',
+        fontWeight: '500',
       }}
     >
       {/* Target Handle */}
@@ -156,23 +156,23 @@ const ProgressNode: React.FC<NodeProps> = ({ data }) => {
       {/* Node Content */}
       <div
         style={{
-          display: "flex",
-          flexDirection: "column",
-          gap: "4px",
-          alignItems: "flex-start",
-          justifyContent: "center",
-          textAlign: "left",
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '4px',
+          alignItems: 'flex-start',
+          justifyContent: 'center',
+          textAlign: 'left',
         }}
       >
         {/* Rule Name */}
         <Tooltip title={`Rule: ${rule}`} placement="top" {...tooltipProps}>
           <div
             style={{
-              fontWeight: "bold",
-              fontSize: "14px",
-              lineHeight: "1.2",
-              wordBreak: "break-word",
-              maxWidth: "130px",
+              fontWeight: 'bold',
+              fontSize: '14px',
+              lineHeight: '1.2',
+              wordBreak: 'break-word',
+              maxWidth: '130px',
             }}
           >
             {rule} ({statusInfo?.total})
@@ -181,7 +181,7 @@ const ProgressNode: React.FC<NodeProps> = ({ data }) => {
 
         {/* Progress Bar - only show if statusInfo is available */}
         {statusInfo && statusInfo.total > 0 && (
-          <div style={{ width: "100%", marginTop: "4px" }}>
+          <div style={{ width: '100%', marginTop: '4px' }}>
             <MultiProgressBar
               total={statusInfo.total}
               success={statusInfo.success}
@@ -196,9 +196,9 @@ const ProgressNode: React.FC<NodeProps> = ({ data }) => {
         {isUnscheduled && (
           <div
             style={{
-              fontSize: "10px",
-              color: "#999",
-              fontStyle: "italic",
+              fontSize: '10px',
+              color: '#999',
+              fontStyle: 'italic',
             }}
           >
             Unscheduled

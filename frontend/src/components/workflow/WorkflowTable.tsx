@@ -1,59 +1,68 @@
+import SnakemakeIcon from '@/assets/snakemake.svg?react';
+import {
+  deleteWorkflowMutation,
+  getAllUsersOptions,
+  getConfigfilesOptions,
+  getDetailOptions,
+  getSnakefileOptions,
+  getWorkflowLogsOptions,
+  getWorkflowsOptions,
+  getWorkflowsQueryKey,
+} from '@/client/@tanstack/react-query.gen';
+import type { Status } from '@/client/types.gen';
+import LiveUpdatesIndicator from '@/components/LiveUpdatesIndicator';
+import FileViewer from '@/components/code/FileViewer';
+import FilesViewer from '@/components/code/FilesViewer';
+import { DurationCell } from '@/components/common/common';
+import WorkflowTag from '@/components/tag/WorkflowTag';
+import { useWorkflowRealtime } from '@/config/workflowRealtime';
+import {
+  formatDateCompact,
+  getStatusColor,
+  getWorkflowProgressStatus,
+} from '@/utils/formatters';
 import {
   DeleteOutlined,
   FileTextOutlined,
   InfoCircleOutlined,
   ReloadOutlined,
   SettingOutlined,
-} from "@ant-design/icons";
-import Icon from "@ant-design/icons";
-import { useQueryClient } from "@tanstack/react-query";
-import { Link } from "@tanstack/react-router";
+} from '@ant-design/icons';
+import Icon from '@ant-design/icons';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
+import { Link } from '@tanstack/react-router';
 import {
   Button,
-  message,
   Popconfirm,
   Progress,
   Space,
   Table,
   Tag,
   Tooltip,
-} from "antd";
-import type { ColumnsType } from "antd/es/table";
-import { useCallback, useMemo, useState } from "react";
+  message,
+} from 'antd';
+import type { ColumnsType } from 'antd/es/table';
+import { useCallback, useMemo, useState } from 'react';
 
-import type { Status } from "../../api/api";
-import type { WorkflowResponse } from "../../api/client";
-import SnakemakeIcon from "../../assets/snakemake.svg?react";
-import {
-  useDeleteWorkflow,
-  useWorkflowConfig,
-  useWorkflowDetail,
-  useWorkflowLogs,
-  useWorkflowSnakefile,
-  useWorkFlowUsers,
-} from "../../hooks/useQueries";
-import { useWorkflowsWithSSE } from "../../hooks/useQueriesWithSSE";
-import {
-  formatDateCompact,
-  getStatusColor,
-  getWorkflowProgressStatus,
-} from "../../utils/formatters";
-import FilesViewer from "../code/FilesViewer";
-import FileViewer from "../code/FileViewer";
-import { DurationCell } from "../common/common";
-import LiveUpdatesIndicator from "../LiveUpdatesIndicator";
-import WorkflowTag from "../tag/WorkflowTag";
-import WorkflowSearch from "./WorkflowSearch";
+import WorkflowSearch from './WorkflowSearch';
+
+export const useDeleteWorkflow = () => {
+  return useMutation({
+    ...deleteWorkflowMutation(),
+  });
+};
 
 const WorkflowTable = () => {
   const deleteWorkflowMutation = useDeleteWorkflow();
+
   const queryClient = useQueryClient();
   const [snakefileModal, setSnakefileModal] = useState<{
     visible: boolean;
     workflowId: string;
   }>({
     visible: false,
-    workflowId: "",
+    workflowId: '',
   });
 
   const [configModal, setConfigModal] = useState<{
@@ -61,7 +70,7 @@ const WorkflowTable = () => {
     workflowId: string;
   }>({
     visible: false,
-    workflowId: "",
+    workflowId: '',
   });
 
   const [logModal, setLogModal] = useState<{
@@ -70,8 +79,8 @@ const WorkflowTable = () => {
     workflowStatus: Status;
   }>({
     visible: false,
-    workflowId: "",
-    workflowStatus: "SUCCESS",
+    workflowId: '',
+    workflowStatus: 'SUCCESS',
   });
 
   const [workflowDetailModal, setWorkflowDetailModal] = useState<{
@@ -79,7 +88,7 @@ const WorkflowTable = () => {
     workflowId: string;
   }>({
     visible: false,
-    workflowId: "",
+    workflowId: '',
   });
 
   // Pagination state
@@ -95,27 +104,45 @@ const WorkflowTable = () => {
   const [searchStartAt, setSearchStartAt] = useState<string | null>(null);
   const [searchEndAt, setSearchEndAt] = useState<string | null>(null);
 
-  const { data: snakefileData } = useWorkflowSnakefile(
-    snakefileModal.workflowId,
-    snakefileModal.visible && !!snakefileModal.workflowId,
-  );
+  const { data: snakefileData } = useQuery({
+    ...getSnakefileOptions({
+      path: {
+        workflow_id: snakefileModal.workflowId,
+      },
+    }),
+    enabled: snakefileModal.visible && !!snakefileModal.workflowId,
+  });
 
-  const { data: configData } = useWorkflowConfig(
-    configModal.workflowId,
-    configModal.visible && !!configModal.workflowId,
-  );
+  const { data: configData } = useQuery({
+    ...getConfigfilesOptions({
+      path: {
+        workflow_id: configModal.workflowId,
+      },
+    }),
+    enabled: configModal.visible && !!configModal.workflowId,
+  });
 
-  const { data: usersData } = useWorkFlowUsers();
+  const { data: usersData } = useQuery({
+    ...getAllUsersOptions(),
+  });
 
-  const { data: logData } = useWorkflowLogs(
-    logModal.workflowId,
-    logModal.visible && !!logModal.workflowId,
-  );
+  const { data: logData } = useQuery({
+    ...getWorkflowLogsOptions({
+      path: {
+        workflow_id: logModal.workflowId,
+      },
+    }),
+    enabled: logModal.visible && !!logModal.workflowId,
+  });
 
-  const { data: workflowDetailData } = useWorkflowDetail(
-    workflowDetailModal.workflowId,
-    workflowDetailModal.visible && !!workflowDetailModal.workflowId,
-  );
+  const { data: workflowDetailData } = useQuery({
+    ...getDetailOptions({
+      path: {
+        workflow_id: workflowDetailModal.workflowId,
+      },
+    }),
+    enabled: workflowDetailModal.visible && !!workflowDetailModal.workflowId,
+  });
 
   const queryParams = useMemo(() => {
     const offset = (currentPage - 1) * pageSize;
@@ -142,27 +169,29 @@ const WorkflowTable = () => {
     searchEndAt,
   ]);
 
-  const {
-    data: workflowsData,
-    isLoading,
-    sseError,
-    isSSEConnected,
-  } = useWorkflowsWithSSE(queryParams);
+  const { data: workflowsData, isLoading: workflowsLoading } = useQuery({
+    ...getWorkflowsOptions({ query: queryParams }),
+  });
 
   const workflows = workflowsData?.workflows ?? [];
+  useWorkflowRealtime(workflows.map((workflow) => ({ id: workflow.id })));
 
   // Handle workflow deletion
   const handleDeleteWorkflow = async (workflowId: string) => {
     try {
-      await deleteWorkflowMutation.mutateAsync(workflowId);
+      await deleteWorkflowMutation.mutateAsync({
+        path: {
+          workflow_id: workflowId,
+        },
+      });
       messageApi.open({
-        type: "success",
+        type: 'success',
         content: `Workflow ${workflowId} deleted successfully!`,
       });
     } catch (error) {
-      console.error("Failed to delete workflow:", error);
+      console.error('Failed to delete workflow:', error);
       messageApi.open({
-        type: "error",
+        type: 'error',
         content: `Failed to delete workflow ${workflowId}. Please try again.`,
       });
     }
@@ -212,25 +241,26 @@ const WorkflowTable = () => {
     [],
   );
 
-  // Refresh handler
   const handleRefresh = useCallback(() => {
-    queryClient.invalidateQueries({ queryKey: ["workflows"] });
+    queryClient.invalidateQueries({
+      queryKey: getWorkflowsQueryKey({ query: queryParams }),
+    });
     messageApi.open({
-      type: "success",
-      content: "Workflows refreshed successfully!",
+      type: 'success',
+      content: 'Workflows refreshed successfully!',
     });
   }, [queryClient, messageApi]);
 
   const columns: ColumnsType<WorkflowResponse> = [
     {
-      title: "Name",
-      dataIndex: "name",
-      key: "name",
+      title: 'Name',
+      dataIndex: 'name',
+      key: 'name',
       width: 240,
-      fixed: "left",
+      fixed: 'left',
       sorter: (a, b) => {
-        const nameA = a.name || "";
-        const nameB = b.name || "";
+        const nameA = a.name || '';
+        const nameB = b.name || '';
         return nameA.localeCompare(nameB);
       },
       render: (name: string | null, record: WorkflowResponse) => {
@@ -239,34 +269,34 @@ const WorkflowTable = () => {
         const extraTagsCount = tags.length - 5;
 
         return (
-          <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
             {/* Name on first row */}
             <Link
               to="/workflow/$workflowId"
               params={{ workflowId: record.id }}
               style={{
-                color: "#1890ff",
-                textDecoration: "none",
-                display: "block",
+                color: '#1890ff',
+                textDecoration: 'none',
+                display: 'block',
               }}
             >
               <div
                 style={{
                   fontWeight: 600,
-                  fontSize: "14px",
-                  color: "#1890ff",
-                  lineHeight: "1.3",
-                  letterSpacing: "-0.01em",
-                  cursor: "pointer",
-                  transition: "all 0.2s ease",
+                  fontSize: '14px',
+                  color: '#1890ff',
+                  lineHeight: '1.3',
+                  letterSpacing: '-0.01em',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.color = "#40a9ff";
-                  e.currentTarget.style.textDecoration = "underline";
+                  e.currentTarget.style.color = '#40a9ff';
+                  e.currentTarget.style.textDecoration = 'underline';
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.color = "#1890ff";
-                  e.currentTarget.style.textDecoration = "none";
+                  e.currentTarget.style.color = '#1890ff';
+                  e.currentTarget.style.textDecoration = 'none';
                 }}
               >
                 {name || record.directory} ({record.total_jobs})
@@ -276,9 +306,9 @@ const WorkflowTable = () => {
             {tags.length > 0 && (
               <div
                 style={{
-                  display: "flex",
-                  flexWrap: "wrap",
-                  alignItems: "center",
+                  display: 'flex',
+                  flexWrap: 'wrap',
+                  alignItems: 'center',
                 }}
               >
                 {displayTags.map((tag, index) => (
@@ -286,7 +316,7 @@ const WorkflowTable = () => {
                     key={index}
                     tag={tag}
                     style={{
-                      fontSize: "11px",
+                      fontSize: '11px',
                       marginInlineEnd: 2,
                     }}
                     onClick={handleTagsSearch}
@@ -299,7 +329,7 @@ const WorkflowTable = () => {
                     title={
                       <div>
                         <div
-                          style={{ marginBottom: "4px", fontWeight: "bold" }}
+                          style={{ marginBottom: '4px', fontWeight: 'bold' }}
                         >
                           All Tags ({tags.length}):
                         </div>
@@ -307,7 +337,7 @@ const WorkflowTable = () => {
                           <WorkflowTag
                             key={index}
                             tag={tag}
-                            style={{ margin: "2px", fontSize: "11px" }}
+                            style={{ margin: '2px', fontSize: '11px' }}
                             onClick={handleTagsSearch}
                           />
                         ))}
@@ -318,14 +348,14 @@ const WorkflowTable = () => {
                       color="default"
                       style={{
                         margin: 0,
-                        fontSize: "11px",
-                        lineHeight: "16px",
-                        height: "18px",
-                        display: "flex",
-                        alignItems: "center",
-                        cursor: "pointer",
-                        borderStyle: "dashed",
-                        padding: "0 6px",
+                        fontSize: '11px',
+                        lineHeight: '16px',
+                        height: '18px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        cursor: 'pointer',
+                        borderStyle: 'dashed',
+                        padding: '0 6px',
                       }}
                     >
                       +{extraTagsCount} more
@@ -339,49 +369,49 @@ const WorkflowTable = () => {
       },
     },
     {
-      title: "User",
-      dataIndex: "user",
-      key: "user",
-      align: "right",
+      title: 'User',
+      dataIndex: 'user',
+      key: 'user',
+      align: 'right',
       width: 35,
       filters: usersData?.map((user) => ({ text: user!, value: user! })) ?? [],
       filteredValue: user ? [user] : null,
       onFilter: (value, record) => record.user === value,
       sorter: (a, b) => {
-        const userA = a.user || "";
-        const userB = b.user || "";
+        const userA = a.user || '';
+        const userB = b.user || '';
         return userA.localeCompare(userB);
       },
     },
     {
-      title: "Status",
-      dataIndex: "status",
-      key: "status",
+      title: 'Status',
+      dataIndex: 'status',
+      key: 'status',
       width: 40,
-      align: "right",
+      align: 'right',
       render: (status: Status) => (
         <Tag
           color={getStatusColor(status)}
-          style={{ textTransform: "uppercase" }}
+          style={{ textTransform: 'uppercase' }}
         >
           {status}
         </Tag>
       ),
       filters: [
-        { text: "Success", value: "SUCCESS" },
-        { text: "Running", value: "RUNNING" },
-        { text: "Error", value: "ERROR" },
-        { text: "Waiting", value: "WAITING" },
+        { text: 'Success', value: 'SUCCESS' },
+        { text: 'Running', value: 'RUNNING' },
+        { text: 'Error', value: 'ERROR' },
+        { text: 'Waiting', value: 'WAITING' },
       ],
       filteredValue: status ? [status] : null,
       onFilter: (value, record) => record.status === value,
     },
     {
-      title: "Started time",
-      dataIndex: "started_at",
-      key: "started_at",
+      title: 'Started time',
+      dataIndex: 'started_at',
+      key: 'started_at',
       width: 60,
-      align: "right",
+      align: 'right',
       render: (startedAt: string | null) => formatDateCompact(startedAt),
       sorter: (a, b) => {
         const dateA = a.started_at ? new Date(a.started_at).getTime() : 0;
@@ -390,10 +420,10 @@ const WorkflowTable = () => {
       },
     },
     {
-      title: "End Time",
-      dataIndex: "end_time",
-      key: "end_time",
-      align: "right",
+      title: 'End Time',
+      dataIndex: 'end_time',
+      key: 'end_time',
+      align: 'right',
       width: 60,
       render: (endTime: string | null) => formatDateCompact(endTime),
       sorter: (a, b) => {
@@ -403,19 +433,19 @@ const WorkflowTable = () => {
       },
     },
     {
-      title: "Duration",
-      dataIndex: "duration",
-      key: "duration",
+      title: 'Duration',
+      dataIndex: 'duration',
+      key: 'duration',
       width: 30,
-      align: "right",
+      align: 'right',
       render: (_, record) => <DurationCell record={record} />,
     },
     {
-      title: "Progress",
-      key: "progress",
+      title: 'Progress',
+      key: 'progress',
       width: 25,
-      fixed: "right",
-      align: "right",
+      fixed: 'right',
+      align: 'right',
       render: (_, record) => {
         const progressStatus = getWorkflowProgressStatus(
           record.status as Status,
@@ -423,11 +453,11 @@ const WorkflowTable = () => {
         return (
           <div
             style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "flex-end",
-              width: "100%",
-              height: "100%",
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'flex-end',
+              width: '100%',
+              height: '100%',
             }}
           >
             <Progress
@@ -441,20 +471,20 @@ const WorkflowTable = () => {
       },
     },
     {
-      title: "Files",
-      key: "files",
+      title: 'Files',
+      key: 'files',
       width: 40,
-      align: "center",
+      align: 'center',
       render: (_, record) => {
         return (
           <div
             style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "flex-end",
-              gap: "2px",
-              width: "100%",
-              height: "100%",
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'flex-end',
+              gap: '2px',
+              width: '100%',
+              height: '100%',
             }}
           >
             <Space size={2}>
@@ -476,8 +506,8 @@ const WorkflowTable = () => {
                     size="small"
                     onClick={() => handleShowConfig(record.id)}
                     style={{
-                      color: "#52c41a",
-                      padding: "0px",
+                      color: '#52c41a',
+                      padding: '0px',
                     }}
                   />
                 </Tooltip>
@@ -488,8 +518,8 @@ const WorkflowTable = () => {
                     icon={<SettingOutlined style={{ fontSize: 22 }} />}
                     size="small"
                     style={{
-                      color: "#e8e8e8",
-                      padding: "0px",
+                      color: '#e8e8e8',
+                      padding: '0px',
                     }}
                   />
                 </Tooltip>
@@ -505,8 +535,8 @@ const WorkflowTable = () => {
                       handleShowLogs(record.id, record.status as Status)
                     }
                     style={{
-                      color: "#fa8c16",
-                      padding: "0px",
+                      color: '#fa8c16',
+                      padding: '0px',
                     }}
                   />
                 </Tooltip>
@@ -524,8 +554,8 @@ const WorkflowTable = () => {
                     })
                   }
                   style={{
-                    color: "#1890ff",
-                    padding: "0px",
+                    color: '#1890ff',
+                    padding: '0px',
                   }}
                 />
               </Tooltip>
@@ -535,10 +565,10 @@ const WorkflowTable = () => {
       },
     },
     {
-      title: "Delete",
-      key: "delete",
+      title: 'Delete',
+      key: 'delete',
       width: 20,
-      align: "center",
+      align: 'center',
       render: (_, record) => {
         return (
           <Popconfirm
@@ -559,7 +589,7 @@ const WorkflowTable = () => {
               icon={<DeleteOutlined style={{ fontSize: 20 }} />}
               size="small"
               danger
-              style={{ padding: "2px" }}
+              style={{ padding: '2px' }}
             />
           </Popconfirm>
         );
@@ -573,18 +603,18 @@ const WorkflowTable = () => {
       <div
         style={{
           marginBottom: 16,
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
         }}
       >
-        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-          <h3 style={{ margin: "4px 0" }}>
-            Workflows ({workflowsData?.total ?? 0} total, showing{" "}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <h3 style={{ margin: '4px 0' }}>
+            Workflows ({workflowsData?.total ?? 0} total, showing{' '}
             {workflows.length})
           </h3>
           <LiveUpdatesIndicator
-            isConnected={isSSEConnected}
+            isConnected={true}
             retryCount={0}
             showReconnectButton={false}
           />
@@ -600,33 +630,17 @@ const WorkflowTable = () => {
           type="default"
           icon={<ReloadOutlined />}
           onClick={handleRefresh}
-          loading={isLoading}
           size="small"
         >
           Refresh
         </Button>
       </div>
 
-      {sseError && (
-        <div
-          style={{
-            color: "#ff4d4f",
-            backgroundColor: "#fff2f0",
-            border: "1px solid #ffccc7",
-            borderRadius: "6px",
-            padding: "8px 12px",
-            marginBottom: "16px",
-          }}
-        >
-          SSE Connection Error: {sseError}
-        </div>
-      )}
-
       <Table
         columns={columns}
         dataSource={workflows}
         rowKey="id"
-        loading={isLoading}
+        loading={workflowsLoading}
         onChange={(pagination, filters) => {
           if (filters.user !== undefined) {
             const userFilter = filters.user;
@@ -652,8 +666,8 @@ const WorkflowTable = () => {
           showSizeChanger: true,
           showQuickJumper: true,
           showTotal: (total, range) => `${range[0]}-${range[1]} of ${total}`,
-          pageSizeOptions: ["10", "20", "50", "100"],
-          position: ["bottomCenter"],
+          pageSizeOptions: ['10', '20', '50', '100'],
+          position: ['bottomCenter'],
           onChange: (page, size) => {
             setCurrentPage(page);
             if (size !== pageSize) {
@@ -668,27 +682,27 @@ const WorkflowTable = () => {
         }}
         scroll={{ x: 1200 }}
         size="small"
-        style={{ backgroundColor: "white" }}
+        style={{ backgroundColor: 'white' }}
         onRow={() => ({
-          style: { cursor: "pointer" },
+          style: { cursor: 'pointer' },
         })}
       />
       <FileViewer
         key={`snakefile-${snakefileModal.workflowId}`}
         title={`Snakefile - Workflow ${snakefileModal.workflowId}`}
         visible={snakefileModal.visible}
-        onClose={() => setSnakefileModal({ visible: false, workflowId: "" })}
-        fileContent={snakefileData || ""}
+        onClose={() => setSnakefileModal({ visible: false, workflowId: '' })}
+        fileContent={snakefileData || ''}
         fileFormat="yaml"
       />
       <FilesViewer
         key={`config-${configModal.workflowId}`}
         visible={configModal.visible}
-        onClose={() => setConfigModal({ visible: false, workflowId: "" })}
+        onClose={() => setConfigModal({ visible: false, workflowId: '' })}
         fileContent={Object.fromEntries(
           Object.entries(configData || {}).map(([key, value]) => [
             key,
-            value || "",
+            value || '',
           ]),
         )}
         workflowId={configModal.workflowId}
@@ -701,11 +715,11 @@ const WorkflowTable = () => {
         onClose={() =>
           setLogModal({
             visible: false,
-            workflowId: "",
-            workflowStatus: "SUCCESS",
+            workflowId: '',
+            workflowStatus: 'SUCCESS',
           })
         }
-        fileContent={logData?.content || ""}
+        fileContent={logData?.content || ''}
         fileFormat="log"
       />
 
@@ -714,9 +728,9 @@ const WorkflowTable = () => {
         title={`Detail - Workflow ${workflowDetailModal.workflowId}`}
         visible={workflowDetailModal.visible}
         onClose={() =>
-          setWorkflowDetailModal({ visible: false, workflowId: "" })
+          setWorkflowDetailModal({ visible: false, workflowId: '' })
         }
-        fileContent={JSON.stringify(workflowDetailData, null, 2) || ""}
+        fileContent={JSON.stringify(workflowDetailData, null, 2) || ''}
         fileFormat="json"
       />
     </div>

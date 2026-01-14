@@ -1,8 +1,8 @@
-import { ClearOutlined, DownOutlined, RightOutlined } from "@ant-design/icons";
-import { Button, Card, Radio, Space, Tooltip } from "antd";
-import React from "react";
+import { ClearOutlined, DownOutlined, RightOutlined } from '@ant-design/icons';
+import { Button, Card, Radio, Space, Tooltip } from 'antd';
+import React from 'react';
 
-import { type LayoutDirection } from "../../utils/graphLayout";
+import { type LayoutDirection } from '../../utils/graphLayout';
 
 interface LayoutControlPanelProps {
   layoutDirection: LayoutDirection;
@@ -21,13 +21,13 @@ const LayoutControlPanel: React.FC<LayoutControlPanelProps> = ({
     <Card
       size="small"
       style={{
-        boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)",
-        border: "1px solid #d9d9d9",
+        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+        border: '1px solid #d9d9d9',
       }}
     >
-      <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-          <span style={{ fontSize: "12px", fontWeight: "500" }}>Layout:</span>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span style={{ fontSize: '12px', fontWeight: '500' }}>Layout:</span>
           <Radio.Group
             value={layoutDirection}
             onChange={(e) => onLayoutChange(e.target.value)}
@@ -55,30 +55,30 @@ const LayoutControlPanel: React.FC<LayoutControlPanelProps> = ({
         {selectedRule && (
           <div
             style={{
-              display: "flex",
-              flexDirection: "column",
-              gap: "4px",
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '4px',
             }}
           >
             <div
               style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "8px",
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
               }}
             >
-              <span style={{ fontSize: "12px", fontWeight: "500" }}>
+              <span style={{ fontSize: '12px', fontWeight: '500' }}>
                 Filter:
               </span>
               <span
                 style={{
-                  fontSize: "11px",
-                  color: "#1890ff",
-                  fontWeight: "500",
-                  backgroundColor: "#f0f8ff",
-                  padding: "2px 6px",
-                  borderRadius: "4px",
-                  border: "1px solid #d4e8fc",
+                  fontSize: '11px',
+                  color: '#1890ff',
+                  fontWeight: '500',
+                  backgroundColor: '#f0f8ff',
+                  padding: '2px 6px',
+                  borderRadius: '4px',
+                  border: '1px solid #d4e8fc',
                 }}
               >
                 {selectedRule}
@@ -88,7 +88,7 @@ const LayoutControlPanel: React.FC<LayoutControlPanelProps> = ({
                 icon={<ClearOutlined />}
                 onClick={onClearRule}
                 type="text"
-                style={{ alignSelf: "flex-start" }}
+                style={{ alignSelf: 'flex-start' }}
               />
             </div>
           </div>

@@ -1,7 +1,7 @@
-import { Alert, Modal, Spin, Typography } from "antd";
-import React, { useEffect, useState } from "react";
+import { Alert, Modal, Spin, Typography } from 'antd';
+import React, { useEffect, useState } from 'react';
 
-import { useWorkflowLogs } from "../../hooks/useQueries";
+import { useWorkflowLogs } from '../../hooks/useQueries';
 
 const { Text } = Typography;
 
@@ -24,7 +24,7 @@ const LogViewer: React.FC<LogViewerProps> = ({
   onClose,
   workflowId,
 }) => {
-  const [logContent, setLogContent] = useState<string>("");
+  const [logContent, setLogContent] = useState<string>('');
 
   const {
     data: staticLogs,
@@ -39,22 +39,22 @@ const LogViewer: React.FC<LogViewerProps> = ({
       if (logResponse.content) {
         setLogContent(logResponse.content);
       } else {
-        setLogContent(logResponse.message || "No log content available");
+        setLogContent(logResponse.message || 'No log content available');
       }
     } else if (visible && !staticLogs) {
-      setLogContent("");
+      setLogContent('');
     }
   }, [visible, staticLogs]);
 
   const handleClose = () => {
-    setLogContent("");
+    setLogContent('');
     onClose();
   };
 
   return (
     <Modal
       title={
-        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <span>Workflow Logs - {workflowId}</span>
         </div>
       }
@@ -64,16 +64,16 @@ const LogViewer: React.FC<LogViewerProps> = ({
       footer={null}
     >
       <div
-        style={{ height: "500px", display: "flex", flexDirection: "column" }}
+        style={{ height: '500px', display: 'flex', flexDirection: 'column' }}
       >
         {error && (
           <Alert
             message="Error Loading Logs"
             description={
-              error instanceof Error ? error.message : "Unknown error"
+              error instanceof Error ? error.message : 'Unknown error'
             }
             type="error"
-            style={{ marginBottom: "16px" }}
+            style={{ marginBottom: '16px' }}
             showIcon
           />
         )}
@@ -82,10 +82,10 @@ const LogViewer: React.FC<LogViewerProps> = ({
         {isLoading ? (
           <div
             style={{
-              display: "flex",
-              justifyContent: "center",
-              alignItems: "center",
-              height: "100%",
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              height: '100%',
             }}
           >
             <Spin size="large" />
@@ -94,20 +94,20 @@ const LogViewer: React.FC<LogViewerProps> = ({
           <div
             style={{
               flex: 1,
-              backgroundColor: "#1e1e1e",
-              color: "#d4d4d4",
-              padding: "16px",
+              backgroundColor: '#1e1e1e',
+              color: '#d4d4d4',
+              padding: '16px',
               fontFamily:
                 'Monaco, Menlo, "Ubuntu Mono", consolas, "source-code-pro", monospace',
-              fontSize: "12px",
-              overflow: "auto",
-              whiteSpace: "pre-wrap",
-              border: "1px solid #d9d9d9",
-              borderRadius: "6px",
+              fontSize: '12px',
+              overflow: 'auto',
+              whiteSpace: 'pre-wrap',
+              border: '1px solid #d9d9d9',
+              borderRadius: '6px',
             }}
           >
             {logContent || (
-              <Text type="secondary" style={{ color: "#888" }}>
+              <Text type="secondary" style={{ color: '#888' }}>
                 No logs available...
               </Text>
             )}

@@ -1,8 +1,8 @@
-import { ExclamationCircleOutlined } from "@ant-design/icons";
-import { Alert, Switch, Typography } from "antd";
-import React, { useMemo, useState } from "react";
+import { ExclamationCircleOutlined } from '@ant-design/icons';
+import { Alert, Switch, Typography } from 'antd';
+import React, { useMemo, useState } from 'react';
 
-import VirtualizedCodeViewer from "./VirtualizedCodeViewer";
+import VirtualizedCodeViewer from './VirtualizedCodeViewer';
 
 const { Text } = Typography;
 
@@ -21,7 +21,7 @@ interface FileContentProps {
 const FileContent: React.FC<FileContentProps> = ({
   fileContent,
   fileName,
-  fileFormat = "yaml",
+  fileFormat = 'yaml',
   showFileName = false,
 }) => {
   const [forceHighlighting, setForceHighlighting] = useState(false);
@@ -41,7 +41,7 @@ const FileContent: React.FC<FileContentProps> = ({
     }
 
     const sizeInBytes = new Blob([fileContent]).size;
-    const lineCount = fileContent.split("\n").length;
+    const lineCount = fileContent.split('\n').length;
     const isLargeFile = sizeInBytes > MAX_FILE_SIZE_FOR_HIGHLIGHTING;
     const hasLotsOfLines = lineCount > MAX_LINES_FOR_HIGHLIGHTING;
     const shouldSkipHighlighting =
@@ -60,12 +60,12 @@ const FileContent: React.FC<FileContentProps> = ({
   // Get preview content for large files
   const previewContent = useMemo(() => {
     if (!fileContent || !fileAnalysis.shouldSkipHighlighting)
-      return fileContent || "";
+      return fileContent || '';
 
-    const lines = fileContent.split("\n");
+    const lines = fileContent.split('\n');
     if (lines.length <= LARGE_FILE_PREVIEW_LINES) return fileContent;
 
-    const preview = lines.slice(0, LARGE_FILE_PREVIEW_LINES).join("\n");
+    const preview = lines.slice(0, LARGE_FILE_PREVIEW_LINES).join('\n');
     const remainingLines = lines.length - LARGE_FILE_PREVIEW_LINES;
 
     return `${preview}\n\n... [${remainingLines} more lines truncated for performance] ...`;
@@ -73,44 +73,44 @@ const FileContent: React.FC<FileContentProps> = ({
 
   const getLanguageFromFormat = () => {
     switch (fileFormat) {
-      case "json":
-        return "json";
-      case "yaml":
-        return "yaml";
-      case "log":
-        return "text";
-      case "python":
-        return "python";
-      case "md":
-      case "rst":
-      case "txt":
-        return "markdown";
+      case 'json':
+        return 'json';
+      case 'yaml':
+        return 'yaml';
+      case 'log':
+        return 'text';
+      case 'python':
+        return 'python';
+      case 'md':
+      case 'rst':
+      case 'txt':
+        return 'markdown';
       default:
-        return "yaml";
+        return 'yaml';
     }
   };
 
   return (
     <div
       style={{
-        height: "100%",
-        maxHeight: "100%",
-        overflow: "hidden",
-        display: "flex",
-        flexDirection: "column",
+        height: '100%',
+        maxHeight: '100%',
+        overflow: 'hidden',
+        display: 'flex',
+        flexDirection: 'column',
       }}
     >
       {showFileName && (
         <div
           style={{
-            display: "flex",
-            flexDirection: "row",
-            justifyContent: "space-between",
-            alignItems: "center",
-            marginBottom: "12px",
-            padding: "8px 12px",
-            backgroundColor: "#f5f5f5",
-            borderRadius: "4px",
+            display: 'flex',
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: '12px',
+            padding: '8px 12px',
+            backgroundColor: '#f5f5f5',
+            borderRadius: '4px',
             flexShrink: 0,
           }}
         >
@@ -132,12 +132,12 @@ const FileContent: React.FC<FileContentProps> = ({
           description={
             <div>
               <Text>
-                This file is large ({fileAnalysis.sizeInKB}KB,{" "}
+                This file is large ({fileAnalysis.sizeInKB}KB,{' '}
                 {fileAnalysis.lineCount} lines) and syntax highlighting has been
                 disabled for performance.
                 {fileAnalysis.lineCount > LARGE_FILE_PREVIEW_LINES && (
                   <span>
-                    {" "}
+                    {' '}
                     Showing first {LARGE_FILE_PREVIEW_LINES} lines only.
                   </span>
                 )}
@@ -157,7 +157,7 @@ const FileContent: React.FC<FileContentProps> = ({
           type="warning"
           icon={<ExclamationCircleOutlined />}
           showIcon
-          style={{ marginBottom: "16px", flexShrink: 0 }}
+          style={{ marginBottom: '16px', flexShrink: 0 }}
         />
       )}
 
@@ -165,33 +165,33 @@ const FileContent: React.FC<FileContentProps> = ({
         style={{
           flex: 1,
           minHeight: 0,
-          display: "flex",
-          flexDirection: "column",
+          display: 'flex',
+          flexDirection: 'column',
         }}
       >
         {fileAnalysis.shouldSkipHighlighting ? (
           <div
             style={{
               margin: 0,
-              padding: "16px",
-              fontSize: "12px",
+              padding: '16px',
+              fontSize: '12px',
               fontFamily: 'Monaco, Menlo, "Ubuntu Mono", Consolas, monospace',
-              whiteSpace: "pre-wrap",
-              backgroundColor: "#f8f9fa",
-              color: "#495057",
-              lineHeight: "1.5",
-              border: "1px solid #dee2e6",
-              borderRadius: "4px",
+              whiteSpace: 'pre-wrap',
+              backgroundColor: '#f8f9fa',
+              color: '#495057',
+              lineHeight: '1.5',
+              border: '1px solid #dee2e6',
+              borderRadius: '4px',
               flex: 1,
-              overflow: "auto",
+              overflow: 'auto',
             }}
           >
             {previewContent}
           </div>
         ) : (
-          <div style={{ height: "100%", minHeight: "50px" }}>
+          <div style={{ height: '100%', minHeight: '50px' }}>
             <VirtualizedCodeViewer
-              code={fileContent || ""}
+              code={fileContent || ''}
               language={getLanguageFromFormat()}
               theme="light"
               fontSize={12}

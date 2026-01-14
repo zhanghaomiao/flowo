@@ -1,9 +1,9 @@
-import { FolderOutlined } from "@ant-design/icons";
+import { FolderOutlined } from '@ant-design/icons';
 
-import type { TreeDataNode } from "../../api/api";
-import { getFileIcon, isSupportedFile } from "./FileUtils";
-import { getFileExtension } from "./ResultViewer";
-import type { AntdTreeNode } from "./types";
+import type { TreeDataNode } from '../../api/api';
+import { getFileIcon, isSupportedFile } from './FileUtils';
+import { getFileExtension } from './ResultViewer';
+import type { AntdTreeNode } from './types';
 
 // Filter tree nodes to only include supported files and directories
 // For lazy loading: keep all directories since their children will be loaded later
@@ -14,7 +14,7 @@ export const filterSupportedFiles = (
     .map((node) => {
       if (node.isLeaf) {
         // For files, only include if supported
-        return isSupportedFile(node.title || "") ? node : null;
+        return isSupportedFile(node.title || '') ? node : null;
       } else {
         // For directories, always include them (children will be loaded later)
         // If children are already loaded, recursively filter them
@@ -35,19 +35,19 @@ export const filterSupportedFiles = (
 
 export const convertToAntdTreeData = (
   nodes: (TreeDataNode & { fileSize?: number | null })[],
-  parentPath = "",
+  parentPath = '',
   onLoadData?: (node: AntdTreeNode) => Promise<void>,
 ): AntdTreeNode[] => {
   const filteredNodes = filterSupportedFiles(nodes);
 
   return filteredNodes.map((node) => {
     const fullPath = parentPath ? `${parentPath}/${node.title}` : node.title;
-    const fileExtension = node.isLeaf ? getFileExtension(node.title || "") : "";
+    const fileExtension = node.isLeaf ? getFileExtension(node.title || '') : '';
 
     return {
-      title: node.title || "",
-      key: node.key || "",
-      icon: node.isLeaf ? getFileIcon(node.title || "") : <FolderOutlined />,
+      title: node.title || '',
+      key: node.key || '',
+      icon: node.isLeaf ? getFileIcon(node.title || '') : <FolderOutlined />,
       children: node.children
         ? convertToAntdTreeData(
             node.children as (TreeDataNode & { fileSize?: number | null })[],
@@ -59,21 +59,21 @@ export const convertToAntdTreeData = (
           : [], // Empty array for directories to enable lazy loading
       isLeaf: node.isLeaf || false,
       fullPath,
-      type: node.isLeaf ? "file" : "directory",
+      type: node.isLeaf ? 'file' : 'directory',
       fileExtension,
       nodeData: node, // Store original node data for preview
       loadData:
         onLoadData && !node.isLeaf
           ? () =>
               onLoadData({
-                title: node.title || "",
-                key: node.key || "",
+                title: node.title || '',
+                key: node.key || '',
                 icon: <FolderOutlined />,
                 children: [],
                 isLeaf: false,
                 fullPath,
-                type: "directory",
-                fileExtension: "",
+                type: 'directory',
+                fileExtension: '',
                 nodeData: node,
               })
           : undefined,
@@ -89,8 +89,8 @@ export const convertRuleOutputToTreeData = (
   const treeMap = new Map<string, AntdTreeNode>();
 
   filePaths.forEach((filePath) => {
-    const parts = filePath.split("/");
-    let currentPath = "";
+    const parts = filePath.split('/');
+    let currentPath = '';
 
     parts.forEach((part, index) => {
       const isFile = index === parts.length - 1;
@@ -98,7 +98,7 @@ export const convertRuleOutputToTreeData = (
       currentPath = parentPath ? `${parentPath}/${part}` : part;
 
       if (!treeMap.has(currentPath)) {
-        const fileExtension = isFile ? getFileExtension(part) : "";
+        const fileExtension = isFile ? getFileExtension(part) : '';
 
         const node: AntdTreeNode = {
           title: part,
@@ -107,7 +107,7 @@ export const convertRuleOutputToTreeData = (
           children: isFile ? undefined : [],
           isLeaf: isFile,
           fullPath: basepath ? `${basepath}/${currentPath}` : currentPath,
-          type: isFile ? "file" : "directory",
+          type: isFile ? 'file' : 'directory',
           fileExtension,
           nodeData: {
             title: part,
@@ -137,7 +137,7 @@ export const convertRuleOutputToTreeData = (
   // Return only root level nodes
   const rootNodes: AntdTreeNode[] = [];
   treeMap.forEach((node, path) => {
-    if (!path.includes("/")) {
+    if (!path.includes('/')) {
       rootNodes.push(node);
     }
   });
@@ -157,19 +157,19 @@ export const combineRuleOutputWithDirectoryContent = (
   // Find the directory node in the rule tree
   const findAndUpdateNode = (nodes: AntdTreeNode[]): AntdTreeNode[] => {
     return nodes.map((node) => {
-      if (node.fullPath === directoryPath && node.type === "directory") {
+      if (node.fullPath === directoryPath && node.type === 'directory') {
         // Convert directory content to AntdTreeNode format (files only)
         const additionalFiles = filesOnly.map((item) => ({
-          title: item.title || "",
-          key: `${directoryPath}/${item.title || ""}`,
-          icon: getFileIcon(item.title || ""),
+          title: item.title || '',
+          key: `${directoryPath}/${item.title || ''}`,
+          icon: getFileIcon(item.title || ''),
           children: undefined,
           isLeaf: true,
-          fullPath: `${directoryPath}/${item.title || ""}`,
-          type: "file" as const,
-          fileExtension: getFileExtension(item.title || ""),
+          fullPath: `${directoryPath}/${item.title || ''}`,
+          type: 'file' as const,
+          fileExtension: getFileExtension(item.title || ''),
           nodeData: {
-            title: item.title || "",
+            title: item.title || '',
             key: item.key,
             isLeaf: true,
             children: undefined,
