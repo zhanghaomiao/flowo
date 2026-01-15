@@ -1,7 +1,7 @@
+import { client } from '@/client/client.gen';
 import { Alert, Image, Spin } from 'antd';
 import React, { useState } from 'react';
 
-import { constructApiUrl } from '../../api/client';
 import FileContent from '../code/FileContent';
 import { CSVPreview, FullscreenCSVPreview } from './CSVPreview';
 import {
@@ -165,7 +165,9 @@ export const FilePreview: React.FC<{ nodeData: SelectedNodeData }> = ({
 
   if (type !== 'file') return null;
 
-  const fileUrl = constructApiUrl(`/files/${fullPath}`);
+  const fileUrl = client.buildUrl({
+    url: `/files/${fullPath}`,
+  });
   const category = getFileTypeCategory(data.title || '');
   const fileSize = data.fileSize || 0;
 
@@ -232,7 +234,9 @@ const renderPreviewContent = (
 // Enhanced render function for fullscreen
 export const renderFullscreenPreview = (nodeData: SelectedNodeData) => {
   const { fullPath, nodeData: data } = nodeData;
-  const fileUrl = constructApiUrl(`/files/${fullPath}`);
+  const fileUrl = client.buildUrl({
+    url: `/files/${fullPath}`,
+  });
   const category = getFileTypeCategory(data.title || '');
   const fileSize = data.fileSize || 0;
 

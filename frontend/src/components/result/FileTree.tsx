@@ -1,6 +1,6 @@
+import type { TreeDataNode } from '@/client/types.gen';
 import { FolderOutlined } from '@ant-design/icons';
 
-import type { TreeDataNode } from '../../api/api';
 import { getFileIcon, isSupportedFile } from './FileUtils';
 import { getFileExtension } from './ResultViewer';
 import type { AntdTreeNode } from './types';

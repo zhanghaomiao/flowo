@@ -1,4 +1,5 @@
-import { useWorkFlowIdByName } from '@/hooks/useQueries';
+// import { useWorkFlowIdByName } from '@/hooks/useQueries';
+import { useGetWorkflowIdByNameQuery } from '@/client/@tanstack/react-query.gen';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { useEffect } from 'react';
 
@@ -18,7 +19,11 @@ export const Route = createFileRoute('/workflow/')({
 function RouteComponent() {
   const { name } = Route.useSearch();
   const navigate = useNavigate();
-  const { data: workflowId, isLoading, error } = useWorkFlowIdByName(name);
+  const { data: workflowId, isLoading } = useGetWorkflowIdByNameQuery({
+    query: {
+      name,
+    },
+  });
 
   useEffect(() => {
     if (name && workflowId) {
@@ -28,10 +33,6 @@ function RouteComponent() {
 
   if (isLoading) {
     return <div>Loading...</div>;
-  }
-
-  if (error) {
-    return <div>Error: {error.message}</div>;
   }
 
   return (

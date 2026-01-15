@@ -1,7 +1,6 @@
+import { useGetWorkflowLogsQuery } from '@/client/@tanstack/react-query.gen';
 import { Alert, Modal, Spin, Typography } from 'antd';
 import React, { useEffect, useState } from 'react';
-
-import { useWorkflowLogs } from '../../hooks/useQueries';
 
 const { Text } = Typography;
 
@@ -9,14 +8,6 @@ interface LogViewerProps {
   visible: boolean;
   onClose: () => void;
   workflowId: string;
-}
-
-// Define the log response structure based on the error message
-interface LogResponse {
-  workflow_id: string;
-  log_file: string;
-  content: string;
-  message: string;
 }
 
 const LogViewer: React.FC<LogViewerProps> = ({
@@ -30,12 +21,16 @@ const LogViewer: React.FC<LogViewerProps> = ({
     data: staticLogs,
     isLoading,
     error,
-  } = useWorkflowLogs(workflowId, visible);
+  } = useGetWorkflowLogsQuery({
+    path: {
+      workflow_id: workflowId,
+    },
+  });
 
   // Initialize log content when modal opens or data changes
   useEffect(() => {
     if (visible && staticLogs) {
-      const logResponse = staticLogs as LogResponse;
+      const logResponse = staticLogs;
       if (logResponse.content) {
         setLogContent(logResponse.content);
       } else {

@@ -1,6 +1,6 @@
 import {
-  getDetailOptions,
-  getProgressOptions,
+  useGetDetailQuery,
+  useGetProgressQuery,
 } from '@/client/@tanstack/react-query.gen';
 import WorkflowTag from '@/components/tag/WorkflowTag';
 import {
@@ -19,29 +19,25 @@ interface WorkflowProgressProps {
 }
 
 const WorkflowProgress: React.FC<WorkflowProgressProps> = ({ workflowId }) => {
-  const { data: progressData } = useQuery({
-    ...getProgressOptions({
-      path: {
-        workflow_id: workflowId,
-      },
-    }),
+  const { data: progressData } = useGetProgressQuery({
+    path: {
+      workflow_id: workflowId,
+    },
   });
-  const { data: totalJobsData } = useQuery({
-    ...getProgressOptions({
-      path: {
-        workflow_id: workflowId,
-      },
-      query: {
-        return_total_jobs_number: true,
-      },
-    }),
+
+  const { data: totalJobsData } = useGetProgressQuery({
+    path: {
+      workflow_id: workflowId,
+    },
+    query: {
+      return_total_jobs_number: true,
+    },
   });
-  const { data: workflow } = useQuery({
-    ...getDetailOptions({
-      path: {
-        workflow_id: workflowId,
-      },
-    }),
+
+  const { data: workflow } = useGetDetailQuery({
+    path: {
+      workflow_id: workflowId,
+    },
   });
 
   const getProgressStatus = () => {

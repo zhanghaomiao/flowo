@@ -1,7 +1,6 @@
+import { getTagColor } from '@/utils/tagColors';
 import { Tag } from 'antd';
 import React from 'react';
-
-import { getTagColor } from '../../utils/tagColors';
 
 interface WorkflowTagProps {
   tag: string;

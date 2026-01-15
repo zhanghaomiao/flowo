@@ -1,5 +1,4 @@
 import {
-  CodeOutlined,
   FileImageOutlined,
   FileOutlined,
   FilePdfOutlined,

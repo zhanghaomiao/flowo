@@ -9,7 +9,7 @@ import {
   getWorkflowsOptions,
   getWorkflowsQueryKey,
 } from '@/client/@tanstack/react-query.gen';
-import type { Status } from '@/client/types.gen';
+import type { Status, WorkflowResponse } from '@/client/types.gen';
 import LiveUpdatesIndicator from '@/components/LiveUpdatesIndicator';
 import FileViewer from '@/components/code/FileViewer';
 import FilesViewer from '@/components/code/FilesViewer';

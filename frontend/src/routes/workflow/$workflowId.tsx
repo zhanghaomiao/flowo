@@ -1,6 +1,7 @@
 import {
   getDetailOptions,
   getSnakefileOptions,
+  useGetSnakefileQuery,
 } from '@/client/@tanstack/react-query.gen';
 import type { Status } from '@/client/types.gen';
 import FileContent from '@/components/code/FileContent.tsx';
@@ -58,12 +59,10 @@ function WorkflowDetail() {
     setSelectedRule(selectedRule === ruleName ? null : ruleName);
   };
 
-  const { data: snakefileContent } = useQuery({
-    ...getSnakefileOptions({
-      path: {
-        workflow_id: workflowId as string,
-      },
-    }),
+  const { data: snakefileContent } = useGetSnakefileQuery({
+    path: {
+      workflow_id: workflowId as string,
+    },
   });
 
   return (
@@ -228,7 +227,7 @@ function WorkflowDetail() {
                   />
                 )}
 
-                {activeTab === 'result' && (
+                {/* {activeTab === 'result' && (
                   <div
                     style={{
                       height: '100%',
@@ -243,7 +242,7 @@ function WorkflowDetail() {
                       selectedRule={selectedRule || undefined}
                     />
                   </div>
-                )}
+                )} */}
               </div>
             </div>
           </Splitter.Panel>
