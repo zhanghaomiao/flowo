@@ -1,15 +1,15 @@
 import {
-  getDetailOptions,
+  useGetDetailQuery,
   getSnakefileOptions,
-  useGetSnakefileQuery,
 } from '@/client/@tanstack/react-query.gen';
 import type { Status } from '@/client/types.gen';
 import FileContent from '@/components/code/FileContent.tsx';
-import { WorkflowGraph } from '@/components/dag';
+import WorkflowGraph from '@/components/job/dag/Dag';
 import JobTable from '@/components/job/JobTable.tsx';
 import { ResultViewer } from '@/components/result/ResultViewer.tsx';
 import WorkflowProgress from '@/components/workflow/WorkflowProgress.tsx';
 import WorkflowTimeline from '@/components/workflow/WorkflowTimeline.tsx';
+import { useWorkflowRealtime } from '@/config/workflowRealtime';
 import { useWorkflowState } from '@/hooks/useWorkflowState.ts';
 import {
   ClockCircleOutlined,
@@ -20,7 +20,7 @@ import {
 import { useQuery } from '@tanstack/react-query';
 import { createFileRoute } from '@tanstack/react-router';
 import { Splitter, Tabs } from 'antd';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 export const Route = createFileRoute('/workflow/$workflowId')({
   component: WorkflowDetail,
@@ -40,30 +40,34 @@ function WorkflowDetail() {
     handleJobSelect,
   } = useWorkflowState();
 
-  const { data: workflow } = useQuery({
-    ...getDetailOptions({
-      path: {
-        workflow_id: workflowId as string,
-      },
-    }),
-  });
-  const [enableSnakefile, setEnableSnakefile] = useState(false);
+  const realtimeTargets = useMemo(() => [{ id: workflowId }], [workflowId]);
+  useWorkflowRealtime(realtimeTargets);
 
+  const { data: workflow } = useGetDetailQuery({
+    path: {
+      workflow_id: workflowId!,
+    },
+  });
+
+  const [enableSnakefile, setEnableSnakefile] = useState(false);
   useEffect(() => {
     setEnableSnakefile(activeTab === 'code');
   }, [activeTab]);
 
   const workflowStatus = workflow?.status;
-
   const handleNodeClick = (ruleName: string) => {
     setSelectedRule(selectedRule === ruleName ? null : ruleName);
   };
 
-  const { data: snakefileContent } = useGetSnakefileQuery({
-    path: {
-      workflow_id: workflowId as string,
-    },
+  const { data: snakefileContent } = useQuery({
+    ...getSnakefileOptions({
+      path: {
+        workflow_id: workflowId as string,
+      },
+    }),
+    enabled: enableSnakefile,
   });
+
 
   return (
     <div style={{ width: '96%', margin: '0 auto' }}>
@@ -226,8 +230,7 @@ function WorkflowDetail() {
                     fileFormat="python"
                   />
                 )}
-
-                {/* {activeTab === 'result' && (
+                {activeTab === 'result' && (
                   <div
                     style={{
                       height: '100%',
@@ -242,7 +245,7 @@ function WorkflowDetail() {
                       selectedRule={selectedRule || undefined}
                     />
                   </div>
-                )} */}
+                )}
               </div>
             </div>
           </Splitter.Panel>

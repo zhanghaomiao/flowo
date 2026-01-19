@@ -2,8 +2,8 @@ import { client } from '@/client/client.gen';
 import { Alert, Image, Spin } from 'antd';
 import React, { useState } from 'react';
 
-import FileContent from '../code/FileContent';
-import { CSVPreview, FullscreenCSVPreview } from './CSVPreview';
+import FileContent from '@/components/contentViewer/FileContent';
+import { CSVPreview, FullscreenCSVPreview } from '../contentViewer/CSVPreview';
 import {
   formatFileSize,
   getFileExtension,

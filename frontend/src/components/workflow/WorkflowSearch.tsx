@@ -1,5 +1,5 @@
 import { getAllTagsOptions } from '@/client/@tanstack/react-query.gen';
-import WorkflowTag from '@/components/tag/WorkflowTag';
+import WorkflowTag from '@/components/workflow/WorkflowTag';
 import { SearchOutlined } from '@ant-design/icons';
 import { useQuery } from '@tanstack/react-query';
 import type { TimeRangePickerProps } from 'antd';

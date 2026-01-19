@@ -1160,10 +1160,16 @@ export type GetLogsError = GetLogsErrors[keyof GetLogsErrors];
 
 export type GetLogsResponses = {
     /**
+     * Response Get Logs Api V1 Jobs  Job Id  Logs Get
+     *
      * Successful Response
      */
-    200: unknown;
+    200: {
+        [key: string]: string;
+    };
 };
+
+export type GetLogsResponse = GetLogsResponses[keyof GetLogsResponses];
 
 export type GetOutputsData = {
     body?: never;

@@ -2,14 +2,13 @@ import {
   useGetDetailQuery,
   useGetProgressQuery,
 } from '@/client/@tanstack/react-query.gen';
-import WorkflowTag from '@/components/tag/WorkflowTag';
+import WorkflowTag from '@/components/workflow/WorkflowTag';
 import {
   ArrowLeftOutlined,
   CheckCircleOutlined,
   ClockCircleOutlined,
   SyncOutlined,
 } from '@ant-design/icons';
-import { useQuery } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
 import { Button, Card, Col, Progress, Row, Statistic } from 'antd';
 import React from 'react';

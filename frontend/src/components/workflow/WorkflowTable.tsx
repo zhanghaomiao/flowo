@@ -14,7 +14,7 @@ import LiveUpdatesIndicator from '@/components/LiveUpdatesIndicator';
 import FileViewer from '@/components/code/FileViewer';
 import FilesViewer from '@/components/code/FilesViewer';
 import { DurationCell } from '@/components/common/common';
-import WorkflowTag from '@/components/tag/WorkflowTag';
+import WorkflowTag from '@/components/workflow/WorkflowTag';
 import { useWorkflowRealtime } from '@/config/workflowRealtime';
 import {
   formatDateCompact,

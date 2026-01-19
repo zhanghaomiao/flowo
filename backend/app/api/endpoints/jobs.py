@@ -18,11 +18,6 @@ def get_job(
     return JobService(db).get_job_details_with_id(job_id)
 
 
-# @router.get("/{job_id}/files", response_model=FileResponse)
-# def get_files(job_id: int, db: Session = Depends(get_db)):
-#     return JobService(db).get_job_files_with_id(job_id=job_id)
-
-
-@router.get("/{job_id}/logs")
+@router.get("/{job_id}/logs", response_model=dict[str, str])
 def get_logs(job_id: int, db: Session = Depends(get_db)):
     return JobService(db).get_job_logs_with_id(job_id=job_id)

@@ -13,16 +13,13 @@ from fastapi.responses import JSONResponse
 from sqlalchemy import and_, case, func, select, or_
 from sqlalchemy.orm import Session
 from ..models.enums import FileType
-import logging
 from ..models import Error, Job, Status, Workflow, Rule, File
 from ..schemas import (
     RuleStatusResponse,
-    TreeDataNode,
     WorkflowDetialResponse,
     WorkflowListResponse,
     WorkflowResponse,
 )
-from ..services.file_tree import build_tree_with_anytree
 
 
 class WorkflowService:
@@ -173,12 +170,13 @@ class WorkflowService:
                 content={"error": "Workflow not found"},
             )
 
-        if workflow.flowo_working_path:
-            snakefile = str(workflow.snakefile).replace(
-                workflow.flowo_working_path, "/work_dir/"
-            )
-        else:
-            snakefile = workflow.snakefile
+        # if workflow.flowo_working_path:
+        #     snakefile = str(workflow.snakefile).replace(
+        #         workflow.flowo_working_path, "/work_dir/"
+        #     )
+        # else:
+        #     snakefile = workflow.snakefile
+        snakefile = workflow.snakefile
 
         if snakefile and os.path.exists(snakefile):
             try:
@@ -416,18 +414,6 @@ class WorkflowService:
             "workflow": deleted_workflows_count,
             "job": updated_error_jobs_count + updated_success_jobs_count,
         }
-
-    def get_outputs(
-        self,
-        workflow_id: uuid.UUID,
-        max_depth: int = 2,
-    ) -> list[TreeDataNode]:
-
-        directory = self.get_flowo_directory(workflow_id=workflow_id)
-        if not directory:
-            raise HTTPException(status_code=404, detail="directory not found")
-
-        return build_tree_with_anytree(directory, max_depth=max_depth)
 
     def get_rule_outputs(self, workflow_id: uuid.UUID, rule_name: str):
 

@@ -2,7 +2,7 @@ import { ClearOutlined, DownOutlined, RightOutlined } from '@ant-design/icons';
 import { Button, Card, Radio, Space, Tooltip } from 'antd';
 import React from 'react';
 
-import { type LayoutDirection } from '../../utils/graphLayout';
+import { type LayoutDirection } from '@/utils/graphLayout';
 
 interface LayoutControlPanelProps {
   layoutDirection: LayoutDirection;

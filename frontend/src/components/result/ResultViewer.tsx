@@ -1,4 +1,3 @@
-// import { constructApiUrl } from '../../api/client';
 import { client } from '@/client/client.gen';
 import {
   DownloadOutlined,
@@ -21,12 +20,7 @@ import {
 } from 'antd';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
-import {
-  useCaddyDirectoryTree,
-  useLazyDirectoryLoad,
-  useRuleOutput,
-  useWorkflowDetail,
-} from '../../hooks/useQueries';
+import { useGetJobOutputsQuery, useGetDetailQuery } from '@/client/@tanstack/react-query.gen';
 import { FilePreview, renderFullscreenPreview } from './FilePreview';
 import {
   combineRuleOutputWithDirectoryContent,
@@ -82,7 +76,11 @@ export const ResultViewer: React.FC<ResultViewerProps> = ({
     isLoading: isWorkflowLoading,
     error: workflowError,
     refetch: refetchWorkflow,
-  } = useWorkflowDetail(workflowId);
+  } = useGetDetailQuery({
+    path: {
+      workflow_id: workflowId,
+    },
+  });
 
   const {
     data: outputsTree,
@@ -99,7 +97,14 @@ export const ResultViewer: React.FC<ResultViewerProps> = ({
     isLoading: isRuleOutputLoading,
     error: ruleOutputError,
     refetch: refetchRuleOutput,
-  } = useRuleOutput(workflowId, selectedRule || '');
+  } = useGetJobOutputsQuery({
+    path: {
+      workflow_id: workflowId,
+    },
+    query: {
+      rule_name: selectedRule || '',
+    },
+  });
 
   // Hook for loading directory content when rule is selected
   const {

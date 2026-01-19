@@ -163,7 +163,7 @@ class JobService:
 
         return results
 
-    def get_job_logs_with_id(self, job_id: int):
+    def get_job_logs_with_id(self, job_id: int) -> dict[str, str]:
         files = (
             self.db_session.query(File)
             .filter(and_(File.job_id == job_id, File.file_type == "LOG"))

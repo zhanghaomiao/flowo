@@ -1,3 +1,8 @@
+import DraggableLegendPanel from '@/components/job/dag/DraggableLegendPanel';
+import LayoutControlPanel from '@/components/job/dag/LayoutControlPanel';
+import ProgressNode from '@/components/job/dag/NodeProgressBar';
+import { useWorkflowGraph } from '@/components/job/dag/useDag';
+import { type LayoutDirection, getLayoutInfo } from '@/utils/graphLayout';
 import { FullscreenExitOutlined, FullscreenOutlined } from '@ant-design/icons';
 import type { Node, NodeProps } from '@xyflow/react';
 import {
@@ -24,12 +29,6 @@ import React, {
   useRef,
   useState,
 } from 'react';
-
-import { type LayoutDirection, getLayoutInfo } from '../../utils/graphLayout';
-import DraggableLegendPanel from './DraggableLegendPanel';
-import LayoutControlPanel from './LayoutControlPanel';
-import ProgressNode from './NodeProgressBar';
-import { useWorkflowGraph } from './useDag';
 
 // Type for styling properties - matches what useWorkflowGraph returns
 type NodeStylingData = {
@@ -103,6 +102,7 @@ const WorkflowGraphInner: React.FC<WorkflowGraphProps> = ({
   const [forceLayoutRecalc, setForceLayoutRecalc] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const isFittingView = useRef(false);
+
 
   // Use the custom hook for graph data
   const {

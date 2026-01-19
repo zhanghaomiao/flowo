@@ -11,6 +11,7 @@ router = APIRouter()
 async def stream_events(
     request: Request,
     workflow_ids: str | None = Query(None, description="Current visible workflow IDs"),
+    global_insert: bool = Query(False, description="Global insert"),
 ):
     target_channels = []
 
@@ -21,7 +22,8 @@ async def stream_events(
 
     # 2. 【核心】强制订阅全局插入频道
     # 这样一旦有新 Workflow 插入，所有连着的客户端都能收到通知
-    target_channels.append("workflows_global_insert")
+    if global_insert:
+        target_channels.append("workflows_global_insert")
     logger.info(f"SSE: Total channels to listen: {target_channels}")
 
     return EventSourceResponse(

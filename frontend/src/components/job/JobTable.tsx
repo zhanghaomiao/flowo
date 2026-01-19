@@ -1,24 +1,22 @@
 import {
   getJobOptions,
-  getJobsOptions,
-  getJobsQueryKey,
   getLogsOptions,
+  useGetJobsQuery,
 } from '@/client/@tanstack/react-query.gen';
 import type { JobResponse, Status } from '@/client/types.gen';
 import LiveUpdatesIndicator from '@/components/LiveUpdatesIndicator';
-import FileViewer from '@/components/code/FileViewer';
-import FilesViewer from '@/components/code/FilesViewer';
 import { DurationCell, calculateDuration } from '@/components/common/common';
 import { formatDateCompact, getStatusColor } from '@/utils/formatters';
 import {
   FileTextOutlined,
   InfoCircleOutlined,
-  ReloadOutlined,
 } from '@ant-design/icons';
-import { useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { Button, Table, Tag, Tooltip } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import React, { useEffect, useState } from 'react';
+import FileViewer from '@/components/code/FileViewer';
+import FilesViewer from '@/components/code/FilesViewer';
 
 interface JobTableProps {
   workflowId?: string;
@@ -29,11 +27,8 @@ interface JobTableProps {
 
 const JobTable: React.FC<JobTableProps> = ({
   workflowId,
-  workflowStatus,
   ruleName,
-  showRefreshButton = true,
 }) => {
-  const queryClient = useQueryClient();
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
   const [status, setStatus] = useState<Status | null>(null);
@@ -60,11 +55,9 @@ const JobTable: React.FC<JobTableProps> = ({
     setPageSize(20);
   }, [ruleName]);
 
-  const { data: jobs, isLoading } = useQuery({
-    ...getJobsOptions({
-      path: {
-        workflow_id: workflowId!,
-      },
+  const { data: jobs, isLoading } =
+    useGetJobsQuery({
+      path: { workflow_id: workflowId! },
       query: {
         limit: pageSize,
         offset: offset,
@@ -73,27 +66,20 @@ const JobTable: React.FC<JobTableProps> = ({
         order_by_started: true,
         descending: true,
       },
-    }),
-  });
+    });
 
   const { data: jobDetailData } = useQuery({
     ...getJobOptions({
-      path: {
-        job_id: jobDetailModal.jobId,
-      },
+      path: { job_id: jobDetailModal.jobId },
     }),
-  });
+    enabled: jobDetailModal.visible && jobDetailModal.jobId > 0 ? true : false,
+  })
 
-  const [jobLogsData] = useQueries({
-    queries: [
-      {
-        ...getLogsOptions({
-          path: {
-            job_id: jobLogsModal.jobId,
-          },
-        }),
-      },
-    ],
+  const { data: jobLogsData } = useQuery({
+    ...getLogsOptions({
+      path: { job_id: jobLogsModal.jobId },
+    }),
+    enabled: jobLogsModal.visible && jobLogsModal.jobId > 0 ? true : false,
   });
 
   const columns: ColumnsType<JobResponse> = [
@@ -326,22 +312,6 @@ const JobTable: React.FC<JobTableProps> = ({
             showReconnectButton={false}
           />
         </div>
-        <div style={{ display: 'flex', alignItems: 'center' }}>
-          {showRefreshButton && (
-            <Button
-              icon={<ReloadOutlined />}
-              onClick={() =>
-                queryClient.invalidateQueries({
-                  queryKey: getJobsQueryKey({
-                    path: { workflow_id: workflowId! },
-                  }),
-                })
-              }
-            >
-              Refresh
-            </Button>
-          )}
-        </div>
       </div>
 
       <Table
@@ -395,13 +365,13 @@ const JobTable: React.FC<JobTableProps> = ({
         fileFormat="json"
       />
 
-      {/* <FilesViewer
+      <FilesViewer
         key={`jobLogs`}
         visible={jobLogsModal.visible}
         onClose={() => setJobLogsModal({ visible: false, jobId: 0 })}
-        fileContent={jobLogsData[0].data ?? {}}
+        fileContent={jobLogsData || {}}
         jobId={jobLogsModal.jobId}
-      /> */}
+      />
     </div>
   );
 };

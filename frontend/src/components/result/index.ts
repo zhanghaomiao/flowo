@@ -16,7 +16,7 @@ export {
 } from './FilePreview';
 
 // CSV preview components
-export { CSVPreview, FullscreenCSVPreview } from './CSVPreview';
+export { CSVPreview, FullscreenCSVPreview } from '../contentViewer/CSVPreview';
 
 // File tree utilities
 export { convertToAntdTreeData, filterSupportedFiles } from './FileTree';

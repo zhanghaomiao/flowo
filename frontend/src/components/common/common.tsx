@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 
-import type { JobResponse, WorkflowResponse } from '../../api';
-import { formatDuration } from '../../utils/formatters';
+import type { JobResponse, WorkflowResponse } from '@/client/types.gen';
+import { formatDuration } from '@/utils/formatters';
 
 // Utility function to calculate duration in milliseconds
 export const calculateDuration = (

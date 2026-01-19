@@ -71,31 +71,6 @@ export const useWorkflowRealtime = (workflows: { id: string }[] = []) => {
 
     const eventSource = new EventSource(url);
 
-    // eventSource.onmessage = (event) => {
-    //   console.log('🔌 [SSE] Message:', event.data);
-    //   try {
-    //     const data = JSON.parse(event.data);
-
-    //     if (data.operation === 'UPDATE' && !data.new_status) return;
-
-    //     if (data.table === 'workflows') {
-    //       if (data.operation === 'INSERT') {
-    //         debouncedRefreshList();
-    //       } else {
-    //         debouncedSyncActiveData();
-    //       }
-    //     }
-
-    //     // -------------------------------------------------
-    //     // B. Jobs 表变更 (高并发重灾区)
-    //     // -------------------------------------------------
-    //     else if (data.table === 'jobs') {
-    //       debouncedSyncActiveData();
-    //     }
-    //   } catch (e) {
-    //     console.error('SSE Parse Error', e);
-    //   }
-    // };
     eventSource.addEventListener('message', (event) => {
       console.log('🔌 [SSE] Message:', event.data);
       try {
@@ -110,10 +85,6 @@ export const useWorkflowRealtime = (workflows: { id: string }[] = []) => {
             debouncedSyncActiveData();
           }
         }
-
-        // -------------------------------------------------
-        // B. Jobs 表变更 (高并发重灾区)
-        // -------------------------------------------------
         else if (data.table === 'jobs') {
           debouncedSyncActiveData();
         }
@@ -124,7 +95,6 @@ export const useWorkflowRealtime = (workflows: { id: string }[] = []) => {
 
     return () => {
       eventSource.close();
-      // 清理防抖计时器，防止组件卸载后还在刷新
       debouncedRefreshList.cancel();
       debouncedSyncActiveData.cancel();
     };

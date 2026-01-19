@@ -1,6 +1,6 @@
 import React from 'react';
 
-import type { TreeDataNode } from '../../api/api';
+import type { TreeDataNode } from '@/client/types.gen';
 
 export interface ResultViewerProps {
   workflowId: string;
