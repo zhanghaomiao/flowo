@@ -6,13 +6,13 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from app.core.session import get_db
-from app.schemas import ResourcesSummary, StatusSummary, UserSummary
+from app.schemas import ResourcesSummary, StatusSummary, UserSummary, SystemHealthResponse
 from app.services import SummaryService, WorkflowService
 
 router = APIRouter()
 
 
-@router.get("/resources")
+@router.get("/resources", response_model=ResourcesSummary)
 def get_system_resources():
     total_cpus = psutil.cpu_count(logical=True)
     cpu_idle_percent = psutil.cpu_times_percent(interval=0.1).idle
@@ -85,3 +85,36 @@ def get_rule_duration(
 @router.post("/pruning", response_model=dict[str, int])
 def post_pruning(db: Session = Depends(get_db)):
     return WorkflowService(db).pruning()
+
+
+@router.get("/health", response_model=SystemHealthResponse)
+def get_system_health(db: Session = Depends(get_db)):
+    """检查系统健康状态，包括数据库和SSE服务（同步版本）"""
+    return SummaryService(db).get_system_health()
+
+
+@router.get("/health/async", response_model=SystemHealthResponse)
+async def get_system_health_async(db: Session = Depends(get_db)):
+    """检查系统健康状态，包括数据库和SSE服务（异步版本，包含完整SSE检查）"""
+    service = SummaryService(db)
+
+    # 检查数据库（同步）
+    db_status = service.check_database_health()
+
+    # 检查SSE（异步）
+    sse_status = await service.check_sse_health()
+
+    # 确定整体状态
+    services = [db_status, sse_status]
+    if all(s.status == "healthy" for s in services):
+        overall_status = "healthy"
+    elif any(s.status == "unhealthy" for s in services):
+        overall_status = "unhealthy"
+    else:
+        overall_status = "degraded"
+
+    return SystemHealthResponse(
+        database=db_status,
+        sse=sse_status,
+        overall_status=overall_status
+    )

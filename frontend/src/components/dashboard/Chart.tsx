@@ -401,7 +401,7 @@ export const BoxPlot = ({
 };
 
 export const WordCloud = React.memo(
-  ({ data, title }: { data: Array<[string, number]>; title: string }) => {
+  ({ data, title }: { data: Array<{ name: string; value: number }>; title: string }) => {
     if (!data || data.length === 0) {
       return (
         <Empty
@@ -438,7 +438,7 @@ export const WordCloud = React.memo(
     };
 
     // Transform data for word cloud format with deterministic colors
-    const wordCloudData = data.map(([name, value]) => ({
+    const wordCloudData = data.map(({ name, value }) => ({
       name: name,
       value: value,
       textStyle: {

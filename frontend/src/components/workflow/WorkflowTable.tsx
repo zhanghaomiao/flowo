@@ -11,8 +11,7 @@ import {
 } from '@/client/@tanstack/react-query.gen';
 import type { Status, WorkflowResponse } from '@/client/types.gen';
 import LiveUpdatesIndicator from '@/components/LiveUpdatesIndicator';
-import FileViewer from '@/components/code/FileViewer';
-import FilesViewer from '@/components/code/FilesViewer';
+import { FileViewerModal, MultiFileViewer } from '@/components/shared/viewers';
 import { DurationCell } from '@/components/common/common';
 import WorkflowTag from '@/components/workflow/WorkflowTag';
 import { useWorkflowRealtime } from '@/config/workflowRealtime';
@@ -687,7 +686,7 @@ const WorkflowTable = () => {
           style: { cursor: 'pointer' },
         })}
       />
-      <FileViewer
+      <FileViewerModal
         key={`snakefile-${snakefileModal.workflowId}`}
         title={`Snakefile - Workflow ${snakefileModal.workflowId}`}
         visible={snakefileModal.visible}
@@ -695,7 +694,7 @@ const WorkflowTable = () => {
         fileContent={snakefileData || ''}
         fileFormat="yaml"
       />
-      <FilesViewer
+      <MultiFileViewer
         key={`config-${configModal.workflowId}`}
         visible={configModal.visible}
         onClose={() => setConfigModal({ visible: false, workflowId: '' })}
@@ -708,7 +707,7 @@ const WorkflowTable = () => {
         workflowId={configModal.workflowId}
       />
 
-      <FileViewer
+      <FileViewerModal
         key={`log-${logModal.workflowId}`}
         title={`Log - Workflow ${logModal.workflowId}`}
         visible={logModal.visible}
@@ -723,7 +722,7 @@ const WorkflowTable = () => {
         fileFormat="log"
       />
 
-      <FileViewer
+      <FileViewerModal
         key={`detail-${workflowDetailModal.workflowId}`}
         title={`Detail - Workflow ${workflowDetailModal.workflowId}`}
         visible={workflowDetailModal.visible}

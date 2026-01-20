@@ -15,7 +15,7 @@
 
     # Handle API requests - proxy to backend
     handle /api/v1/* {
-        reverse_proxy flowo-backend
+        reverse_proxy flowo-backend:8000
         
         # Apply security headers to API routes
         header {

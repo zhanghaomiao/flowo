@@ -7,6 +7,7 @@ from itertools import chain, groupby
 from operator import itemgetter
 from typing import Any
 from datetime import datetime
+from pathlib import Path
 
 from fastapi import HTTPException
 from fastapi.responses import JSONResponse
@@ -20,6 +21,7 @@ from ..schemas import (
     WorkflowListResponse,
     WorkflowResponse,
 )
+from app.core.config import settings
 
 
 class WorkflowService:
@@ -52,7 +54,17 @@ class WorkflowService:
     def get_flowo_directory(self, workflow_id: uuid.UUID):
         workflow = self.get_workflow(workflow_id=workflow_id)
         if workflow and workflow.flowo_working_path and workflow.directory:
-            return workflow.directory.replace(workflow.flowo_working_path, "/work_dir")
+            host_base_path = Path(workflow.flowo_working_path).resolve()
+            target_path_on_host = Path(workflow.directory).resolve()
+            container_mount_path = Path(settings.CONTAINER_MOUNT_PATH).resolve()
+            try:
+                relative_path = target_path_on_host.relative_to(host_base_path)
+                container_path = container_mount_path / relative_path
+                return str(container_path)
+            except ValueError:
+                print(f"Error: {workflow.directory} is not inside {workflow.flowo_working_path}")
+        return None
+
 
     def get_detail(self, workflow_id: uuid.UUID):
         workflow = self.get_workflow(workflow_id=workflow_id)

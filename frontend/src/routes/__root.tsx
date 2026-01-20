@@ -42,6 +42,7 @@ function RootComponent() {
     if (pathname.startsWith('/dashboard')) return '/dashboard';
     if (pathname.startsWith('/about')) return '/about';
     // For workflow detail pages (/workflow/xxx), don't highlight any menu item
+    if (pathname.startsWith('/workflow')) return '/';
     return '';
   };
 

@@ -1,22 +1,15 @@
 import { Button, Modal } from 'antd';
 import React from 'react';
 
-import FileContent from './FileContent';
+import { TextViewer } from './TextViewer';
+import type { FileViewerModalProps } from './types';
 
-interface FileViewerProps {
-  visible: boolean;
-  onClose: () => void;
-  fileContent: string;
-  fileFormat?: 'log' | 'yaml' | 'json' | 'python';
-  title: string;
-}
-
-const FileViewer: React.FC<FileViewerProps> = ({
+export const FileViewerModal: React.FC<FileViewerModalProps> = ({
   visible,
   onClose,
+  title,
   fileContent,
   fileFormat = 'yaml',
-  title,
 }) => {
   return (
     <Modal
@@ -41,9 +34,7 @@ const FileViewer: React.FC<FileViewerProps> = ({
       width={1000}
       styles={{ body: { height: '75vh', padding: '16px', top: 20 } }}
     >
-      <FileContent fileContent={fileContent} fileFormat={fileFormat} />
+      <TextViewer content={fileContent} fileFormat={fileFormat} />
     </Modal>
   );
 };
-
-export default FileViewer;

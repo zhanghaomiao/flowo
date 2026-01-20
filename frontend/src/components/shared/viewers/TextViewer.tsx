@@ -3,6 +3,7 @@ import { Alert, Switch, Typography } from 'antd';
 import React, { useMemo, useState } from 'react';
 
 import VirtualizedCodeViewer from './VirtualizedCodeViewer';
+import type { FileViewerProps } from './types';
 
 const { Text } = Typography;
 
@@ -11,20 +12,19 @@ const MAX_FILE_SIZE_FOR_HIGHLIGHTING = 100 * 1024; // 100KB
 const MAX_LINES_FOR_HIGHLIGHTING = 5000;
 const LARGE_FILE_PREVIEW_LINES = 5000;
 
-interface FileContentProps {
-  fileContent: string;
-  fileName?: string;
-  fileFormat: string;
-  showFileName?: boolean;
-}
-
-const FileContent: React.FC<FileContentProps> = ({
-  fileContent,
+export const TextViewer: React.FC<FileViewerProps> = ({
+  src,
+  content,
   fileName,
   fileFormat = 'yaml',
+  fullscreen = false,
   showFileName = false,
 }) => {
   const [forceHighlighting, setForceHighlighting] = useState(false);
+
+  // For src-based loading, we'd need to fetch content
+  // For now, assume content is provided directly
+  const fileContent = content || '';
 
   // Analyze file size and complexity
   const fileAnalysis = useMemo(() => {
@@ -205,5 +205,3 @@ const FileContent: React.FC<FileContentProps> = ({
     </div>
   );
 };
-
-export default FileContent;

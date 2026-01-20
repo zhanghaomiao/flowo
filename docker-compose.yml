@@ -44,7 +44,7 @@ services:
       POSTGRES_PORT: 5432
       TZ: ${TZ:-Asia/Shanghai}
     volumes:
-      - ${FLOWO_WORKING_PATH:-.}:/work_dir:ro
+      - ${FLOWO_WORKING_PATH:-.}:${CONTAINER_MOUNT_PATH:-/work_dir}:ro
     depends_on:
       postgresql:
         condition: service_healthy
@@ -59,57 +59,52 @@ services:
         uv run alembic upgrade head
         echo '✅ Database migrations completed!'
         echo 'Starting application...'
-        exec uv run uvicorn app.main:app --host 0.0.0.0 --port 80
+        exec uv run uvicorn app.main:app --host 0.0.0.0 --port 8000
 
-  # flowo-frontend:
-  #   build:
-  #     context: ./frontend
-  #     dockerfile: Dockerfile
-  #     args:
-  #       # Use relative path in production - Caddy will proxy /api/v1/* to backend
-  #       # Only set absolute URL for development when VITE_API_BASE_PATH is explicitly provided
-  #       VITE_API_BASE_PATH: ${VITE_API_BASE_PATH:-}
-  #       VITE_DISABLE_SSE: ${VITE_DISABLE_SSE:-false}
-  #   container_name: frontend
-  #   environment:
-  #     TZ: ${TZ:-Asia/Shanghai}
-  #   networks:
-  #     - flowo-network
-  #   restart: unless-stopped
-  #   healthcheck:
-  #     test:
-  #       [
-  #         "CMD",
-  #         "wget",
-  #         "--no-verbose",
-  #         "--tries=1",
-  #         "--spider",
-  #         "http://localhost/health",
-  #       ]
-  #     interval: 30s
-  #     timeout: 10s
-  #     retries: 3
+  flowo-frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: frontend
+    environment:
+      TZ: ${TZ:-Asia/Shanghai}
+    networks:
+      - flowo-network
+    restart: unless-stopped
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "wget",
+          "--no-verbose",
+          "--tries=1",
+          "--spider",
+          "http://localhost/health",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
-  # caddy:
-  #   image: caddy:2-alpine
-  #   container_name: caddy
-  #   environment:
-  #     TZ: ${TZ:-Asia/Shanghai}
-  #   env_file:
-  #     - .env
-  #   volumes:
-  #     - ./Caddyfile:/etc/caddy/Caddyfile
-  #     - ${FLOWO_WORKING_PATH:-.}:/work_dir:ro
-  #     - caddy_data:/data
-  #     - caddy_config:/config
-  #   ports:
-  #     - "${PORT:-80}:80"
-  #   depends_on:
-  #     - flowo-backend
-  #     - flowo-frontend
-  #   networks:
-  #     - flowo-network
-  #   restart: unless-stopped
+  caddy:
+    image: caddy:2-alpine
+    container_name: caddy
+    environment:
+      TZ: ${TZ:-Asia/Shanghai}
+    env_file:
+      - .env
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - ${FLOWO_WORKING_PATH:-.}:/work_dir:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    ports:
+      - "${PORT:-3100}:80"
+    depends_on:
+      - flowo-backend
+      - flowo-frontend
+    networks:
+      - flowo-network
+    restart: unless-stopped
 
 volumes:
   postgres_data:

@@ -2,15 +2,12 @@ import { Spin, Table } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import React, { useState } from 'react';
 
-// Interfaces for CSV/TSV data
+import type { FileViewerProps } from './types';
+
+// Interfaces for table data
 interface TableRowData {
   key: number;
   [key: string]: string | number;
-}
-
-interface CSVPreviewProps {
-  src: string;
-  isFullscreen?: boolean;
 }
 
 const parseCSVTSV = (text: string, delimiter: string) => {
@@ -53,10 +50,10 @@ const parseCSVTSV = (text: string, delimiter: string) => {
   return { columns: tableColumns, data: tableData };
 };
 
-// CSV/TSV Preview Component
-export const CSVPreview: React.FC<CSVPreviewProps> = ({
+export const TableViewer: React.FC<FileViewerProps> = ({
   src,
-  isFullscreen = false,
+  content,
+  fullscreen = false,
 }) => {
   const [data, setData] = useState<TableRowData[]>([]);
   const [columns, setColumns] = useState<ColumnsType<TableRowData>>([]);
@@ -67,12 +64,21 @@ export const CSVPreview: React.FC<CSVPreviewProps> = ({
     setLoading(true);
     setError('');
 
-    fetch(src)
-      .then((response) => response.text())
-      .then((text) => {
+    const loadData = async () => {
+      try {
+        let text: string;
+        if (content) {
+          text = content;
+        } else if (src) {
+          const response = await fetch(src);
+          text = await response.text();
+        } else {
+          throw new Error('No content or src provided');
+        }
+
         // Determine delimiter based on file extension or content analysis
         const isTSV =
-          src.toLowerCase().includes('.tsv') ||
+          (src && src.toLowerCase().includes('.tsv')) ||
           (text.includes('\t') &&
             text.split('\t').length > text.split(',').length);
         const delimiter = isTSV ? '\t' : ',';
@@ -85,13 +91,15 @@ export const CSVPreview: React.FC<CSVPreviewProps> = ({
         setColumns(parsedColumns);
         setData(parsedData);
         setLoading(false);
-      })
-      .catch((error) => {
-        console.error('Error loading CSV/TSV file:', error);
+      } catch (error) {
+        console.error('Error loading table data:', error);
         setError('Error loading file content');
         setLoading(false);
-      });
-  }, [src]);
+      }
+    };
+
+    loadData();
+  }, [src, content]);
 
   if (loading) {
     return <Spin />;
@@ -105,11 +113,11 @@ export const CSVPreview: React.FC<CSVPreviewProps> = ({
     return <div style={{ padding: '16px' }}>No data to display</div>;
   }
 
-  const containerStyle = isFullscreen
+  const containerStyle = fullscreen
     ? { height: 'calc(100vh - 250px)', padding: '24px', overflow: 'hidden' }
     : { padding: '16px' };
 
-  const scrollConfig = isFullscreen
+  const scrollConfig = fullscreen
     ? { x: 'max-content', y: 'calc(100vh - 320px)' }
     : { x: 'max-content', y: 500 };
 
@@ -121,7 +129,7 @@ export const CSVPreview: React.FC<CSVPreviewProps> = ({
         size="small"
         scroll={scrollConfig}
         pagination={{
-          pageSize: isFullscreen ? 100 : 50,
+          pageSize: fullscreen ? 100 : 50,
           showSizeChanger: true,
           showQuickJumper: true,
           showTotal: (total) => `Total ${total} rows`,
@@ -131,10 +139,3 @@ export const CSVPreview: React.FC<CSVPreviewProps> = ({
     </div>
   );
 };
-
-// Fullscreen CSV/TSV Preview Component
-export const FullscreenCSVPreview: React.FC<{ src: string }> = ({ src }) => {
-  return <CSVPreview src={src} isFullscreen={true} />;
-};
-
-export default CSVPreview;

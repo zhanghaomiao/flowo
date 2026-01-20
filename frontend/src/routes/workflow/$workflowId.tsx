@@ -3,10 +3,10 @@ import {
   getSnakefileOptions,
 } from '@/client/@tanstack/react-query.gen';
 import type { Status } from '@/client/types.gen';
-import FileContent from '@/components/code/FileContent.tsx';
+import { TextViewer } from '@/components/shared/viewers';
 import WorkflowGraph from '@/components/job/dag/Dag';
 import JobTable from '@/components/job/JobTable.tsx';
-import { ResultViewer } from '@/components/result/ResultViewer.tsx';
+import { ResultViewer } from '@/components/features/result/ResultViewer.tsx';
 import WorkflowProgress from '@/components/workflow/WorkflowProgress.tsx';
 import WorkflowTimeline from '@/components/workflow/WorkflowTimeline.tsx';
 import { useWorkflowRealtime } from '@/config/workflowRealtime';
@@ -225,8 +225,8 @@ function WorkflowDetail() {
                 )}
 
                 {activeTab === 'code' && (
-                  <FileContent
-                    fileContent={snakefileContent as string}
+                  <TextViewer
+                    content={snakefileContent as string}
                     fileFormat="python"
                   />
                 )}

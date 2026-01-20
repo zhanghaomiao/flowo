@@ -3,8 +3,8 @@
 import { type DefaultError, type InfiniteData, infiniteQueryOptions, queryOptions, type UseMutationOptions, useQuery } from '@tanstack/react-query';
 
 import { client } from '../client.gen';
-import { deleteWorkflow, getActivity, getAllTags, getAllUsers, getConfigfiles, getDetail, getJob, getJobOutputs, getJobs, getLogs, getOutputs, getProgress, getRuleDuration, getRuleError, getRuleGraph, getRuleStatus, getSnakefile, getStatus, getSystemResources, getTimelines, getUserSummary, getWorkflowIdByName, getWorkflowLogs, getWorkflows, type Options, postPruning, streamEvents, streamWorkflowLogsSse } from '../sdk.gen';
-import type { DeleteWorkflowData, DeleteWorkflowError, GetActivityData, GetActivityError, GetActivityResponse, GetAllTagsData, GetAllTagsResponse, GetAllUsersData, GetAllUsersResponse, GetConfigfilesData, GetConfigfilesError, GetConfigfilesResponse, GetDetailData, GetDetailError, GetDetailResponse, GetJobData, GetJobError, GetJobOutputsData, GetJobOutputsError, GetJobOutputsResponse, GetJobResponse, GetJobsData, GetJobsError, GetJobsResponse, GetLogsData, GetLogsError, GetLogsResponse, GetOutputsData, GetOutputsError, GetOutputsResponse, GetProgressData, GetProgressError, GetProgressResponse, GetRuleDurationData, GetRuleDurationError, GetRuleDurationResponse, GetRuleErrorData, GetRuleErrorError, GetRuleErrorResponse, GetRuleGraphData, GetRuleGraphError, GetRuleGraphResponse, GetRuleStatusData, GetRuleStatusError, GetRuleStatusResponse, GetSnakefileData, GetSnakefileError, GetSnakefileResponse, GetStatusData, GetStatusError, GetStatusResponse, GetSystemResourcesData, GetTimelinesData, GetTimelinesError, GetTimelinesResponse, GetUserSummaryData, GetUserSummaryResponse, GetWorkflowIdByNameData, GetWorkflowIdByNameError, GetWorkflowIdByNameResponse, GetWorkflowLogsData, GetWorkflowLogsError, GetWorkflowLogsResponse, GetWorkflowsData, GetWorkflowsError, GetWorkflowsResponse, PostPruningData, PostPruningResponse, StreamEventsData, StreamEventsError, StreamWorkflowLogsSseData, StreamWorkflowLogsSseError } from '../types.gen';
+import { deleteWorkflow, getActivity, getAllTags, getAllUsers, getConfigfiles, getDetail, getJob, getJobOutputs, getJobs, getLogs, getProgress, getRuleDuration, getRuleError, getRuleGraph, getRuleStatus, getSnakefile, getStatus, getSystemHealth, getSystemHealthAsync, getSystemResources, getTimelines, getUserSummary, getWorkflowIdByName, getWorkflowLogs, getWorkflows, listFiles, type Options, postPruning, streamEvents, streamWorkflowLogsSse } from '../sdk.gen';
+import type { DeleteWorkflowData, DeleteWorkflowError, GetActivityData, GetActivityError, GetActivityResponse, GetAllTagsData, GetAllTagsResponse, GetAllUsersData, GetAllUsersResponse, GetConfigfilesData, GetConfigfilesError, GetConfigfilesResponse, GetDetailData, GetDetailError, GetDetailResponse, GetJobData, GetJobError, GetJobOutputsData, GetJobOutputsError, GetJobOutputsResponse, GetJobResponse, GetJobsData, GetJobsError, GetJobsResponse, GetLogsData, GetLogsError, GetLogsResponse, GetProgressData, GetProgressError, GetProgressResponse, GetRuleDurationData, GetRuleDurationError, GetRuleDurationResponse, GetRuleErrorData, GetRuleErrorError, GetRuleErrorResponse, GetRuleGraphData, GetRuleGraphError, GetRuleGraphResponse, GetRuleStatusData, GetRuleStatusError, GetRuleStatusResponse, GetSnakefileData, GetSnakefileError, GetSnakefileResponse, GetStatusData, GetStatusError, GetStatusResponse, GetSystemHealthAsyncData, GetSystemHealthAsyncResponse, GetSystemHealthData, GetSystemHealthResponse, GetSystemResourcesData, GetSystemResourcesResponse, GetTimelinesData, GetTimelinesError, GetTimelinesResponse, GetUserSummaryData, GetUserSummaryResponse, GetWorkflowIdByNameData, GetWorkflowIdByNameError, GetWorkflowIdByNameResponse, GetWorkflowLogsData, GetWorkflowLogsError, GetWorkflowLogsResponse, GetWorkflowsData, GetWorkflowsError, GetWorkflowsResponse, ListFilesData, ListFilesError, ListFilesResponse, PostPruningData, PostPruningResponse, StreamEventsData, StreamEventsError, StreamWorkflowLogsSseData, StreamWorkflowLogsSseError } from '../types.gen';
 
 export type QueryKey<TOptions extends Options> = [
     Pick<TOptions, 'baseUrl' | 'body' | 'headers' | 'path' | 'query'> & {
@@ -44,7 +44,7 @@ export const getSystemResourcesQueryKey = (options?: Options<GetSystemResourcesD
 /**
  * Get System Resources
  */
-export const getSystemResourcesOptions = (options?: Options<GetSystemResourcesData>) => queryOptions<unknown, DefaultError, unknown, ReturnType<typeof getSystemResourcesQueryKey>>({
+export const getSystemResourcesOptions = (options?: Options<GetSystemResourcesData>) => queryOptions<GetSystemResourcesResponse, DefaultError, GetSystemResourcesResponse, ReturnType<typeof getSystemResourcesQueryKey>>({
     queryFn: async ({ queryKey, signal }) => {
         const { data } = await getSystemResources({
             ...options,
@@ -193,6 +193,60 @@ export const postPruningMutation = (options?: Partial<Options<PostPruningData>>)
     };
     return mutationOptions;
 };
+
+export const getSystemHealthQueryKey = (options?: Options<GetSystemHealthData>) => createQueryKey('getSystemHealth', options, false, ['summary']);
+
+/**
+ * Get System Health
+ *
+ * 检查系统健康状态，包括数据库和SSE服务（同步版本）
+ */
+export const getSystemHealthOptions = (options?: Options<GetSystemHealthData>) => queryOptions<GetSystemHealthResponse, DefaultError, GetSystemHealthResponse, ReturnType<typeof getSystemHealthQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await getSystemHealth({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: getSystemHealthQueryKey(options)
+});
+
+/**
+ * Get System Health
+ *
+ * 检查系统健康状态，包括数据库和SSE服务（同步版本）
+ */
+export const useGetSystemHealthQuery = (options?: Options<GetSystemHealthData>) => useQuery(getSystemHealthOptions(options));
+
+export const getSystemHealthAsyncQueryKey = (options?: Options<GetSystemHealthAsyncData>) => createQueryKey('getSystemHealthAsync', options, false, ['summary']);
+
+/**
+ * Get System Health Async
+ *
+ * 检查系统健康状态，包括数据库和SSE服务（异步版本，包含完整SSE检查）
+ */
+export const getSystemHealthAsyncOptions = (options?: Options<GetSystemHealthAsyncData>) => queryOptions<GetSystemHealthAsyncResponse, DefaultError, GetSystemHealthAsyncResponse, ReturnType<typeof getSystemHealthAsyncQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await getSystemHealthAsync({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: getSystemHealthAsyncQueryKey(options)
+});
+
+/**
+ * Get System Health Async
+ *
+ * 检查系统健康状态，包括数据库和SSE服务（异步版本，包含完整SSE检查）
+ */
+export const useGetSystemHealthAsyncQuery = (options?: Options<GetSystemHealthAsyncData>) => useQuery(getSystemHealthAsyncOptions(options));
 
 export const getAllUsersQueryKey = (options?: Options<GetAllUsersData>) => createQueryKey('getAllUsers', options, false, ['workflow']);
 
@@ -593,29 +647,6 @@ export const getLogsOptions = (options: Options<GetLogsData>) => queryOptions<Ge
  */
 export const useGetLogsQuery = (options: Options<GetLogsData>) => useQuery(getLogsOptions(options));
 
-export const getOutputsQueryKey = (options: Options<GetOutputsData>) => createQueryKey('getOutputs', options, false, ['outputs']);
-
-/**
- * Get Outputs
- */
-export const getOutputsOptions = (options: Options<GetOutputsData>) => queryOptions<GetOutputsResponse, GetOutputsError, GetOutputsResponse, ReturnType<typeof getOutputsQueryKey>>({
-    queryFn: async ({ queryKey, signal }) => {
-        const { data } = await getOutputs({
-            ...options,
-            ...queryKey[0],
-            signal,
-            throwOnError: true
-        });
-        return data;
-    },
-    queryKey: getOutputsQueryKey(options)
-});
-
-/**
- * Get Outputs
- */
-export const useGetOutputsQuery = (options: Options<GetOutputsData>) => useQuery(getOutputsOptions(options));
-
 export const getJobOutputsQueryKey = (options: Options<GetJobOutputsData>) => createQueryKey('getJobOutputs', options, false, ['outputs']);
 
 /**
@@ -734,3 +765,26 @@ export const streamWorkflowLogsSseOptions = (options: Options<StreamWorkflowLogs
  * 使用Server-Sent Events格式的实时日志流
  */
 export const useStreamWorkflowLogsSseQuery = (options: Options<StreamWorkflowLogsSseData>) => useQuery(streamWorkflowLogsSseOptions(options));
+
+export const listFilesQueryKey = (options: Options<ListFilesData>) => createQueryKey('listFiles', options, false, ['files']);
+
+/**
+ * List Files
+ */
+export const listFilesOptions = (options: Options<ListFilesData>) => queryOptions<ListFilesResponse, ListFilesError, ListFilesResponse, ReturnType<typeof listFilesQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await listFiles({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: listFilesQueryKey(options)
+});
+
+/**
+ * List Files
+ */
+export const useListFilesQuery = (options: Options<ListFilesData>) => useQuery(listFilesOptions(options));

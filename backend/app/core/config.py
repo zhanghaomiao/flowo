@@ -18,6 +18,8 @@ class Settings(BaseSettings):
     # SQL settings
     BACKEND_CORS_ORIGINS: list[str] = ["*"]
 
+    CONTAINER_MOUNT_PATH: str = "/work_dir"
+
     class Config:
         env_file = "../.env"
         env_file_encoding = "utf-8"

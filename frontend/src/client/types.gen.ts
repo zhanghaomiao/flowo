@@ -5,6 +5,32 @@ export type ClientOptions = {
 };
 
 /**
+ * FileNode
+ */
+export type FileNode = {
+    /**
+     * Title
+     */
+    title: string;
+    /**
+     * Key
+     */
+    key: string;
+    /**
+     * Isleaf
+     */
+    isLeaf: boolean;
+    /**
+     * Filesize
+     */
+    fileSize?: number | null;
+    /**
+     * Icon
+     */
+    icon: string;
+};
+
+/**
  * HTTPValidationError
  */
 export type HttpValidationError = {
@@ -173,6 +199,28 @@ export type JobResponse = {
 };
 
 /**
+ * ResourcesSummary
+ */
+export type ResourcesSummary = {
+    /**
+     * Cpu Idle Cores
+     */
+    cpu_idle_cores: number;
+    /**
+     * Cpu Total Cores
+     */
+    cpu_total_cores: number | null;
+    /**
+     * Mem Total Gb
+     */
+    mem_total_GB: number;
+    /**
+     * Mem Available Gb
+     */
+    mem_available_GB: number;
+};
+
+/**
  * RuleStatusResponse
  */
 export type RuleStatusResponse = {
@@ -196,6 +244,30 @@ export type RuleStatusResponse = {
      * Status
      */
     status: string;
+};
+
+/**
+ * ServiceStatus
+ */
+export type ServiceStatus = {
+    /**
+     * Name
+     */
+    name: string;
+    /**
+     * Status
+     */
+    status: string;
+    /**
+     * Message
+     */
+    message: string;
+    /**
+     * Details
+     */
+    details?: {
+        [key: string]: unknown;
+    } | null;
 };
 
 /**
@@ -226,29 +298,15 @@ export type StatusSummary = {
 };
 
 /**
- * TreeDataNode
+ * SystemHealthResponse
  */
-export type TreeDataNode = {
+export type SystemHealthResponse = {
+    database: ServiceStatus;
+    sse: ServiceStatus;
     /**
-     * Title
+     * Overall Status
      */
-    title: string;
-    /**
-     * Key
-     */
-    key: string;
-    /**
-     * Icon
-     */
-    icon?: string | null;
-    /**
-     * Children
-     */
-    children?: Array<TreeDataNode> | null;
-    /**
-     * Isleaf
-     */
-    isLeaf?: boolean | null;
+    overall_status: string;
 };
 
 /**
@@ -434,8 +492,10 @@ export type GetSystemResourcesResponses = {
     /**
      * Successful Response
      */
-    200: unknown;
+    200: ResourcesSummary;
 };
+
+export type GetSystemResourcesResponse = GetSystemResourcesResponses[keyof GetSystemResourcesResponses];
 
 export type GetUserSummaryData = {
     body?: never;
@@ -636,6 +696,38 @@ export type PostPruningResponses = {
 };
 
 export type PostPruningResponse = PostPruningResponses[keyof PostPruningResponses];
+
+export type GetSystemHealthData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/summary/health';
+};
+
+export type GetSystemHealthResponses = {
+    /**
+     * Successful Response
+     */
+    200: SystemHealthResponse;
+};
+
+export type GetSystemHealthResponse = GetSystemHealthResponses[keyof GetSystemHealthResponses];
+
+export type GetSystemHealthAsyncData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/summary/health/async';
+};
+
+export type GetSystemHealthAsyncResponses = {
+    /**
+     * Successful Response
+     */
+    200: SystemHealthResponse;
+};
+
+export type GetSystemHealthAsyncResponse = GetSystemHealthAsyncResponses[keyof GetSystemHealthAsyncResponses];
 
 export type GetAllUsersData = {
     body?: never;
@@ -1171,43 +1263,6 @@ export type GetLogsResponses = {
 
 export type GetLogsResponse = GetLogsResponses[keyof GetLogsResponses];
 
-export type GetOutputsData = {
-    body?: never;
-    path: {
-        /**
-         * Workflow Id
-         */
-        workflow_id: string;
-    };
-    query?: {
-        /**
-         * Max Depth
-         */
-        max_depth?: number;
-    };
-    url: '/api/v1/outputs/{workflow_id}/outputs';
-};
-
-export type GetOutputsErrors = {
-    /**
-     * Validation Error
-     */
-    422: HttpValidationError;
-};
-
-export type GetOutputsError = GetOutputsErrors[keyof GetOutputsErrors];
-
-export type GetOutputsResponses = {
-    /**
-     * Response Get Outputs Api V1 Outputs  Workflow Id  Outputs Get
-     *
-     * Successful Response
-     */
-    200: Array<TreeDataNode>;
-};
-
-export type GetOutputsResponse = GetOutputsResponses[keyof GetOutputsResponses];
-
 export type GetJobOutputsData = {
     body?: never;
     path: {
@@ -1273,6 +1328,12 @@ export type StreamEventsData = {
          * Current visible workflow IDs
          */
         workflow_ids?: string | null;
+        /**
+         * Global Insert
+         *
+         * Global insert
+         */
+        global_insert?: boolean;
     };
     url: '/api/v1/sse/events';
 };
@@ -1354,3 +1415,41 @@ export type StreamWorkflowLogsSseResponses = {
      */
     200: unknown;
 };
+
+export type ListFilesData = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * Workflow Id
+         */
+        workflow_id: string;
+        /**
+         * Path
+         *
+         * Parent directory path (relative)
+         */
+        path?: string;
+    };
+    url: '/api/v1/files/list';
+};
+
+export type ListFilesErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type ListFilesError = ListFilesErrors[keyof ListFilesErrors];
+
+export type ListFilesResponses = {
+    /**
+     * Response List Files Api V1 Files List Get
+     *
+     * Successful Response
+     */
+    200: Array<FileNode>;
+};
+
+export type ListFilesResponse = ListFilesResponses[keyof ListFilesResponses];

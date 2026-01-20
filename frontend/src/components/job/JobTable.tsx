@@ -15,8 +15,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Button, Table, Tag, Tooltip } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import React, { useEffect, useState } from 'react';
-import FileViewer from '@/components/code/FileViewer';
-import FilesViewer from '@/components/code/FilesViewer';
+import { FileViewerModal, MultiFileViewer } from '@/components/shared/viewers';
 
 interface JobTableProps {
   workflowId?: string;
@@ -356,7 +355,7 @@ const JobTable: React.FC<JobTableProps> = ({
         style={{ backgroundColor: 'white' }}
       />
 
-      <FileViewer
+      <FileViewerModal
         key={`jobDetail`}
         title={`Detail -  Job ${jobDetailModal.jobId}`}
         visible={jobDetailModal.visible}
@@ -365,7 +364,7 @@ const JobTable: React.FC<JobTableProps> = ({
         fileFormat="json"
       />
 
-      <FilesViewer
+      <MultiFileViewer
         key={`jobLogs`}
         visible={jobLogsModal.visible}
         onClose={() => setJobLogsModal({ visible: false, jobId: 0 })}

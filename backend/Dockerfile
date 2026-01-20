@@ -42,4 +42,4 @@ ENTRYPOINT []
 # Use the non-root user to run our application
 USER nonroot
 
-CMD ["uv", "run", "fastapi", "run", "app/main.py", "--host", "0.0.0.0", "--port", "80"]
+CMD ["uv", "run", "fastapi", "run", "app/main.py", "--host", "0.0.0.0", "--port", "8000"]
