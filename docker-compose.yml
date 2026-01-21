@@ -51,6 +51,7 @@ services:
     networks:
       - flowo-network
     restart: unless-stopped
+    entrypoint: []
     command:
       - sh
       - -c
@@ -94,7 +95,7 @@ services:
       - .env
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile
-      - ${FLOWO_WORKING_PATH:-.}:/work_dir:ro
+      - ${FLOWO_WORKING_PATH:-.}:${CONTAINER_MOUNT_PATH:-/work_dir}ro
       - caddy_data:/data
       - caddy_config:/config
     ports:

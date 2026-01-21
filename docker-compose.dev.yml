@@ -1,0 +1,51 @@
+services:
+  # 1. 数据库 (直接复制需要的配置，保持简单)
+  postgresql:
+    image: postgres:15-alpine
+    container_name: flowo-postgres-dev
+    env_file:
+      - .env
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-flowo_logs}
+      POSTGRES_USER: ${POSTGRES_USER:-flowo}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-flowo_password}
+      POSTGRES_HOST_AUTH_METHOD: trust
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - flowo-dev-network
+    restart: always
+
+  # 2. Caddy (作为网关，指向宿主机)
+  caddy:
+    image: caddy:2-alpine
+    container_name: caddy-dev
+    env_file:
+      - .env
+    environment:
+      # 告诉 Caddy 本地前端运行在 5173
+      - FRONTEND_PORT=5173
+    ports:
+      - "${PORT:-3100}:80"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - ${FLOWO_WORKING_PATH:-.}:${CONTAINER_MOUNT_PATH:-/work_dir}:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    # 关键：让 Caddy 能通过这两个域名访问宿主机 IP
+    extra_hosts:
+      - "flowo-backend:host-gateway"
+      - "flowo-frontend:host-gateway"
+    networks:
+      - flowo-dev-network
+    restart: always
+
+volumes:
+  postgres_data:
+  caddy_data:
+  caddy_config:
+
+networks:
+  flowo-dev-network:

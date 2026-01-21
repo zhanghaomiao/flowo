@@ -11,9 +11,6 @@ importers:
       '@ant-design/icons':
         specifier: ^6.0.0
         version: 6.0.0(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
-      '@babel/runtime':
-        specifier: ^7.28.6
-        version: 7.28.6
       '@tanstack/react-query':
         specifier: ^5.80.2
         version: 5.80.7(react@19.1.0)
