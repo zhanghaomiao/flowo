@@ -2,7 +2,7 @@
 
 import type { Client, Options as Options2, TDataShape } from './client';
 import { client } from './client.gen';
-import type { DeleteWorkflowData, DeleteWorkflowErrors, DeleteWorkflowResponses, GetActivityData, GetActivityErrors, GetActivityResponses, GetAllTagsData, GetAllTagsResponses, GetAllUsersData, GetAllUsersResponses, GetConfigfilesData, GetConfigfilesErrors, GetConfigfilesResponses, GetDetailData, GetDetailErrors, GetDetailResponses, GetJobData, GetJobErrors, GetJobOutputsData, GetJobOutputsErrors, GetJobOutputsResponses, GetJobResponses, GetJobsData, GetJobsErrors, GetJobsResponses, GetLogsData, GetLogsErrors, GetLogsResponses, GetProgressData, GetProgressErrors, GetProgressResponses, GetRuleDurationData, GetRuleDurationErrors, GetRuleDurationResponses, GetRuleErrorData, GetRuleErrorErrors, GetRuleErrorResponses, GetRuleGraphData, GetRuleGraphErrors, GetRuleGraphResponses, GetRuleStatusData, GetRuleStatusErrors, GetRuleStatusResponses, GetSnakefileData, GetSnakefileErrors, GetSnakefileResponses, GetStatusData, GetStatusErrors, GetStatusResponses, GetSystemHealthAsyncData, GetSystemHealthAsyncResponses, GetSystemHealthData, GetSystemHealthResponses, GetSystemResourcesData, GetSystemResourcesResponses, GetTimelinesData, GetTimelinesErrors, GetTimelinesResponses, GetUserSummaryData, GetUserSummaryResponses, GetWorkflowIdByNameData, GetWorkflowIdByNameErrors, GetWorkflowIdByNameResponses, GetWorkflowLogsData, GetWorkflowLogsErrors, GetWorkflowLogsResponses, GetWorkflowsData, GetWorkflowsErrors, GetWorkflowsResponses, ListFilesData, ListFilesErrors, ListFilesResponses, PostPruningData, PostPruningResponses, StreamEventsData, StreamEventsErrors, StreamEventsResponses, StreamWorkflowLogsSseData, StreamWorkflowLogsSseErrors, StreamWorkflowLogsSseResponses } from './types.gen';
+import type { DeleteWorkflowData, DeleteWorkflowErrors, DeleteWorkflowResponses, GetActivityData, GetActivityErrors, GetActivityResponses, GetAllTagsData, GetAllTagsResponses, GetAllUsersData, GetAllUsersResponses, GetConfigfilesData, GetConfigfilesErrors, GetConfigfilesResponses, GetDetailData, GetDetailErrors, GetDetailResponses, GetJobData, GetJobErrors, GetJobOutputsData, GetJobOutputsErrors, GetJobOutputsResponses, GetJobResponses, GetJobsData, GetJobsErrors, GetJobsResponses, GetLogsData, GetLogsErrors, GetLogsResponses, GetProgressData, GetProgressErrors, GetProgressResponses, GetRuleDurationData, GetRuleDurationErrors, GetRuleDurationResponses, GetRuleErrorData, GetRuleErrorErrors, GetRuleErrorResponses, GetRuleGraphData, GetRuleGraphErrors, GetRuleGraphResponses, GetRuleStatusData, GetRuleStatusErrors, GetRuleStatusResponses, GetSnakefileData, GetSnakefileErrors, GetSnakefileResponses, GetStatusData, GetStatusErrors, GetStatusResponses, GetSystemHealthAsyncData, GetSystemHealthAsyncResponses, GetSystemHealthData, GetSystemHealthResponses, GetSystemResourcesData, GetSystemResourcesResponses, GetTimelinesData, GetTimelinesErrors, GetTimelinesResponses, GetUserSummaryData, GetUserSummaryResponses, GetWorkflowIdByNameData, GetWorkflowIdByNameErrors, GetWorkflowIdByNameResponses, GetWorkflowLogData, GetWorkflowLogErrors, GetWorkflowLogResponses, GetWorkflowsData, GetWorkflowsErrors, GetWorkflowsResponses, ListFilesData, ListFilesErrors, ListFilesResponses, PostPruningData, PostPruningResponses, ReadFileData, ReadFileErrors, ReadFileResponses, StreamEventsData, StreamEventsErrors, StreamEventsResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean> = Options2<TData, ThrowOnError> & {
     /**
@@ -103,6 +103,11 @@ export const getRuleStatus = <ThrowOnError extends boolean = false>(options: Opt
 export const getSnakefile = <ThrowOnError extends boolean = false>(options: Options<GetSnakefileData, ThrowOnError>) => (options.client ?? client).get<GetSnakefileResponses, GetSnakefileErrors, ThrowOnError>({ url: '/api/v1/workflows/{workflow_id}/snakefile', ...options });
 
 /**
+ * Get Workflow Log
+ */
+export const getWorkflowLog = <ThrowOnError extends boolean = false>(options: Options<GetWorkflowLogData, ThrowOnError>) => (options.client ?? client).get<GetWorkflowLogResponses, GetWorkflowLogErrors, ThrowOnError>({ url: '/api/v1/workflows/{workflow_id}/log', ...options });
+
+/**
  * Get Configfiles
  */
 export const getConfigfiles = <ThrowOnError extends boolean = false>(options: Options<GetConfigfilesData, ThrowOnError>) => (options.client ?? client).get<GetConfigfilesResponses, GetConfigfilesErrors, ThrowOnError>({ url: '/api/v1/workflows/{workflow_id}/configfiles', ...options });
@@ -153,18 +158,11 @@ export const getAllTags = <ThrowOnError extends boolean = false>(options?: Optio
 export const streamEvents = <ThrowOnError extends boolean = false>(options?: Options<StreamEventsData, ThrowOnError>) => (options?.client ?? client).get<StreamEventsResponses, StreamEventsErrors, ThrowOnError>({ url: '/api/v1/sse/events', ...options });
 
 /**
- * Get Workflow Logs
- */
-export const getWorkflowLogs = <ThrowOnError extends boolean = false>(options: Options<GetWorkflowLogsData, ThrowOnError>) => (options.client ?? client).get<GetWorkflowLogsResponses, GetWorkflowLogsErrors, ThrowOnError>({ url: '/api/v1/logs/{workflow_id}', ...options });
-
-/**
- * Stream Workflow Logs Sse
- *
- * 使用Server-Sent Events格式的实时日志流
- */
-export const streamWorkflowLogsSse = <ThrowOnError extends boolean = false>(options: Options<StreamWorkflowLogsSseData, ThrowOnError>) => (options.client ?? client).get<StreamWorkflowLogsSseResponses, StreamWorkflowLogsSseErrors, ThrowOnError>({ url: '/api/v1/logs/{workflow_id}/sse', ...options });
-
-/**
  * List Files
  */
 export const listFiles = <ThrowOnError extends boolean = false>(options: Options<ListFilesData, ThrowOnError>) => (options.client ?? client).get<ListFilesResponses, ListFilesErrors, ThrowOnError>({ url: '/api/v1/files/list', ...options });
+
+/**
+ * Read File
+ */
+export const readFile = <ThrowOnError extends boolean = false>(options: Options<ReadFileData, ThrowOnError>) => (options.client ?? client).get<ReadFileResponses, ReadFileErrors, ThrowOnError>({ url: '/api/v1/files/files/{file_path}', ...options });

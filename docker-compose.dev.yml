@@ -25,7 +25,6 @@ services:
     env_file:
       - .env
     environment:
-      # 告诉 Caddy 本地前端运行在 5173
       - FRONTEND_PORT=5173
     ports:
       - "${PORT:-3100}:80"

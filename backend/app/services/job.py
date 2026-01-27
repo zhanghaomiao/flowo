@@ -1,7 +1,7 @@
 import uuid
 
 from sqlalchemy import and_, func, select, case
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
 from ..models import File, Job, Rule, Status
 from ..schemas import (
@@ -11,6 +11,7 @@ from ..schemas import (
     JobResponse,
 )
 from .workflow import WorkflowService
+from fastapi import HTTPException
 
 
 class JobService:
@@ -31,10 +32,8 @@ class JobService:
         jobs = list(self.db_session.execute(query).scalars())
         return [JobResponse.model_validate(job) for job in jobs]
 
-    def get_job_rule_name_by_job_id(self, job_id: int) -> str | None:
-        result = (
-            self.db_session.query(Rule.name).join(Job).filter(Job.id == job_id).first()
-        )
+    def get_job_rule_name_by_job_id(self, job_id: int):
+        result = self.db_session.query(Rule.name).join(Job).filter(Job.id == job_id).first()
         return result
 
     def get_jobs_by_workflow_id(
@@ -116,51 +115,47 @@ class JobService:
     def _get_jobs_by_workflow_id(self):
         pass
 
-    # def jobs_append(self, jobs: list[JobResponse]) -> list[JobResponse]:
-    #     rule_count_total = WorkflowService(self.db_session).get_workflow_run_info(
-    #         dict(jobs[0])["workflow_id"]
-    #     )
-
-    #     rule_count_current = {}
-    #     for job in jobs:
-    #         rule_name = dict(job)["rule_name"]
-    #         rule_count_current[rule_name] = rule_count_current.get(rule_name, 0) + 1
-
-    #     results = {
-    #         k: rule_count_total[k] - rule_count_current.get(k, 0)
-    #         for k in rule_count_total.keys()
-    #         if rule_count_total[k] - rule_count_current.get(k, 0) > 0
-    #     }
-
-    #     for rule_name, count in results.items():
-    #         for _ in range(count):
-    #             if rule_name == "total":
-    #                 continue
-    #             jobs.append(JobResponse(rule_name=rule_name, status="waiting"))
-
-    #     return jobs
     def get_job_details_with_id(self, job_id: int) -> JobDetailResponse:
-        """Retrieves a job by its unique identifier."""
-        rule_name = self.get_job_rule_name_by_job_id(job_id=job_id)
-        query = select(Job).where(Job.id == job_id)
-        files = self.get_job_files_with_id(job_id=job_id)
-        job = self.db_session.execute(query).scalar_one_or_none()
-        wf = WorkflowService(self.db_session).get_detail(workflow_id=job.workflow_id)
-        return JobDetailResponse.model_validate(
-            {
-                **job.__dict__,
-                **files,
-                "rule_name": rule_name[0],
-                "directory": wf.directory,
-            }
+        query = (
+            select(Job)
+            .options(
+                joinedload(Job.rule),      # 预加载 Rule，避免额外查询
+                joinedload(Job.workflow)   # 预加载 Workflow，避免额外查询
+            )
+            .where(Job.id == job_id)
         )
 
-    def get_job_files_with_id(self, job_id: int) -> FileResponse:
+        # 2. 修复 Bug：使用 scalars().one_or_none() 获取模型实例
+        job = self.db_session.execute(query).scalars().one_or_none()
+        if not job:
+            raise HTTPException(status_code=404, detail=f"Job with id {job_id} not found")
+
+        files = self.get_job_files_with_id(job_id=job_id)
+        
+        
+        directory = ""
+        if job.workflow_id:
+             wf_service = WorkflowService(self.db_session)
+             wf_detail = wf_service.get_detail(workflow_id=job.workflow_id)
+             directory = wf_detail.directory
+
+        rule_name = job.rule.name if job.rule else None 
+
+        return JobDetailResponse(
+            status=job.status,
+            started_at=job.started_at,
+            # ... 其他 job 字段手动映射或使用 model_validate(job, update={...})
+            **files,
+            rule_name=rule_name,
+            directory=directory,
+        )
+
+
+    def get_job_files_with_id(self, job_id: int) -> dict[str, list[str]]:
         files = self.db_session.query(File).filter(File.job_id == job_id).all()
         results = {}
         for file in files:
             results.setdefault(file.file_type.value.lower(), []).append(file.path)
-
         return results
 
     def get_job_logs_with_id(self, job_id: int) -> dict[str, str]:

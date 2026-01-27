@@ -5,9 +5,9 @@ import {
   getConfigfilesOptions,
   getDetailOptions,
   getSnakefileOptions,
-  getWorkflowLogsOptions,
   getWorkflowsOptions,
   getWorkflowsQueryKey,
+  getWorkflowLogOptions
 } from '@/client/@tanstack/react-query.gen';
 import type { Status, WorkflowResponse } from '@/client/types.gen';
 import LiveUpdatesIndicator from '@/components/LiveUpdatesIndicator';
@@ -126,7 +126,7 @@ const WorkflowTable = () => {
   });
 
   const { data: logData } = useQuery({
-    ...getWorkflowLogsOptions({
+    ...getWorkflowLogOptions({
       path: {
         workflow_id: logModal.workflowId,
       },
@@ -691,7 +691,7 @@ const WorkflowTable = () => {
         title={`Snakefile - Workflow ${snakefileModal.workflowId}`}
         visible={snakefileModal.visible}
         onClose={() => setSnakefileModal({ visible: false, workflowId: '' })}
-        fileContent={snakefileData || ''}
+        fileContent={snakefileData?.content || ''}
         fileFormat="yaml"
       />
       <MultiFileViewer

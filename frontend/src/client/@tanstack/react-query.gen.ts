@@ -3,8 +3,8 @@
 import { type DefaultError, type InfiniteData, infiniteQueryOptions, queryOptions, type UseMutationOptions, useQuery } from '@tanstack/react-query';
 
 import { client } from '../client.gen';
-import { deleteWorkflow, getActivity, getAllTags, getAllUsers, getConfigfiles, getDetail, getJob, getJobOutputs, getJobs, getLogs, getProgress, getRuleDuration, getRuleError, getRuleGraph, getRuleStatus, getSnakefile, getStatus, getSystemHealth, getSystemHealthAsync, getSystemResources, getTimelines, getUserSummary, getWorkflowIdByName, getWorkflowLogs, getWorkflows, listFiles, type Options, postPruning, streamEvents, streamWorkflowLogsSse } from '../sdk.gen';
-import type { DeleteWorkflowData, DeleteWorkflowError, GetActivityData, GetActivityError, GetActivityResponse, GetAllTagsData, GetAllTagsResponse, GetAllUsersData, GetAllUsersResponse, GetConfigfilesData, GetConfigfilesError, GetConfigfilesResponse, GetDetailData, GetDetailError, GetDetailResponse, GetJobData, GetJobError, GetJobOutputsData, GetJobOutputsError, GetJobOutputsResponse, GetJobResponse, GetJobsData, GetJobsError, GetJobsResponse, GetLogsData, GetLogsError, GetLogsResponse, GetProgressData, GetProgressError, GetProgressResponse, GetRuleDurationData, GetRuleDurationError, GetRuleDurationResponse, GetRuleErrorData, GetRuleErrorError, GetRuleErrorResponse, GetRuleGraphData, GetRuleGraphError, GetRuleGraphResponse, GetRuleStatusData, GetRuleStatusError, GetRuleStatusResponse, GetSnakefileData, GetSnakefileError, GetSnakefileResponse, GetStatusData, GetStatusError, GetStatusResponse, GetSystemHealthAsyncData, GetSystemHealthAsyncResponse, GetSystemHealthData, GetSystemHealthResponse, GetSystemResourcesData, GetSystemResourcesResponse, GetTimelinesData, GetTimelinesError, GetTimelinesResponse, GetUserSummaryData, GetUserSummaryResponse, GetWorkflowIdByNameData, GetWorkflowIdByNameError, GetWorkflowIdByNameResponse, GetWorkflowLogsData, GetWorkflowLogsError, GetWorkflowLogsResponse, GetWorkflowsData, GetWorkflowsError, GetWorkflowsResponse, ListFilesData, ListFilesError, ListFilesResponse, PostPruningData, PostPruningResponse, StreamEventsData, StreamEventsError, StreamWorkflowLogsSseData, StreamWorkflowLogsSseError } from '../types.gen';
+import { deleteWorkflow, getActivity, getAllTags, getAllUsers, getConfigfiles, getDetail, getJob, getJobOutputs, getJobs, getLogs, getProgress, getRuleDuration, getRuleError, getRuleGraph, getRuleStatus, getSnakefile, getStatus, getSystemHealth, getSystemHealthAsync, getSystemResources, getTimelines, getUserSummary, getWorkflowIdByName, getWorkflowLog, getWorkflows, listFiles, type Options, postPruning, readFile, streamEvents } from '../sdk.gen';
+import type { DeleteWorkflowData, DeleteWorkflowError, GetActivityData, GetActivityError, GetActivityResponse, GetAllTagsData, GetAllTagsResponse, GetAllUsersData, GetAllUsersResponse, GetConfigfilesData, GetConfigfilesError, GetConfigfilesResponse, GetDetailData, GetDetailError, GetDetailResponse, GetJobData, GetJobError, GetJobOutputsData, GetJobOutputsError, GetJobOutputsResponse, GetJobResponse, GetJobsData, GetJobsError, GetJobsResponse, GetLogsData, GetLogsError, GetLogsResponse, GetProgressData, GetProgressError, GetProgressResponse, GetRuleDurationData, GetRuleDurationError, GetRuleDurationResponse, GetRuleErrorData, GetRuleErrorError, GetRuleErrorResponse, GetRuleGraphData, GetRuleGraphError, GetRuleGraphResponse, GetRuleStatusData, GetRuleStatusError, GetRuleStatusResponse, GetSnakefileData, GetSnakefileError, GetSnakefileResponse, GetStatusData, GetStatusError, GetStatusResponse, GetSystemHealthAsyncData, GetSystemHealthAsyncResponse, GetSystemHealthData, GetSystemHealthResponse, GetSystemResourcesData, GetSystemResourcesResponse, GetTimelinesData, GetTimelinesError, GetTimelinesResponse, GetUserSummaryData, GetUserSummaryResponse, GetWorkflowIdByNameData, GetWorkflowIdByNameError, GetWorkflowIdByNameResponse, GetWorkflowLogData, GetWorkflowLogError, GetWorkflowLogResponse, GetWorkflowsData, GetWorkflowsError, GetWorkflowsResponse, ListFilesData, ListFilesError, ListFilesResponse, PostPruningData, PostPruningResponse, ReadFileData, ReadFileError, ReadFileResponse, StreamEventsData, StreamEventsError } from '../types.gen';
 
 export type QueryKey<TOptions extends Options> = [
     Pick<TOptions, 'baseUrl' | 'body' | 'headers' | 'path' | 'query'> & {
@@ -492,6 +492,29 @@ export const getSnakefileOptions = (options: Options<GetSnakefileData>) => query
  */
 export const useGetSnakefileQuery = (options: Options<GetSnakefileData>) => useQuery(getSnakefileOptions(options));
 
+export const getWorkflowLogQueryKey = (options: Options<GetWorkflowLogData>) => createQueryKey('getWorkflowLog', options, false, ['workflow']);
+
+/**
+ * Get Workflow Log
+ */
+export const getWorkflowLogOptions = (options: Options<GetWorkflowLogData>) => queryOptions<GetWorkflowLogResponse, GetWorkflowLogError, GetWorkflowLogResponse, ReturnType<typeof getWorkflowLogQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await getWorkflowLog({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: getWorkflowLogQueryKey(options)
+});
+
+/**
+ * Get Workflow Log
+ */
+export const useGetWorkflowLogQuery = (options: Options<GetWorkflowLogData>) => useQuery(getWorkflowLogOptions(options));
+
 export const getConfigfilesQueryKey = (options: Options<GetConfigfilesData>) => createQueryKey('getConfigfiles', options, false, ['workflow']);
 
 /**
@@ -716,56 +739,6 @@ export const streamEventsOptions = (options?: Options<StreamEventsData>) => quer
  */
 export const useStreamEventsQuery = (options?: Options<StreamEventsData>) => useQuery(streamEventsOptions(options));
 
-export const getWorkflowLogsQueryKey = (options: Options<GetWorkflowLogsData>) => createQueryKey('getWorkflowLogs', options, false, ['logs']);
-
-/**
- * Get Workflow Logs
- */
-export const getWorkflowLogsOptions = (options: Options<GetWorkflowLogsData>) => queryOptions<GetWorkflowLogsResponse, GetWorkflowLogsError, GetWorkflowLogsResponse, ReturnType<typeof getWorkflowLogsQueryKey>>({
-    queryFn: async ({ queryKey, signal }) => {
-        const { data } = await getWorkflowLogs({
-            ...options,
-            ...queryKey[0],
-            signal,
-            throwOnError: true
-        });
-        return data;
-    },
-    queryKey: getWorkflowLogsQueryKey(options)
-});
-
-/**
- * Get Workflow Logs
- */
-export const useGetWorkflowLogsQuery = (options: Options<GetWorkflowLogsData>) => useQuery(getWorkflowLogsOptions(options));
-
-export const streamWorkflowLogsSseQueryKey = (options: Options<StreamWorkflowLogsSseData>) => createQueryKey('streamWorkflowLogsSse', options, false, ['logs']);
-
-/**
- * Stream Workflow Logs Sse
- *
- * 使用Server-Sent Events格式的实时日志流
- */
-export const streamWorkflowLogsSseOptions = (options: Options<StreamWorkflowLogsSseData>) => queryOptions<unknown, StreamWorkflowLogsSseError, unknown, ReturnType<typeof streamWorkflowLogsSseQueryKey>>({
-    queryFn: async ({ queryKey, signal }) => {
-        const { data } = await streamWorkflowLogsSse({
-            ...options,
-            ...queryKey[0],
-            signal,
-            throwOnError: true
-        });
-        return data;
-    },
-    queryKey: streamWorkflowLogsSseQueryKey(options)
-});
-
-/**
- * Stream Workflow Logs Sse
- *
- * 使用Server-Sent Events格式的实时日志流
- */
-export const useStreamWorkflowLogsSseQuery = (options: Options<StreamWorkflowLogsSseData>) => useQuery(streamWorkflowLogsSseOptions(options));
-
 export const listFilesQueryKey = (options: Options<ListFilesData>) => createQueryKey('listFiles', options, false, ['files']);
 
 /**
@@ -788,3 +761,26 @@ export const listFilesOptions = (options: Options<ListFilesData>) => queryOption
  * List Files
  */
 export const useListFilesQuery = (options: Options<ListFilesData>) => useQuery(listFilesOptions(options));
+
+export const readFileQueryKey = (options: Options<ReadFileData>) => createQueryKey('readFile', options, false, ['files']);
+
+/**
+ * Read File
+ */
+export const readFileOptions = (options: Options<ReadFileData>) => queryOptions<ReadFileResponse, ReadFileError, ReadFileResponse, ReturnType<typeof readFileQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await readFile({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: readFileQueryKey(options)
+});
+
+/**
+ * Read File
+ */
+export const useReadFileQuery = (options: Options<ReadFileData>) => useQuery(readFileOptions(options));

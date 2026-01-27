@@ -226,7 +226,7 @@ function WorkflowDetail() {
 
                 {activeTab === 'code' && (
                   <TextViewer
-                    content={snakefileContent as string}
+                    content={snakefileContent?.content as string}
                     fileFormat="python"
                   />
                 )}

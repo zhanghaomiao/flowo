@@ -17,7 +17,7 @@ class Settings(BaseSettings):
 
     # SQL settings
     BACKEND_CORS_ORIGINS: list[str] = ["*"]
-
+    FOLWO_WORKING_PATH: str = "/tmp/flowo_working_dir"
     CONTAINER_MOUNT_PATH: str = "/work_dir"
 
     class Config:

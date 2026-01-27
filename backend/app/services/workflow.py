@@ -1,5 +1,4 @@
 from argparse import FileType
-import os
 import uuid
 from collections import Counter, defaultdict
 from datetime import datetime
@@ -7,10 +6,8 @@ from itertools import chain, groupby
 from operator import itemgetter
 from typing import Any
 from datetime import datetime
-from pathlib import Path
 
 from fastapi import HTTPException
-from fastapi.responses import JSONResponse
 from sqlalchemy import and_, case, func, select, or_
 from sqlalchemy.orm import Session
 from ..models.enums import FileType
@@ -21,7 +18,7 @@ from ..schemas import (
     WorkflowListResponse,
     WorkflowResponse,
 )
-from app.core.config import settings
+from app.utils.paths import path_resolver, get_file_content, PathContent
 
 
 class WorkflowService:
@@ -30,22 +27,6 @@ class WorkflowService:
     def __init__(self, db_session: Session):
         self.db_session = db_session
 
-    def validate_workflow_exists(self, workflow_id: uuid.UUID) -> None:
-        """
-        Validate that a workflow exists
-
-        Args:
-            workflow_id: UUID of the workflow to validate
-
-        Raises:
-            HTTPException: If the workflow does not exist
-        """
-        query = select(Workflow).where(Workflow.id == workflow_id)
-        workflow = self.db_session.execute(query).scalars().first()
-
-        if not workflow:
-            raise HTTPException(status_code=404, detail="Workflow not found")
-
     def get_workflow(self, workflow_id: uuid.UUID):
         query = select(Workflow).where(Workflow.id == workflow_id)
         workflow = self.db_session.execute(query).scalar_one_or_none()
@@ -53,34 +34,21 @@ class WorkflowService:
 
     def get_flowo_directory(self, workflow_id: uuid.UUID):
         workflow = self.get_workflow(workflow_id=workflow_id)
-        if workflow and workflow.flowo_working_path and workflow.directory:
-            host_base_path = Path(workflow.flowo_working_path).resolve()
-            target_path_on_host = Path(workflow.directory).resolve()
-            container_mount_path = Path(settings.CONTAINER_MOUNT_PATH).resolve()
-            try:
-                relative_path = target_path_on_host.relative_to(host_base_path)
-                container_path = container_mount_path / relative_path
-                return str(container_path)
-            except ValueError:
-                print(f"Error: {workflow.directory} is not inside {workflow.flowo_working_path}")
-        return None
+        if not workflow or not workflow.directory:
+            raise HTTPException(status_code=404, detail="Workflow not found")
+        return path_resolver.resolve(workflow.directory)
 
 
     def get_detail(self, workflow_id: uuid.UUID):
         workflow = self.get_workflow(workflow_id=workflow_id)
         if not workflow:
-            return
-
-        flowo_directory = self.get_flowo_directory(workflow_id=workflow_id)
-        if flowo_directory:
-            flowo_directory = flowo_directory.replace("/work_dir", "")
-
+            raise HTTPException(status_code=404, detail="Workflow not found")
         return WorkflowDetialResponse(
             **{
                 **workflow.__dict__,
                 "progress": self._get_progress(workflow.id),
                 "workflow_id": workflow.id,
-                "flowo_directory": flowo_directory,
+                "flowo_directory": workflow.directory
             }
         )
 
@@ -173,37 +141,18 @@ class WorkflowService:
         query = select(Workflow.user).distinct().where(Workflow.user.is_not(None))
         return list(self.db_session.execute(query).scalars())
 
-    def get_snakefile(self, workflow_id: uuid.UUID) -> str | JSONResponse:
+    def get_snakefile(self, workflow_id: uuid.UUID) -> PathContent:
         workflow = self.get_workflow(workflow_id=workflow_id)
+        if workflow is None or not workflow.snakefile:
+            raise HTTPException(status_code=404, detail="Workflow or snakefile not found")
+        return get_file_content(workflow.snakefile)
+    
+    def get_workflow_log(self, workflow_id: uuid.UUID) -> PathContent:
+        workflow = self.get_workflow(workflow_id=workflow_id)
+        if workflow is None or not workflow.logfile:
+            raise HTTPException(status_code=404, detail="Workflow or log file not found")
+        return get_file_content(workflow.logfile)
 
-        if workflow is None:
-            return JSONResponse(
-                status_code=404,
-                content={"error": "Workflow not found"},
-            )
-
-        # if workflow.flowo_working_path:
-        #     snakefile = str(workflow.snakefile).replace(
-        #         workflow.flowo_working_path, "/work_dir/"
-        #     )
-        # else:
-        #     snakefile = workflow.snakefile
-        snakefile = workflow.snakefile
-
-        if snakefile and os.path.exists(snakefile):
-            try:
-                with open(snakefile) as f:
-                    file_content = f.read()
-                return file_content
-            except Exception as e:
-                return JSONResponse(
-                    status_code=500, content={"error": f"Failed to read file: {str(e)}"}
-                )
-        else:
-            return JSONResponse(
-                status_code=404,
-                content={"error": "Snakefile not found, please set flowo_working_path"},
-            )
 
     def get_all_tags(self) -> list[str]:
         query = select(Workflow.tags)
@@ -278,7 +227,7 @@ class WorkflowService:
 
         workflow = self.get_workflow(workflow_id=workflow_id)
         if not workflow:
-            return {}
+            raise HTTPException(status_code=404, detail="Workflow not found")
 
         return workflow.rulegraph_data if workflow.rulegraph_data else {}
 
@@ -286,12 +235,10 @@ class WorkflowService:
 
         workflow = self.get_workflow(workflow_id=workflow_id)
         if not workflow:
-            return {}
-
+            raise HTTPException(status_code=404, detail="Workflow not found")
         return workflow.run_info if workflow.run_info else {}
 
     def get_timelines_with_id(self, workflow_id: uuid.UUID):
-        # rule_name: [[rule name show, started at, end time, status] ...]
         from app.services.job import JobService
 
         results = []

@@ -199,6 +199,20 @@ export type JobResponse = {
 };
 
 /**
+ * PathContent
+ */
+export type PathContent = {
+    /**
+     * Content
+     */
+    content: string;
+    /**
+     * Path
+     */
+    path: string;
+};
+
+/**
  * ResourcesSummary
  */
 export type ResourcesSummary = {
@@ -1021,14 +1035,42 @@ export type GetSnakefileError = GetSnakefileErrors[keyof GetSnakefileErrors];
 
 export type GetSnakefileResponses = {
     /**
-     * Response Get Snakefile Api V1 Workflows  Workflow Id  Snakefile Get
-     *
      * Successful Response
      */
-    200: string;
+    200: PathContent;
 };
 
 export type GetSnakefileResponse = GetSnakefileResponses[keyof GetSnakefileResponses];
+
+export type GetWorkflowLogData = {
+    body?: never;
+    path: {
+        /**
+         * Workflow Id
+         */
+        workflow_id: string;
+    };
+    query?: never;
+    url: '/api/v1/workflows/{workflow_id}/log';
+};
+
+export type GetWorkflowLogErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type GetWorkflowLogError = GetWorkflowLogErrors[keyof GetWorkflowLogErrors];
+
+export type GetWorkflowLogResponses = {
+    /**
+     * Successful Response
+     */
+    200: PathContent;
+};
+
+export type GetWorkflowLogResponse = GetWorkflowLogResponses[keyof GetWorkflowLogResponses];
 
 export type GetConfigfilesData = {
     body?: never;
@@ -1354,68 +1396,6 @@ export type StreamEventsResponses = {
     200: unknown;
 };
 
-export type GetWorkflowLogsData = {
-    body?: never;
-    path: {
-        /**
-         * Workflow Id
-         */
-        workflow_id: string;
-    };
-    query?: never;
-    url: '/api/v1/logs/{workflow_id}';
-};
-
-export type GetWorkflowLogsErrors = {
-    /**
-     * Validation Error
-     */
-    422: HttpValidationError;
-};
-
-export type GetWorkflowLogsError = GetWorkflowLogsErrors[keyof GetWorkflowLogsErrors];
-
-export type GetWorkflowLogsResponses = {
-    /**
-     * Response Get Workflow Logs Api V1 Logs  Workflow Id  Get
-     *
-     * Successful Response
-     */
-    200: {
-        [key: string]: string;
-    };
-};
-
-export type GetWorkflowLogsResponse = GetWorkflowLogsResponses[keyof GetWorkflowLogsResponses];
-
-export type StreamWorkflowLogsSseData = {
-    body?: never;
-    path: {
-        /**
-         * Workflow Id
-         */
-        workflow_id: string;
-    };
-    query?: never;
-    url: '/api/v1/logs/{workflow_id}/sse';
-};
-
-export type StreamWorkflowLogsSseErrors = {
-    /**
-     * Validation Error
-     */
-    422: HttpValidationError;
-};
-
-export type StreamWorkflowLogsSseError = StreamWorkflowLogsSseErrors[keyof StreamWorkflowLogsSseErrors];
-
-export type StreamWorkflowLogsSseResponses = {
-    /**
-     * Successful Response
-     */
-    200: unknown;
-};
-
 export type ListFilesData = {
     body?: never;
     path?: never;
@@ -1453,3 +1433,33 @@ export type ListFilesResponses = {
 };
 
 export type ListFilesResponse = ListFilesResponses[keyof ListFilesResponses];
+
+export type ReadFileData = {
+    body?: never;
+    path: {
+        /**
+         * File Path
+         */
+        file_path: string;
+    };
+    query?: never;
+    url: '/api/v1/files/files/{file_path}';
+};
+
+export type ReadFileErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type ReadFileError = ReadFileErrors[keyof ReadFileErrors];
+
+export type ReadFileResponses = {
+    /**
+     * Successful Response
+     */
+    200: PathContent;
+};
+
+export type ReadFileResponse = ReadFileResponses[keyof ReadFileResponses];

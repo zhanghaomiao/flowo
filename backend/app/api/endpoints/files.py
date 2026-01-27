@@ -1,11 +1,13 @@
 import uuid
 from fastapi import APIRouter, HTTPException, Query, Depends
+from fastapi.responses import FileResponse
 from pathlib import Path
 import os
 from typing import List, Optional
 from pydantic import BaseModel
 from app.services.workflow import WorkflowService
 from app.core.session import get_db
+from app.utils.paths import path_resolver, get_file_content, PathContent
 from sqlalchemy.orm import Session
 
 
@@ -27,7 +29,8 @@ def list_files(
     db: Session = Depends(get_db)
 ):
     root_dir = Path(WorkflowService(db).get_flowo_directory(workflow_id))
-    target_path = (root_dir / path).resolve()
+    # root_dir = path_resolver
+    # target_path = (root_dir / path).resolve()
     
     if not str(target_path).startswith(str(root_dir)):
         raise HTTPException(status_code=403, detail="Access denied")
@@ -61,3 +64,22 @@ def list_files(
 
     nodes.sort(key=lambda x: (x['isLeaf'], x['title'].lower()))
     return nodes
+
+
+@router.get("/files/{file_path:path}", response_model=PathContent)
+def read_file(file_path: str):
+    try:
+        result = get_file_content(file_path)
+        return result
+
+    except FileNotFoundError as e:
+        raise HTTPException(status_code=404, detail="File does not exist")
+        
+    except IsADirectoryError:
+        raise HTTPException(status_code=400, detail="Target is a directory")
+
+    except ValueError as e:
+        raise HTTPException(status_code=403, detail="Access to this path is forbidden")
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Internal Server Error: {str(e)}")
