@@ -119,33 +119,26 @@ class JobService:
         query = (
             select(Job)
             .options(
-                joinedload(Job.rule),      # 预加载 Rule，避免额外查询
-                joinedload(Job.workflow)   # 预加载 Workflow，避免额外查询
+                joinedload(Job.rule),      
+                joinedload(Job.workflow)   
             )
             .where(Job.id == job_id)
         )
 
-        # 2. 修复 Bug：使用 scalars().one_or_none() 获取模型实例
         job = self.db_session.execute(query).scalars().one_or_none()
         if not job:
             raise HTTPException(status_code=404, detail=f"Job with id {job_id} not found")
 
-        files = self.get_job_files_with_id(job_id=job_id)
-        
-        
         directory = ""
         if job.workflow_id:
              wf_service = WorkflowService(self.db_session)
              wf_detail = wf_service.get_detail(workflow_id=job.workflow_id)
              directory = wf_detail.directory
 
-        rule_name = job.rule.name if job.rule else None 
+        rule_name = job.rule.name 
 
         return JobDetailResponse(
-            status=job.status,
-            started_at=job.started_at,
-            # ... 其他 job 字段手动映射或使用 model_validate(job, update={...})
-            **files,
+            **job.__dict__,
             rule_name=rule_name,
             directory=directory,
         )

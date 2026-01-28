@@ -29,15 +29,8 @@ def list_files(
     db: Session = Depends(get_db)
 ):
     root_dir = Path(WorkflowService(db).get_flowo_directory(workflow_id))
-    # root_dir = path_resolver
-    # target_path = (root_dir / path).resolve()
-    
-    if not str(target_path).startswith(str(root_dir)):
-        raise HTTPException(status_code=403, detail="Access denied")
-    if not target_path.exists():
-        raise HTTPException(status_code=404, detail="Path not found")
+    target_path = (root_dir / path).resolve()
     nodes = []
-    
     try:
         with os.scandir(target_path) as entries:
             for entry in entries:

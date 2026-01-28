@@ -1,6 +1,7 @@
 import uuid
 from datetime import datetime
 from typing import Any
+from app.models.job import Status
 
 from pydantic import BaseModel, ConfigDict
 
@@ -37,8 +38,8 @@ class JobListResponse(BaseModel):
 
 class JobDetailResponse(BaseModel):
     rule_name: str
+    status: Status 
     workflow_id: uuid.UUID | None = None
-    status: str | None = None
     started_at: datetime | None = None
     end_time: datetime | None = None
     message: str | None = None
@@ -48,5 +49,5 @@ class JobDetailResponse(BaseModel):
     resources: dict[str, Any] | None = None
     directory: str | None = None
     input: list[str] | None = None
-    output: list[str]
+    output: list[str] | None = None
     log: list[str] | None = None
