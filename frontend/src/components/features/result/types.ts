@@ -19,6 +19,7 @@ export interface AntdTreeNode {
   fileExtension: string;
   nodeData: TreeDataNode & { fileSize?: number | null };
   loadData?: () => Promise<void>;
+  url?: string;
 }
 
 export interface SelectedNodeData {
@@ -31,6 +32,7 @@ export interface SelectedNodeData {
   type: 'file' | 'directory';
   fileExtension: string;
   nodeData: TreeDataNode & { fileSize?: number | null };
+  url?: string | undefined;
 }
 
 export interface TreeSelectInfo {

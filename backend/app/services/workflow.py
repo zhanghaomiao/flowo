@@ -138,8 +138,15 @@ class WorkflowService:
         )
 
     def get_all_users(self) -> list[str]:
-        query = select(Workflow.user).distinct().where(Workflow.user.is_not(None))
-        return list(self.db_session.execute(query).scalars())
+        query = (
+            select(Workflow.user)
+            .distinct()
+            .where(Workflow.user.is_not(None))
+            .order_by(Workflow.user)
+        )
+        users = self.db_session.execute(query).scalars().all()
+        return [u for u in users if u is not None]
+
 
     def get_snakefile(self, workflow_id: uuid.UUID) -> PathContent:
         workflow = self.get_workflow(workflow_id=workflow_id)
@@ -251,13 +258,15 @@ class WorkflowService:
         )
 
         run_info = self.get_workflow_run_info(workflow_id=workflow_id)
+        if not run_info:
+            return []
+
         for job in jobs:
-            # if job.rule_name == "all":
-            #     continue
-
             rule_name_dict[job.rule_name] = rule_name_dict.get(job.rule_name, 0) + 1
-            rule_name_show = f"{job.rule_name} {rule_name_dict[job.rule_name]}/{run_info[job.rule_name]}"
-
+            if job.rule_name:
+                rule_name_show = f"{job.rule_name} {rule_name_dict[job.rule_name]}/{run_info.get(job.rule_name)}"
+            else:
+                rule_name_show = f"{rule_name_dict[job.rule_name]}"
             started_at = job.started_at
             end_time = job.end_time if not job.status == "RUNNING" else datetime.now()
 

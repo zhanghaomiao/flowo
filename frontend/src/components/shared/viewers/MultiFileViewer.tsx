@@ -72,7 +72,7 @@ export const MultiFileViewer: React.FC<MultiFileViewerProps> = ({
         </Button>,
       ]}
       width={1200}
-      styles={{ body: { height: '80vh', padding: 0 } }}
+      styles={{ body: { height: '70vh', padding: 0 } }}
     >
       {filePaths.length === 0 ? (
         <Empty description="No files to display" />

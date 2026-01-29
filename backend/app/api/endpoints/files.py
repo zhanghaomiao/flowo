@@ -16,7 +16,8 @@ class FileNode(BaseModel):
     key: str            # 核心：相对路径作为 Key
     isLeaf: bool        # True=文件, False=文件夹
     fileSize: Optional[int] = None
-    icon: str           # 辅助字段，告诉前端用什么图标
+    icon: str           
+    url: Optional[str] = None
 
 
 router = APIRouter()
@@ -49,7 +50,8 @@ def list_files(
                     "key": relative_key,   
                     "isLeaf": not is_dir,  
                     "fileSize": entry.stat().st_size if not is_dir else None,
-                    "icon": "folder" if is_dir else "file"
+                    "icon": "folder" if is_dir else "file",
+                    "url": None if is_dir else f"{target_path}/{entry.name}"
                 })
                 
     except PermissionError:

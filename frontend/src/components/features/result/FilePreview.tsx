@@ -39,14 +39,10 @@ export const FilePreview: React.FC<FilePreviewProps> = ({ nodeData, fullscreen =
     );
   }
 
-  const { fullPath, nodeData: data } = nodeData;
+  const { url, nodeData: data } = nodeData;
   const title = data.title || '';
   const fileSize = data.fileSize || 0;
 
-  // 2. 构造 URL (使用 useMemo 防止不必要的重算)
-  const fileUrl = useMemo(() => client.buildUrl({
-    url: `/files/${fullPath}`,
-  }), [fullPath]);
 
   const category = getFileTypeCategory(title as string);
   const extension = getFileExtension(title as string);
@@ -67,15 +63,15 @@ export const FilePreview: React.FC<FilePreviewProps> = ({ nodeData, fullscreen =
   const renderContent = () => {
     switch (category) {
       case 'image':
-        return <ImageViewer src={fileUrl} fullscreen={fullscreen} />;
+        return <ImageViewer src={url} fullscreen={fullscreen} />;
       case 'text':
         // For text files, we need to fetch content first
-        return <TextFileViewer src={fileUrl} extension={extension} />;
+        return <TextFileViewer src={url} extension={extension} />;
       case 'pdf':
       case 'html':
-        return <IframeViewer src={fileUrl} fileName={title as string} />;
+        return <IframeViewer src={url} fileName={title as string} />;
       case 'csv':
-        return <TableViewer src={fileUrl} fullscreen={fullscreen} />;
+        return <TableViewer src={url} fullscreen={fullscreen} />;
       default:
         return (
           <Result
@@ -88,7 +84,10 @@ export const FilePreview: React.FC<FilePreviewProps> = ({ nodeData, fullscreen =
   };
 
   // Text file viewer that fetches content
-  const TextFileViewer: React.FC<{ src: string; extension: string }> = ({ src, extension }) => {
+  const TextFileViewer: React.FC<{ src: string | undefined; extension: string }> = ({ src, extension }) => {
+    if (!src) {
+      return <Result status="error" title="No source URL provided for text file." />;
+    }
     const { data, isLoading, isError } = useQuery({
       queryKey: ['fileContent', src],
       queryFn: async () => {

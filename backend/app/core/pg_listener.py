@@ -6,7 +6,7 @@ from collections.abc import AsyncGenerator
 import asyncpg
 from fastapi import Request
 from fastapi.logger import logger
-from sse_starlette.sse import ServerSentEvent
+from sse_starlette.event import ServerSentEvent
 
 from app.core.config import settings
 
@@ -15,7 +15,7 @@ class PGListener:
     def __init__(self):
         self.db_url = str(settings.SQLALCHEMY_DATABASE_URI)
         self._connection: asyncpg.Connection | None = None
-        self._lock = asyncio.Lock()
+        self._lock = asyncio.Lock() 
         self._stop_event = asyncio.Event()
 
         # 核心数据结构：频道名 -> 订阅者队列集合
@@ -44,6 +44,8 @@ class PGListener:
                 logger.info("SSE: PGListener disconnected")
             except Exception as e:
                 logger.error(f"SSE: Error closing connection: {e}")
+            finally:
+                self._connection = None
 
     def _on_notification(self, conn, pid, channel, payload):
         """
@@ -73,7 +75,8 @@ class PGListener:
                 self._subscribers[channel].add(queue)
 
                 # 只有当这个频道从未被监听过时，才向 asyncpg 和 数据库 注册
-                if channel not in self._listening_channels and self._connection:
+                # 必须检查连接是否存在且未关闭
+                if channel not in self._listening_channels and self._connection and not self._connection.is_closed():
                     try:
                         # A. 向 asyncpg 注册回调 (Python 侧)
                         # 告诉 asyncpg: 如果收到这个 channel 的消息，请调用 _on_notification

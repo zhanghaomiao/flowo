@@ -39,6 +39,7 @@
     # Handle static file serving for work directory
     handle_path /files/* {
         # Handle CORS preflight requests
+        uri strip_prefix {$CONTAINER_MOUNT_PATH}
         @options {
             method OPTIONS
         }
@@ -49,11 +50,11 @@
             Access-Control-Max-Age "86400"
         }
         respond @options 200
-        
-        root * /work_dir
+        root * {$CONTAINER_MOUNT_PATH}
+
         file_server {
             browse
-            hide .snakemake *.smk flowo_logs
+            # hide .snakemake *.smk flowo_logs
         }
         
         # Set caching headers for different file types

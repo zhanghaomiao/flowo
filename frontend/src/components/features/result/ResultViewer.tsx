@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { useQueryClient, useQuery } from '@tanstack/react-query';
-import { listFilesOptions } from '@/client/@tanstack/react-query.gen';
+import { useQueryClient } from '@tanstack/react-query';
+import { useListFilesQuery, listFilesOptions } from '@/client/@tanstack/react-query.gen';
 import { client } from '@/client/client.gen';
 import {
-  ReloadOutlined,
   DownloadOutlined,
   FullscreenOutlined,
   FileOutlined
@@ -36,14 +35,10 @@ export const ResultViewer: React.FC<ResultViewerProps> = ({ workflowId }) => {
   const [selectedNodeData, setSelectedNodeData] = useState<AntdTreeNode | null>(null);
   const [isFullscreenOpen, setIsFullscreenOpen] = useState(false);
 
-  const {
-    data: rootFiles,
-    isLoading,
-  } = useQuery({
-    ...listFilesOptions({
-      query: { workflow_id: workflowId, path: '' }
-    }),
+  const { data: rootFiles, isLoading } = useListFilesQuery({
+    query: { workflow_id: workflowId, path: '' }
   });
+
 
   useEffect(() => {
     if (rootFiles) {
@@ -89,9 +84,7 @@ export const ResultViewer: React.FC<ResultViewerProps> = ({ workflowId }) => {
 
   const handleDownload = () => {
     if (!selectedNodeData) return;
-    // 使用 nodeData 中的 fullPath (或者 key)
-    const path = selectedNodeData.fullPath || selectedNodeData.key;
-    const url = client.buildUrl({ url: `/files/${path}?download=true` });
+    const url = client.buildUrl({ url: `${selectedNodeData.url}?download=true` });
     window.open(url, '_blank');
   };
 
@@ -121,7 +114,6 @@ export const ResultViewer: React.FC<ResultViewerProps> = ({ workflowId }) => {
           </Card>
         </Splitter.Panel>
 
-        {/* 右侧：预览区 */}
         <Splitter.Panel>
           <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
             {/* 右侧头部工具栏 */}
@@ -157,7 +149,6 @@ export const ResultViewer: React.FC<ResultViewerProps> = ({ workflowId }) => {
               </Space>
             </div>
 
-            {/* 右侧内容区 */}
             <div style={{ flex: 1, overflow: 'hidden', padding: 16, background: '#fafafa' }}>
               <Card style={{ height: '100%' }} styles={{ body: { height: '100%', padding: 0 } }}>
                 <FilePreview nodeData={selectedNodeData} />

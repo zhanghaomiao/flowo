@@ -22,6 +22,7 @@ services:
   caddy:
     image: caddy:2-alpine
     container_name: caddy-dev
+    user: "0:0"
     env_file:
       - .env
     environment:
@@ -30,7 +31,7 @@ services:
       - "${PORT:-3100}:80"
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile
-      - ${FLOWO_WORKING_PATH:-.}:${CONTAINER_MOUNT_PATH:-/work_dir}:ro
+      - ${FLOWO_WORKING_PATH:-.}:${CONTAINER_MOUNT_PATH:-/flowo-data}:ro
       - caddy_data:/data
       - caddy_config:/config
     # 关键：让 Caddy 能通过这两个域名访问宿主机 IP

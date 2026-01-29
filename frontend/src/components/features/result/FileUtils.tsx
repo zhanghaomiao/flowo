@@ -54,6 +54,7 @@ export const ALL_SUPPORTED_EXTENSIONS = [
   ...FILE_TYPES.text,
   ...FILE_TYPES.csv,
 ];
+const FILE_SERVER_BASE_URL = '/files';
 
 // =================================================================
 // Helpers
@@ -168,6 +169,12 @@ export const updateTreeData = (
 export const transformApiNodeToTreeNode = (item: any): AntdTreeNode => {
   const isLeaf = item.isLeaf !== undefined ? item.isLeaf : !item.is_dir;
 
+  let fileUrl: string | undefined = undefined;
+
+  if (isLeaf) {
+    fileUrl = `${FILE_SERVER_BASE_URL}${item.url}`;
+  }
+
   return {
     title: item.title,
     key: item.key,
@@ -178,5 +185,6 @@ export const transformApiNodeToTreeNode = (item: any): AntdTreeNode => {
     fullPath: item.key,
     nodeData: item,
     fileExtension: getFileExtension(item.title),
+    url: fileUrl,
   };
 };

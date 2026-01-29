@@ -28,6 +28,10 @@ export type FileNode = {
      * Icon
      */
     icon: string;
+    /**
+     * Url
+     */
+    url?: string | null;
 };
 
 /**
@@ -48,14 +52,11 @@ export type JobDetailResponse = {
      * Rule Name
      */
     rule_name: string;
+    status: Status;
     /**
      * Workflow Id
      */
     workflow_id?: string | null;
-    /**
-     * Status
-     */
-    status?: string | null;
     /**
      * Started At
      */
@@ -99,7 +100,7 @@ export type JobDetailResponse = {
     /**
      * Output
      */
-    output: Array<string>;
+    output?: Array<string> | null;
     /**
      * Log
      */

@@ -365,7 +365,7 @@ const JobTable: React.FC<JobTableProps> = ({
       />
 
       <MultiFileViewer
-        key={`jobLogs`}
+        key={`jobLogs-${jobLogsModal.jobId}`}
         visible={jobLogsModal.visible}
         onClose={() => setJobLogsModal({ visible: false, jobId: 0 })}
         fileContent={jobLogsData || {}}

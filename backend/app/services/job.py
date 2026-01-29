@@ -12,6 +12,8 @@ from ..schemas import (
 )
 from .workflow import WorkflowService
 from fastapi import HTTPException
+from app.utils.paths import  path_resolver
+from pathlib import Path
 
 
 class JobService:
@@ -159,23 +161,14 @@ class JobService:
         )
 
         query = select(Job).where(Job.id == job_id)
-        wf = self.db_session.execute(query).scalar_one_or_none().workflow
-
+        wf = self.db_session.execute(query).scalar_one().workflow
+        if not wf or not wf.directory:
+            raise HTTPException(status_code=404, detail="Workflow not found")
         results = {}
         for file in files:
-            if not wf.flowo_working_path or not wf.directory:
-                return {
-                    file: "logs not found, please set flowo_working_path and directory"
-                }
-
-            file_path = (
-                wf.directory.replace(wf.flowo_working_path, "/work_dir/")
-                + "/"
-                + file.path
-            )
-
+            path = path_resolver.resolve(str(Path(wf.directory) / str(file.path)))
             try:
-                with open(file_path) as f:
+                with open(path) as f:
                     results[file.path] = f.read()
             except Exception as e:
                 results[file.path] = f"Failed to oepn file: {str(e)}"

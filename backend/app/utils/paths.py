@@ -11,7 +11,7 @@ class PathContent(BaseModel):
 
 class PathResolver:
     def __init__(self):
-        self.source_root = settings.FOLWO_WORKING_PATH
+        self.source_root = settings.FLOWO_WORKING_PATH
         self.current_root = settings.CONTAINER_MOUNT_PATH
 
     def resolve(self, db_path_str: str) -> Path:
