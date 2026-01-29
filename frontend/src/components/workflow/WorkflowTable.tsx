@@ -5,14 +5,14 @@ import {
   getConfigfilesOptions,
   getDetailOptions,
   getSnakefileOptions,
+  getWorkflowLogOptions,
   getWorkflowsOptions,
-  getWorkflowsQueryKey,
-  getWorkflowLogOptions
+  getWorkflowsQueryKey
 } from '@/client/@tanstack/react-query.gen';
 import type { Status, WorkflowResponse } from '@/client/types.gen';
+import { DurationCell } from '@/components/common/common';
 import LiveUpdatesIndicator from '@/components/LiveUpdatesIndicator';
 import { FileViewerModal, MultiFileViewer } from '@/components/shared/viewers';
-import { DurationCell } from '@/components/common/common';
 import WorkflowTag from '@/components/workflow/WorkflowTag';
 import { useWorkflowRealtime } from '@/config/workflowRealtime';
 import {
@@ -20,16 +20,14 @@ import {
   getStatusColor,
   getWorkflowProgressStatus,
 } from '@/utils/formatters';
-import {
+import Icon, {
   DeleteOutlined,
   FileTextOutlined,
   InfoCircleOutlined,
   ReloadOutlined,
   SettingOutlined,
 } from '@ant-design/icons';
-import Icon from '@ant-design/icons';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
 import {
   Button,
@@ -46,14 +44,8 @@ import { useCallback, useMemo, useState } from 'react';
 
 import WorkflowSearch from './WorkflowSearch';
 
-export const useDeleteWorkflow = () => {
-  return useMutation({
-    ...deleteWorkflowMutation(),
-  });
-};
 
 const WorkflowTable = () => {
-  const deleteWorkflowMutation = useDeleteWorkflow();
 
   const queryClient = useQueryClient();
   const [snakefileModal, setSnakefileModal] = useState<{
@@ -172,13 +164,21 @@ const WorkflowTable = () => {
     ...getWorkflowsOptions({ query: queryParams }),
   });
 
-  const workflows = workflowsData?.workflows ?? [];
-  useWorkflowRealtime(workflows.map((workflow) => ({ id: workflow.id })));
+  const deleteWorkflow = useMutation({
+    ...deleteWorkflowMutation(),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: getWorkflowsQueryKey({ query: queryParams }),
+      });
+    }
+  });
 
-  // Handle workflow deletion
+  const workflows = workflowsData?.workflows ?? [];
+  useWorkflowRealtime(workflows.map((workflow) => ({ id: workflow.id })), true);
+
   const handleDeleteWorkflow = async (workflowId: string) => {
     try {
-      await deleteWorkflowMutation.mutateAsync({
+      await deleteWorkflow.mutateAsync({
         path: {
           workflow_id: workflowId,
         },
@@ -578,10 +578,10 @@ const WorkflowTable = () => {
             cancelText="No"
             okButtonProps={{
               danger: true,
-              loading: deleteWorkflowMutation.isPending,
+              loading: deleteWorkflow.isPending,
             }}
             placement="topLeft"
-            disabled={deleteWorkflowMutation.isPending}
+            disabled={deleteWorkflow.isPending}
           >
             <Button
               type="text"
