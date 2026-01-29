@@ -1,3 +1,3 @@
 from .job import JobService
-from .workflow import WorkflowService
 from .summary import SummaryService
+from .workflow import WorkflowService

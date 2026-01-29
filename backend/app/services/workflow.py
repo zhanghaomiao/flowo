@@ -1,24 +1,24 @@
-from argparse import FileType
 import uuid
 from collections import Counter, defaultdict
 from datetime import datetime
 from itertools import chain, groupby
 from operator import itemgetter
 from typing import Any
-from datetime import datetime
 
 from fastapi import HTTPException
-from sqlalchemy import and_, case, func, select, or_
+from sqlalchemy import and_, case, func, or_, select
 from sqlalchemy.orm import Session
+
+from app.utils.paths import PathContent, get_file_content, path_resolver
+
+from ..models import Error, File, Job, Rule, Status, Workflow
 from ..models.enums import FileType
-from ..models import Error, Job, Status, Workflow, Rule, File
 from ..schemas import (
     RuleStatusResponse,
     WorkflowDetialResponse,
     WorkflowListResponse,
     WorkflowResponse,
 )
-from app.utils.paths import path_resolver, get_file_content, PathContent
 
 
 class WorkflowService:
@@ -38,7 +38,6 @@ class WorkflowService:
             raise HTTPException(status_code=404, detail="Workflow not found")
         return path_resolver.resolve(workflow.directory)
 
-
     def get_detail(self, workflow_id: uuid.UUID):
         workflow = self.get_workflow(workflow_id=workflow_id)
         if not workflow:
@@ -48,7 +47,7 @@ class WorkflowService:
                 **workflow.__dict__,
                 "progress": self._get_progress(workflow.id),
                 "workflow_id": workflow.id,
-                "flowo_directory": workflow.directory
+                "flowo_directory": workflow.directory,
             }
         )
 
@@ -147,19 +146,21 @@ class WorkflowService:
         users = self.db_session.execute(query).scalars().all()
         return [u for u in users if u is not None]
 
-
     def get_snakefile(self, workflow_id: uuid.UUID) -> PathContent:
         workflow = self.get_workflow(workflow_id=workflow_id)
         if workflow is None or not workflow.snakefile:
-            raise HTTPException(status_code=404, detail="Workflow or snakefile not found")
+            raise HTTPException(
+                status_code=404, detail="Workflow or snakefile not found"
+            )
         return get_file_content(workflow.snakefile)
-    
+
     def get_workflow_log(self, workflow_id: uuid.UUID) -> PathContent:
         workflow = self.get_workflow(workflow_id=workflow_id)
         if workflow is None or not workflow.logfile:
-            raise HTTPException(status_code=404, detail="Workflow or log file not found")
+            raise HTTPException(
+                status_code=404, detail="Workflow or log file not found"
+            )
         return get_file_content(workflow.logfile)
-
 
     def get_all_tags(self) -> list[str]:
         query = select(Workflow.tags)
@@ -231,7 +232,6 @@ class WorkflowService:
             return round((success / total) * 100) if total else 0
 
     def get_workflow_rule_graph_data(self, workflow_id: uuid.UUID) -> dict[str, Any]:
-
         workflow = self.get_workflow(workflow_id=workflow_id)
         if not workflow:
             raise HTTPException(status_code=404, detail="Workflow not found")
@@ -239,7 +239,6 @@ class WorkflowService:
         return workflow.rulegraph_data if workflow.rulegraph_data else {}
 
     def get_workflow_run_info(self, workflow_id: uuid.UUID) -> dict[str, Any]:
-
         workflow = self.get_workflow(workflow_id=workflow_id)
         if not workflow:
             raise HTTPException(status_code=404, detail="Workflow not found")
@@ -384,7 +383,6 @@ class WorkflowService:
         }
 
     def get_rule_outputs(self, workflow_id: uuid.UUID, rule_name: str):
-
         query = (
             select(File.path)
             .join(Job)

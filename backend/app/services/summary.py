@@ -1,24 +1,20 @@
-import asyncio
+import math
 from collections import Counter, defaultdict
 from datetime import datetime
-import math
-from datetime import datetime
 from typing import Literal
+
 import asyncpg
-
-from sqlalchemy import select, func, desc, and_, cast, Float, distinct, text
-from sqlalchemy.orm import Session
+from sqlalchemy import Float, and_, cast, desc, distinct, func, select, text
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.orm import Session
 
-from ..core.config import settings
 from ..core.pg_listener import pg_listener
-
-from ..models import Job, Workflow, Rule
+from ..models import Job, Rule, Workflow
 from ..schemas import (
-    StatusSummary,
-    UserSummary,
     ServiceStatus,
+    StatusSummary,
     SystemHealthResponse,
+    UserSummary,
 )
 
 
@@ -144,7 +140,7 @@ class SummaryService:
 
             top_tags = tag_counter.most_common(limit)
 
-            return {tag: count for tag, count in top_tags}
+            return dict(top_tags)
 
     def get_rule_error(
         self,
@@ -289,28 +285,28 @@ class SummaryService:
                     name="database",
                     status="healthy",
                     message="Database connection is healthy",
-                    details={"connection": "ok"}
+                    details={"connection": "ok"},
                 )
             else:
                 return ServiceStatus(
                     name="database",
                     status="unhealthy",
                     message="Database query failed",
-                    details={"connection": "query_failed"}
+                    details={"connection": "query_failed"},
                 )
         except SQLAlchemyError as e:
             return ServiceStatus(
                 name="database",
                 status="unhealthy",
                 message=f"Database connection error: {str(e)}",
-                details={"error": str(e)}
+                details={"error": str(e)},
             )
         except Exception as e:
             return ServiceStatus(
                 name="database",
                 status="unknown",
                 message=f"Unexpected error: {str(e)}",
-                details={"error": str(e)}
+                details={"error": str(e)},
             )
 
     async def check_sse_health(self) -> ServiceStatus:
@@ -322,7 +318,7 @@ class SummaryService:
                     name="sse",
                     status="unhealthy",
                     message="SSE listener is not connected to database",
-                    details={"connection": "disconnected"}
+                    details={"connection": "disconnected"},
                 )
 
             # 尝试执行一个简单的监听测试
@@ -335,28 +331,31 @@ class SummaryService:
                         name="sse",
                         status="healthy",
                         message="SSE service is healthy and connected",
-                        details={"connection": "ok", "listeners": len(pg_listener._listening_channels)}
+                        details={
+                            "connection": "ok",
+                            "listeners": len(pg_listener._listening_channels),
+                        },
                     )
                 else:
                     return ServiceStatus(
                         name="sse",
                         status="unhealthy",
                         message="SSE connection test failed",
-                        details={"connection": "test_failed"}
+                        details={"connection": "test_failed"},
                     )
             except asyncpg.exceptions.InterfaceError:
                 return ServiceStatus(
                     name="sse",
                     status="unhealthy",
                     message="SSE database connection lost",
-                    details={"connection": "lost"}
+                    details={"connection": "lost"},
                 )
             except Exception as e:
                 return ServiceStatus(
                     name="sse",
                     status="unhealthy",
                     message=f"SSE connection error: {str(e)}",
-                    details={"error": str(e)}
+                    details={"error": str(e)},
                 )
 
         except Exception as e:
@@ -364,7 +363,7 @@ class SummaryService:
                 name="sse",
                 status="unknown",
                 message=f"SSE check failed: {str(e)}",
-                details={"error": str(e)}
+                details={"error": str(e)},
             )
 
     def get_system_health(self) -> SystemHealthResponse:
@@ -378,7 +377,7 @@ class SummaryService:
             name="sse",
             status="unknown",
             message="SSE health check requires async context",
-            details={"note": "Use async endpoint for full SSE check"}
+            details={"note": "Use async endpoint for full SSE check"},
         )
 
         # 确定整体状态
@@ -391,7 +390,5 @@ class SummaryService:
             overall_status = "degraded"
 
         return SystemHealthResponse(
-            database=db_status,
-            sse=sse_status,
-            overall_status=overall_status
+            database=db_status, sse=sse_status, overall_status=overall_status
         )

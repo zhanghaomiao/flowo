@@ -6,7 +6,12 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from app.core.session import get_db
-from app.schemas import ResourcesSummary, StatusSummary, UserSummary, SystemHealthResponse
+from app.schemas import (
+    ResourcesSummary,
+    StatusSummary,
+    SystemHealthResponse,
+    UserSummary,
+)
 from app.services import SummaryService, WorkflowService
 
 router = APIRouter()
@@ -15,6 +20,8 @@ router = APIRouter()
 @router.get("/resources", response_model=ResourcesSummary)
 def get_system_resources():
     total_cpus = psutil.cpu_count(logical=True)
+    if not total_cpus:
+        total_cpus = 1
     cpu_idle_percent = psutil.cpu_times_percent(interval=0.1).idle
     cpu_idle_cores = round(total_cpus * cpu_idle_percent / 100, 2)
 
@@ -114,7 +121,5 @@ async def get_system_health_async(db: Session = Depends(get_db)):
         overall_status = "degraded"
 
     return SystemHealthResponse(
-        database=db_status,
-        sse=sse_status,
-        overall_status=overall_status
+        database=db_status, sse=sse_status, overall_status=overall_status
     )

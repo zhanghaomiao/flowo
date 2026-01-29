@@ -26,9 +26,7 @@ class Error(Base):
     line: Mapped[str | None]
 
     # Relationship to Rule (optional)
-    rule_id: Mapped[int | None] = mapped_column(
-        ForeignKey("rules.id"), nullable=True
-    )
+    rule_id: Mapped[int | None] = mapped_column(ForeignKey("rules.id"), nullable=True)
     rule: Mapped[Optional["Rule"]] = relationship("Rule", back_populates="errors")
 
     # Relationship to Workflow (always present)

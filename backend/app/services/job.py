@@ -1,19 +1,19 @@
 import uuid
+from pathlib import Path
 
-from sqlalchemy import and_, func, select, case
+from fastapi import HTTPException
+from sqlalchemy import and_, case, func, select
 from sqlalchemy.orm import Session, joinedload
+
+from app.utils.paths import path_resolver
 
 from ..models import File, Job, Rule, Status
 from ..schemas import (
-    FileResponse,
     JobDetailResponse,
     JobListResponse,
     JobResponse,
 )
 from .workflow import WorkflowService
-from fastapi import HTTPException
-from app.utils.paths import  path_resolver
-from pathlib import Path
 
 
 class JobService:
@@ -35,7 +35,9 @@ class JobService:
         return [JobResponse.model_validate(job) for job in jobs]
 
     def get_job_rule_name_by_job_id(self, job_id: int):
-        result = self.db_session.query(Rule.name).join(Job).filter(Job.id == job_id).first()
+        result = (
+            self.db_session.query(Rule.name).join(Job).filter(Job.id == job_id).first()
+        )
         return result
 
     def get_jobs_by_workflow_id(
@@ -120,31 +122,29 @@ class JobService:
     def get_job_details_with_id(self, job_id: int) -> JobDetailResponse:
         query = (
             select(Job)
-            .options(
-                joinedload(Job.rule),      
-                joinedload(Job.workflow)   
-            )
+            .options(joinedload(Job.rule), joinedload(Job.workflow))
             .where(Job.id == job_id)
         )
 
         job = self.db_session.execute(query).scalars().one_or_none()
         if not job:
-            raise HTTPException(status_code=404, detail=f"Job with id {job_id} not found")
+            raise HTTPException(
+                status_code=404, detail=f"Job with id {job_id} not found"
+            )
 
         directory = ""
         if job.workflow_id:
-             wf_service = WorkflowService(self.db_session)
-             wf_detail = wf_service.get_detail(workflow_id=job.workflow_id)
-             directory = wf_detail.directory
+            wf_service = WorkflowService(self.db_session)
+            wf_detail = wf_service.get_detail(workflow_id=job.workflow_id)
+            directory = wf_detail.directory
 
-        rule_name = job.rule.name 
+        rule_name = job.rule.name
 
         return JobDetailResponse(
             **job.__dict__,
             rule_name=rule_name,
             directory=directory,
         )
-
 
     def get_job_files_with_id(self, job_id: int) -> dict[str, list[str]]:
         files = self.db_session.query(File).filter(File.job_id == job_id).all()

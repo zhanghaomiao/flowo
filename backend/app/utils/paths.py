@@ -1,11 +1,12 @@
-import os
 from pathlib import Path
+
 from pydantic import BaseModel
+
 from app.core.config import settings
 
 
 class PathContent(BaseModel):
-    content: str    
+    content: str
     path: str
 
 
@@ -23,7 +24,7 @@ class PathResolver:
 
         original_path = Path(db_path_str)
 
-        # 情况 A: 数据库存的是相对路径 
+        # 情况 A: 数据库存的是相对路径
         if not original_path.is_absolute():
             return Path(self.current_root) / original_path
 
@@ -34,13 +35,15 @@ class PathResolver:
                 relative_part = original_path.resolve().relative_to(source_base)
                 return Path(self.current_root) / relative_part
             except ValueError:
-                print(f"CRITICAL: Path {original_path} is outside configured source root {source_base}")
-                return original_path 
-        
+                print(
+                    f"CRITICAL: Path {original_path} is outside configured source root {source_base}"
+                )
+                return original_path
+
         return original_path
 
-path_resolver = PathResolver()
 
+path_resolver = PathResolver()
 
 
 def get_file_content(file_path: str) -> PathContent:
@@ -52,5 +55,5 @@ def get_file_content(file_path: str) -> PathContent:
     if not resolved_path.is_file():
         raise IsADirectoryError(f"Path is a directory, not a file: {resolved_path}")
 
-    content = resolved_path.read_text(encoding='utf-8')
+    content = resolved_path.read_text(encoding="utf-8")
     return PathContent(content=content, path=str(resolved_path))

@@ -17,7 +17,6 @@ from app.schemas import (
 from app.services import JobService, WorkflowService
 from app.utils.paths import PathContent
 
-
 router = APIRouter()
 
 
@@ -112,6 +111,7 @@ def get_rule_status(workflow_id: uuid.UUID, db: Session = Depends(get_db)):
 @router.get("/{workflow_id}/snakefile", response_model=PathContent)
 def get_snakefile(workflow_id: uuid.UUID, db: Session = Depends(get_db)):
     return WorkflowService(db).get_snakefile(workflow_id)
+
 
 @router.get("/{workflow_id}/log", response_model=PathContent)
 def get_workflow_log(workflow_id: uuid.UUID, db: Session = Depends(get_db)):

@@ -1,9 +1,10 @@
 import uuid
 from datetime import datetime
 from typing import Any
-from app.models.job import Status
 
 from pydantic import BaseModel, ConfigDict
+
+from app.models.job import Status
 
 
 class JobResponse(BaseModel):
@@ -38,7 +39,7 @@ class JobListResponse(BaseModel):
 
 class JobDetailResponse(BaseModel):
     rule_name: str
-    status: Status 
+    status: Status
     workflow_id: uuid.UUID | None = None
     started_at: datetime | None = None
     end_time: datetime | None = None

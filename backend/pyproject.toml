@@ -59,3 +59,8 @@ exclude = [
 [[tool.uv.index]]
 url = "https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple"
 default = true
+
+[dependency-groups]
+dev = [
+    "ruff>=0.14.11",
+]

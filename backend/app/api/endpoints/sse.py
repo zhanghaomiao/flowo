@@ -15,13 +15,9 @@ async def stream_events(
 ):
     target_channels = []
 
-    # 1. 监听当前屏幕上的 ID (为了 UPDATE/DELETE 实时跳动)
     if workflow_ids:
         ids = [x.strip() for x in workflow_ids.split(",") if x.strip()]
         target_channels.extend([f"workflow_events_{id}" for id in ids])
-
-    # 2. 【核心】强制订阅全局插入频道
-    # 这样一旦有新 Workflow 插入，所有连着的客户端都能收到通知
     if global_insert:
         target_channels.append("workflows_global_insert")
     logger.info(f"SSE: Total channels to listen: {target_channels}")
