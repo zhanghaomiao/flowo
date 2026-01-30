@@ -160,21 +160,25 @@ const WorkflowTable = () => {
     searchEndAt,
   ]);
 
-  const { data: workflowsData, isLoading: workflowsLoading, isFetching: workflowsFetching } = useQuery({
+  const { data: workflowsData, isLoading: workflowsLoading } = useQuery({
     ...getWorkflowsOptions({ query: queryParams }),
   });
+
 
   const deleteWorkflow = useMutation({
     ...deleteWorkflowMutation(),
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: getWorkflowsQueryKey({ query: queryParams }),
+        predicate: (query: any) => {
+          const keyObj = query.queryKey[0] as any;
+          return Array.isArray(keyObj?.tags) && keyObj.tags.includes('workflow');
+        },
       });
     }
   });
 
   const workflows = workflowsData?.workflows ?? [];
-  useWorkflowRealtime(workflows.map((workflow) => ({ id: workflow.id })), true, workflowsLoading || workflowsFetching);
+  const connectionStatus = useWorkflowRealtime(workflows.map((workflow) => workflow.id));
 
   const handleDeleteWorkflow = async (workflowId: string) => {
     try {
@@ -613,9 +617,7 @@ const WorkflowTable = () => {
             {workflows.length})
           </h3>
           <LiveUpdatesIndicator
-            isConnected={true}
-            retryCount={0}
-            showReconnectButton={false}
+            status={connectionStatus}
           />
           <WorkflowSearch
             onTagsChange={handleTagsSearch}

@@ -4,8 +4,8 @@ import {
   useGetJobsQuery,
 } from '@/client/@tanstack/react-query.gen';
 import type { JobResponse, Status } from '@/client/types.gen';
-import LiveUpdatesIndicator from '@/components/LiveUpdatesIndicator';
 import { DurationCell, calculateDuration } from '@/components/common/common';
+import { FileViewerModal, MultiFileViewer } from '@/components/shared/viewers';
 import { formatDateCompact, getStatusColor } from '@/utils/formatters';
 import {
   FileTextOutlined,
@@ -15,7 +15,6 @@ import { useQuery } from '@tanstack/react-query';
 import { Button, Table, Tag, Tooltip } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import React, { useEffect, useState } from 'react';
-import { FileViewerModal, MultiFileViewer } from '@/components/shared/viewers';
 
 interface JobTableProps {
   workflowId?: string;
@@ -302,15 +301,9 @@ const JobTable: React.FC<JobTableProps> = ({
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
-          margin: '10px 0',
+          margin: '2px 0',
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <LiveUpdatesIndicator
-            isConnected={true}
-            showReconnectButton={false}
-          />
-        </div>
       </div>
 
       <Table

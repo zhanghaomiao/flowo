@@ -20,7 +20,7 @@ import {
 import { useQuery } from '@tanstack/react-query';
 import { createFileRoute } from '@tanstack/react-router';
 import { Splitter, Tabs } from 'antd';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 export const Route = createFileRoute('/workflow/$workflowId')({
   component: WorkflowDetail,
@@ -40,8 +40,7 @@ function WorkflowDetail() {
     handleJobSelect,
   } = useWorkflowState();
 
-  const realtimeTargets = useMemo(() => [{ id: workflowId }], [workflowId]);
-  useWorkflowRealtime(realtimeTargets);
+  useWorkflowRealtime([workflowId]);
 
   const { data: workflow } = useGetDetailQuery({
     path: {

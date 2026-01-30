@@ -22,6 +22,7 @@ function About() {
         <li>Monitor job statuses and details</li>
         <li>Visualize workflow rule dependencies</li>
         <li>Interactive graph-based job filtering</li>
+        <li> user management</li>
       </ul>
     </div>
   );

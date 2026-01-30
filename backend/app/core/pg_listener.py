@@ -67,6 +67,10 @@ class PGListener:
         """
         queue = asyncio.Queue(maxsize=100)
 
+        if not self._connection or self._connection.is_closed():
+            logger.error("SSE: Database connection is missing or closed")
+            raise Exception("Database connection unavailable")
+
         unique_channels = set(channels)
 
         async with self._lock:
@@ -91,6 +95,7 @@ class PGListener:
                         logger.debug(f"SSE: Started listening on DB channel: {channel}")
                     except Exception as e:
                         logger.error(f"SSE: Failed to LISTEN {channel}: {e}")
+                        raise e
 
         try:
             # 发送连接成功消息

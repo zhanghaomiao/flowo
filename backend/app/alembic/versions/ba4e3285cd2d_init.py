@@ -134,50 +134,36 @@ def upgrade() -> None:
     RETURNS trigger AS $$
     DECLARE
         payload JSONB;
-        channel_name TEXT;
-
-        routing_id TEXT; -- 路由ID：决定发给哪个频道 (Workflow ID)
-        entity_id TEXT;  -- 实体ID：记录本身的 ID (Job ID 或 Workflow ID)
-
+        entity_id TEXT;  
+        workflow_id TEXT;
         current_record RECORD;
+
     BEGIN
         IF (TG_OP = 'DELETE') THEN current_record := OLD; ELSE current_record := NEW; END IF;
 
         -- 1. 区分 路由ID 和 实体ID
         IF TG_TABLE_NAME = 'workflows' THEN
-            routing_id := current_record.id::TEXT;
             entity_id  := current_record.id::TEXT;
+            workflow_id := current_record.id::TEXT;
         ELSIF TG_TABLE_NAME = 'jobs' THEN
-            routing_id := current_record.workflow_id::TEXT;
             entity_id  := current_record.id::TEXT;          -- 自己的 ID
+            workflow_id := current_record.workflow_id::TEXT;
         END IF;
 
         -- 2. 构建 Payload (传 entity_id)
         payload := jsonb_build_object(
             'table', TG_TABLE_NAME,
             'operation', TG_OP,
-            'id', entity_id, -- 这里必须是 Job ID 或 Workflow ID
+            'id', entity_id, 
+            'workflow_id', workflow_id,
             'timestamp', EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)
         );
-
-        -- 补充 Job 的 workflow_id 以便前端识别
-        IF TG_TABLE_NAME = 'jobs' THEN
-            payload := payload || jsonb_build_object('workflow_id', routing_id);
-        END IF;
 
         IF TG_OP = 'UPDATE' OR TG_OP = 'INSERT' THEN
             payload := payload || jsonb_build_object('new_status', NEW.status);
         END IF;
 
-        -- 3. 发送通知
-        -- 路由 A: 发给 workflow_events_{workflow_id}
-        PERFORM pg_notify('workflow_events_' || routing_id, payload::TEXT);
-
-        -- 路由 B: 全局 INSERT (只针对 workflow)
-        IF TG_OP = 'INSERT' AND TG_TABLE_NAME = 'workflows' THEN
-            PERFORM pg_notify('workflows_global_insert', payload::TEXT);
-        END IF;
-
+        PERFORM pg_notify('global_events', payload::TEXT);
         RETURN NULL;
     END;
     $$ LANGUAGE plpgsql;
