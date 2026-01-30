@@ -1,12 +1,12 @@
 import {
-  useGetDetailQuery,
   getSnakefileOptions,
+  useGetDetailQuery,
 } from '@/client/@tanstack/react-query.gen';
 import type { Status } from '@/client/types.gen';
-import { TextViewer } from '@/components/shared/viewers';
+import { ResultViewer } from '@/components/features/result/ResultViewer.tsx';
 import WorkflowGraph from '@/components/job/dag/Dag';
 import JobTable from '@/components/job/JobTable.tsx';
-import { ResultViewer } from '@/components/features/result/ResultViewer.tsx';
+import { TextViewer } from '@/components/shared/viewers';
 import WorkflowProgress from '@/components/workflow/WorkflowProgress.tsx';
 import WorkflowTimeline from '@/components/workflow/WorkflowTimeline.tsx';
 import { useWorkflowRealtime } from '@/config/workflowRealtime';

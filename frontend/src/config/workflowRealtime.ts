@@ -16,7 +16,7 @@ const invalidateByTag = (queryClient: any, tag: string) => {
   });
 };
 
-export const useWorkflowRealtime = (workflows: { id: string }[] = [], enableGlobalInsert: boolean = false) => {
+export const useWorkflowRealtime = (workflows: { id: string }[] = [], enableGlobalInsert: boolean = false, shouldPause: boolean = false) => {
   const queryClient = useQueryClient();
 
   // 生成 ID 字符串 (用于 SSE 订阅)
@@ -62,6 +62,9 @@ export const useWorkflowRealtime = (workflows: { id: string }[] = [], enableGlob
 
   useEffect(() => {
     // 构建 URL
+    if (shouldPause) {
+      return;
+    }
     const url = client.buildUrl({
       url: '/api/v1/sse/events',
       query:
@@ -105,5 +108,7 @@ export const useWorkflowRealtime = (workflows: { id: string }[] = [], enableGlob
     queryClient,
     debouncedRefreshList,
     debouncedSyncActiveData,
+    enableGlobalInsert,
+    shouldPause,
   ]);
 };

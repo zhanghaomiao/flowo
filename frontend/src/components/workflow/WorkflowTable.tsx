@@ -160,7 +160,7 @@ const WorkflowTable = () => {
     searchEndAt,
   ]);
 
-  const { data: workflowsData, isLoading: workflowsLoading } = useQuery({
+  const { data: workflowsData, isLoading: workflowsLoading, isFetching: workflowsFetching } = useQuery({
     ...getWorkflowsOptions({ query: queryParams }),
   });
 
@@ -174,7 +174,7 @@ const WorkflowTable = () => {
   });
 
   const workflows = workflowsData?.workflows ?? [];
-  useWorkflowRealtime(workflows.map((workflow) => ({ id: workflow.id })), true);
+  useWorkflowRealtime(workflows.map((workflow) => ({ id: workflow.id })), true, workflowsLoading || workflowsFetching);
 
   const handleDeleteWorkflow = async (workflowId: string) => {
     try {

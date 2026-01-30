@@ -278,7 +278,6 @@ class SummaryService:
     def check_database_health(self) -> ServiceStatus:
         """检查数据库连接状态"""
         try:
-            # 执行一个简单的查询来测试数据库连接
             result = self.db_session.execute(text("SELECT 1 as test")).fetchone()
             if result and result[0] == 1:
                 return ServiceStatus(

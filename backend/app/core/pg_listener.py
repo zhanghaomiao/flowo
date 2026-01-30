@@ -51,7 +51,7 @@ class PGListener:
         """
         数据库回调：收到消息，分发给订阅了该 channel 的所有队列
         """
-        logger.info(f"SSE: Received notification on channel '{channel}': {payload}")
+        # logger.info(f"SSE: Received notification on channel '{channel}': {payload}")
         if channel in self._subscribers:
             # 复制一份 list 进行遍历，防止遍历期间 set 被修改
             for queue in list(self._subscribers[channel]):
@@ -107,7 +107,6 @@ class PGListener:
 
                     # 解析 JSON
                     payload_obj = json.loads(data["payload"])
-
                     yield ServerSentEvent(
                         event="message",
                         data=json.dumps(payload_obj),
