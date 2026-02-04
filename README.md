@@ -63,6 +63,11 @@ cd flowo
 cp env.example .env
 ```
 
+2. **Build and Run Backend**:
+```sh
+docker compose up -d --build
+```
+
 Edit your `.env` file as follows. In most cases, you only need to modify ⚠️ `FLOWO_WORKING_PATH` to point to the directory where you run your Snakemake workflows:
 
 ```sh
@@ -101,8 +106,8 @@ For detailed installation, configuration, and usage, please refer to the plugin'
 Quick start:
 
 ```sh
-pip install snakemake-logger-plugin-flowo
-flowo --generate-config
+pip install .  # Install the plugin from the root of this repo
+flowo-init-config --generate-config
 ```
 
 Configure the plugin:
@@ -122,8 +127,10 @@ POSTGRES_HOST=localhost     # same as your .env
 POSTGRES_PORT=5432          # same as your .env
 
 ### APP settings
-FLOWO_USER=FlowO
-FLOWO_WORKING_PATH=/path/to/flowo_project_dir # ⚠️ same as your .env, set this to your workflow directory
+# FLOWO_USER has been removed.
+# Authentication is handled via FLOWO_USER_TOKEN.
+FLOWO_USER_TOKEN=your_generated_token_here
+FLOWO_WORKING_PATH=/path/to/flowo_project_dir # ⚠️ same as your .env
 ```
 
 ---

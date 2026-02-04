@@ -29,8 +29,8 @@ services:
 
   flowo-backend:
     build:
-      context: ./backend
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: Dockerfile.backend
     container_name: flowo-backend
     userns_mode: "keep-id"
     env_file:

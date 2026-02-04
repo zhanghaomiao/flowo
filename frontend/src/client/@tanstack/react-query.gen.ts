@@ -3,8 +3,59 @@
 import { type DefaultError, type InfiniteData, infiniteQueryOptions, queryOptions, type UseMutationOptions, useQuery } from '@tanstack/react-query';
 
 import { client } from '../client.gen';
-import { deleteWorkflow, getActivity, getAllTags, getAllUsers, getConfigfiles, getDetail, getJob, getJobOutputs, getJobs, getLogs, getProgress, getRuleDuration, getRuleError, getRuleGraph, getRuleStatus, getSnakefile, getStatus, getSystemHealth, getSystemHealthAsync, getSystemResources, getTimelines, getUserSummary, getWorkflowIdByName, getWorkflowLog, getWorkflows, listFiles, type Options, postPruning, readFile, streamEvents } from '../sdk.gen';
-import type { DeleteWorkflowData, DeleteWorkflowError, GetActivityData, GetActivityError, GetActivityResponse, GetAllTagsData, GetAllTagsResponse, GetAllUsersData, GetAllUsersResponse, GetConfigfilesData, GetConfigfilesError, GetConfigfilesResponse, GetDetailData, GetDetailError, GetDetailResponse, GetJobData, GetJobError, GetJobOutputsData, GetJobOutputsError, GetJobOutputsResponse, GetJobResponse, GetJobsData, GetJobsError, GetJobsResponse, GetLogsData, GetLogsError, GetLogsResponse, GetProgressData, GetProgressError, GetProgressResponse, GetRuleDurationData, GetRuleDurationError, GetRuleDurationResponse, GetRuleErrorData, GetRuleErrorError, GetRuleErrorResponse, GetRuleGraphData, GetRuleGraphError, GetRuleGraphResponse, GetRuleStatusData, GetRuleStatusError, GetRuleStatusResponse, GetSnakefileData, GetSnakefileError, GetSnakefileResponse, GetStatusData, GetStatusError, GetStatusResponse, GetSystemHealthAsyncData, GetSystemHealthAsyncResponse, GetSystemHealthData, GetSystemHealthResponse, GetSystemResourcesData, GetSystemResourcesResponse, GetTimelinesData, GetTimelinesError, GetTimelinesResponse, GetUserSummaryData, GetUserSummaryResponse, GetWorkflowIdByNameData, GetWorkflowIdByNameError, GetWorkflowIdByNameResponse, GetWorkflowLogData, GetWorkflowLogError, GetWorkflowLogResponse, GetWorkflowsData, GetWorkflowsError, GetWorkflowsResponse, ListFilesData, ListFilesError, ListFilesResponse, PostPruningData, PostPruningResponse, ReadFileData, ReadFileError, ReadFileResponse, StreamEventsData, StreamEventsError } from '../types.gen';
+import { authJwtLogin, authJwtLogout, closeWorkflow, createToken, deleteToken, deleteWorkflow, getActivity, getAllTags, getClientConfig, getConfigfiles, getDetail, getJob, getJobOutputs, getJobs, getLogs, getProgress, getRuleDuration, getRuleError, getRuleGraph, getRuleStatus, getSnakefile, getSseTicket, getStatus, getSystemHealth, getSystemResources, getTimelines, getUserSummary, getWorkflowIdByName, getWorkflowLog, getWorkflows, listFiles, listTokens, type Options, postPruning, readFile, registerRegister, reportEvent, streamEvents, usersCurrentUser, usersDeleteUser, usersPatchCurrentUser, usersPatchUser, usersUser } from '../sdk.gen';
+import type { AuthJwtLoginData, AuthJwtLoginError, AuthJwtLoginResponse, AuthJwtLogoutData, CloseWorkflowData, CloseWorkflowError, CreateTokenData, CreateTokenError, CreateTokenResponse, DeleteTokenData, DeleteTokenError, DeleteWorkflowData, DeleteWorkflowError, GetActivityData, GetActivityError, GetActivityResponse, GetAllTagsData, GetAllTagsResponse, GetClientConfigData, GetClientConfigResponse, GetConfigfilesData, GetConfigfilesError, GetConfigfilesResponse, GetDetailData, GetDetailError, GetDetailResponse, GetJobData, GetJobError, GetJobOutputsData, GetJobOutputsError, GetJobOutputsResponse, GetJobResponse, GetJobsData, GetJobsError, GetJobsResponse, GetLogsData, GetLogsError, GetLogsResponse, GetProgressData, GetProgressError, GetProgressResponse, GetRuleDurationData, GetRuleDurationError, GetRuleDurationResponse, GetRuleErrorData, GetRuleErrorError, GetRuleErrorResponse, GetRuleGraphData, GetRuleGraphError, GetRuleGraphResponse, GetRuleStatusData, GetRuleStatusError, GetRuleStatusResponse, GetSnakefileData, GetSnakefileError, GetSnakefileResponse, GetSseTicketData, GetStatusData, GetStatusError, GetStatusResponse, GetSystemHealthData, GetSystemHealthResponse, GetSystemResourcesData, GetSystemResourcesResponse, GetTimelinesData, GetTimelinesError, GetTimelinesResponse, GetUserSummaryData, GetUserSummaryResponse, GetWorkflowIdByNameData, GetWorkflowIdByNameError, GetWorkflowIdByNameResponse, GetWorkflowLogData, GetWorkflowLogError, GetWorkflowLogResponse, GetWorkflowsData, GetWorkflowsError, GetWorkflowsResponse, ListFilesData, ListFilesError, ListFilesResponse, ListTokensData, ListTokensResponse, PostPruningData, PostPruningResponse, ReadFileData, ReadFileError, ReadFileResponse, RegisterRegisterData, RegisterRegisterError, RegisterRegisterResponse, ReportEventData, ReportEventError, StreamEventsData, StreamEventsError, UsersCurrentUserData, UsersCurrentUserResponse, UsersDeleteUserData, UsersDeleteUserError, UsersDeleteUserResponse, UsersPatchCurrentUserData, UsersPatchCurrentUserError, UsersPatchCurrentUserResponse, UsersPatchUserData, UsersPatchUserError, UsersPatchUserResponse, UsersUserData, UsersUserError, UsersUserResponse } from '../types.gen';
+
+/**
+ * Auth:Jwt.Login
+ */
+export const authJwtLoginMutation = (options?: Partial<Options<AuthJwtLoginData>>): UseMutationOptions<AuthJwtLoginResponse, AuthJwtLoginError, Options<AuthJwtLoginData>> => {
+    const mutationOptions: UseMutationOptions<AuthJwtLoginResponse, AuthJwtLoginError, Options<AuthJwtLoginData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await authJwtLogin({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+/**
+ * Auth:Jwt.Logout
+ */
+export const authJwtLogoutMutation = (options?: Partial<Options<AuthJwtLogoutData>>): UseMutationOptions<unknown, DefaultError, Options<AuthJwtLogoutData>> => {
+    const mutationOptions: UseMutationOptions<unknown, DefaultError, Options<AuthJwtLogoutData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await authJwtLogout({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+/**
+ * Register:Register
+ */
+export const registerRegisterMutation = (options?: Partial<Options<RegisterRegisterData>>): UseMutationOptions<RegisterRegisterResponse, RegisterRegisterError, Options<RegisterRegisterData>> => {
+    const mutationOptions: UseMutationOptions<RegisterRegisterResponse, RegisterRegisterError, Options<RegisterRegisterData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await registerRegister({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
 
 export type QueryKey<TOptions extends Options> = [
     Pick<TOptions, 'baseUrl' | 'body' | 'headers' | 'path' | 'query'> & {
@@ -37,6 +88,103 @@ const createQueryKey = <TOptions extends Options>(id: string, options?: TOptions
         params.query = options.query;
     }
     return [params];
+};
+
+export const usersCurrentUserQueryKey = (options?: Options<UsersCurrentUserData>) => createQueryKey('usersCurrentUser', options, false, ['users']);
+
+/**
+ * Users:Current User
+ */
+export const usersCurrentUserOptions = (options?: Options<UsersCurrentUserData>) => queryOptions<UsersCurrentUserResponse, DefaultError, UsersCurrentUserResponse, ReturnType<typeof usersCurrentUserQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await usersCurrentUser({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: usersCurrentUserQueryKey(options)
+});
+
+/**
+ * Users:Current User
+ */
+export const useUsersCurrentUserQuery = (options?: Options<UsersCurrentUserData>) => useQuery(usersCurrentUserOptions(options));
+
+/**
+ * Users:Patch Current User
+ */
+export const usersPatchCurrentUserMutation = (options?: Partial<Options<UsersPatchCurrentUserData>>): UseMutationOptions<UsersPatchCurrentUserResponse, UsersPatchCurrentUserError, Options<UsersPatchCurrentUserData>> => {
+    const mutationOptions: UseMutationOptions<UsersPatchCurrentUserResponse, UsersPatchCurrentUserError, Options<UsersPatchCurrentUserData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await usersPatchCurrentUser({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+/**
+ * Users:Delete User
+ */
+export const usersDeleteUserMutation = (options?: Partial<Options<UsersDeleteUserData>>): UseMutationOptions<UsersDeleteUserResponse, UsersDeleteUserError, Options<UsersDeleteUserData>> => {
+    const mutationOptions: UseMutationOptions<UsersDeleteUserResponse, UsersDeleteUserError, Options<UsersDeleteUserData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await usersDeleteUser({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const usersUserQueryKey = (options: Options<UsersUserData>) => createQueryKey('usersUser', options, false, ['users']);
+
+/**
+ * Users:User
+ */
+export const usersUserOptions = (options: Options<UsersUserData>) => queryOptions<UsersUserResponse, UsersUserError, UsersUserResponse, ReturnType<typeof usersUserQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await usersUser({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: usersUserQueryKey(options)
+});
+
+/**
+ * Users:User
+ */
+export const useUsersUserQuery = (options: Options<UsersUserData>) => useQuery(usersUserOptions(options));
+
+/**
+ * Users:Patch User
+ */
+export const usersPatchUserMutation = (options?: Partial<Options<UsersPatchUserData>>): UseMutationOptions<UsersPatchUserResponse, UsersPatchUserError, Options<UsersPatchUserData>> => {
+    const mutationOptions: UseMutationOptions<UsersPatchUserResponse, UsersPatchUserError, Options<UsersPatchUserData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await usersPatchUser({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
 };
 
 export const getSystemResourcesQueryKey = (options?: Options<GetSystemResourcesData>) => createQueryKey('getSystemResources', options, false, ['summary']);
@@ -199,7 +347,7 @@ export const getSystemHealthQueryKey = (options?: Options<GetSystemHealthData>) 
 /**
  * Get System Health
  *
- * 检查系统健康状态，包括数据库和SSE服务（同步版本）
+ * 检查系统健康状态，包括数据库和SSE服务
  */
 export const getSystemHealthOptions = (options?: Options<GetSystemHealthData>) => queryOptions<GetSystemHealthResponse, DefaultError, GetSystemHealthResponse, ReturnType<typeof getSystemHealthQueryKey>>({
     queryFn: async ({ queryKey, signal }) => {
@@ -217,20 +365,18 @@ export const getSystemHealthOptions = (options?: Options<GetSystemHealthData>) =
 /**
  * Get System Health
  *
- * 检查系统健康状态，包括数据库和SSE服务（同步版本）
+ * 检查系统健康状态，包括数据库和SSE服务
  */
 export const useGetSystemHealthQuery = (options?: Options<GetSystemHealthData>) => useQuery(getSystemHealthOptions(options));
 
-export const getSystemHealthAsyncQueryKey = (options?: Options<GetSystemHealthAsyncData>) => createQueryKey('getSystemHealthAsync', options, false, ['summary']);
+export const getWorkflowsQueryKey = (options?: Options<GetWorkflowsData>) => createQueryKey('getWorkflows', options, false, ['workflow']);
 
 /**
- * Get System Health Async
- *
- * 检查系统健康状态，包括数据库和SSE服务（异步版本，包含完整SSE检查）
+ * Get Workflows
  */
-export const getSystemHealthAsyncOptions = (options?: Options<GetSystemHealthAsyncData>) => queryOptions<GetSystemHealthAsyncResponse, DefaultError, GetSystemHealthAsyncResponse, ReturnType<typeof getSystemHealthAsyncQueryKey>>({
+export const getWorkflowsOptions = (options?: Options<GetWorkflowsData>) => queryOptions<GetWorkflowsResponse, GetWorkflowsError, GetWorkflowsResponse, ReturnType<typeof getWorkflowsQueryKey>>({
     queryFn: async ({ queryKey, signal }) => {
-        const { data } = await getSystemHealthAsync({
+        const { data } = await getWorkflows({
             ...options,
             ...queryKey[0],
             signal,
@@ -238,55 +384,7 @@ export const getSystemHealthAsyncOptions = (options?: Options<GetSystemHealthAsy
         });
         return data;
     },
-    queryKey: getSystemHealthAsyncQueryKey(options)
-});
-
-/**
- * Get System Health Async
- *
- * 检查系统健康状态，包括数据库和SSE服务（异步版本，包含完整SSE检查）
- */
-export const useGetSystemHealthAsyncQuery = (options?: Options<GetSystemHealthAsyncData>) => useQuery(getSystemHealthAsyncOptions(options));
-
-export const getAllUsersQueryKey = (options?: Options<GetAllUsersData>) => createQueryKey('getAllUsers', options, false, ['workflow']);
-
-/**
- * Get All Users
- */
-export const getAllUsersOptions = (options?: Options<GetAllUsersData>) => queryOptions<GetAllUsersResponse, DefaultError, GetAllUsersResponse, ReturnType<typeof getAllUsersQueryKey>>({
-    queryFn: async ({ queryKey, signal }) => {
-        const { data } = await getAllUsers({
-            ...options,
-            ...queryKey[0],
-            signal,
-            throwOnError: true
-        });
-        return data;
-    },
-    queryKey: getAllUsersQueryKey(options)
-});
-
-/**
- * Get All Users
- */
-export const useGetAllUsersQuery = (options?: Options<GetAllUsersData>) => useQuery(getAllUsersOptions(options));
-
-export const getJobsQueryKey = (options: Options<GetJobsData>) => createQueryKey('getJobs', options, false, ['workflow']);
-
-/**
- * Get Jobs
- */
-export const getJobsOptions = (options: Options<GetJobsData>) => queryOptions<GetJobsResponse, GetJobsError, GetJobsResponse, ReturnType<typeof getJobsQueryKey>>({
-    queryFn: async ({ queryKey, signal }) => {
-        const { data } = await getJobs({
-            ...options,
-            ...queryKey[0],
-            signal,
-            throwOnError: true
-        });
-        return data;
-    },
-    queryKey: getJobsQueryKey(options)
+    queryKey: getWorkflowsQueryKey(options)
 });
 
 const createInfiniteParams = <K extends Pick<QueryKey<Options>[0], 'body' | 'headers' | 'path' | 'query'>>(queryKey: QueryKey<Options>, page: K) => {
@@ -317,56 +415,6 @@ const createInfiniteParams = <K extends Pick<QueryKey<Options>[0], 'body' | 'hea
     }
     return params as unknown as typeof page;
 };
-
-export const getJobsInfiniteQueryKey = (options: Options<GetJobsData>): QueryKey<Options<GetJobsData>> => createQueryKey('getJobs', options, true);
-
-/**
- * Get Jobs
- */
-export const getJobsInfiniteOptions = (options: Options<GetJobsData>) => infiniteQueryOptions<GetJobsResponse, GetJobsError, InfiniteData<GetJobsResponse>, QueryKey<Options<GetJobsData>>, number | null | Pick<QueryKey<Options<GetJobsData>>[0], 'body' | 'headers' | 'path' | 'query'>>(
-// @ts-ignore
-{
-    queryFn: async ({ pageParam, queryKey, signal }) => {
-        // @ts-ignore
-        const page: Pick<QueryKey<Options<GetJobsData>>[0], 'body' | 'headers' | 'path' | 'query'> = typeof pageParam === 'object' ? pageParam : {
-            query: {
-                offset: pageParam
-            }
-        };
-        const params = createInfiniteParams(queryKey, page);
-        const { data } = await getJobs({
-            ...options,
-            ...params,
-            signal,
-            throwOnError: true
-        });
-        return data;
-    },
-    queryKey: getJobsInfiniteQueryKey(options)
-});
-
-/**
- * Get Jobs
- */
-export const useGetJobsQuery = (options: Options<GetJobsData>) => useQuery(getJobsOptions(options));
-
-export const getWorkflowsQueryKey = (options?: Options<GetWorkflowsData>) => createQueryKey('getWorkflows', options, false, ['workflow']);
-
-/**
- * Get Workflows
- */
-export const getWorkflowsOptions = (options?: Options<GetWorkflowsData>) => queryOptions<GetWorkflowsResponse, GetWorkflowsError, GetWorkflowsResponse, ReturnType<typeof getWorkflowsQueryKey>>({
-    queryFn: async ({ queryKey, signal }) => {
-        const { data } = await getWorkflows({
-            ...options,
-            ...queryKey[0],
-            signal,
-            throwOnError: true
-        });
-        return data;
-    },
-    queryKey: getWorkflowsQueryKey(options)
-});
 
 export const getWorkflowsInfiniteQueryKey = (options?: Options<GetWorkflowsData>): QueryKey<Options<GetWorkflowsData>> => createQueryKey('getWorkflows', options, true);
 
@@ -399,6 +447,56 @@ export const getWorkflowsInfiniteOptions = (options?: Options<GetWorkflowsData>)
  * Get Workflows
  */
 export const useGetWorkflowsQuery = (options?: Options<GetWorkflowsData>) => useQuery(getWorkflowsOptions(options));
+
+export const getJobsQueryKey = (options: Options<GetJobsData>) => createQueryKey('getJobs', options, false, ['workflow']);
+
+/**
+ * Get Jobs
+ */
+export const getJobsOptions = (options: Options<GetJobsData>) => queryOptions<GetJobsResponse, GetJobsError, GetJobsResponse, ReturnType<typeof getJobsQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await getJobs({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: getJobsQueryKey(options)
+});
+
+export const getJobsInfiniteQueryKey = (options: Options<GetJobsData>): QueryKey<Options<GetJobsData>> => createQueryKey('getJobs', options, true);
+
+/**
+ * Get Jobs
+ */
+export const getJobsInfiniteOptions = (options: Options<GetJobsData>) => infiniteQueryOptions<GetJobsResponse, GetJobsError, InfiniteData<GetJobsResponse>, QueryKey<Options<GetJobsData>>, number | null | Pick<QueryKey<Options<GetJobsData>>[0], 'body' | 'headers' | 'path' | 'query'>>(
+// @ts-ignore
+{
+    queryFn: async ({ pageParam, queryKey, signal }) => {
+        // @ts-ignore
+        const page: Pick<QueryKey<Options<GetJobsData>>[0], 'body' | 'headers' | 'path' | 'query'> = typeof pageParam === 'object' ? pageParam : {
+            query: {
+                offset: pageParam
+            }
+        };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await getJobs({
+            ...options,
+            ...params,
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: getJobsInfiniteQueryKey(options)
+});
+
+/**
+ * Get Jobs
+ */
+export const useGetJobsQuery = (options: Options<GetJobsData>) => useQuery(getJobsOptions(options));
 
 export const getRuleGraphQueryKey = (options: Options<GetRuleGraphData>) => createQueryKey('getRuleGraph', options, false, ['workflow']);
 
@@ -716,12 +814,52 @@ export const getAllTagsOptions = (options?: Options<GetAllTagsData>) => queryOpt
  */
 export const useGetAllTagsQuery = (options?: Options<GetAllTagsData>) => useQuery(getAllTagsOptions(options));
 
-export const streamEventsQueryKey = (options?: Options<StreamEventsData>) => createQueryKey('streamEvents', options, false, ['sse']);
+export const getClientConfigQueryKey = (options?: Options<GetClientConfigData>) => createQueryKey('getClientConfig', options, false, ['utils']);
+
+/**
+ * Get Client Config
+ */
+export const getClientConfigOptions = (options?: Options<GetClientConfigData>) => queryOptions<GetClientConfigResponse, DefaultError, GetClientConfigResponse, ReturnType<typeof getClientConfigQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await getClientConfig({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: getClientConfigQueryKey(options)
+});
+
+/**
+ * Get Client Config
+ */
+export const useGetClientConfigQuery = (options?: Options<GetClientConfigData>) => useQuery(getClientConfigOptions(options));
+
+/**
+ * Get Sse Ticket
+ */
+export const getSseTicketMutation = (options?: Partial<Options<GetSseTicketData>>): UseMutationOptions<unknown, DefaultError, Options<GetSseTicketData>> => {
+    const mutationOptions: UseMutationOptions<unknown, DefaultError, Options<GetSseTicketData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await getSseTicket({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const streamEventsQueryKey = (options: Options<StreamEventsData>) => createQueryKey('streamEvents', options, false, ['sse']);
 
 /**
  * Stream Events
  */
-export const streamEventsOptions = (options?: Options<StreamEventsData>) => queryOptions<unknown, StreamEventsError, unknown, ReturnType<typeof streamEventsQueryKey>>({
+export const streamEventsOptions = (options: Options<StreamEventsData>) => queryOptions<unknown, StreamEventsError, unknown, ReturnType<typeof streamEventsQueryKey>>({
     queryFn: async ({ queryKey, signal }) => {
         const { data } = await streamEvents({
             ...options,
@@ -737,7 +875,7 @@ export const streamEventsOptions = (options?: Options<StreamEventsData>) => quer
 /**
  * Stream Events
  */
-export const useStreamEventsQuery = (options?: Options<StreamEventsData>) => useQuery(streamEventsOptions(options));
+export const useStreamEventsQuery = (options: Options<StreamEventsData>) => useQuery(streamEventsOptions(options));
 
 export const listFilesQueryKey = (options: Options<ListFilesData>) => createQueryKey('listFiles', options, false, ['files']);
 
@@ -784,3 +922,94 @@ export const readFileOptions = (options: Options<ReadFileData>) => queryOptions<
  * Read File
  */
 export const useReadFileQuery = (options: Options<ReadFileData>) => useQuery(readFileOptions(options));
+
+/**
+ * Report Event
+ */
+export const reportEventMutation = (options?: Partial<Options<ReportEventData>>): UseMutationOptions<unknown, ReportEventError, Options<ReportEventData>> => {
+    const mutationOptions: UseMutationOptions<unknown, ReportEventError, Options<ReportEventData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await reportEvent({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+/**
+ * Close Workflow
+ */
+export const closeWorkflowMutation = (options?: Partial<Options<CloseWorkflowData>>): UseMutationOptions<unknown, CloseWorkflowError, Options<CloseWorkflowData>> => {
+    const mutationOptions: UseMutationOptions<unknown, CloseWorkflowError, Options<CloseWorkflowData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await closeWorkflow({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const listTokensQueryKey = (options?: Options<ListTokensData>) => createQueryKey('listTokens', options, false, ['tokens']);
+
+/**
+ * List Tokens
+ */
+export const listTokensOptions = (options?: Options<ListTokensData>) => queryOptions<ListTokensResponse, DefaultError, ListTokensResponse, ReturnType<typeof listTokensQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await listTokens({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: listTokensQueryKey(options)
+});
+
+/**
+ * List Tokens
+ */
+export const useListTokensQuery = (options?: Options<ListTokensData>) => useQuery(listTokensOptions(options));
+
+/**
+ * Create Token
+ */
+export const createTokenMutation = (options?: Partial<Options<CreateTokenData>>): UseMutationOptions<CreateTokenResponse, CreateTokenError, Options<CreateTokenData>> => {
+    const mutationOptions: UseMutationOptions<CreateTokenResponse, CreateTokenError, Options<CreateTokenData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await createToken({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+/**
+ * Delete Token
+ */
+export const deleteTokenMutation = (options?: Partial<Options<DeleteTokenData>>): UseMutationOptions<unknown, DeleteTokenError, Options<DeleteTokenData>> => {
+    const mutationOptions: UseMutationOptions<unknown, DeleteTokenError, Options<DeleteTokenData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await deleteToken({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};

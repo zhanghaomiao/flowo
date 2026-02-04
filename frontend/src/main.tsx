@@ -6,6 +6,7 @@ import { createRoot } from 'react-dom/client';
 
 import './index.css';
 import { routeTree } from './routeTree.gen';
+import { AuthProvider, useAuth, type AuthContextType } from './auth';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -23,6 +24,7 @@ const router = createRouter({
   routeTree,
   context: {
     queryClient,
+    auth: undefined!, // This will be set by the Provider
   },
   defaultPreload: 'intent',
 });
@@ -34,26 +36,33 @@ declare module '@tanstack/react-router' {
   }
 }
 
+function App() {
+  const auth = useAuth();
+  return <RouterProvider router={router} context={{ auth }} />;
+}
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
-      <ConfigProvider
-        theme={{
-          components: {
-            Tree: {
-              indentSize: 12,
+      <AuthProvider>
+        <ConfigProvider
+          theme={{
+            components: {
+              Tree: {
+                indentSize: 12,
+              },
+              Layout: {
+                headerHeight: 45,
+              },
+              Card: {
+                bodyPadding: 4,
+              },
             },
-            Layout: {
-              headerHeight: 45,
-            },
-            Card: {
-              bodyPadding: 4,
-            },
-          },
-        }}
-      >
-        <RouterProvider router={router} />
-      </ConfigProvider>
+          }}
+        >
+          <App />
+        </ConfigProvider>
+      </AuthProvider>
     </QueryClientProvider>
   </StrictMode>,
 );

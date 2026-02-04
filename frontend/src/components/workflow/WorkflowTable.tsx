@@ -1,17 +1,16 @@
 import SnakemakeIcon from '@/assets/snakemake.svg?react';
 import {
   deleteWorkflowMutation,
-  getAllUsersOptions,
   getConfigfilesOptions,
   getDetailOptions,
   getSnakefileOptions,
   getWorkflowLogOptions,
   getWorkflowsOptions,
-  getWorkflowsQueryKey
+  getWorkflowsQueryKey,
 } from '@/client/@tanstack/react-query.gen';
 import type { Status, WorkflowResponse } from '@/client/types.gen';
-import { DurationCell } from '@/components/common/common';
 import LiveUpdatesIndicator from '@/components/LiveUpdatesIndicator';
+import { DurationCell } from '@/components/common/common';
 import { FileViewerModal, MultiFileViewer } from '@/components/shared/viewers';
 import WorkflowTag from '@/components/workflow/WorkflowTag';
 import { useWorkflowRealtime } from '@/config/workflowRealtime';
@@ -44,9 +43,7 @@ import { useCallback, useMemo, useState } from 'react';
 
 import WorkflowSearch from './WorkflowSearch';
 
-
 const WorkflowTable = () => {
-
   const queryClient = useQueryClient();
   const [snakefileModal, setSnakefileModal] = useState<{
     visible: boolean;
@@ -85,7 +82,6 @@ const WorkflowTable = () => {
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
-  const [user, setUser] = useState<string | null>(null);
   const [status, setStatus] = useState<Status | null>(null);
   const [messageApi, contextHolder] = message.useMessage();
 
@@ -113,10 +109,6 @@ const WorkflowTable = () => {
     enabled: configModal.visible && !!configModal.workflowId,
   });
 
-  const { data: usersData } = useQuery({
-    ...getAllUsersOptions(),
-  });
-
   const { data: logData } = useQuery({
     ...getWorkflowLogOptions({
       path: {
@@ -142,7 +134,6 @@ const WorkflowTable = () => {
       offset,
       orderByStarted: true,
       descending: true,
-      user,
       status,
       tags: searchTags,
       name: searchName,
@@ -152,7 +143,6 @@ const WorkflowTable = () => {
   }, [
     pageSize,
     currentPage,
-    user,
     status,
     searchTags,
     searchName,
@@ -164,21 +154,24 @@ const WorkflowTable = () => {
     ...getWorkflowsOptions({ query: queryParams }),
   });
 
-
   const deleteWorkflow = useMutation({
     ...deleteWorkflowMutation(),
     onSuccess: () => {
       queryClient.invalidateQueries({
         predicate: (query: any) => {
           const keyObj = query.queryKey[0] as any;
-          return Array.isArray(keyObj?.tags) && keyObj.tags.includes('workflow');
+          return (
+            Array.isArray(keyObj?.tags) && keyObj.tags.includes('workflow')
+          );
         },
       });
-    }
+    },
   });
 
   const workflows = workflowsData?.workflows ?? [];
-  const connectionStatus = useWorkflowRealtime(workflows.map((workflow) => workflow.id));
+  const connectionStatus = useWorkflowRealtime(
+    workflows.map((workflow) => workflow.id),
+  );
 
   const handleDeleteWorkflow = async (workflowId: string) => {
     try {
@@ -259,7 +252,7 @@ const WorkflowTable = () => {
       title: 'Name',
       dataIndex: 'name',
       key: 'name',
-      width: 240,
+      width: 220,
       fixed: 'left',
       sorter: (a, b) => {
         const nameA = a.name || '';
@@ -372,25 +365,10 @@ const WorkflowTable = () => {
       },
     },
     {
-      title: 'User',
-      dataIndex: 'user',
-      key: 'user',
-      align: 'right',
-      width: 35,
-      filters: usersData?.map((user) => ({ text: user!, value: user! })) ?? [],
-      filteredValue: user ? [user] : null,
-      onFilter: (value, record) => record.user === value,
-      sorter: (a, b) => {
-        const userA = a.user || '';
-        const userB = b.user || '';
-        return userA.localeCompare(userB);
-      },
-    },
-    {
       title: 'Status',
       dataIndex: 'status',
       key: 'status',
-      width: 40,
+      width: 30,
       align: 'right',
       render: (status: Status) => (
         <Tag
@@ -576,7 +554,7 @@ const WorkflowTable = () => {
         return (
           <Popconfirm
             title="Delete Workflow"
-            description={`Are you sure you want to delete workflow: "${record.name}" with user: ${record.user}?`}
+            description={`Are you sure you want to delete workflow: "${record.name || record.id}"?`}
             onConfirm={() => handleDeleteWorkflow(record.id)}
             okText="Yes"
             cancelText="No"
@@ -616,9 +594,7 @@ const WorkflowTable = () => {
             Workflows ({workflowsData?.total ?? 0} total, showing{' '}
             {workflows.length})
           </h3>
-          <LiveUpdatesIndicator
-            status={connectionStatus}
-          />
+          <LiveUpdatesIndicator status={connectionStatus} />
           <WorkflowSearch
             onTagsChange={handleTagsSearch}
             onNameChange={handleNameSearch}
@@ -643,14 +619,6 @@ const WorkflowTable = () => {
         rowKey="id"
         loading={workflowsLoading}
         onChange={(pagination, filters) => {
-          if (filters.user !== undefined) {
-            const userFilter = filters.user;
-            setUser(
-              userFilter && userFilter.length > 0
-                ? (userFilter[0] as string)
-                : null,
-            );
-          }
           if (filters.status !== undefined) {
             const statusFilter = filters.status;
             setStatus(

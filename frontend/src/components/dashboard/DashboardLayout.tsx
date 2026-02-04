@@ -1,13 +1,22 @@
 import {
+  postPruningMutation,
+  useGetActivityQuery,
+  useGetRuleDurationQuery,
+  useGetRuleErrorQuery,
+  useGetStatusQuery,
+  useGetSystemHealthQuery,
+  useGetSystemResourcesQuery,
+} from '@/client/@tanstack/react-query.gen';
+import {
   CloudServerOutlined,
   DatabaseOutlined,
   PlayCircleOutlined,
   ReloadOutlined,
   SyncOutlined,
-  TeamOutlined,
   ToolOutlined,
   WifiOutlined,
 } from '@ant-design/icons';
+import { useMutation } from '@tanstack/react-query';
 import {
   Alert,
   Button,
@@ -24,9 +33,6 @@ import React, { useMemo, useState } from 'react';
 
 import { BarChart, BoxPlot, StackedBarChart, WordCloud } from './Chart';
 import { StatusChart } from './StatusChart';
-import { useMutation } from '@tanstack/react-query';
-import { useGetStatusQuery, useGetUserSummaryQuery, useGetActivityQuery, useGetSystemResourcesQuery, useGetSystemHealthAsyncQuery, useGetRuleErrorQuery, useGetRuleDurationQuery } from '@/client/@tanstack/react-query.gen';
-import { postPruningMutation } from '@/client/@tanstack/react-query.gen';
 
 export const DashboardLayout: React.FC = () => {
   const [messageApi, contextHolder] = message.useMessage();
@@ -40,10 +46,11 @@ export const DashboardLayout: React.FC = () => {
   const ruleError = useGetRuleErrorQuery({ query: { limit: 10 } });
   const ruleDuration = useGetRuleDurationQuery({ query: { limit: 10 } });
 
-  const runningUsers = useGetUserSummaryQuery();
   const databasePruning = useMutation(postPruningMutation());
-  const { data: systemResourcesData, error: systemResourcesError } = useGetSystemResourcesQuery();
-  const { data: systemHealthData, isLoading: isSystemHealthLoading } = useGetSystemHealthAsyncQuery();
+  const { data: systemResourcesData, error: systemResourcesError } =
+    useGetSystemResourcesQuery();
+  const { data: systemHealthData, isLoading: isSystemHealthLoading } =
+    useGetSystemHealthQuery();
 
   const handleReload = async () => {
     setIsReloading(true);
@@ -61,7 +68,7 @@ export const DashboardLayout: React.FC = () => {
       const data = await databasePruning.mutateAsync({});
       messageApi.open({
         type: 'success',
-        content: `Database pruning completed successfully, delete ${data.workflow} workflows 
+        content: `Database pruning completed successfully, delete ${data.workflow} workflows
         and update ${data.job} jobs status`,
       });
     } catch {
@@ -81,7 +88,6 @@ export const DashboardLayout: React.FC = () => {
     };
   }, [runningWorkflows.data]);
 
-
   const jobChartData = useMemo(() => {
     return {
       success: runningJobs.data?.success || 0,
@@ -99,7 +105,10 @@ export const DashboardLayout: React.FC = () => {
   }, [tagActivity.data]);
 
   const ruleActivityData = useMemo(() => {
-    return Object.entries(ruleActivity.data || {}).map(([name, value]) => [name, value]);
+    return Object.entries(ruleActivity.data || {}).map(([name, value]) => [
+      name,
+      value,
+    ]);
   }, [ruleActivity.data]);
 
   return (
@@ -198,7 +207,8 @@ export const DashboardLayout: React.FC = () => {
                 title="Running Workflows"
                 value={runningWorkflows.data?.running}
                 prefix={
-                  runningWorkflows.data?.running && runningWorkflows.data?.running > 0 ? (
+                  runningWorkflows.data?.running &&
+                  runningWorkflows.data?.running > 0 ? (
                     <SyncOutlined spin />
                   ) : (
                     <PlayCircleOutlined />
@@ -239,20 +249,42 @@ export const DashboardLayout: React.FC = () => {
 
         <Col span={4}>
           <Card style={{ height: '100%' }}>
-            {runningUsers.error ? (
-              <div style={{ textAlign: 'center' }}>
-                <Alert message="Failed to load" type="error" showIcon />
-              </div>
-            ) : (
-              <Statistic
-                title="Active Users"
-                value={`${runningUsers.data?.running}/${runningUsers.data?.total}`}
-                prefix={<TeamOutlined />}
-                valueStyle={{ color: '#52c41a', textAlign: 'center' }}
-                style={{ textAlign: 'center' }}
-                loading={runningUsers.isLoading}
-              />
-            )}
+            <Statistic
+              title="Database"
+              value={
+                isSystemHealthLoading
+                  ? 'Wait...'
+                  : systemHealthData?.database.status === 'healthy'
+                    ? 'Healthy'
+                    : systemHealthData?.database.status === 'unhealthy'
+                      ? 'Error'
+                      : 'Unknown'
+              }
+              prefix={
+                <DatabaseOutlined
+                  style={{
+                    color: isSystemHealthLoading
+                      ? '#d9d9d9'
+                      : systemHealthData?.database.status === 'healthy'
+                        ? '#52c41a'
+                        : systemHealthData?.database.status === 'unhealthy'
+                          ? '#ff4d4f'
+                          : '#faad14',
+                  }}
+                />
+              }
+              valueStyle={{
+                color: isSystemHealthLoading
+                  ? '#d9d9d9'
+                  : systemHealthData?.database.status === 'healthy'
+                    ? '#52c41a'
+                    : systemHealthData?.database.status === 'unhealthy'
+                      ? '#ff4d4f'
+                      : '#faad14',
+                textAlign: 'center',
+              }}
+              style={{ textAlign: 'center' }}
+            />
           </Card>
         </Col>
 
@@ -281,12 +313,21 @@ export const DashboardLayout: React.FC = () => {
                     CPU Usage
                   </div>
                   <span style={{ fontWeight: 'bold', color: '#722ed1' }}>
-                    {Math.round((systemResourcesData?.cpu_total_cores || 0) - (systemResourcesData?.cpu_idle_cores || 0))}/{Math.round(systemResourcesData?.cpu_total_cores || 0)}{' '}
+                    {Math.round(
+                      (systemResourcesData?.cpu_total_cores || 0) -
+                        (systemResourcesData?.cpu_idle_cores || 0),
+                    )}
+                    /{Math.round(systemResourcesData?.cpu_total_cores || 0)}{' '}
                     cores
                   </span>
                 </div>
                 <Progress
-                  percent={Math.round(((systemResourcesData?.cpu_total_cores || 0) - (systemResourcesData?.cpu_idle_cores || 0)) / (systemResourcesData?.cpu_total_cores || 1) * 100)}
+                  percent={Math.round(
+                    (((systemResourcesData?.cpu_total_cores || 0) -
+                      (systemResourcesData?.cpu_idle_cores || 0)) /
+                      (systemResourcesData?.cpu_total_cores || 1)) *
+                      100,
+                  )}
                   strokeColor="#722ed1"
                   size="small"
                   showInfo={false}
@@ -321,14 +362,20 @@ export const DashboardLayout: React.FC = () => {
                     Memory Usage
                   </div>
                   <span style={{ fontWeight: 'bold', color: '#13c2c2' }}>
-                    {Math.round((systemResourcesData?.mem_total_GB || 0) - (systemResourcesData?.mem_available_GB || 0))}/
-                    {Math.round(systemResourcesData?.mem_total_GB || 1)} GB
+                    {Math.round(
+                      (systemResourcesData?.mem_total_GB || 0) -
+                        (systemResourcesData?.mem_available_GB || 0),
+                    )}
+                    /{Math.round(systemResourcesData?.mem_total_GB || 1)} GB
                   </span>
                 </div>
                 <Progress
-                  percent={Math.round
-                    (((systemResourcesData?.mem_total_GB || 0) - (systemResourcesData?.mem_available_GB || 0)) / (systemResourcesData?.mem_total_GB || 1) * 100)
-                  }
+                  percent={Math.round(
+                    (((systemResourcesData?.mem_total_GB || 0) -
+                      (systemResourcesData?.mem_available_GB || 0)) /
+                      (systemResourcesData?.mem_total_GB || 1)) *
+                      100,
+                  )}
                   strokeColor="#13c2c2"
                   size="small"
                   showInfo={false}
@@ -406,7 +453,6 @@ export const DashboardLayout: React.FC = () => {
         </Col>
       </Row>
 
-
       <Row gutter={[16, 16]} style={{ marginBottom: '24px' }}>
         <Col xs={24} lg={8}>
           <Card
@@ -427,13 +473,13 @@ export const DashboardLayout: React.FC = () => {
             style={{ height: '350px', width: '100%' }}
           >
             <StackedBarChart
-              data={
-                Object.entries(ruleError.data || {}).map(([name, value]) => ({
+              data={Object.entries(ruleError.data || {}).map(
+                ([name, value]) => ({
                   name: name,
                   total: value.total as number,
                   error: value.error as number,
-                }))
-              }
+                }),
+              )}
               title="Rules"
             />
           </Card>

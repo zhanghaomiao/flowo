@@ -5,6 +5,62 @@ export type ClientOptions = {
 };
 
 /**
+ * BearerResponse
+ */
+export type BearerResponse = {
+    /**
+     * Access Token
+     */
+    access_token: string;
+    /**
+     * Token Type
+     */
+    token_type: string;
+};
+
+/**
+ * Body_auth_jwt_login_api_v1_auth_jwt_login_post
+ */
+export type BodyAuthJwtLoginApiV1AuthJwtLoginPost = {
+    /**
+     * Grant Type
+     */
+    grant_type?: string | null;
+    /**
+     * Username
+     */
+    username: string;
+    /**
+     * Password
+     */
+    password: string;
+    /**
+     * Scope
+     */
+    scope?: string;
+    /**
+     * Client Id
+     */
+    client_id?: string | null;
+    /**
+     * Client Secret
+     */
+    client_secret?: string | null;
+};
+
+/**
+ * ErrorModel
+ */
+export type ErrorModel = {
+    /**
+     * Detail
+     */
+    detail: string | {
+        [key: string]: string;
+    };
+};
+
+/**
  * FileNode
  */
 export type FileNode = {
@@ -214,6 +270,28 @@ export type PathContent = {
 };
 
 /**
+ * ReportPayload
+ */
+export type ReportPayload = {
+    /**
+     * Event
+     */
+    event: string;
+    /**
+     * Record
+     */
+    record: {
+        [key: string]: unknown;
+    };
+    /**
+     * Context
+     */
+    context: {
+        [key: string]: unknown;
+    };
+};
+
+/**
  * ResourcesSummary
  */
 export type ResourcesSummary = {
@@ -325,6 +403,58 @@ export type SystemHealthResponse = {
 };
 
 /**
+ * UserCreate
+ */
+export type UserCreate = {
+    /**
+     * Email
+     */
+    email: string;
+    /**
+     * Password
+     */
+    password: string;
+    /**
+     * Is Active
+     */
+    is_active?: boolean | null;
+    /**
+     * Is Superuser
+     */
+    is_superuser?: boolean | null;
+    /**
+     * Is Verified
+     */
+    is_verified?: boolean | null;
+};
+
+/**
+ * UserRead
+ */
+export type UserRead = {
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * Email
+     */
+    email: string;
+    /**
+     * Is Active
+     */
+    is_active?: boolean;
+    /**
+     * Is Superuser
+     */
+    is_superuser?: boolean;
+    /**
+     * Is Verified
+     */
+    is_verified?: boolean;
+};
+
+/**
  * UserSummary
  */
 export type UserSummary = {
@@ -336,6 +466,82 @@ export type UserSummary = {
      * Running
      */
     running: number;
+};
+
+/**
+ * UserTokenCreate
+ */
+export type UserTokenCreate = {
+    /**
+     * Name
+     */
+    name: string;
+    /**
+     * Ttl Days
+     */
+    ttl_days?: number | null;
+};
+
+/**
+ * UserTokenList
+ */
+export type UserTokenList = {
+    /**
+     * Tokens
+     */
+    tokens: Array<UserTokenResponse>;
+};
+
+/**
+ * UserTokenResponse
+ */
+export type UserTokenResponse = {
+    /**
+     * Name
+     */
+    name: string;
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * Token
+     */
+    token: string;
+    /**
+     * Created At
+     */
+    created_at: string;
+    /**
+     * Expires At
+     */
+    expires_at?: string | null;
+};
+
+/**
+ * UserUpdate
+ */
+export type UserUpdate = {
+    /**
+     * Password
+     */
+    password?: string | null;
+    /**
+     * Email
+     */
+    email?: string | null;
+    /**
+     * Is Active
+     */
+    is_active?: boolean | null;
+    /**
+     * Is Superuser
+     */
+    is_superuser?: boolean | null;
+    /**
+     * Is Verified
+     */
+    is_verified?: boolean | null;
 };
 
 /**
@@ -495,6 +701,271 @@ export type WorkflowResponse = {
      */
     total_jobs: number;
 };
+
+export type AuthJwtLoginData = {
+    body: BodyAuthJwtLoginApiV1AuthJwtLoginPost;
+    path?: never;
+    query?: never;
+    url: '/api/v1/auth/jwt/login';
+};
+
+export type AuthJwtLoginErrors = {
+    /**
+     * Bad Request
+     */
+    400: ErrorModel;
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type AuthJwtLoginError = AuthJwtLoginErrors[keyof AuthJwtLoginErrors];
+
+export type AuthJwtLoginResponses = {
+    /**
+     * Successful Response
+     */
+    200: BearerResponse;
+};
+
+export type AuthJwtLoginResponse = AuthJwtLoginResponses[keyof AuthJwtLoginResponses];
+
+export type AuthJwtLogoutData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/auth/jwt/logout';
+};
+
+export type AuthJwtLogoutErrors = {
+    /**
+     * Missing token or inactive user.
+     */
+    401: unknown;
+};
+
+export type AuthJwtLogoutResponses = {
+    /**
+     * Successful Response
+     */
+    200: unknown;
+};
+
+export type RegisterRegisterData = {
+    body: UserCreate;
+    path?: never;
+    query?: never;
+    url: '/api/v1/auth/register';
+};
+
+export type RegisterRegisterErrors = {
+    /**
+     * Bad Request
+     */
+    400: ErrorModel;
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type RegisterRegisterError = RegisterRegisterErrors[keyof RegisterRegisterErrors];
+
+export type RegisterRegisterResponses = {
+    /**
+     * Successful Response
+     */
+    201: UserRead;
+};
+
+export type RegisterRegisterResponse = RegisterRegisterResponses[keyof RegisterRegisterResponses];
+
+export type UsersCurrentUserData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/auth/users/me';
+};
+
+export type UsersCurrentUserErrors = {
+    /**
+     * Missing token or inactive user.
+     */
+    401: unknown;
+};
+
+export type UsersCurrentUserResponses = {
+    /**
+     * Successful Response
+     */
+    200: UserRead;
+};
+
+export type UsersCurrentUserResponse = UsersCurrentUserResponses[keyof UsersCurrentUserResponses];
+
+export type UsersPatchCurrentUserData = {
+    body: UserUpdate;
+    path?: never;
+    query?: never;
+    url: '/api/v1/auth/users/me';
+};
+
+export type UsersPatchCurrentUserErrors = {
+    /**
+     * Bad Request
+     */
+    400: ErrorModel;
+    /**
+     * Missing token or inactive user.
+     */
+    401: unknown;
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type UsersPatchCurrentUserError = UsersPatchCurrentUserErrors[keyof UsersPatchCurrentUserErrors];
+
+export type UsersPatchCurrentUserResponses = {
+    /**
+     * Successful Response
+     */
+    200: UserRead;
+};
+
+export type UsersPatchCurrentUserResponse = UsersPatchCurrentUserResponses[keyof UsersPatchCurrentUserResponses];
+
+export type UsersDeleteUserData = {
+    body?: never;
+    path: {
+        /**
+         * Id
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/api/v1/auth/users/{id}';
+};
+
+export type UsersDeleteUserErrors = {
+    /**
+     * Missing token or inactive user.
+     */
+    401: unknown;
+    /**
+     * Not a superuser.
+     */
+    403: unknown;
+    /**
+     * The user does not exist.
+     */
+    404: unknown;
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type UsersDeleteUserError = UsersDeleteUserErrors[keyof UsersDeleteUserErrors];
+
+export type UsersDeleteUserResponses = {
+    /**
+     * Successful Response
+     */
+    204: void;
+};
+
+export type UsersDeleteUserResponse = UsersDeleteUserResponses[keyof UsersDeleteUserResponses];
+
+export type UsersUserData = {
+    body?: never;
+    path: {
+        /**
+         * Id
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/api/v1/auth/users/{id}';
+};
+
+export type UsersUserErrors = {
+    /**
+     * Missing token or inactive user.
+     */
+    401: unknown;
+    /**
+     * Not a superuser.
+     */
+    403: unknown;
+    /**
+     * The user does not exist.
+     */
+    404: unknown;
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type UsersUserError = UsersUserErrors[keyof UsersUserErrors];
+
+export type UsersUserResponses = {
+    /**
+     * Successful Response
+     */
+    200: UserRead;
+};
+
+export type UsersUserResponse = UsersUserResponses[keyof UsersUserResponses];
+
+export type UsersPatchUserData = {
+    body: UserUpdate;
+    path: {
+        /**
+         * Id
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/api/v1/auth/users/{id}';
+};
+
+export type UsersPatchUserErrors = {
+    /**
+     * Bad Request
+     */
+    400: ErrorModel;
+    /**
+     * Missing token or inactive user.
+     */
+    401: unknown;
+    /**
+     * Not a superuser.
+     */
+    403: unknown;
+    /**
+     * The user does not exist.
+     */
+    404: unknown;
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type UsersPatchUserError = UsersPatchUserErrors[keyof UsersPatchUserErrors];
+
+export type UsersPatchUserResponses = {
+    /**
+     * Successful Response
+     */
+    200: UserRead;
+};
+
+export type UsersPatchUserResponse = UsersPatchUserResponses[keyof UsersPatchUserResponses];
 
 export type GetSystemResourcesData = {
     body?: never;
@@ -728,39 +1199,91 @@ export type GetSystemHealthResponses = {
 
 export type GetSystemHealthResponse = GetSystemHealthResponses[keyof GetSystemHealthResponses];
 
-export type GetSystemHealthAsyncData = {
+export type GetWorkflowsData = {
     body?: never;
     path?: never;
-    query?: never;
-    url: '/api/v1/summary/health/async';
+    query?: {
+        /**
+         * Limit
+         *
+         * Maximum number of workflows to return
+         */
+        limit?: number | null;
+        /**
+         * Offset
+         *
+         * Number of workflows to skip
+         */
+        offset?: number | null;
+        /**
+         * Order By Started
+         *
+         * Order by start time (True) or ID (False)
+         */
+        order_by_started?: boolean;
+        /**
+         * Descending
+         *
+         * Order in descending order (newest first)
+         */
+        descending?: boolean;
+        /**
+         * User
+         *
+         * Filter by user string (legacy)
+         */
+        user?: string | null;
+        /**
+         * Status
+         *
+         * Filter by workflow status (RUNNING, SUCCESS, ERROR, UNKNOWN)
+         */
+        status?: Status | null;
+        /**
+         * Tags
+         *
+         * Filter by tags (comma-separated)
+         */
+        tags?: string | null;
+        /**
+         * Name
+         *
+         * Filter by workflow name
+         */
+        name?: string | null;
+        /**
+         * Start At
+         *
+         * Filter workflows started after this time
+         */
+        start_at?: string | null;
+        /**
+         * End At
+         *
+         * Filter workflows ended before this time
+         */
+        end_at?: string | null;
+    };
+    url: '/api/v1/workflows/';
 };
 
-export type GetSystemHealthAsyncResponses = {
+export type GetWorkflowsErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type GetWorkflowsError = GetWorkflowsErrors[keyof GetWorkflowsErrors];
+
+export type GetWorkflowsResponses = {
     /**
      * Successful Response
      */
-    200: SystemHealthResponse;
+    200: WorkflowListResponse;
 };
 
-export type GetSystemHealthAsyncResponse = GetSystemHealthAsyncResponses[keyof GetSystemHealthAsyncResponses];
-
-export type GetAllUsersData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/api/v1/workflows/users';
-};
-
-export type GetAllUsersResponses = {
-    /**
-     * Response Get All Users Api V1 Workflows Users Get
-     *
-     * Successful Response
-     */
-    200: Array<string>;
-};
-
-export type GetAllUsersResponse = GetAllUsersResponses[keyof GetAllUsersResponses];
+export type GetWorkflowsResponse = GetWorkflowsResponses[keyof GetWorkflowsResponses];
 
 export type GetJobsData = {
     body?: never;
@@ -828,92 +1351,6 @@ export type GetJobsResponses = {
 };
 
 export type GetJobsResponse = GetJobsResponses[keyof GetJobsResponses];
-
-export type GetWorkflowsData = {
-    body?: never;
-    path?: never;
-    query?: {
-        /**
-         * Limit
-         *
-         * Maximum number of workflows to return
-         */
-        limit?: number | null;
-        /**
-         * Offset
-         *
-         * Number of workflows to skip
-         */
-        offset?: number | null;
-        /**
-         * Order By Started
-         *
-         * Order by start time (True) or ID (False)
-         */
-        order_by_started?: boolean;
-        /**
-         * Descending
-         *
-         * Order in descending order (newest first)
-         */
-        descending?: boolean;
-        /**
-         * User
-         *
-         * Filter by user who started the workflow
-         */
-        user?: string | null;
-        /**
-         * Status
-         *
-         * Filter by workflow status (RUNNING, SUCCESS, ERROR, UNKNOWN)
-         */
-        status?: Status | null;
-        /**
-         * Tags
-         *
-         * Filter by tags (comma-separated)
-         */
-        tags?: string | null;
-        /**
-         * Name
-         *
-         * Filter by workflow name
-         */
-        name?: string | null;
-        /**
-         * Start At
-         *
-         * Filter workflows started after this time
-         */
-        start_at?: string | null;
-        /**
-         * End At
-         *
-         * Filter workflows ended before this time
-         */
-        end_at?: string | null;
-    };
-    url: '/api/v1/workflows/';
-};
-
-export type GetWorkflowsErrors = {
-    /**
-     * Validation Error
-     */
-    422: HttpValidationError;
-};
-
-export type GetWorkflowsError = GetWorkflowsErrors[keyof GetWorkflowsErrors];
-
-export type GetWorkflowsResponses = {
-    /**
-     * Successful Response
-     */
-    200: WorkflowListResponse;
-};
-
-export type GetWorkflowsResponse = GetWorkflowsResponses[keyof GetWorkflowsResponses];
 
 export type GetRuleGraphData = {
     body?: never;
@@ -1361,22 +1798,48 @@ export type GetAllTagsResponses = {
 
 export type GetAllTagsResponse = GetAllTagsResponses[keyof GetAllTagsResponses];
 
+export type GetClientConfigData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/utils/client-config';
+};
+
+export type GetClientConfigResponses = {
+    /**
+     * Response Get Client Config Api V1 Utils Client Config Get
+     *
+     * Successful Response
+     */
+    200: {
+        [key: string]: string | number;
+    };
+};
+
+export type GetClientConfigResponse = GetClientConfigResponses[keyof GetClientConfigResponses];
+
+export type GetSseTicketData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/sse/ticket';
+};
+
+export type GetSseTicketResponses = {
+    /**
+     * Successful Response
+     */
+    200: unknown;
+};
+
 export type StreamEventsData = {
     body?: never;
     path?: never;
-    query?: {
+    query: {
         /**
-         * Workflow Ids
-         *
-         * Current visible workflow IDs
+         * Token
          */
-        workflow_ids?: string | null;
-        /**
-         * Global Insert
-         *
-         * Global insert
-         */
-        global_insert?: boolean;
+        token: string;
     };
     url: '/api/v1/sse/events';
 };
@@ -1464,3 +1927,123 @@ export type ReadFileResponses = {
 };
 
 export type ReadFileResponse = ReadFileResponses[keyof ReadFileResponses];
+
+export type ReportEventData = {
+    body: ReportPayload;
+    path?: never;
+    query?: never;
+    url: '/api/v1/reports/';
+};
+
+export type ReportEventErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type ReportEventError = ReportEventErrors[keyof ReportEventErrors];
+
+export type ReportEventResponses = {
+    /**
+     * Successful Response
+     */
+    200: unknown;
+};
+
+export type CloseWorkflowData = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * Workflow Id
+         */
+        workflow_id: string;
+    };
+    url: '/api/v1/reports/close';
+};
+
+export type CloseWorkflowErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type CloseWorkflowError = CloseWorkflowErrors[keyof CloseWorkflowErrors];
+
+export type CloseWorkflowResponses = {
+    /**
+     * Successful Response
+     */
+    200: unknown;
+};
+
+export type ListTokensData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/tokens/';
+};
+
+export type ListTokensResponses = {
+    /**
+     * Successful Response
+     */
+    200: UserTokenList;
+};
+
+export type ListTokensResponse = ListTokensResponses[keyof ListTokensResponses];
+
+export type CreateTokenData = {
+    body: UserTokenCreate;
+    path?: never;
+    query?: never;
+    url: '/api/v1/tokens/';
+};
+
+export type CreateTokenErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type CreateTokenError = CreateTokenErrors[keyof CreateTokenErrors];
+
+export type CreateTokenResponses = {
+    /**
+     * Successful Response
+     */
+    200: UserTokenResponse;
+};
+
+export type CreateTokenResponse = CreateTokenResponses[keyof CreateTokenResponses];
+
+export type DeleteTokenData = {
+    body?: never;
+    path: {
+        /**
+         * Token Id
+         */
+        token_id: string;
+    };
+    query?: never;
+    url: '/api/v1/tokens/{token_id}';
+};
+
+export type DeleteTokenErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type DeleteTokenError = DeleteTokenErrors[keyof DeleteTokenErrors];
+
+export type DeleteTokenResponses = {
+    /**
+     * Successful Response
+     */
+    200: unknown;
+};

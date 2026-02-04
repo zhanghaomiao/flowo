@@ -18,78 +18,132 @@ const invalidateByTag = (queryClient: any, tag: string) => {
 
 export const useWorkflowRealtime = (workflows: string[] = []) => {
   const queryClient = useQueryClient();
-  const [connectionStatus, setConnectionStatus] = useState<'OFF' | 'CONNECTING' | 'ONLINE'>('OFF');
+  const [connectionStatus, setConnectionStatus] = useState<
+    'OFF' | 'CONNECTING' | 'ONLINE'
+  >('OFF');
 
   const currentIdsRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
     currentIdsRef.current = new Set(workflows);
-  }, [workflows])
-  
+  }, [workflows]);
 
   const debounceSync = useMemo(
     () =>
-      debounce(() => {
-        invalidateByTag(queryClient, TAG_WORKFLOWS);
-      }, 1000, 
-      {
-        leading: false,
-        trailing: true,
-        maxWait: 2000
-      }
-    ),
+      debounce(
+        () => {
+          invalidateByTag(queryClient, TAG_WORKFLOWS);
+        },
+        1000,
+        {
+          leading: false,
+          trailing: true,
+          maxWait: 2000,
+        },
+      ),
     [queryClient],
   );
 
-
   useEffect(() => {
-    setConnectionStatus('CONNECTING');
-    const url = client.buildUrl({
-      url: '/api/v1/sse/events',
-    });
+    let eventSource: EventSource | null = null;
+    let isActive = true;
+    let retryTimeout: NodeJS.Timeout | null = null;
 
-    const eventSource = new EventSource(url);
-    eventSource.onopen = () => {
-      setConnectionStatus('ONLINE');
-      invalidateByTag(queryClient, TAG_WORKFLOWS);
-    };
-
-    eventSource.onerror = () => {
-      setConnectionStatus('CONNECTING');
-      eventSource.close();
-    };
-
-    eventSource.addEventListener('message', (event) => {
-      try {
-        const data = JSON.parse(event.data);
-        const {table, operation, id, workflow_id} = data;
-
-        if (data.operation === 'UPDATE' && !data.new_status) return;
-        if (data.operation === 'INSERT' || data.operation === 'DELETE') { 
-          debounceSync()
-        }
-        if (table === 'workflows') {
-          if (currentIdsRef.current.has(id)) {
-            debounceSync();
-          }
-        }
-        else if (table === 'jobs') { 
-          if (currentIdsRef.current.has(workflow_id)) {
-            debounceSync();
-          }
-        }
-      } catch (e) {
-        console.error('SSE Parse Error', e);
+    const connectSSE = async () => {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        setConnectionStatus('OFF');
+        return;
       }
-    });
+
+      setConnectionStatus('CONNECTING');
+
+      try {
+        // 1. Get short-lived ticket
+        const ticketRes = await fetch('/api/v1/sse/ticket', {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (!ticketRes.ok) {
+          throw new Error('Failed to obtain SSE ticket');
+        }
+
+        const { ticket } = await ticketRes.json();
+
+        if (!isActive) return;
+
+        // 2. Connect with ticket
+        const url = client.buildUrl({
+          url: '/api/v1/sse/events',
+          query: { token: ticket },
+        });
+
+        eventSource = new EventSource(url);
+
+        eventSource.onopen = () => {
+          if (isActive) {
+            setConnectionStatus('ONLINE');
+            invalidateByTag(queryClient, TAG_WORKFLOWS);
+          }
+        };
+
+        eventSource.onerror = () => {
+          if (isActive) {
+            setConnectionStatus('CONNECTING');
+            eventSource?.close();
+            // Retry connection after 3 seconds
+            retryTimeout = setTimeout(() => {
+              connectSSE();
+            }, 3000);
+          }
+        };
+
+        eventSource.addEventListener('message', (event) => {
+          if (!isActive) return;
+          try {
+            const data = JSON.parse(event.data);
+            const { table, operation, id, workflow_id } = data;
+
+            if (data.operation === 'UPDATE' && !data.new_status) return;
+            if (data.operation === 'INSERT' || data.operation === 'DELETE') {
+              debounceSync();
+            }
+            if (table === 'workflows') {
+              if (currentIdsRef.current.has(id)) {
+                debounceSync();
+              }
+            } else if (table === 'jobs') {
+              if (currentIdsRef.current.has(workflow_id)) {
+                debounceSync();
+              }
+            }
+          } catch (e) {
+            console.error('SSE Parse Error', e);
+          }
+        });
+      } catch (error) {
+        console.error('SSE Connection Error:', error);
+        if (isActive) {
+          setConnectionStatus('OFF');
+          // Retry connection after 5 seconds on fatal error
+          retryTimeout = setTimeout(() => {
+            connectSSE();
+          }, 5000);
+        }
+      }
+    };
+
+    connectSSE();
 
     return () => {
-      eventSource.close();
+      isActive = false;
+      eventSource?.close();
+      if (retryTimeout) clearTimeout(retryTimeout);
       debounceSync.cancel();
     };
-  }, [
-    queryClient,
-    debounceSync
-  ]);
-  return connectionStatus
+  }, [queryClient, debounceSync]);
+  return connectionStatus;
 };

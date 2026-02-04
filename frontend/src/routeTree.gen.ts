@@ -9,159 +9,230 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as DashboardRouteImport } from './routes/dashboard'
-import { Route as AboutRouteImport } from './routes/about'
-import { Route as IndexRouteImport } from './routes/index'
-import { Route as WorkflowIndexRouteImport } from './routes/workflow/index'
-import { Route as DashboardIndexRouteImport } from './routes/Dashboard/index'
-import { Route as WorkflowWorkflowIdRouteImport } from './routes/workflow/$workflowId'
+import { Route as RegisterRouteImport } from './routes/register'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
+import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated.index'
+import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticated.profile'
+import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated.dashboard'
+import { Route as AuthenticatedWorkflowIndexRouteImport } from './routes/_authenticated.workflow/index'
+import { Route as AuthenticatedDashboardIndexRouteImport } from './routes/_authenticated.Dashboard/index'
+import { Route as AuthenticatedWorkflowWorkflowIdRouteImport } from './routes/_authenticated.workflow/$workflowId'
 
-const DashboardRoute = DashboardRouteImport.update({
-  id: '/dashboard',
-  path: '/dashboard',
+const RegisterRoute = RegisterRouteImport.update({
+  id: '/register',
+  path: '/register',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AboutRoute = AboutRouteImport.update({
-  id: '/about',
-  path: '/about',
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
+const AuthenticatedRoute = AuthenticatedRouteImport.update({
+  id: '/_authenticated',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedIndexRoute = AuthenticatedIndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => AuthenticatedRoute,
 } as any)
-const WorkflowIndexRoute = WorkflowIndexRouteImport.update({
-  id: '/workflow/',
-  path: '/workflow/',
-  getParentRoute: () => rootRouteImport,
+const AuthenticatedProfileRoute = AuthenticatedProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => AuthenticatedRoute,
 } as any)
-const DashboardIndexRoute = DashboardIndexRouteImport.update({
-  id: '/Dashboard/',
-  path: '/Dashboard/',
-  getParentRoute: () => rootRouteImport,
+const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => AuthenticatedRoute,
 } as any)
-const WorkflowWorkflowIdRoute = WorkflowWorkflowIdRouteImport.update({
-  id: '/workflow/$workflowId',
-  path: '/workflow/$workflowId',
-  getParentRoute: () => rootRouteImport,
-} as any)
+const AuthenticatedWorkflowIndexRoute =
+  AuthenticatedWorkflowIndexRouteImport.update({
+    id: '/workflow/',
+    path: '/workflow/',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedDashboardIndexRoute =
+  AuthenticatedDashboardIndexRouteImport.update({
+    id: '/Dashboard/',
+    path: '/Dashboard/',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedWorkflowWorkflowIdRoute =
+  AuthenticatedWorkflowWorkflowIdRouteImport.update({
+    id: '/workflow/$workflowId',
+    path: '/workflow/$workflowId',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof IndexRoute
-  '/about': typeof AboutRoute
-  '/dashboard': typeof DashboardRoute
-  '/workflow/$workflowId': typeof WorkflowWorkflowIdRoute
-  '/Dashboard': typeof DashboardIndexRoute
-  '/workflow': typeof WorkflowIndexRoute
+  '/login': typeof LoginRoute
+  '/register': typeof RegisterRoute
+  '/dashboard': typeof AuthenticatedDashboardRoute
+  '/profile': typeof AuthenticatedProfileRoute
+  '/': typeof AuthenticatedIndexRoute
+  '/workflow/$workflowId': typeof AuthenticatedWorkflowWorkflowIdRoute
+  '/Dashboard': typeof AuthenticatedDashboardIndexRoute
+  '/workflow': typeof AuthenticatedWorkflowIndexRoute
 }
 export interface FileRoutesByTo {
-  '/': typeof IndexRoute
-  '/about': typeof AboutRoute
-  '/dashboard': typeof DashboardRoute
-  '/workflow/$workflowId': typeof WorkflowWorkflowIdRoute
-  '/Dashboard': typeof DashboardIndexRoute
-  '/workflow': typeof WorkflowIndexRoute
+  '/login': typeof LoginRoute
+  '/register': typeof RegisterRoute
+  '/dashboard': typeof AuthenticatedDashboardRoute
+  '/profile': typeof AuthenticatedProfileRoute
+  '/': typeof AuthenticatedIndexRoute
+  '/workflow/$workflowId': typeof AuthenticatedWorkflowWorkflowIdRoute
+  '/Dashboard': typeof AuthenticatedDashboardIndexRoute
+  '/workflow': typeof AuthenticatedWorkflowIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
-  '/': typeof IndexRoute
-  '/about': typeof AboutRoute
-  '/dashboard': typeof DashboardRoute
-  '/workflow/$workflowId': typeof WorkflowWorkflowIdRoute
-  '/Dashboard/': typeof DashboardIndexRoute
-  '/workflow/': typeof WorkflowIndexRoute
+  '/_authenticated': typeof AuthenticatedRouteWithChildren
+  '/login': typeof LoginRoute
+  '/register': typeof RegisterRoute
+  '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/profile': typeof AuthenticatedProfileRoute
+  '/_authenticated/': typeof AuthenticatedIndexRoute
+  '/_authenticated/workflow/$workflowId': typeof AuthenticatedWorkflowWorkflowIdRoute
+  '/_authenticated/Dashboard/': typeof AuthenticatedDashboardIndexRoute
+  '/_authenticated/workflow/': typeof AuthenticatedWorkflowIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    | '/'
-    | '/about'
+    | '/login'
+    | '/register'
     | '/dashboard'
+    | '/profile'
+    | '/'
     | '/workflow/$workflowId'
     | '/Dashboard'
     | '/workflow'
   fileRoutesByTo: FileRoutesByTo
   to:
-    | '/'
-    | '/about'
+    | '/login'
+    | '/register'
     | '/dashboard'
+    | '/profile'
+    | '/'
     | '/workflow/$workflowId'
     | '/Dashboard'
     | '/workflow'
   id:
     | '__root__'
-    | '/'
-    | '/about'
-    | '/dashboard'
-    | '/workflow/$workflowId'
-    | '/Dashboard/'
-    | '/workflow/'
+    | '/_authenticated'
+    | '/login'
+    | '/register'
+    | '/_authenticated/dashboard'
+    | '/_authenticated/profile'
+    | '/_authenticated/'
+    | '/_authenticated/workflow/$workflowId'
+    | '/_authenticated/Dashboard/'
+    | '/_authenticated/workflow/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute
-  AboutRoute: typeof AboutRoute
-  DashboardRoute: typeof DashboardRoute
-  WorkflowWorkflowIdRoute: typeof WorkflowWorkflowIdRoute
-  DashboardIndexRoute: typeof DashboardIndexRoute
-  WorkflowIndexRoute: typeof WorkflowIndexRoute
+  AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
+  LoginRoute: typeof LoginRoute
+  RegisterRoute: typeof RegisterRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/dashboard': {
-      id: '/dashboard'
-      path: '/dashboard'
-      fullPath: '/dashboard'
-      preLoaderRoute: typeof DashboardRouteImport
+    '/register': {
+      id: '/register'
+      path: '/register'
+      fullPath: '/register'
+      preLoaderRoute: typeof RegisterRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/about': {
-      id: '/about'
-      path: '/about'
-      fullPath: '/about'
-      preLoaderRoute: typeof AboutRouteImport
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: ''
+      preLoaderRoute: typeof AuthenticatedRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/': {
+      id: '/_authenticated/'
       path: '/'
       fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof AuthenticatedIndexRouteImport
+      parentRoute: typeof AuthenticatedRoute
     }
-    '/workflow/': {
-      id: '/workflow/'
+    '/_authenticated/profile': {
+      id: '/_authenticated/profile'
+      path: '/profile'
+      fullPath: '/profile'
+      preLoaderRoute: typeof AuthenticatedProfileRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/dashboard': {
+      id: '/_authenticated/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof AuthenticatedDashboardRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/workflow/': {
+      id: '/_authenticated/workflow/'
       path: '/workflow'
       fullPath: '/workflow'
-      preLoaderRoute: typeof WorkflowIndexRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof AuthenticatedWorkflowIndexRouteImport
+      parentRoute: typeof AuthenticatedRoute
     }
-    '/Dashboard/': {
-      id: '/Dashboard/'
+    '/_authenticated/Dashboard/': {
+      id: '/_authenticated/Dashboard/'
       path: '/Dashboard'
       fullPath: '/Dashboard'
-      preLoaderRoute: typeof DashboardIndexRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof AuthenticatedDashboardIndexRouteImport
+      parentRoute: typeof AuthenticatedRoute
     }
-    '/workflow/$workflowId': {
-      id: '/workflow/$workflowId'
+    '/_authenticated/workflow/$workflowId': {
+      id: '/_authenticated/workflow/$workflowId'
       path: '/workflow/$workflowId'
       fullPath: '/workflow/$workflowId'
-      preLoaderRoute: typeof WorkflowWorkflowIdRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof AuthenticatedWorkflowWorkflowIdRouteImport
+      parentRoute: typeof AuthenticatedRoute
     }
   }
 }
 
+interface AuthenticatedRouteChildren {
+  AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedProfileRoute: typeof AuthenticatedProfileRoute
+  AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
+  AuthenticatedWorkflowWorkflowIdRoute: typeof AuthenticatedWorkflowWorkflowIdRoute
+  AuthenticatedDashboardIndexRoute: typeof AuthenticatedDashboardIndexRoute
+  AuthenticatedWorkflowIndexRoute: typeof AuthenticatedWorkflowIndexRoute
+}
+
+const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
+  AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedProfileRoute: AuthenticatedProfileRoute,
+  AuthenticatedIndexRoute: AuthenticatedIndexRoute,
+  AuthenticatedWorkflowWorkflowIdRoute: AuthenticatedWorkflowWorkflowIdRoute,
+  AuthenticatedDashboardIndexRoute: AuthenticatedDashboardIndexRoute,
+  AuthenticatedWorkflowIndexRoute: AuthenticatedWorkflowIndexRoute,
+}
+
+const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
+  AuthenticatedRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
-  IndexRoute: IndexRoute,
-  AboutRoute: AboutRoute,
-  DashboardRoute: DashboardRoute,
-  WorkflowWorkflowIdRoute: WorkflowWorkflowIdRoute,
-  DashboardIndexRoute: DashboardIndexRoute,
-  WorkflowIndexRoute: WorkflowIndexRoute,
+  AuthenticatedRoute: AuthenticatedRouteWithChildren,
+  LoginRoute: LoginRoute,
+  RegisterRoute: RegisterRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
