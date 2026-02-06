@@ -1997,20 +1997,11 @@ name = "snakemake-logger-plugin-flowo"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [
-    { name = "alembic" },
-    { name = "anytree" },
-    { name = "asyncpg" },
-    { name = "fastapi", extra = ["standard"] },
-    { name = "fastapi-users", extra = ["sqlalchemy"] },
-    { name = "passlib", extra = ["bcrypt"] },
-    { name = "psutil" },
-    { name = "psycopg2-binary" },
+    { name = "httpx" },
     { name = "pydantic" },
     { name = "pydantic-settings" },
     { name = "snakemake" },
     { name = "snakemake-interface-logger-plugins" },
-    { name = "sqlalchemy" },
-    { name = "sse-starlette" },
 ]
 
 [package.optional-dependencies]
@@ -2021,19 +2012,32 @@ dev = [
     { name = "pytest-asyncio" },
     { name = "ruff" },
 ]
+server = [
+    { name = "alembic" },
+    { name = "anytree" },
+    { name = "asyncpg" },
+    { name = "fastapi", extra = ["standard"] },
+    { name = "fastapi-users", extra = ["sqlalchemy"] },
+    { name = "passlib", extra = ["bcrypt"] },
+    { name = "psutil" },
+    { name = "psycopg2-binary" },
+    { name = "sqlalchemy" },
+    { name = "sse-starlette" },
+]
 
 [package.metadata]
 requires-dist = [
-    { name = "alembic", specifier = ">=1.16.1" },
-    { name = "anytree", specifier = ">=2.13.0" },
-    { name = "asyncpg", specifier = ">=0.30.0" },
+    { name = "alembic", marker = "extra == 'server'", specifier = ">=1.16.1" },
+    { name = "anytree", marker = "extra == 'server'", specifier = ">=2.13.0" },
+    { name = "asyncpg", marker = "extra == 'server'", specifier = ">=0.30.0" },
     { name = "black", marker = "extra == 'dev'", specifier = ">=23.0.0" },
-    { name = "fastapi", extras = ["standard"], specifier = ">=0.115.12" },
-    { name = "fastapi-users", extras = ["sqlalchemy"], specifier = ">=15.0.3" },
+    { name = "fastapi", extras = ["standard"], marker = "extra == 'server'", specifier = ">=0.115.12" },
+    { name = "fastapi-users", extras = ["sqlalchemy"], marker = "extra == 'server'", specifier = ">=15.0.3" },
+    { name = "httpx", specifier = ">=0.28.1" },
     { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.0.0" },
-    { name = "passlib", extras = ["bcrypt"], specifier = ">=1.7.4" },
-    { name = "psutil", specifier = ">=7.0.0" },
-    { name = "psycopg2-binary", specifier = ">=2.9.9" },
+    { name = "passlib", extras = ["bcrypt"], marker = "extra == 'server'", specifier = ">=1.7.4" },
+    { name = "psutil", marker = "extra == 'server'", specifier = ">=7.0.0" },
+    { name = "psycopg2-binary", marker = "extra == 'server'", specifier = ">=2.9.9" },
     { name = "pydantic", specifier = ">=2.11.5" },
     { name = "pydantic-settings", specifier = ">=2.9.1" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=7.0.0" },
@@ -2041,10 +2045,10 @@ requires-dist = [
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.1.0" },
     { name = "snakemake" },
     { name = "snakemake-interface-logger-plugins" },
-    { name = "sqlalchemy", specifier = ">=2.0.41" },
-    { name = "sse-starlette", specifier = ">=3.1.2" },
+    { name = "sqlalchemy", marker = "extra == 'server'", specifier = ">=2.0.41" },
+    { name = "sse-starlette", marker = "extra == 'server'", specifier = ">=3.1.2" },
 ]
-provides-extras = ["dev"]
+provides-extras = ["server", "dev"]
 
 [[package]]
 name = "sqlalchemy"

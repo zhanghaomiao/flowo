@@ -7,9 +7,7 @@ build-backend = "hatchling.build"
 packages = ["app"]
 exclude = [
     "app/api",
-    "app/services/workflow.py",
-    "app/services/summary.py",
-    "app/services/job.py",
+    "app/services",
     "app/main.py",
     "app/core/pg_listener.py",
     "app/alembic",
@@ -34,9 +32,16 @@ authors = [
 
 dependencies = [
     "pydantic>=2.11.5",
-    "sqlalchemy>=2.0.41",
-    "psycopg2-binary>=2.9.9",
     "pydantic-settings>=2.9.1",
+    "snakemake",
+    "snakemake-interface-logger-plugins",
+    "httpx>=0.28.1",
+    "sqlalchemy>=2.0.41"
+]
+
+[project.optional-dependencies]
+server = [
+    "psycopg2-binary>=2.9.9",
     "asyncpg>=0.30.0",
     "alembic>=1.16.1",
     "fastapi[standard]>=0.115.12",
@@ -45,12 +50,7 @@ dependencies = [
     "sse-starlette>=3.1.2",
     "fastapi-users[sqlalchemy]>=15.0.3",
     "passlib[bcrypt]>=1.7.4",
-    "snakemake",
-    "snakemake-interface-logger-plugins",
-    "httpx>=0.28.1",
 ]
-
-[project.optional-dependencies]
 dev = [
     "pytest>=7.0.0",
     "pytest-asyncio>=0.21.0",
@@ -66,7 +66,7 @@ dev = [
 #flowo = "app.plugin.LogHandler"
 
 [project.scripts]
-flowo = "snakemake_logger_plugin_flowo.plugin.__main__:main"
+flowo = "snakemake_logger_plugin_flowo.plugin.client.cli:main"
 
 [project.entry-points."snakemake.log_handlers"]
 flowo = "snakemake_logger_plugin_flowo.plugin.LogHandler"

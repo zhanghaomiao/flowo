@@ -1,8 +1,8 @@
 import argparse
 from pathlib import Path
 
-from .. import logger
-from ..core.config import settings
+from ... import logger
+from ...core.config import settings
 
 
 def generate_config(token: str | None = None):

@@ -33,11 +33,6 @@ const menuItems = [
     icon: <DashboardOutlined />,
     label: <Link to="/dashboard">Dashboard</Link>,
   },
-  {
-    key: '/profile',
-    icon: <UserOutlined />,
-    label: <Link to="/profile">Profile</Link>,
-  },
 ];
 
 function RootComponent() {
@@ -84,6 +79,34 @@ function RootComponent() {
             items={menuItems}
             selectedKeys={[getSelectedKey()]}
           />
+          <div
+            style={{
+              marginLeft: 'auto',
+              display: 'flex',
+              alignItems: 'center',
+            }}
+          >
+            <Link
+              to="/profile"
+              style={{
+                color: 'white',
+                display: 'flex',
+                alignItems: 'center',
+                padding: '4px 8px',
+                borderRadius: '8px',
+                transition: 'background 0.3s',
+              }}
+              onMouseEnter={(e) =>
+                (e.currentTarget.style.background = 'rgba(255,255,255,0.1)')
+              }
+              onMouseLeave={(e) =>
+                (e.currentTarget.style.background = 'transparent')
+              }
+            >
+              <UserOutlined style={{ fontSize: '18px', marginRight: '8px' }} />
+              <span style={{ fontSize: '14px' }}>Profile</span>
+            </Link>
+          </div>
         </Header>
       )}
       <Content style={{ padding: '0px', minWidth: '80%', maxWidth: '100%' }}>
