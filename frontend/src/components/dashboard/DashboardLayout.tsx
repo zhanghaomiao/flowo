@@ -247,46 +247,6 @@ export const DashboardLayout: React.FC = () => {
           </Card>
         </Col>
 
-        <Col span={4}>
-          <Card style={{ height: '100%' }}>
-            <Statistic
-              title="Database"
-              value={
-                isSystemHealthLoading
-                  ? 'Wait...'
-                  : systemHealthData?.database.status === 'healthy'
-                    ? 'Healthy'
-                    : systemHealthData?.database.status === 'unhealthy'
-                      ? 'Error'
-                      : 'Unknown'
-              }
-              prefix={
-                <DatabaseOutlined
-                  style={{
-                    color: isSystemHealthLoading
-                      ? '#d9d9d9'
-                      : systemHealthData?.database.status === 'healthy'
-                        ? '#52c41a'
-                        : systemHealthData?.database.status === 'unhealthy'
-                          ? '#ff4d4f'
-                          : '#faad14',
-                  }}
-                />
-              }
-              valueStyle={{
-                color: isSystemHealthLoading
-                  ? '#d9d9d9'
-                  : systemHealthData?.database.status === 'healthy'
-                    ? '#52c41a'
-                    : systemHealthData?.database.status === 'unhealthy'
-                      ? '#ff4d4f'
-                      : '#faad14',
-                textAlign: 'center',
-              }}
-              style={{ textAlign: 'center' }}
-            />
-          </Card>
-        </Col>
 
         <Col span={4}>
           <Card style={{ height: '100%' }}>
@@ -382,6 +342,47 @@ export const DashboardLayout: React.FC = () => {
                 />
               </div>
             )}
+          </Card>
+        </Col>
+
+        <Col span={4}>
+          <Card style={{ height: '100%' }}>
+            <Statistic
+              title="Database"
+              value={
+                isSystemHealthLoading
+                  ? 'Wait...'
+                  : systemHealthData?.database.status === 'healthy'
+                    ? 'Healthy'
+                    : systemHealthData?.database.status === 'unhealthy'
+                      ? 'Error'
+                      : 'Unknown'
+              }
+              prefix={
+                <DatabaseOutlined
+                  style={{
+                    color: isSystemHealthLoading
+                      ? '#d9d9d9'
+                      : systemHealthData?.database.status === 'healthy'
+                        ? '#52c41a'
+                        : systemHealthData?.database.status === 'unhealthy'
+                          ? '#ff4d4f'
+                          : '#faad14',
+                  }}
+                />
+              }
+              valueStyle={{
+                color: isSystemHealthLoading
+                  ? '#d9d9d9'
+                  : systemHealthData?.database.status === 'healthy'
+                    ? '#52c41a'
+                    : systemHealthData?.database.status === 'unhealthy'
+                      ? '#ff4d4f'
+                      : '#faad14',
+                textAlign: 'center',
+              }}
+              style={{ textAlign: 'center' }}
+            />
           </Card>
         </Col>
 
