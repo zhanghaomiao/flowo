@@ -1,4 +1,4 @@
-FROM harbor.hmiao.org:14443/docker.io/library/node:22-alpine AS build
+FROM node:22-alpine AS build
 
 WORKDIR /app
 
@@ -14,7 +14,7 @@ COPY . .
 RUN npm run build
 
 # Production stage
-FROM harbor.hmiao.org:14443/docker.io/library/nginx:alpine
+FROM nginx:alpine
 
 # Copy built files to nginx
 COPY --from=build /app/dist /usr/share/nginx/html
