@@ -55,9 +55,14 @@ services:
       - sh
       - -c
       - |
+        echo '🚀 Starting backend setup...'
         echo 'Running database migrations...'
-        uv run alembic upgrade head
-        echo '✅ Database migrations completed!'
+        if alembic upgrade head; then
+            echo '✅ Database migrations completed successfully!'
+        else
+            echo '❌ Database migrations failed!'
+            exit 1
+        fi
         echo 'Starting application...'
         exec uvicorn app.main:app --host 0.0.0.0 --port 8000
 

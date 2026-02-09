@@ -23,16 +23,16 @@ ENV UV_TOOL_BIN_DIR=/usr/local/bin
 
 
 
-COPY pyproject.toml uv.lock ./
+COPY --chown=nonroot:nonroot pyproject.toml uv.lock ./
 
 # RUN mkdir app && touch app/__init__.py
 
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --frozen --no-install-project --extra server
 
-COPY app  /app/app
-COPY README.md /app
-COPY alembic.ini /app/alembic.ini
+COPY --chown=nonroot:nonroot app  /app/app
+COPY --chown=nonroot:nonroot README.md /app
+COPY --chown=nonroot:nonroot alembic.ini /app/alembic.ini
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --frozen --no-editable --no-dev --extra server
 
