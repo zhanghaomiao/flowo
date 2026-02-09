@@ -3,6 +3,7 @@ import {
   deleteTokenMutation,
   listTokensOptions,
   usersCurrentUserOptions,
+  listTokensQueryKey,
 } from '@/client/@tanstack/react-query.gen';
 import { UserTokenResponse } from '@/client/types.gen';
 import {
@@ -118,10 +119,15 @@ function ProfileComponent() {
         },
       });
       setGeneratedToken(result.token);
-      queryClient.invalidateQueries({ queryKey: ['listTokens'] });
+      queryClient.invalidateQueries({
+        queryKey: listTokensQueryKey({
+          headers: { Authorization: `Bearer ${token}` }
+        })
+      });
       setNewTokenName('');
       setNewTokenTTL(undefined);
     } catch (err) {
+      console.error(err);
       message.error('Failed to create token');
     }
   };
@@ -134,7 +140,11 @@ function ProfileComponent() {
         },
       });
       message.success('Token deleted');
-      queryClient.invalidateQueries({ queryKey: ['listTokens'] });
+      queryClient.invalidateQueries({
+        queryKey: listTokensQueryKey({
+          headers: { Authorization: `Bearer ${token}` }
+        })
+      });
     } catch (err) {
       message.error('Failed to delete token');
     }
@@ -400,7 +410,7 @@ FLOWO_WORKING_PATH=${clientConfig.FLOWO_WORKING_PATH}`;
         onCancel={() => setIsTokenModalVisible(false)}
         footer={null}
         width={600}
-        destroyOnClose
+        destroyOnHidden
       >
         {!generatedToken ? (
           <Form

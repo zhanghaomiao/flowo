@@ -1,13 +1,13 @@
+import { useEffect, useState } from 'react';
 import { authJwtLoginMutation } from '@/client/@tanstack/react-query.gen';
 import {
   ArrowRightOutlined,
-  GithubOutlined,
   LockOutlined,
   MailOutlined,
 } from '@ant-design/icons';
 import { useMutation } from '@tanstack/react-query';
 import { Link, createFileRoute, useNavigate } from '@tanstack/react-router';
-import { Button, Card, Divider, Form, Input, Typography, message } from 'antd';
+import { Button, Card, Divider, Form, Input, Modal, Typography, message } from 'antd';
 
 import { useAuth } from '../auth';
 
@@ -24,9 +24,20 @@ export const Route = createFileRoute('/login')({
 
 function LoginComponent() {
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { login, isAuthenticated } = useAuth();
   const { redirect } = Route.useSearch();
   const loginMutation = useMutation(authJwtLoginMutation());
+  const [isForgotModalVisible, setIsForgotModalVisible] = useState(false);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      if (redirect) {
+        navigate({ to: redirect });
+      } else {
+        navigate({ to: '/' });
+      }
+    }
+  }, [isAuthenticated, navigate, redirect]);
 
   const onFinish = async (values: any) => {
     try {
@@ -40,7 +51,6 @@ function LoginComponent() {
       if (data && data.access_token) {
         login(data.access_token);
         message.success('Welcome back to FlowO');
-        navigate({ to: redirect || '/' });
       } else {
         throw new Error('No token received');
       }
@@ -165,9 +175,13 @@ function LoginComponent() {
           </Form.Item>
 
           <div style={{ marginBottom: 24, textAlign: 'right' }}>
-            <Link to="/login" style={{ color: '#00A2FF', fontSize: 14 }}>
+            <Button
+              type="link"
+              onClick={() => setIsForgotModalVisible(true)}
+              style={{ color: '#00A2FF', fontSize: 14, padding: 0, height: 'auto' }}
+            >
               Forgot password?
-            </Link>
+            </Button>
           </div>
 
           <Form.Item>
@@ -190,25 +204,6 @@ function LoginComponent() {
             </Button>
           </Form.Item>
 
-          <Divider style={{ borderColor: '#f0f0f0' }}>
-            <Text style={{ color: '#bfbfbf', fontSize: 12 }}>
-              OR CONTINUE WITH
-            </Text>
-          </Divider>
-
-          <Button
-            block
-            icon={<GithubOutlined />}
-            style={{
-              height: 48,
-              borderRadius: 12,
-              background: '#ffffff',
-              color: '#333',
-              borderColor: '#e8e8e8',
-            }}
-          >
-            GitHub
-          </Button>
 
           <div style={{ textAlign: 'center', marginTop: 32 }}>
             <Text style={{ color: '#666666' }}>Don't have an account?</Text>{' '}
@@ -218,6 +213,34 @@ function LoginComponent() {
           </div>
         </Form>
       </Card>
+
+      <Modal
+        title="Reset Password"
+        open={isForgotModalVisible}
+        onOk={() => setIsForgotModalVisible(false)}
+        onCancel={() => setIsForgotModalVisible(false)}
+        footer={[
+          <Button key="ok" type="primary" onClick={() => setIsForgotModalVisible(false)}>
+            Got it
+          </Button>,
+        ]}
+      >
+        <div style={{ padding: '16px 0' }}>
+          <p>Password reset via email is not currently configured.</p>
+          <p>Please contact your system administrator to reset your password using the server CLI:</p>
+          <Card
+            size="small"
+            style={{
+              background: '#f5f5f5',
+              fontFamily: 'monospace',
+              marginTop: 16,
+              fontSize: '13px'
+            }}
+          >
+            docker exec -it flowo-backend python -m app.manage reset-password &lt;email&gt; &lt;new_password&gt;
+          </Card>
+        </div>
+      </Modal>
     </div>
   );
 }

@@ -28,7 +28,6 @@
     "echarts": "^5.6.0",
     "echarts-for-react": "^3.0.2",
     "echarts-wordcloud": "^2.1.0",
-    "loadsh": "^0.0.4",
     "lodash": "^4.17.21",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",

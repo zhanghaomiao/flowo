@@ -455,20 +455,6 @@ export type UserRead = {
 };
 
 /**
- * UserSummary
- */
-export type UserSummary = {
-    /**
-     * Total
-     */
-    total: number;
-    /**
-     * Running
-     */
-    running: number;
-};
-
-/**
  * UserTokenCreate
  */
 export type UserTokenCreate = {
@@ -982,22 +968,6 @@ export type GetSystemResourcesResponses = {
 };
 
 export type GetSystemResourcesResponse = GetSystemResourcesResponses[keyof GetSystemResourcesResponses];
-
-export type GetUserSummaryData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/api/v1/summary/user';
-};
-
-export type GetUserSummaryResponses = {
-    /**
-     * Successful Response
-     */
-    200: UserSummary;
-};
-
-export type GetUserSummaryResponse = GetUserSummaryResponses[keyof GetUserSummaryResponses];
 
 export type GetStatusData = {
     body?: never;
