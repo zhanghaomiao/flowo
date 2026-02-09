@@ -5,47 +5,87 @@ services:
     container_name: flowo-postgres-dev
     env_file:
       - .env
-    environment:
-      POSTGRES_DB: ${POSTGRES_DB:-flowo_logs}
-      POSTGRES_USER: ${POSTGRES_USER:-flowo}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-flowo_password}
-      POSTGRES_HOST_AUTH_METHOD: trust
     ports:
       - "${POSTGRES_PORT:-5432}:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - postgres_data_dev:/var/lib/postgresql/data
     networks:
       - flowo-dev-network
-    restart: always
+    restart: unless-stopped
+
+  flowo-backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    container_name: flowo-backend-dev
+    userns_mode: "keep-id"
+    env_file:
+      - .env
+    environment:
+      POSTGRES_HOST: postgresql
+      POSTGRES_PORT: 5432
+    volumes:
+      - ${FLOWO_WORKING_PATH:-.}:${CONTAINER_MOUNT_PATH:-/work_dir}:ro
+      - ./app:/app/app # Mount local app directory for hot-reload
+      - ./pyproject.toml:/app/pyproject.toml
+      - ./alembic.ini:/app/alembic.ini
+    depends_on:
+      - postgresql
+    networks:
+      - flowo-dev-network
+    restart: unless-stopped
+    # Use uvicorn with --reload for development
+    command:
+      [
+        "uvicorn",
+        "app.main:app",
+        "--host",
+        "0.0.0.0",
+        "--port",
+        "8000",
+        "--reload",
+      ]
+
+  flowo-frontend:
+    image: node:22-alpine
+    container_name: flowo-frontend-dev
+    working_dir: /app
+    volumes:
+      - ./frontend:/app
+    environment:
+      VITE_API_BASE_PATH: http://localhost:3100
+    networks:
+      - flowo-dev-network
+    restart: unless-stopped
+    command: ["sh", "-c", "npm install && npm run dev -- --host 0.0.0.0"]
 
   # 2. Caddy (作为网关，指向宿主机)
   caddy:
     image: caddy:2-alpine
     container_name: caddy-dev
-    user: "0:0"
     env_file:
       - .env
     environment:
-      - FRONTEND_PORT=5173
-    ports:
-      - "${PORT:-3100}:80"
+      FRONTEND_PORT: 5173 # Vite dev server port
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile
       - ${FLOWO_WORKING_PATH:-.}:${CONTAINER_MOUNT_PATH:-/flowo-data}:ro
-      - caddy_data:/data
-      - caddy_config:/config
-    # 关键：让 Caddy 能通过这两个域名访问宿主机 IP
-    extra_hosts:
-      - "flowo-backend:host-gateway"
-      - "flowo-frontend:host-gateway"
+      - caddy_data_dev:/data
+      - caddy_config_dev:/config
+    ports:
+      - "${PORT:-3100}:80"
+    depends_on:
+      - flowo-backend
+      - flowo-frontend
     networks:
       - flowo-dev-network
-    restart: always
+    restart: unless-stopped
 
 volumes:
-  postgres_data:
-  caddy_data:
-  caddy_config:
+  postgres_data_dev:
+  caddy_data_dev:
+  caddy_config_dev:
 
 networks:
   flowo-dev-network:
+    driver: bridge

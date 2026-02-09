@@ -4,14 +4,6 @@ services:
     container_name: flowo-postgres
     env_file:
       - .env
-    environment:
-      POSTGRES_DB: ${POSTGRES_DB:-flowo_logs}
-      POSTGRES_USER: ${POSTGRES_USER:-flowo}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-flowo_password}
-      POSTGRES_HOST_AUTH_METHOD: trust
-      TZ: ${TZ:-Asia/Shanghai}
-    #ports:
-    #  - "${POSTGRES_PORT:-5432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
@@ -28,20 +20,14 @@ services:
     restart: unless-stopped
 
   flowo-backend:
-    build:
-      context: .
-      dockerfile: Dockerfile.backend
+    image: ghcr.io/zhanghaomiao/flowo/backend:latest
     container_name: flowo-backend
     userns_mode: "keep-id"
     env_file:
       - .env
     environment:
-      POSTGRES_DB: ${POSTGRES_DB:-flowo_logs}
-      POSTGRES_USER: ${POSTGRES_USER:-flowo}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-flowo_password}
       POSTGRES_HOST: postgresql
       POSTGRES_PORT: 5432
-      TZ: ${TZ:-Asia/Shanghai}
     volumes:
       - ${FLOWO_WORKING_PATH:-.}:${CONTAINER_MOUNT_PATH:-/work_dir}:ro
     depends_on:
@@ -67,12 +53,8 @@ services:
         exec uvicorn app.main:app --host 0.0.0.0 --port 8000
 
   flowo-frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
+    image: ghcr.io/zhanghaomiao/flowo/frontend:latest
     container_name: frontend
-    environment:
-      TZ: ${TZ:-Asia/Shanghai}
     networks:
       - flowo-network
     restart: unless-stopped
@@ -93,8 +75,6 @@ services:
   caddy:
     image: caddy:2-alpine
     container_name: caddy
-    environment:
-      TZ: ${TZ:-Asia/Shanghai}
     env_file:
       - .env
     volumes:
