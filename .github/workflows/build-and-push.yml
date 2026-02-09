@@ -1,107 +1,79 @@
-name: Conditional Docker Build and Push
+name: Build, Push to GHCR and Release
 
 on:
   push:
-    branches:
-      - release
-    paths:
-      - "backend/app/**"
-      - "frontend/src/**"
-      - ".github/workflows/**"
+    tags:
+      - "v*.*.*" # 只有推送 v1.0.0 这种 Tag 时才运行
 
 env:
-  BACKEND_IMAGE: flowo-backend
-  FRONTEND_IMAGE: flowo-frontend
-  IMAGE_TAG: ${{ github.sha }}
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
 
 jobs:
-  detect-changes:
+  build-and-push:
     runs-on: ubuntu-latest
-    outputs:
-      backend-changed: ${{ steps.changes.outputs.backend }}
-      frontend-changed: ${{ steps.changes.outputs.frontend }}
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      matrix:
+        include:
+          - component: backend
+            context: .
+            dockerfile: ./Dockerfile.backend
+          - component: frontend
+            context: ./frontend
+            dockerfile: ./frontend/Dockerfile
 
-      - name: Detect changes
-        id: changes
-        run: |
-          changed_files=$(git diff --name-only HEAD~1 HEAD)
-
-          echo "$changed_files"
-
-          backend_changed=false
-          frontend_changed=false
-
-          if echo "$changed_files" | grep -qE '^backend/app/'; then
-            backend_changed=true
-          fi
-
-          if echo "$changed_files" | grep -qE '^frontend/src/'; then
-            frontend_changed=true
-          fi
-
-          if echo "$changed_files" | grep -qE '^\.github/workflows/'; then
-            backend_changed=true
-            frontend_changed=true
-            echo "Workflow changes detected, triggering both builds"
-          fi
-
-          echo "backend=$backend_changed" >> $GITHUB_OUTPUT
-          echo "frontend=$frontend_changed" >> $GITHUB_OUTPUT
-
-  build-backend:
-    runs-on: ubuntu-latest
-    needs: detect-changes
-    if: needs.detect-changes.outputs.backend-changed == 'true'
     steps:
       - uses: actions/checkout@v4
 
-      - name: Login to DockerHub
+      - name: Log in to the Container registry
         uses: docker/login-action@v3
         with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-      - uses: docker/setup-buildx-action@v3
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/${{ matrix.component }}
+          tags: |
+            type=ref,event=tag
+            type=raw,value=latest,enable={{is_default_branch}}
 
-      - name: Build and push backend
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
-          context: ./backend
-          file: ./backend/Dockerfile
+          context: ${{ matrix.context }}
+          file: ${{ matrix.dockerfile }}
           push: true
-          tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.BACKEND_IMAGE }}:${{ env.IMAGE_TAG }}
-            ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.BACKEND_IMAGE }}:latest
-          platforms: linux/amd64
-
-  build-frontend:
-    runs-on: ubuntu-latest
-    needs: detect-changes
-    if: needs.detect-changes.outputs.frontend-changed == 'true'
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Login to DockerHub
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-
-      - uses: docker/setup-buildx-action@v3
-
-      - name: Build and push frontend
-        uses: docker/build-push-action@v5
-        with:
-          context: ./frontend
-          file: ./frontend/Dockerfile
-          push: true
-          tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.FRONTEND_IMAGE }}:${{ env.IMAGE_TAG }}
-            ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.FRONTEND_IMAGE }}:latest
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
           platforms: linux/amd64
           build-args: |
             VITE_API_BASE_PATH=http://localhost:3100
+
+  create-release:
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: Release ${{ github.ref_name }}
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -40,8 +40,8 @@ def upgrade() -> None:
         "workflows",
         sa.Column("id", sa.Uuid(), nullable=False),
         sa.Column("snakefile", sa.String(), nullable=True),
-        sa.Column("started_at", sa.DateTime(), nullable=False),
-        sa.Column("end_time", sa.DateTime(), nullable=True),
+        sa.Column("started_at", sa.DateTime(timezone=True), nullable=False),
+        sa.Column("end_time", sa.DateTime(timezone=True), nullable=True),
         sa.Column(
             "status",
             sa.Enum("RUNNING", "SUCCESS", "ERROR", "WAITING", "UNKNOWN", name="status"),
@@ -96,8 +96,8 @@ def upgrade() -> None:
             sa.Enum("RUNNING", "SUCCESS", "ERROR", "WAITING", "UNKNOWN", name="status"),
             nullable=False,
         ),
-        sa.Column("started_at", sa.DateTime(), nullable=False),
-        sa.Column("end_time", sa.DateTime(), nullable=True),
+        sa.Column("started_at", sa.DateTime(timezone=True), nullable=False),
+        sa.Column("end_time", sa.DateTime(timezone=True), nullable=True),
         sa.Column("group_id", sa.Integer(), nullable=True),
         sa.ForeignKeyConstraint(
             ["rule_id"],
@@ -114,7 +114,7 @@ def upgrade() -> None:
     op.create_table(
         "errors",
         sa.Column("id", sa.Integer(), nullable=False),
-        sa.Column("timestamp", sa.DateTime(), nullable=False),
+        sa.Column("timestamp", sa.DateTime(timezone=True), nullable=False),
         sa.Column("exception", sa.String(), nullable=False),
         sa.Column("location", sa.String(), nullable=True),
         sa.Column("traceback", sa.Text(), nullable=True),
@@ -158,8 +158,8 @@ def upgrade() -> None:
         sa.Column("name", sa.String(), nullable=False),
         sa.Column("token", sa.String(), nullable=False),
         sa.Column("user_id", sa.Uuid(), nullable=False),
-        sa.Column("created_at", sa.DateTime(), nullable=False),
-        sa.Column("expires_at", sa.DateTime(), nullable=True),
+        sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
+        sa.Column("expires_at", sa.DateTime(timezone=True), nullable=True),
         sa.ForeignKeyConstraint(["user_id"], ["user.id"]),
         sa.PrimaryKeyConstraint("id"),
     )

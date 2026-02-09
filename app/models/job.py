@@ -1,8 +1,8 @@
 import uuid
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from typing import TYPE_CHECKING, Any
 
-from sqlalchemy import Enum, ForeignKey
+from sqlalchemy import DateTime, Enum, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .base import Base
@@ -51,8 +51,10 @@ class Job(Base):
     threads: Mapped[int | None]
     priority: Mapped[int | None]
     status: Mapped[Status] = mapped_column(Enum(Status), default="WAITING")
-    started_at: Mapped[datetime] = mapped_column(default=datetime.now(UTC))
-    end_time: Mapped[datetime | None]
+    started_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
+    )
+    end_time: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     group_id: Mapped[int | None]
 
     workflow: Mapped["Workflow"] = relationship("Workflow")

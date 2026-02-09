@@ -104,7 +104,6 @@ function RootComponent() {
               }
             >
               <UserOutlined style={{ fontSize: '18px', marginRight: '8px' }} />
-              <span style={{ fontSize: '14px' }}>Profile</span>
             </Link>
           </div>
         </Header>
