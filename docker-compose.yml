@@ -10,8 +10,8 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-flowo_password}
       POSTGRES_HOST_AUTH_METHOD: trust
       TZ: ${TZ:-Asia/Shanghai}
-    ports:
-      - "${POSTGRES_PORT:-5432}:5432"
+        #ports:
+        #- "${POSTGRES_PORT:-5432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
@@ -40,8 +40,6 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-flowo}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-flowo_password}
       POSTGRES_HOST: postgresql
-      # Use internal port 5432 for container-to-container communication
-      # POSTGRES_PORT in .env is only for external port mapping
       POSTGRES_PORT: 5432
       TZ: ${TZ:-Asia/Shanghai}
     volumes:
@@ -61,7 +59,7 @@ services:
         uv run alembic upgrade head
         echo '✅ Database migrations completed!'
         echo 'Starting application...'
-        exec uv run uvicorn app.main:app --host 0.0.0.0 --port 8000
+        exec uvicorn app.main:app --host 0.0.0.0 --port 8000
 
   flowo-frontend:
     build:
