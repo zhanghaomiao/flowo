@@ -30,6 +30,7 @@ def upgrade() -> None:
         sa.Column("is_active", sa.Boolean(), nullable=False),
         sa.Column("is_superuser", sa.Boolean(), nullable=False),
         sa.Column("is_verified", sa.Boolean(), nullable=False),
+        sa.Column("name", sa.String(), nullable=True),
         sa.PrimaryKeyConstraint("id"),
     )
     op.create_index(op.f("ix_user_email"), "user", ["email"], unique=True)
@@ -170,7 +171,7 @@ def upgrade() -> None:
     RETURNS trigger AS $$
     DECLARE
         payload JSONB;
-        entity_id TEXT;  
+        entity_id TEXT;
         workflow_id TEXT;
         workflow_user_id UUID;
         current_record RECORD;
@@ -193,7 +194,7 @@ def upgrade() -> None:
         payload := jsonb_build_object(
             'table', TG_TABLE_NAME,
             'operation', TG_OP,
-            'id', entity_id, 
+            'id', entity_id,
             'workflow_id', workflow_id,
             'timestamp', EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)
         );
@@ -209,7 +210,7 @@ def upgrade() -> None:
             -- Fallback to global_events for unassigned workflows
             PERFORM pg_notify('global_events', payload::TEXT);
         END IF;
-        
+
         RETURN NULL;
     END;
     $$ LANGUAGE plpgsql;
