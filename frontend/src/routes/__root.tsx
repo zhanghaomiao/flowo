@@ -1,34 +1,37 @@
 import {
   DashboardOutlined,
   HomeOutlined,
-  QuestionCircleOutlined,
-} from "@ant-design/icons";
-import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
+  UserOutlined,
+} from '@ant-design/icons';
+import { type QueryClient } from '@tanstack/react-query';
+import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import {
-  createRootRoute,
   Link,
   Outlet,
+  createRootRouteWithContext,
   useLocation,
-} from "@tanstack/react-router";
-import { Layout, Menu } from "antd";
+} from '@tanstack/react-router';
+import { Layout, Menu } from 'antd';
+
+import { type AuthContextType } from '../auth';
+
+export interface MyRouterContext {
+  auth: AuthContextType;
+  queryClient: QueryClient;
+}
 
 const { Header, Content } = Layout;
 
 const menuItems = [
   {
-    key: "/",
+    key: '/',
     icon: <HomeOutlined />,
     label: <Link to="/">Workflows</Link>,
   },
   {
-    key: "/dashboard",
+    key: '/dashboard',
     icon: <DashboardOutlined />,
     label: <Link to="/dashboard">Dashboard</Link>,
-  },
-  {
-    key: "/about",
-    icon: <QuestionCircleOutlined />,
-    label: <Link to="/about">About</Link>,
   },
 ];
 
@@ -38,41 +41,75 @@ function RootComponent() {
   // Determine the selected menu key based on current pathname
   const getSelectedKey = () => {
     const pathname = location.pathname;
-    if (pathname === "/") return "/";
-    if (pathname.startsWith("/dashboard")) return "/dashboard";
-    if (pathname.startsWith("/about")) return "/about";
+    if (pathname === '/') return '/';
+    if (pathname.startsWith('/dashboard')) return '/dashboard';
+    if (pathname.startsWith('/profile')) return '/profile';
     // For workflow detail pages (/workflow/xxx), don't highlight any menu item
-    return "";
+    if (pathname.startsWith('/workflow')) return '/';
+    return '';
   };
 
+  const isPublicRoute =
+    location.pathname === '/login' || location.pathname === '/register';
+
   return (
-    <Layout style={{ minHeight: "100vh", width: "100%" }}>
-      <Header
-        style={{
-          display: "flex",
-          alignItems: "center",
-          padding: "0 12px",
-        }}
-      >
-        <div
+    <Layout style={{ minHeight: '100vh', width: '100%' }}>
+      {!isPublicRoute && (
+        <Header
           style={{
-            color: "white",
-            fontSize: "18px",
-            fontWeight: "bold",
-            marginRight: "24px",
+            display: 'flex',
+            alignItems: 'center',
+            padding: '0 12px',
           }}
         >
-          FlowO
-        </div>
-        <Menu
-          theme="dark"
-          mode="horizontal"
-          style={{ flex: 1, minWidth: 0 }}
-          items={menuItems}
-          selectedKeys={[getSelectedKey()]}
-        />
-      </Header>
-      <Content style={{ padding: "0px", minWidth: "80%", maxWidth: "100%" }}>
+          <div
+            style={{
+              color: 'white',
+              fontSize: '18px',
+              fontWeight: 'bold',
+              marginRight: '24px',
+            }}
+          >
+            FlowO
+          </div>
+          <Menu
+            theme="dark"
+            mode="horizontal"
+            style={{ flex: 1, minWidth: 0 }}
+            items={menuItems}
+            selectedKeys={[getSelectedKey()]}
+          />
+          <div
+            style={{
+              marginLeft: 'auto',
+              display: 'flex',
+              alignItems: 'center',
+            }}
+          >
+            <Link
+              to="/profile"
+              style={{
+                color: 'white',
+                display: 'flex',
+                alignItems: 'center',
+                padding: '4px 8px',
+                borderRadius: '8px',
+                transition: 'background 0.3s',
+              }}
+              onMouseEnter={(e) =>
+                (e.currentTarget.style.background = 'rgba(255,255,255,0.1)')
+              }
+              onMouseLeave={(e) =>
+                (e.currentTarget.style.background = 'transparent')
+              }
+            >
+              <UserOutlined style={{ fontSize: '18px', marginRight: '8px' }} />
+              <span style={{ fontSize: '14px' }}>Profile</span>
+            </Link>
+          </div>
+        </Header>
+      )}
+      <Content style={{ padding: '0px', minWidth: '80%', maxWidth: '100%' }}>
         <Outlet />
       </Content>
       <ReactQueryDevtools initialIsOpen={false} />
@@ -80,6 +117,6 @@ function RootComponent() {
   );
 }
 
-export const Route = createRootRoute({
+export const Route = createRootRouteWithContext<MyRouterContext>()({
   component: RootComponent,
 });

@@ -1,7 +1,7 @@
-import type { Edge, Node } from "@xyflow/react";
-import dagre from "dagre";
+import type { Edge, Node } from '@xyflow/react';
+import dagre from 'dagre';
 
-export type LayoutDirection = "TB" | "LR" | "BT" | "RL";
+export type LayoutDirection = 'TB' | 'LR' | 'BT' | 'RL';
 
 export interface LayoutOptions {
   direction: LayoutDirection;
@@ -13,7 +13,7 @@ export interface LayoutOptions {
 }
 
 export const defaultLayoutOptions: LayoutOptions = {
-  direction: "TB",
+  direction: 'TB',
   nodeWidth: 150,
   nodeHeight: 60,
   nodeSpacing: 50,
@@ -34,7 +34,7 @@ export const getLayoutedElements = (
   // Set graph properties
   dagreGraph.setGraph({
     rankdir: opts.direction,
-    align: "UL",
+    align: 'UL',
     nodesep: opts.nodeSpacing,
     ranksep: opts.rankSpacing,
     marginx: opts.margin,
@@ -76,15 +76,15 @@ export const getLayoutInfo = (
   direction: LayoutDirection,
 ): { name: string; icon: string } => {
   switch (direction) {
-    case "TB":
-      return { name: "Top-Down", icon: "↓" };
-    case "LR":
-      return { name: "Left-Right", icon: "→" };
-    case "BT":
-      return { name: "Bottom-Up", icon: "↑" };
-    case "RL":
-      return { name: "Right-Left", icon: "←" };
+    case 'TB':
+      return { name: 'Top-Down', icon: '↓' };
+    case 'LR':
+      return { name: 'Left-Right', icon: '→' };
+    case 'BT':
+      return { name: 'Bottom-Up', icon: '↑' };
+    case 'RL':
+      return { name: 'Right-Left', icon: '←' };
     default:
-      return { name: "Unknown", icon: "?" };
+      return { name: 'Unknown', icon: '?' };
   }
 };

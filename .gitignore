@@ -8,7 +8,7 @@ wheels/
 
 # Virtual environments
 .venv
-**/tests/** 
+# **/tests/** 
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -166,7 +166,7 @@ pgdata/
 postgres-data/
 
 # Docker
-.dockerignore
+# .dockerignore
 docker-compose.override.yml
 
 # Logs
@@ -259,3 +259,5 @@ temp/
 .prettierrc
 docker-compose.jm.yml
 .gitea/** 
+k8s/
+*.code-workspace

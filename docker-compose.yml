@@ -10,8 +10,8 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-flowo_password}
       POSTGRES_HOST_AUTH_METHOD: trust
       TZ: ${TZ:-Asia/Shanghai}
-    ports:
-      - "${POSTGRES_PORT:-5432}:5432"
+        #ports:
+        #- "${POSTGRES_PORT:-5432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
@@ -27,12 +27,12 @@ services:
       retries: 5
     restart: unless-stopped
 
-  # Alembic database migrations
-  alembic-migrations:
+  flowo-backend:
     build:
-      context: ./backend
-      dockerfile: Dockerfile
-    container_name: flowo-migrations
+      context: .
+      dockerfile: Dockerfile.backend
+    container_name: flowo-backend
+    userns_mode: "keep-id"
     env_file:
       - .env
     environment:
@@ -40,66 +40,36 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-flowo}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-flowo_password}
       POSTGRES_HOST: postgresql
-      POSTGRES_PORT: ${POSTGRES_PORT:-5432}
-      PYTHONPATH: /app
-      PYTHONUNBUFFERED: 1
+      POSTGRES_PORT: 5432
       TZ: ${TZ:-Asia/Shanghai}
+    volumes:
+      - ${FLOWO_WORKING_PATH:-.}:${CONTAINER_MOUNT_PATH:-/work_dir}:ro
     depends_on:
       postgresql:
         condition: service_healthy
     networks:
       - flowo-network
-    working_dir: /app
+    restart: unless-stopped
+    entrypoint: []
     command:
       - sh
       - -c
       - |
-        echo 'Checking if database has already been initialized...'
-        EXISTS=$$(psql postgresql://$$POSTGRES_USER:$$POSTGRES_PASSWORD@$$POSTGRES_HOST:$$POSTGRES_PORT/$$POSTGRES_DB -tAc "SELECT to_regclass('alembic_version')")
-        if [ "$$EXISTS" = "alembic_version" ]; then
-          echo '✅ Database already initialized. Skipping migration.'
+        echo '🚀 Starting backend setup...'
+        echo 'Running database migrations...'
+        if alembic upgrade head; then
+            echo '✅ Database migrations completed successfully!'
         else
-          echo '1. Running Alembic migrations to create tables...'
-          uv run alembic upgrade head
-          echo '✅ Tables created successfully!'
-          echo '2. Running init-db scripts to create triggers and functions...'
-          psql postgresql://$$POSTGRES_USER:$$POSTGRES_PASSWORD@$$POSTGRES_HOST:$$POSTGRES_PORT/$$POSTGRES_DB -f /app/scripts/01-triggers-functions.sql
-          echo '✅ Triggers and functions created successfully!'
-          echo '🎉 Database setup completed!'
+            echo '❌ Database migrations failed!'
+            exit 1
         fi
-    restart: "no"
-
-  flowo-backend:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
-    container_name: flowo-backend
-    env_file:
-      - .env
-    environment:
-      POSTGRES_DB: ${POSTGRES_DB:-flowo_logs}
-      POSTGRES_USER: ${POSTGRES_USER:-flowo}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-flowo_password}
-      POSTGRES_HOST: postgresql
-      POSTGRES_PORT: ${POSTGRES_PORT:-5432}
-      TZ: ${TZ:-Asia/Shanghai}
-    volumes:
-      - ${FLOWO_WORKING_PATH:-.}:/work_dir:ro
-    depends_on:
-      alembic-migrations:
-        condition: service_completed_successfully
-    networks:
-      - flowo-network
-    restart: unless-stopped
-    command: uv run uvicorn app.main:app --host 0.0.0.0 --port 80
+        echo 'Starting application...'
+        exec uvicorn app.main:app --host 0.0.0.0 --port 8000
 
   flowo-frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-      args:
-        VITE_API_BASE_PATH: ${VITE_API_BASE_PATH:-http://localhost:3100}
-        VITE_DISABLE_SSE: ${VITE_DISABLE_SSE:-false}
     container_name: frontend
     environment:
       TZ: ${TZ:-Asia/Shanghai}
@@ -129,11 +99,11 @@ services:
       - .env
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile
-      - ${FLOWO_WORKING_PATH:-.}:/work_dir:ro
+      - ${FLOWO_WORKING_PATH:-.}:${CONTAINER_MOUNT_PATH:-/flowo-data}:ro
       - caddy_data:/data
       - caddy_config:/config
     ports:
-      - "${CADDY_PORT:-80}:80"
+      - "${PORT:-3100}:80"
     depends_on:
       - flowo-backend
       - flowo-frontend
@@ -143,11 +113,8 @@ services:
 
 volumes:
   postgres_data:
-    driver: local
   caddy_data:
-    driver: local
   caddy_config:
-    driver: local
 
 networks:
   flowo-network:

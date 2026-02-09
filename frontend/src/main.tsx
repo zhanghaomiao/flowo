@@ -1,15 +1,13 @@
-import "./index.css";
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { RouterProvider, createRouter } from '@tanstack/react-router';
+import { ConfigProvider } from 'antd';
+import { StrictMode } from 'react';
+import { createRoot } from 'react-dom/client';
 
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { createRouter, RouterProvider } from "@tanstack/react-router";
-import { ConfigProvider } from "antd";
-import { StrictMode } from "react";
-import { createRoot } from "react-dom/client";
+import './index.css';
+import { routeTree } from './routeTree.gen';
+import { AuthProvider, useAuth, type AuthContextType } from './auth';
 
-import { routeTree } from "./routeTree.gen";
-// SSEProvider removed - now using direct SSE hooks
-
-// Create a client
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -26,37 +24,45 @@ const router = createRouter({
   routeTree,
   context: {
     queryClient,
+    auth: undefined!, // This will be set by the Provider
   },
-  defaultPreload: "intent",
+  defaultPreload: 'intent',
 });
 
 // Register the router instance for type safety
-declare module "@tanstack/react-router" {
+declare module '@tanstack/react-router' {
   interface Register {
     router: typeof router;
   }
 }
 
-createRoot(document.getElementById("root")!).render(
+function App() {
+  const auth = useAuth();
+  return <RouterProvider router={router} context={{ auth }} />;
+}
+
+createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
-      <ConfigProvider
-        theme={{
-          components: {
-            Tree: {
-              indentSize: 12,
+      <AuthProvider>
+        <ConfigProvider
+          theme={{
+            components: {
+              Tree: {
+                indentSize: 12,
+              },
+              Layout: {
+                headerHeight: 45,
+              },
+              Card: {
+                bodyPadding: 4,
+              },
             },
-            Layout: {
-              headerHeight: 45,
-            },
-            Card: {
-              bodyPadding: 4,
-            },
-          },
-        }}
-      >
-        <RouterProvider router={router} />
-      </ConfigProvider>
+          }}
+        >
+          <App />
+        </ConfigProvider>
+      </AuthProvider>
     </QueryClientProvider>
   </StrictMode>,
 );

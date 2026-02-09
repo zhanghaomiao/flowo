@@ -1,0 +1,84 @@
+[build-system]
+build-backend = "hatchling.build"
+requires = ["hatchling"]
+
+[tool.hatch.build.targets.wheel]
+exclude = [
+  "app/api",
+  "app/services",
+  "app/main.py",
+  "app/core/pg_listener.py",
+  "app/alembic",
+  "app/utils",
+]
+packages = ["app"]
+
+[tool.hatch.build.targets.wheel.sources]
+"app" = "snakemake_logger_plugin_flowo"
+
+[project]
+authors = [
+  {name = "Haomiao Zhang", email = "zhanghm@iregene.com"},
+  {name = "Jingmin Zhang", email = "zhangjm@iregene.com"},
+]
+description = "A unified PostgreSQL-based logging plugin and backend for Snakemake"
+license = {text = "MIT"}
+name = "snakemake-logger-plugin-flowo"
+readme = "README.md"
+requires-python = ">=3.12"
+version = "0.1.12"
+
+dependencies = [
+  "pydantic>=2.11.5",
+  "pydantic-settings>=2.9.1",
+  "snakemake",
+  "snakemake-interface-logger-plugins",
+  "httpx>=0.28.1",
+  "sqlalchemy>=2.0.41",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=7.0.0",
+  "pytest-asyncio>=0.21.0",
+  "black>=23.0.0",
+  "ruff>=0.1.0",
+  "mypy>=1.0.0",
+]
+server = [
+  "psycopg2-binary>=2.9.9",
+  "asyncpg>=0.30.0",
+  "alembic>=1.16.1",
+  "fastapi[standard]>=0.115.12",
+  "anytree>=2.13.0",
+  "psutil>=7.0.0",
+  "sse-starlette>=3.1.2",
+  "fastapi-users[sqlalchemy]>=15.0.3",
+  "passlib[bcrypt]>=1.7.4",
+]
+
+# [project.scripts]
+# flowo = "app.plugin.__main__:main"
+
+# [project.entry-points."snakemake.log_handlers"]
+# flowo = "app.plugin.LogHandler"
+
+[project.scripts]
+flowo = "snakemake_logger_plugin_flowo.plugin.client.cli:main"
+
+[project.entry-points."snakemake.log_handlers"]
+flowo = "snakemake_logger_plugin_flowo.plugin.LogHandler"
+
+[tool.ruff]
+exclude = ["app/alembic/"]
+ignore = ["E501", "B008"]
+line-length = 88
+select = ["E", "W", "F", "I", "B", "C4", "UP"]
+target-version = "py312"
+
+[tool.ruff.per-file-ignores]
+"__init__.py" = ["F401"]
+
+[[tool.uv.index]]
+default = true
+url = "https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple"

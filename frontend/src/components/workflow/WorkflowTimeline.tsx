@@ -1,10 +1,9 @@
-import { Alert, Card, Spin } from "antd";
-import React, { useMemo } from "react";
-import { useEffect, useRef } from "react";
-import { Chart } from "react-google-charts";
-
-import type { JobResponse } from "../../api/api";
-import { useWorkflowTimeline } from "../../hooks/useQueries";
+import { getTimelinesOptions } from '@/client/@tanstack/react-query.gen';
+import { useQuery } from '@tanstack/react-query';
+import { Alert, Card, Spin } from 'antd';
+import React, { useMemo } from 'react';
+import { useEffect, useRef } from 'react';
+import { Chart } from 'react-google-charts';
 
 interface ChartWrapper {
   draw: () => void;
@@ -16,64 +15,64 @@ interface ChartWrapper {
 // Default Google Charts Gantt palette
 const DEFAULT_GANTT_PALETTE = [
   {
-    color: "#5e97f6",
-    dark: "#2a56c6",
-    light: "#c6dafc",
+    color: '#5e97f6',
+    dark: '#2a56c6',
+    light: '#c6dafc',
   },
   {
-    color: "#db4437",
-    dark: "#a52714",
-    light: "#f4c7c3",
+    color: '#db4437',
+    dark: '#a52714',
+    light: '#f4c7c3',
   },
   {
-    color: "#f2a600",
-    dark: "#ee8100",
-    light: "#fce8b2",
+    color: '#f2a600',
+    dark: '#ee8100',
+    light: '#fce8b2',
   },
   {
-    color: "#0f9d58",
-    dark: "#0b8043",
-    light: "#b7e1cd",
+    color: '#0f9d58',
+    dark: '#0b8043',
+    light: '#b7e1cd',
   },
   {
-    color: "#ab47bc",
-    dark: "#6a1b9a",
-    light: "#e1bee7",
+    color: '#ab47bc',
+    dark: '#6a1b9a',
+    light: '#e1bee7',
   },
   {
-    color: "#00acc1",
-    dark: "#00838f",
-    light: "#b2ebf2",
+    color: '#00acc1',
+    dark: '#00838f',
+    light: '#b2ebf2',
   },
   {
-    color: "#ff7043",
-    dark: "#e64a19",
-    light: "#ffccbc",
+    color: '#ff7043',
+    dark: '#e64a19',
+    light: '#ffccbc',
   },
   {
-    color: "#9e9d24",
-    dark: "#827717",
-    light: "#f0f4c3",
+    color: '#9e9d24',
+    dark: '#827717',
+    light: '#f0f4c3',
   },
   {
-    color: "#5c6bc0",
-    dark: "#3949ab",
-    light: "#c5cae9",
+    color: '#5c6bc0',
+    dark: '#3949ab',
+    light: '#c5cae9',
   },
   {
-    color: "#f06292",
-    dark: "#e91e63",
-    light: "#f8bbd0",
+    color: '#f06292',
+    dark: '#e91e63',
+    light: '#f8bbd0',
   },
   {
-    color: "#00796b",
-    dark: "#004d40",
-    light: "#b2dfdb",
+    color: '#00796b',
+    dark: '#004d40',
+    light: '#b2dfdb',
   },
   {
-    color: "#c2185b",
-    dark: "#880e4f",
-    light: "#f48fb1",
+    color: '#c2185b',
+    dark: '#880e4f',
+    light: '#f48fb1',
   },
 ];
 
@@ -127,7 +126,13 @@ const WorkflowTimeline: React.FC<WorkflowTimelineProps> = ({
     data: timelineData,
     isLoading,
     error,
-  } = useWorkflowTimeline(workflowId);
+  } = useQuery({
+    ...getTimelinesOptions({
+      path: {
+        workflow_id: workflowId,
+      },
+    }),
+  });
 
   // Create consistent palette index mapping based on all available rules
   const paletteMapping = useMemo(() => {
@@ -141,14 +146,14 @@ const WorkflowTimeline: React.FC<WorkflowTimelineProps> = ({
     if (!timelineData) {
       return [
         [
-          "Task ID",
-          "Task Name",
-          "Resource",
-          "Start Date",
-          "End Date",
-          "Duration",
-          "Percent Complete",
-          "Dependencies",
+          'Task ID',
+          'Task Name',
+          'Resource',
+          'Start Date',
+          'End Date',
+          'Duration',
+          'Percent Complete',
+          'Dependencies',
         ],
       ];
     }
@@ -157,14 +162,14 @@ const WorkflowTimeline: React.FC<WorkflowTimelineProps> = ({
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const data: Array<Array<any>> = [
       [
-        { type: "string", label: "Task ID" },
-        { type: "string", label: "Task Name" },
-        { type: "string", label: "Resource" },
-        { type: "date", label: "Start Date" },
-        { type: "date", label: "End Date" },
-        { type: "number", label: "Duration" },
-        { type: "number", label: "Percent Complete" },
-        { type: "string", label: "Dependencies" },
+        { type: 'string', label: 'Task ID' },
+        { type: 'string', label: 'Task Name' },
+        { type: 'string', label: 'Resource' },
+        { type: 'date', label: 'Start Date' },
+        { type: 'date', label: 'End Date' },
+        { type: 'number', label: 'Duration' },
+        { type: 'number', label: 'Percent Complete' },
+        { type: 'string', label: 'Dependencies' },
       ],
     ];
 
@@ -178,7 +183,7 @@ const WorkflowTimeline: React.FC<WorkflowTimelineProps> = ({
       }
 
       // Add individual job tasks
-      jobDatas.forEach((jobData: JobResponse, jobIndex: number) => {
+      jobDatas.forEach((jobData: any, jobIndex: number) => {
         const [jobId, startTime, endTime, status] = jobData as [
           string,
           Date,
@@ -187,9 +192,9 @@ const WorkflowTimeline: React.FC<WorkflowTimelineProps> = ({
         ];
 
         let progress = 0;
-        if (status.toLowerCase() === "success") progress = 100;
-        else if (status.toLowerCase() === "running") progress = 50;
-        else if (status.toLowerCase() === "failed") progress = 0;
+        if (status.toLowerCase() === 'success') progress = 100;
+        else if (status.toLowerCase() === 'running') progress = 50;
+        else if (status.toLowerCase() === 'failed') progress = 0;
 
         const startDate = new Date(startTime);
         const endDate = new Date(endTime);
@@ -241,10 +246,10 @@ const WorkflowTimeline: React.FC<WorkflowTimelineProps> = ({
             endDate instanceof Date ? endDate.toISOString() : String(endDate);
 
           // Determine status from progress
-          let status = "unknown";
-          if (progress === 100) status = "success";
-          else if (progress === 50) status = "running";
-          else if (progress === 0) status = "failed";
+          let status = 'unknown';
+          if (progress === 100) status = 'success';
+          else if (progress === 50) status = 'running';
+          else if (progress === 0) status = 'failed';
 
           if (onJobSelect) {
             onJobSelect({
@@ -263,7 +268,7 @@ const WorkflowTimeline: React.FC<WorkflowTimelineProps> = ({
         }
       }
     } catch (error) {
-      console.error("Error handling chart selection:", error);
+      console.error('Error handling chart selection:', error);
     }
   };
 
@@ -294,7 +299,7 @@ const WorkflowTimeline: React.FC<WorkflowTimelineProps> = ({
         percentEnabled: true,
         shadowEnabled: true,
         labelStyle: {
-          fontName: "Arial",
+          fontName: 'Arial',
           fontSize: 12,
         },
         barCornerRadius: 4,
@@ -307,13 +312,13 @@ const WorkflowTimeline: React.FC<WorkflowTimelineProps> = ({
 
   if (isLoading) {
     return (
-      <Card style={{ height: "100%" }}>
+      <Card style={{ height: '100%' }}>
         <div
           style={{
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            height: "200px",
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            height: '200px',
           }}
         >
           <Spin size="large" />
@@ -324,10 +329,10 @@ const WorkflowTimeline: React.FC<WorkflowTimelineProps> = ({
 
   if (error) {
     return (
-      <Card style={{ height: "100%" }}>
+      <Card style={{ height: '100%' }}>
         <Alert
           message="Error Loading Timeline"
-          description={error instanceof Error ? error.message : "Unknown error"}
+          description={error instanceof Error ? error.message : 'Unknown error'}
           type="error"
           showIcon
         />
@@ -337,8 +342,8 @@ const WorkflowTimeline: React.FC<WorkflowTimelineProps> = ({
 
   if (!ganttData || ganttData.length <= 1) {
     return (
-      <Card style={{ height: "100%" }}>
-        <div style={{ textAlign: "center", padding: "50px" }}>
+      <Card style={{ height: '100%' }}>
+        <div style={{ textAlign: 'center', padding: '50px' }}>
           No timeline data available
         </div>
       </Card>
@@ -348,7 +353,7 @@ const WorkflowTimeline: React.FC<WorkflowTimelineProps> = ({
   return (
     <div
       ref={containerRef}
-      style={{ height: "100%", width: "100%", overflow: "auto" }}
+      style={{ height: '100%', width: '100%', overflow: 'auto' }}
     >
       <Chart
         chartType="Gantt"
@@ -360,7 +365,7 @@ const WorkflowTimeline: React.FC<WorkflowTimelineProps> = ({
         }}
         chartEvents={[
           {
-            eventName: "select",
+            eventName: 'select',
             callback: handleChartSelect,
           },
         ]}
