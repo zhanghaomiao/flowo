@@ -102,10 +102,12 @@ Open [http://localhost:3100](http://localhost:3100) in your browser. Create your
 
 ![token](assets/images/token.png)
 Next, create a token, which is required to configure the snakemake-logger-plugin-flowo. Click the user icon in the top-right corner, select Generate New Token, then provide a name and set an expiration time. Once confirmed, the token will be generated successfully.
+
 ![cli](assets/images/cli.png)
 After that, click Config to access a CLI snippet. Copy and run this command in the terminal where snakemake-logger-plugin-flowo is installed. Once it finishes executing, the setup will be complete.
 
 ---
+
 ## 🚀 Usage
 
 All set!
