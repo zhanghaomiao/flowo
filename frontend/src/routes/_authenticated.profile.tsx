@@ -2,17 +2,11 @@ import {
   createTokenMutation,
   deleteTokenMutation,
   listTokensOptions,
-  usersCurrentUserOptions,
   listTokensQueryKey,
+  usersCurrentUserOptions,
 } from '@/client/@tanstack/react-query.gen';
 import { UserTokenResponse } from '@/client/types.gen';
-import {
-  DeleteOutlined,
-  KeyOutlined,
-  LogoutOutlined,
-  PlusOutlined,
-  UserOutlined,
-} from '@ant-design/icons';
+import { DeleteOutlined, KeyOutlined, PlusOutlined } from '@ant-design/icons';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { createFileRoute } from '@tanstack/react-router';
 import {
@@ -121,8 +115,8 @@ function ProfileComponent() {
       setGeneratedToken(result.token);
       queryClient.invalidateQueries({
         queryKey: listTokensQueryKey({
-          headers: { Authorization: `Bearer ${token}` }
-        })
+          headers: { Authorization: `Bearer ${token}` },
+        }),
       });
       setNewTokenName('');
       setNewTokenTTL(undefined);
@@ -142,8 +136,8 @@ function ProfileComponent() {
       message.success('Token deleted');
       queryClient.invalidateQueries({
         queryKey: listTokensQueryKey({
-          headers: { Authorization: `Bearer ${token}` }
-        })
+          headers: { Authorization: `Bearer ${token}` },
+        }),
       });
     } catch (err) {
       message.error('Failed to delete token');
@@ -184,44 +178,6 @@ FLOWO_WORKING_PATH=${clientConfig.FLOWO_WORKING_PATH}`;
       }}
     >
       <Row gutter={[16, 16]}>
-        <Col span={24}>
-          <Card
-            title={
-              <Space>
-                <UserOutlined />
-                User Profile
-              </Space>
-            }
-            extra={
-              // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-              // @ts-ignore
-              <Button
-                type="primary"
-                danger
-                ghost
-                icon={<LogoutOutlined />}
-                onClick={logout}
-              >
-                Logout
-              </Button>
-            }
-          >
-            <Descriptions column={1} bordered>
-              <Descriptions.Item label="Email">{user?.email}</Descriptions.Item>
-              <Descriptions.Item label="ID">
-                <Paragraph copyable style={{ marginBottom: 0 }}>
-                  {user?.id}
-                </Paragraph>
-              </Descriptions.Item>
-              <Descriptions.Item label="Status">
-                <Tag color={user?.is_active ? 'green' : 'red'}>
-                  {user?.is_active ? 'Active' : 'Inactive'}
-                </Tag>
-              </Descriptions.Item>
-            </Descriptions>
-          </Card>
-        </Col>
-
         <Col span={24}>
           <Card
             title={
@@ -280,14 +236,13 @@ FLOWO_WORKING_PATH=${clientConfig.FLOWO_WORKING_PATH}`;
                       <Button
                         size="small"
                         type="link"
-                        icon={<KeyOutlined />}
                         onClick={() => {
                           setTargetToken((record as any).token || '');
                           setTargetTokenName(record.name);
                           setConfigModalVisible(true);
                         }}
                       >
-                        Config
+                        Show
                       </Button>
                       <Popconfirm
                         title="Delete this token?"
@@ -458,7 +413,6 @@ FLOWO_WORKING_PATH=${clientConfig.FLOWO_WORKING_PATH}`;
           <div style={{ margin: '16px 0' }}>
             <Alert
               message="Token Generated Successfully"
-              description="This token will only be shown once. Please save your configuration now."
               type="success"
               showIcon
               style={{ marginBottom: 24 }}

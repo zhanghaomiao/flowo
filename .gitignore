@@ -3,12 +3,13 @@ __pycache__/
 *.py[oc]
 build/
 dist/
+site/
 wheels/
 *.egg-info
 
 # Virtual environments
 .venv
-# **/tests/** 
+# **/tests/**
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -254,10 +255,10 @@ docs/build/
 # Temporary development files
 scratch/
 tmp/
-temp/ 
+temp/
 
 .prettierrc
 docker-compose.jm.yml
-.gitea/** 
+.gitea/**
 k8s/
 *.code-workspace

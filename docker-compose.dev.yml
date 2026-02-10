@@ -1,12 +1,9 @@
 services:
-  # 1. 数据库 (直接复制需要的配置，保持简单)
   postgresql:
     image: postgres:15-alpine
     container_name: flowo-postgres-dev
     env_file:
       - .env
-    ports:
-      - "${POSTGRES_PORT:-5432}:5432"
     volumes:
       - postgres_data_dev:/var/lib/postgresql/data
     networks:
@@ -36,15 +33,15 @@ services:
     restart: unless-stopped
     # Use uvicorn with --reload for development
     command:
-      [
-        "uvicorn",
-        "app.main:app",
-        "--host",
-        "0.0.0.0",
-        "--port",
-        "8000",
-        "--reload",
-      ]
+      - sh
+      - -c
+      - |
+        echo '🚀 Starting backend setup...'
+        echo 'Running database migrations...'
+        alembic upgrade head
+        echo '✅ Database migrations completed!'
+        echo 'Starting application with reload...'
+        exec uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 
   flowo-frontend:
     image: node:22-alpine

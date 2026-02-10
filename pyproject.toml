@@ -44,6 +44,9 @@ dev = [
   "black>=23.0.0",
   "ruff>=0.1.0",
   "mypy>=1.0.0",
+  "mkdocs>=1.6.0",
+  "mkdocs-material>=9.5.0",
+  "mkdocstrings[python]>=0.25.0",
 ]
 server = [
   "psycopg2-binary>=2.9.9",

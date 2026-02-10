@@ -1,6 +1,8 @@
 import {
   DashboardOutlined,
   HomeOutlined,
+  LogoutOutlined,
+  SettingOutlined,
   UserOutlined,
 } from '@ant-design/icons';
 import { type QueryClient } from '@tanstack/react-query';
@@ -10,10 +12,11 @@ import {
   Outlet,
   createRootRouteWithContext,
   useLocation,
+  useNavigate,
 } from '@tanstack/react-router';
-import { Layout, Menu } from 'antd';
+import { Avatar, Dropdown, Layout, Menu, Space } from 'antd';
 
-import { type AuthContextType } from '../auth';
+import { type AuthContextType, useAuth } from '../auth';
 
 export interface MyRouterContext {
   auth: AuthContextType;
@@ -36,6 +39,8 @@ const menuItems = [
 ];
 
 function RootComponent() {
+  const { logout } = useAuth();
+  const navigate = useNavigate();
   const location = useLocation();
 
   // Determine the selected menu key based on current pathname
@@ -86,31 +91,67 @@ function RootComponent() {
               alignItems: 'center',
             }}
           >
-            <Link
-              to="/profile"
-              style={{
-                color: 'white',
-                display: 'flex',
-                alignItems: 'center',
-                padding: '4px 8px',
-                borderRadius: '8px',
-                transition: 'background 0.3s',
+            <Dropdown
+              menu={{
+                items: [
+                  {
+                    key: 'settings',
+                    icon: <SettingOutlined />,
+                    label: 'Settings',
+                    onClick: () => navigate({ to: '/profile' }),
+                  },
+                  {
+                    type: 'divider',
+                  },
+                  {
+                    key: 'logout',
+                    icon: <LogoutOutlined />,
+                    danger: true,
+                    label: 'Logout',
+                    onClick: logout,
+                  },
+                ],
               }}
-              onMouseEnter={(e) =>
-                (e.currentTarget.style.background = 'rgba(255,255,255,0.1)')
-              }
-              onMouseLeave={(e) =>
-                (e.currentTarget.style.background = 'transparent')
-              }
+              placement="bottomRight"
+              arrow
             >
-              <UserOutlined style={{ fontSize: '18px', marginRight: '8px' }} />
-            </Link>
+              <div
+                style={{
+                  color: 'white',
+                  display: 'flex',
+                  alignItems: 'center',
+                  padding: '4px 8px',
+                  borderRadius: '8px',
+                  transition: 'background 0.3s',
+                  cursor: 'pointer',
+                }}
+                onMouseEnter={(e) =>
+                  (e.currentTarget.style.background = 'rgba(255,255,255,0.1)')
+                }
+                onMouseLeave={(e) =>
+                  (e.currentTarget.style.background = 'transparent')
+                }
+              >
+                <Space>
+                  <Avatar icon={<UserOutlined />} size="small" />
+                </Space>
+              </div>
+            </Dropdown>
           </div>
         </Header>
       )}
       <Content style={{ padding: '0px', minWidth: '80%', maxWidth: '100%' }}>
         <Outlet />
       </Content>
+      <Layout.Footer
+        style={{
+          textAlign: 'center',
+          padding: '12px 0',
+          color: 'gray',
+        }}
+      >
+        FlowO v{__APP_VERSION__} ©{new Date().getFullYear()} Created by Iregene
+      </Layout.Footer>
       <ReactQueryDevtools initialIsOpen={false} />
     </Layout>
   );

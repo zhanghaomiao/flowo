@@ -32,16 +32,16 @@ Unleash the power of automation and monitoring with a fresh, interactive experie
 
 ### 🛠️ Workflows
 
-![Workflow](assets/images/workflow.png)
+![Workflow](docs/assets/images/workflow.png)
 
 ### 📊 Dashboard
 
-![Dashboard](assets/images/dashboard.png)
+![Dashboard](docs/assets/images/dashboard.png)
 
 ### 🕹️ Jobs
 
-| ![DAG](assets/images/dag.png) | ![Jobs](assets/images/jobs.png) |
-| ----------------------------- | ------------------------------- |
+| ![DAG](docs/assets/images/dag.png) | ![Jobs](docs/assets/images/jobs.png) |
+| ---------------------------------- | ------------------------------------ |
 
 ---
 

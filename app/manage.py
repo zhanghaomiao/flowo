@@ -1,10 +1,10 @@
-import asyncio
 import argparse
-import sys
+import asyncio
+
 from app.core.session import get_async_session
-from app.core.users import get_user_db, UserManager
+from app.core.users import UserManager, get_user_db
 from app.schemas.user import UserUpdate
-from sqlalchemy.ext.asyncio import AsyncSession
+
 
 async def reset_password(email: str, new_password: str):
     async for session in get_async_session():
@@ -22,12 +22,15 @@ async def reset_password(email: str, new_password: str):
             print(f"Successfully updated password for {email}")
             return
 
+
 def main():
     parser = argparse.ArgumentParser(description="FlowO Management CLI")
     subparsers = parser.add_subparsers(dest="command")
 
     # Reset Password command
-    reset_parser = subparsers.add_parser("reset-password", help="Reset a user's password")
+    reset_parser = subparsers.add_parser(
+        "reset-password", help="Reset a user's password"
+    )
     reset_parser.add_argument("email", help="User's email address")
     reset_parser.add_argument("password", help="New password")
 
@@ -37,6 +40,7 @@ def main():
         asyncio.run(reset_password(args.email, args.password))
     else:
         parser.print_help()
+
 
 if __name__ == "__main__":
     main()

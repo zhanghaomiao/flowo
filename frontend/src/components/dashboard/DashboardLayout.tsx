@@ -247,7 +247,6 @@ export const DashboardLayout: React.FC = () => {
           </Card>
         </Col>
 
-
         <Col span={4}>
           <Card style={{ height: '100%' }}>
             {systemResourcesError ? (
