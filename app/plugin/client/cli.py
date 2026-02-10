@@ -44,13 +44,13 @@ def main():
         "--host",
         type=str,
         default=None,
-        help="Optional API host to include in the generated config (not implemented yet)",
+        help="Optional API host to include in the generated config",
     )
     parser.add_argument(
         "--working-path",
         type=str,
         default=None,
-        help="Optional working path to include in the generated config (not implemented yet)",
+        help="Optional working path to include in the generated config",
     )
 
     args = parser.parse_args()

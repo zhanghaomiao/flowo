@@ -6,7 +6,13 @@ import {
   usersCurrentUserOptions,
 } from '@/client/@tanstack/react-query.gen';
 import { UserTokenResponse } from '@/client/types.gen';
-import { DeleteOutlined, KeyOutlined, PlusOutlined } from '@ant-design/icons';
+import {
+  CheckOutlined,
+  CopyOutlined,
+  DeleteOutlined,
+  KeyOutlined,
+  PlusOutlined,
+} from '@ant-design/icons';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { createFileRoute } from '@tanstack/react-router';
 import {
@@ -25,6 +31,7 @@ import {
   Table,
   Tabs,
   Tag,
+  Tooltip,
   Typography,
   message,
 } from 'antd';
@@ -34,6 +41,53 @@ import { useState } from 'react';
 import { useAuth } from '../auth';
 
 const { Text, Paragraph } = Typography;
+
+const CodeBlock = ({ text }: { text: string }) => {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(text);
+    setCopied(true);
+    message.success('Copied to clipboard');
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <div style={{ position: 'relative' }}>
+      <pre
+        style={{
+          margin: 0,
+          padding: '12px',
+          paddingRight: '40px',
+          background: '#f5f5f5',
+          borderRadius: 8,
+          fontSize: 12,
+          overflow: 'auto',
+          maxHeight: 250,
+          border: '1px solid #d9d9d9',
+          whiteSpace: 'pre-wrap',
+          wordBreak: 'break-all',
+        }}
+      >
+        {text}
+      </pre>
+      <Tooltip title={copied ? 'Copied!' : 'Copy'}>
+        <Button
+          type="text"
+          size="small"
+          icon={copied ? <CheckOutlined /> : <CopyOutlined />}
+          onClick={handleCopy}
+          style={{
+            position: 'absolute',
+            top: 8,
+            right: 8,
+            color: copied ? '#52c41a' : 'rgba(0, 0, 0, 0.45)',
+          }}
+        />
+      </Tooltip>
+    </div>
+  );
+};
 
 export const Route = createFileRoute('/_authenticated/profile')({
   component: ProfileComponent,
@@ -51,7 +105,7 @@ function ProfileComponent() {
   const [targetToken, setTargetToken] = useState<string | null>(null);
   const [targetTokenName, setTargetTokenName] = useState<string>('');
 
-  const { data: user, isLoading } = useQuery({
+  const { data: user } = useQuery({
     ...usersCurrentUserOptions({
       headers: {
         Authorization: `Bearer ${token}`,
@@ -160,12 +214,43 @@ FLOWO_WORKING_PATH=${clientConfig.FLOWO_WORKING_PATH}`;
   };
 
   const getGenerateCommand = (t: string) => {
-    return `flowo --generate-config --token ${t || '<YOUR_TOKEN>'}`;
+    const host = window.location.origin;
+    const workingPath =
+      clientConfig?.FLOWO_WORKING_PATH || '<YOUR_WORKING_PATH>';
+    return `flowo --generate-config --token ${t || '<YOUR_TOKEN>'} --host ${host} --working-path ${workingPath}`;
   };
 
-  if (isLoading) {
-    return <div style={{ padding: 24 }}>Loading...</div>;
-  }
+  const renderConfigTabs = (t: string) => (
+    <Tabs
+      defaultActiveKey="cli"
+      items={[
+        {
+          key: 'cli',
+          label: 'Auto-Generate (CLI)',
+          children: (
+            <Descriptions layout="vertical" bordered size="small">
+              <Descriptions.Item label="Run this command in your terminal">
+                <CodeBlock text={getGenerateCommand(t)} />
+              </Descriptions.Item>
+            </Descriptions>
+          ),
+        },
+        {
+          key: 'manual',
+          label: 'Manual Configuration',
+          children: (
+            <>
+              <Descriptions layout="vertical" bordered size="small">
+                <Descriptions.Item label="File Content (~/.config/flowo/.env)">
+                  <CodeBlock text={getConfigFileContent(t || '<YOUR_TOKEN>')} />
+                </Descriptions.Item>
+              </Descriptions>
+            </>
+          ),
+        },
+      ]}
+    />
+  );
 
   return (
     <div
@@ -285,86 +370,19 @@ FLOWO_WORKING_PATH=${clientConfig.FLOWO_WORKING_PATH}`;
             showIcon
             style={{ marginBottom: 16 }}
           />
-
-          <Tabs
-            defaultActiveKey="cli"
-            items={[
-              {
-                key: 'cli',
-                label: 'Auto-Generate (CLI)',
-                children: (
-                  <Descriptions layout="vertical" bordered size="small">
-                    <Descriptions.Item label="Run this command in your terminal">
-                      <Paragraph
-                        copyable={{
-                          text: getGenerateCommand(targetToken || ''),
-                        }}
-                        style={{ marginBottom: 0 }}
-                      >
-                        <pre
-                          style={{
-                            margin: 0,
-                            padding: 8,
-                            background: '#f5f5f5',
-                            borderRadius: 4,
-                            fontSize: 12,
-                            overflow: 'auto',
-                          }}
-                        >
-                          {getGenerateCommand(targetToken || '')}
-                        </pre>
-                      </Paragraph>
-                    </Descriptions.Item>
-                  </Descriptions>
-                ),
-              },
-              {
-                key: 'manual',
-                label: 'Manual Configuration',
-                children: (
-                  <>
-                    <Descriptions layout="vertical" bordered size="small">
-                      <Descriptions.Item label="File Content (~/.config/flowo/.env)">
-                        <Paragraph
-                          copyable={{
-                            text: getConfigFileContent(
-                              targetToken || '<YOUR_TOKEN>',
-                            ),
-                          }}
-                          style={{ marginBottom: 0 }}
-                        >
-                          <pre
-                            style={{
-                              margin: 0,
-                              padding: 8,
-                              background: '#f5f5f5',
-                              borderRadius: 4,
-                              fontSize: 12,
-                              maxHeight: 250,
-                              overflow: 'auto',
-                            }}
-                          >
-                            {getConfigFileContent(
-                              targetToken || '<YOUR_TOKEN>',
-                            )}
-                          </pre>
-                        </Paragraph>
-                      </Descriptions.Item>
-                    </Descriptions>
-                  </>
-                ),
-              },
-            ]}
-          />
+          {renderConfigTabs(targetToken || '')}
         </div>
       </Modal>
 
       <Modal
         title="Generate New Token"
         open={isTokenModalVisible}
-        onCancel={() => setIsTokenModalVisible(false)}
+        onCancel={() => {
+          setIsTokenModalVisible(false);
+          setGeneratedToken(null);
+        }}
         footer={null}
-        width={600}
+        width={750}
         destroyOnHidden
       >
         {!generatedToken ? (
@@ -388,7 +406,7 @@ FLOWO_WORKING_PATH=${clientConfig.FLOWO_WORKING_PATH}`;
                 options={[
                   { value: undefined, label: 'Never Expire' },
                   { value: 7, label: '7 Days' },
-                  { value: 30, label: '30 Days' },
+                  { value: 90, label: '30 Days' },
                   { value: 90, label: '90 Days' },
                   { value: 365, label: '1 Year' },
                 ]}
@@ -417,37 +435,14 @@ FLOWO_WORKING_PATH=${clientConfig.FLOWO_WORKING_PATH}`;
               showIcon
               style={{ marginBottom: 24 }}
             />
-
-            <Descriptions
-              title="Configuration File"
-              layout="vertical"
-              bordered
-              size="small"
-            >
-              <Descriptions.Item label="~/.config/flowo/.env">
-                <Paragraph
-                  copyable={{ text: getConfigFileContent(generatedToken) }}
-                  style={{ marginBottom: 0 }}
-                >
-                  <pre
-                    style={{
-                      margin: 0,
-                      padding: 8,
-                      background: '#f5f5f5',
-                      borderRadius: 4,
-                      fontSize: 12,
-                    }}
-                  >
-                    {getConfigFileContent(generatedToken)}
-                  </pre>
-                </Paragraph>
-              </Descriptions.Item>
-            </Descriptions>
-
+            {renderConfigTabs(generatedToken)}
             <div style={{ textAlign: 'right', marginTop: 24 }}>
               <Button
                 type="primary"
-                onClick={() => setIsTokenModalVisible(false)}
+                onClick={() => {
+                  setIsTokenModalVisible(false);
+                  setGeneratedToken(null);
+                }}
               >
                 Done
               </Button>

@@ -57,6 +57,7 @@ Unleash the power of automation and monitoring with a fresh, interactive experie
   - 🐧 Linux system
   - 🐳 Docker
   - 🐍 snakemake
+
 ---
 
 ### 1️⃣ Install the Snakemake Logger Plugin
@@ -66,6 +67,7 @@ Now let’s install [snakemake-logger-plugin-flowo](https://pypi.org/project/sna
 ```sh
 pip install snakemake-logger-plugin-flowo
 ```
+
 ### 2️⃣ Install the Flowo web server
 
 ```sh
@@ -92,18 +94,20 @@ BACKEND_CORS_ORIGINS=["*"]
 # Workflow Directory
 FLOWO_WORKING_PATH=/path/to/flowo_project_dir  #Important: set this to your workflow directory
 ```
+
 Start the Flowo web service:
 
 ```sh
 docker compose up -d
 ```
-![login](assets/images/login.png)
-Open [http://localhost:3100](http://localhost:3100) in your browser. Create your account and log in. If you see the Flowo interface and the "Live Updates" icon is green, congratulations—your Flowo web service is running successfully! 
 
-![token](assets/images/token.png)
+![login](docs/assets/images/login.png)
+Open [http://localhost:3100](http://localhost:3100) in your browser. Create your account and log in. If you see the Flowo interface and the "Live Updates" icon is green, congratulations—your Flowo web service is running successfully!
+
+![token](docs/assets/images/token.png)
 Next, create a token, which is required to configure the snakemake-logger-plugin-flowo. Click the user icon in the top-right corner, select Generate New Token, then provide a name and set an expiration time. Once confirmed, the token will be generated successfully.
 
-![cli](assets/images/cli.png)
+![cli](docs/assets/images/cli.png)
 After that, click Config to access a CLI snippet. Copy and run this command in the terminal where snakemake-logger-plugin-flowo is installed. Once it finishes executing, the setup will be complete.
 
 ---
@@ -126,7 +130,6 @@ snakemake \
 ```
 
 Now, check out your workflow in the Flowo web! Good luck! 🎉
-
 
 ## Developer Guide
 
@@ -166,4 +169,3 @@ To increment the project version:
 Whenever you push to the `release` branch, a new GitHub Release is created, and Docker images are pushed to GHCR with the version tag.
 
 ---
-
