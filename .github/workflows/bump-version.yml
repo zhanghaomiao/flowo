@@ -55,12 +55,15 @@ jobs:
           # 解释: s/version = .*/.../ 替换整行
           sed -i "s/^version = .*/version = \"$NEW_VERSION\"/" pyproject.toml
 
+          # 3. 同时更新 frontend/package.json
+          sed -i "s/\"version\": \".*\"/\"version\": \"$NEW_VERSION\"/" frontend/package.json
+
       - name: Commit and push changes
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
 
-          git add pyproject.toml
+          git add pyproject.toml frontend/package.json
           git commit -m "chore: bump version to ${{ steps.bump.outputs.NEW_VERSION }}"
 
           # === 关键修改：防冲突保险 ===

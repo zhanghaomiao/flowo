@@ -7,7 +7,7 @@ on:
 
 jobs:
   pypi-publish:
-    name: Upload release to PyPI
+    name: Build and Publish snakemake-logger-plugin-flowo
     runs-on: ubuntu-latest
     permissions:
       contents: read
