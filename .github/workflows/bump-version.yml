@@ -1,0 +1,76 @@
+name: Bump Version
+
+on:
+  workflow_dispatch:
+    inputs:
+      bump_type:
+        description: "Type of version bump"
+        required: true
+        default: "patch"
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+
+jobs:
+  bump-version:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }} # 显式声明，确保有权限
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.12"
+
+      - name: Bump version
+        id: bump
+        run: |
+          # 1. 读取版本 (兼容双引号和单引号)
+          # grep 找 "version =", cut 取值，tr 去掉引号和空格
+          OLD_VERSION=$(grep -m 1 "^version =" pyproject.toml | cut -d '=' -f 2 | tr -d '"' | tr -d "'" | tr -d ' ')
+
+          echo "Current Version: $OLD_VERSION"
+
+          IFS='.' read -r major minor patch <<< "$OLD_VERSION"
+
+          case "${{ github.event.inputs.bump_type }}" in
+            major) major=$((major + 1)); minor=0; patch=0 ;;
+            minor) minor=$((minor + 1)); patch=0 ;;
+            patch) patch=$((patch + 1)) ;;
+          esac
+
+          NEW_VERSION="$major.$minor.$patch"
+          echo "NEW_VERSION=$NEW_VERSION" >> $GITHUB_OUTPUT
+          echo "New Version: $NEW_VERSION"
+
+          # 2. 修改文件 (更稳健的 sed)
+          # 只要是 version = "..." 这种格式都能替换，保留原有的引号风格
+          # 解释: s/version = .*/.../ 替换整行
+          sed -i "s/^version = .*/version = \"$NEW_VERSION\"/" pyproject.toml
+
+      - name: Commit and push changes
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+
+          git add pyproject.toml
+          git commit -m "chore: bump version to ${{ steps.bump.outputs.NEW_VERSION }}"
+
+          # === 关键修改：防冲突保险 ===
+          # 在打 Tag 和推送前，先拉取远程最新代码。
+          # 如果有变动，rebase 会自动把我们的版本修改通过去。
+          git pull --rebase origin ${{ github.ref_name }}
+
+          # 打 Tag
+          git tag "v${{ steps.bump.outputs.NEW_VERSION }}"
+
+          # === 关键修改：原子推送 ===
+          # --atomic 保证代码和 Tag 要么一起成功，要么一起失败，防止出现"代码推了但Tag没推"的情况
+          git push --atomic origin ${{ github.ref_name }} "v${{ steps.bump.outputs.NEW_VERSION }}"
