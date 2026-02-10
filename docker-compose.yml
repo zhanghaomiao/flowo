@@ -9,18 +9,17 @@ services:
     networks:
       - flowo-network
     healthcheck:
-      test:
-        [
-          "CMD-SHELL",
-          "pg_isready -U ${POSTGRES_USER:-flowo} -d ${POSTGRES_DB:-flowo_logs}",
-        ]
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-flowo} -d ${POSTGRES_DB:-flowo_logs}" ]
       interval: 10s
       timeout: 5s
       retries: 5
     restart: unless-stopped
 
   flowo-backend:
-    image: ghcr.io/zhanghaomiao/flowo/backend:latest
+    # image: ghcr.io/zhanghaomiao/flowo/backend:latest
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
     container_name: flowo-backend
     userns_mode: "keep-id"
     env_file:
@@ -53,21 +52,16 @@ services:
         exec uvicorn app.main:app --host 0.0.0.0 --port 8000
 
   flowo-frontend:
-    image: ghcr.io/zhanghaomiao/flowo/frontend:latest
+    # image: ghcr.io/zhanghaomiao/flowo/frontend:latest
+    build:
+      context: frontend
+      dockerfile: Dockerfile
     container_name: frontend
     networks:
       - flowo-network
     restart: unless-stopped
     healthcheck:
-      test:
-        [
-          "CMD",
-          "wget",
-          "--no-verbose",
-          "--tries=1",
-          "--spider",
-          "http://localhost/health",
-        ]
+      test: [ "CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost/health" ]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -95,6 +89,7 @@ volumes:
   postgres_data:
   caddy_data:
   caddy_config:
+
 
 networks:
   flowo-network:

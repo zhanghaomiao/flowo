@@ -8,6 +8,12 @@ Unleash the power of automation and monitoring with a fresh, interactive experie
 
 ---
 
+## 📰 News
+
+**Latest Release**: Flowo now supports user authentication and login! Additionally, we've simplified the configuration process, making it even easier to get started with workflow monitoring and management.
+
+---
+
 ## ✨ Features
 
 - ⚡ **Real-time Monitoring:**
@@ -50,16 +56,17 @@ Unleash the power of automation and monitoring with a fresh, interactive experie
 - **Requirements:**
   - 🐧 Linux system
   - 🐳 Docker
-  - 🐍 snakemake >= 9.6.2
-
-Flowo consists of two parts:
-
-- The Flowo web service (this repository)
-- The Snakemake plugin: [snakemake-logger-plugin-flowo](https://github.com/jmzhang1911/snakemake-logger-plugin-flowo)
-
+  - 🐍 snakemake
 ---
 
-### 1️⃣ Install the Flowo Web Service
+### 1️⃣ Install the Snakemake Logger Plugin
+
+Now let’s install [snakemake-logger-plugin-flowo](https://pypi.org/project/snakemake-logger-plugin-flowo/), a logging plugin for Snakemake. Once the installation is complete, simply add `--logger flowo` to your Snakemake command, and the execution status of your workflow will be automatically sent to the Flowo web server for real-time monitoring and visualization.
+
+```sh
+pip install snakemake-logger-plugin-flowo
+```
+### 2️⃣ Install the Flowo web server
 
 ```sh
 git clone https://github.com/zhanghaomiao/flowo.git
@@ -67,13 +74,7 @@ cd flowo
 cp env.example .env
 ```
 
-2. **Build and Run Backend**:
-
-```sh
-docker compose up -d --build
-```
-
-Edit your `.env` file as follows. In most cases, you only need to modify ⚠️ `FLOWO_WORKING_PATH` to point to the directory where you run your Snakemake workflows:
+Edit your `.env` file as follows. In most cases, you only need to modify `FLOWO_WORKING_PATH` to point to the directory where you run your Snakemake workflows. If you don’t need to view Snakefiles, log files, result previews, etc. in the Flowo web interface — and only want to monitor workflow, job, and rule execution status — there is no need to configure these additional paths.
 
 ```sh
 # Application Settings
@@ -86,57 +87,46 @@ POSTGRES_DB=flowo_logs
 POSTGRES_USER=flowo
 POSTGRES_PASSWORD=flowo_password
 POSTGRES_HOST=localhost
-POSTGRES_PORT=5432
+BACKEND_CORS_ORIGINS=["*"]
 
 # Workflow Directory
-FLOWO_WORKING_PATH=/path/to/flowo_project_dir  # ⚠️ Important: set this to your workflow directory
+FLOWO_WORKING_PATH=/path/to/flowo_project_dir  #Important: set this to your workflow directory
 ```
-
 Start the Flowo web service:
 
 ```sh
-docker compose -f docker-compose.yml up -d
+docker compose up -d
 ```
+![login](assets/images/login.png)
+Open [http://localhost:3100](http://localhost:3100) in your browser. Create your account and log in. If you see the Flowo interface and the "Live Updates" icon is green, congratulations—your Flowo web service is running successfully! 
 
-Open [http://localhost:3100](http://localhost:3100) in your browser.
-If you see the Flowo interface and the "Live Updates" icon is green, congratulations—your Flowo web service is running successfully! 🎉
+![token](assets/images/token.png)
+Next, create a token, which is required to configure the snakemake-logger-plugin-flowo. Click the user icon in the top-right corner, select Generate New Token, then provide a name and set an expiration time. Once confirmed, the token will be generated successfully.
+![cli](assets/images/cli.png)
+After that, click Config to access a CLI snippet. Copy and run this command in the terminal where snakemake-logger-plugin-flowo is installed. Once it finishes executing, the setup will be complete.
 
 ---
+## 🚀 Usage
 
-### 2️⃣ Install the Snakemake Logger Plugin
-
-Next, let's install the Snakemake plugin.
-For detailed installation, configuration, and usage, please refer to the plugin's [documentation](https://github.com/jmzhang1911/snakemake-logger-plugin-flowo).
-
-Quick start:
+All set!
+Let's test with a demo project:
 
 ```sh
-pip install .  # Install the plugin from the root of this repo
-flowo-init-config --generate-config
+cd /path/to/flowo_project_dir
+mkdir demo                # Create a demo project folder
+cd demo
+wget https://raw.githubusercontent.com/zhanghaomiao/flowo/refs/heads/main/tests/demos/Snakefile
+# Run snakemake with flowo logger
+snakemake \
+    --logger flowo \
+    --logger-flowo-name=your_project_name \
+    --logger-flowo-tags="tagA,tagB,tagC"
 ```
 
-Configure the plugin:
+Now, check out your workflow in the Flowo web! Good luck! 🎉
 
-```sh
-vim $HOME/.config/flowo/.env
-```
 
-Edit your `$HOME/.config/flowo/.env` as follows:
-
-```sh
-### Postgres settings
-POSTGRES_USER=flowo         # same as your .env
-POSTGRES_PASSWORD=flowo_password  # same as your .env
-POSTGRES_DB=flowo_logs      # same as your .env
-POSTGRES_HOST=localhost     # same as your .env
-POSTGRES_PORT=5432          # same as your .env
-
-### APP settings
-# FLOWO_USER has been removed.
-# Authentication is handled via FLOWO_USER_TOKEN.
-FLOWO_USER_TOKEN=your_generated_token_here
-FLOWO_WORKING_PATH=/path/to/flowo_project_dir # ⚠️ same as your .env
-```
+## Developer Guide
 
 ### 📦 Docker Environments
 
@@ -175,21 +165,3 @@ Whenever you push to the `release` branch, a new GitHub Release is created, and 
 
 ---
 
-## 🚀 Usage
-
-All set! 🎉
-Let's test with a demo project:
-
-```sh
-cd /path/to/flowo_project_dir
-mkdir demo                # Create a demo project folder
-cd demo
-wget https://raw.githubusercontent.com/zhanghaomiao/flowo/refs/heads/main/tests/demos/Snakefile
-# Run snakemake with flowo logger
-snakemake \
-    --logger flowo \
-    --logger-flowo-name=your_project_name \
-    --logger-flowo-tags="tagA,tagB,tagC"
-```
-
-Now, check out your workflow in the Flowo web! Good luck! 🍀
