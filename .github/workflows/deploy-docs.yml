@@ -31,11 +31,11 @@ jobs:
 
       - name: Install dependencies
         run: |
-          uv sync --extra dev
+          uv pip install --system ".[docs]"
 
       - name: Build Documentation
         run: |
-          uv run mkdocs build
+          mkdocs build
 
       - name: Publish to Cloudflare Pages
         uses: cloudflare/wrangler-action@v3
