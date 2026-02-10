@@ -5,22 +5,23 @@ from ... import logger
 from ...core.config import settings
 
 
-def generate_config(token: str | None = None):
+def generate_config(
+    token: str | None = None, host: str | None = None, working_path: str | None = None
+):
     config_dir = Path.home() / ".config/flowo"
     config_dir.mkdir(parents=True, exist_ok=True)
     config_path = config_dir / ".env"
 
-    token_to_use = token or settings.FLOWO_USER_TOKEN
-    token_line = (
-        f"FLOWO_USER_TOKEN={token_to_use}" if token_to_use else "# FLOWO_USER_TOKEN="
-    )
+    host = host or settings.FLOWO_HOST
+    token = token or settings.FLOWO_USER_TOKEN
+    working_path = working_path or settings.FLOWO_WORKING_PATH
 
     # Use current settings as defaults
     template = f"""
 ### FlowO API Reporting (Secure)
-FLOWO_HOST={settings.FLOWO_HOST}
-{token_line}
-FLOWO_WORKING_PATH={settings.FLOWO_WORKING_PATH}
+FLOWO_HOST={host}
+FLOWO_USER_TOKEN={token}
+FLOWO_WORKING_PATH={working_path}
 """
     with open(config_path, "w") as f:
         f.write(template.strip())
@@ -39,11 +40,23 @@ def main():
         type=str,
         help="Optional API token to include in the generated config",
     )
+    parser.add_argument(
+        "--host",
+        type=str,
+        default=None,
+        help="Optional API host to include in the generated config (not implemented yet)",
+    )
+    parser.add_argument(
+        "--working-path",
+        type=str,
+        default=None,
+        help="Optional working path to include in the generated config (not implemented yet)",
+    )
 
     args = parser.parse_args()
 
     if args.generate_config:
-        generate_config(args.token)
+        generate_config(args.token, args.host, args.working_path)
     else:
         parser.print_help()
 
