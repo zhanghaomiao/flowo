@@ -29,7 +29,9 @@ FLOWO_WORKING_PATH={working_path}
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Flowo Logger Plugin Utility")
+    parser = argparse.ArgumentParser(
+        description="Flowo Logger Plugin Utility. Documentation: https://flowo-docs.pages.dev/"
+    )
     parser.add_argument(
         "--generate-config",
         action="store_true",

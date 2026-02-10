@@ -1,7 +1,7 @@
 site_name: FlowO
 site_description: A unified PostgreSQL-based logging plugin and backend for Snakemake
 site_author: Haomiao Zhang
-site_url: https://docs.flowo.pages.dev/
+site_url: https://flowo-docs.pages.dev/
 
 theme:
   name: material

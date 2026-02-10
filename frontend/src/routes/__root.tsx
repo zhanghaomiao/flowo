@@ -2,6 +2,7 @@ import {
   DashboardOutlined,
   HomeOutlined,
   LogoutOutlined,
+  ReadOutlined,
   SettingOutlined,
   UserOutlined,
 } from '@ant-design/icons';
@@ -101,6 +102,19 @@ function RootComponent() {
                     onClick: () => navigate({ to: '/profile' }),
                   },
                   {
+                    key: 'docs',
+                    icon: <ReadOutlined />,
+                    label: (
+                      <a
+                        href="https://flowo-docs.pages.dev/"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        Documentation
+                      </a>
+                    ),
+                  },
+                  {
                     type: 'divider',
                   },
                   {
@@ -150,7 +164,20 @@ function RootComponent() {
           color: 'gray',
         }}
       >
-        FlowO v{__APP_VERSION__} ©{new Date().getFullYear()} Created by Iregene
+        <Space split={<span style={{ color: '#d9d9d9' }}>|</span>}>
+          <span>
+            FlowO v{__APP_VERSION__} ©{new Date().getFullYear()} Created by
+            Iregene
+          </span>
+          <a
+            href="https://flowo-docs.pages.dev/"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ color: 'gray' }}
+          >
+            Documentation
+          </a>
+        </Space>
       </Layout.Footer>
       <ReactQueryDevtools initialIsOpen={false} />
     </Layout>
