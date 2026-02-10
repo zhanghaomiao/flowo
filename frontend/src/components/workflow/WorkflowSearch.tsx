@@ -1,11 +1,11 @@
-import { SearchOutlined } from "@ant-design/icons";
-import type { TimeRangePickerProps } from "antd";
-import { DatePicker, Input, Select, Space } from "antd";
-import dayjs, { Dayjs } from "dayjs";
-import React, { useEffect, useState } from "react";
-
-import { useAllTags } from "../../hooks/useQueries";
-import WorkflowTag from "../tag/WorkflowTag";
+import { getAllTagsOptions } from '@/client/@tanstack/react-query.gen';
+import WorkflowTag from '@/components/workflow/WorkflowTag';
+import { SearchOutlined } from '@ant-design/icons';
+import { useQuery } from '@tanstack/react-query';
+import type { TimeRangePickerProps } from 'antd';
+import { DatePicker, Input, Select, Space } from 'antd';
+import dayjs, { Dayjs } from 'dayjs';
+import React, { useEffect, useState } from 'react';
 
 const { RangePicker } = DatePicker;
 
@@ -27,10 +27,10 @@ const WorkflowSearch: React.FC<WorkflowSearchProps> = ({
   tags,
 }) => {
   // Local state for immediate UI updates
-  const [localName, setLocalName] = useState(name || "");
-  const { data: allTags } = useAllTags();
-
-  // Debounce the search calls
+  const [localName, setLocalName] = useState(name || '');
+  const { data: allTags } = useQuery({
+    ...getAllTagsOptions(),
+  });
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -42,11 +42,11 @@ const WorkflowSearch: React.FC<WorkflowSearchProps> = ({
   }, [localName, onNameChange]);
 
   useEffect(() => {
-    setLocalName(name || "");
+    setLocalName(name || '');
   }, [name]);
 
   const handleTagsChange = (e: string[]) => {
-    onTagsChange(e.join(","));
+    onTagsChange(e.join(','));
   };
 
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -68,21 +68,21 @@ const WorkflowSearch: React.FC<WorkflowSearchProps> = ({
     }
   };
 
-  const rangePresets: TimeRangePickerProps["presets"] = [
-    { label: "Last 1 Days", value: [dayjs().add(-1, "d"), dayjs()] },
-    { label: "Last 2 Days", value: [dayjs().add(-2, "d"), dayjs()] },
-    { label: "Last 7 Days", value: [dayjs().add(-7, "d"), dayjs()] },
-    { label: "Last 30 Days", value: [dayjs().add(-30, "d"), dayjs()] },
+  const rangePresets: TimeRangePickerProps['presets'] = [
+    { label: 'Last 1 Days', value: [dayjs().add(-1, 'd'), dayjs()] },
+    { label: 'Last 2 Days', value: [dayjs().add(-2, 'd'), dayjs()] },
+    { label: 'Last 7 Days', value: [dayjs().add(-7, 'd'), dayjs()] },
+    { label: 'Last 30 Days', value: [dayjs().add(-30, 'd'), dayjs()] },
   ];
 
   return (
-    <Space size="middle" style={{ display: "flex", alignItems: "center" }}>
+    <Space size="middle" style={{ display: 'flex', alignItems: 'center' }}>
       <Select
         options={allTags?.map((tag) => ({ label: tag, value: tag }))}
         placeholder="Search by tags"
         allowClear
         onChange={handleTagsChange}
-        value={tags && tags.trim() ? tags.split(",") : []}
+        value={tags && tags.trim() ? tags.split(',') : []}
         tagRender={(tag) => <WorkflowTag tag={tag.label as string} />}
         mode="multiple"
         style={{ width: 140 }}
@@ -101,7 +101,7 @@ const WorkflowSearch: React.FC<WorkflowSearchProps> = ({
 
       <RangePicker
         presets={[...rangePresets]}
-        placeholder={["Start time", "End time"]}
+        placeholder={['Start time', 'End time']}
         allowEmpty={[true, true]}
         showTime
         format="YYYY-MM-DD HH:mm"

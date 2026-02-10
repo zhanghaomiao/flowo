@@ -1,5 +1,5 @@
-import { Card } from "antd";
-import React from "react";
+import { Card } from 'antd';
+import React from 'react';
 
 interface StatusData {
   success: number;
@@ -39,9 +39,9 @@ export const StatusChart: React.FC<StatusChartProps> = ({
 
   // Create conic gradient based on data
   const createConicGradient = () => {
-    if (data.total === 0) return "conic-gradient(#d9d9d9 100%)";
+    if (data.total === 0) return 'conic-gradient(#d9d9d9 100%)';
 
-    let gradientString = "conic-gradient(from 0deg, ";
+    let gradientString = 'conic-gradient(from 0deg, ';
     let currentAngle = 0;
 
     // Success (green)
@@ -71,21 +71,21 @@ export const StatusChart: React.FC<StatusChartProps> = ({
       gradientString = gradientString.slice(0, -2);
     }
 
-    gradientString += ")";
+    gradientString += ')';
     return gradientString;
   };
 
   return (
-    <Card title={title} loading={loading} style={{ height: "350px" }}>
+    <Card title={title} loading={loading} style={{ height: '350px' }}>
       <div
         style={{
-          width: "100%",
-          height: "280px",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-          gap: "20px",
+          width: '100%',
+          height: '280px',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '20px',
         }}
       >
         {!loading && (
@@ -93,48 +93,48 @@ export const StatusChart: React.FC<StatusChartProps> = ({
             {/* CSS Donut Chart */}
             <div
               style={{
-                position: "relative",
-                width: "200px",
-                height: "200px",
-                borderRadius: "50%",
+                position: 'relative',
+                width: '200px',
+                height: '200px',
+                borderRadius: '50%',
                 background: createConicGradient(),
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                transition: "all 0.3s ease",
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                transition: 'all 0.3s ease',
               }}
             >
               {/* Inner circle to create donut effect */}
               <div
                 style={{
-                  width: "120px",
-                  height: "120px",
-                  borderRadius: "50%",
-                  backgroundColor: "#ffffff",
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)",
+                  width: '120px',
+                  height: '120px',
+                  borderRadius: '50%',
+                  backgroundColor: '#ffffff',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
                 }}
               >
                 {/* Total count in center */}
                 <div
                   style={{
-                    fontSize: "32px",
-                    fontWeight: "bold",
-                    color: "#333",
-                    lineHeight: "1",
+                    fontSize: '32px',
+                    fontWeight: 'bold',
+                    color: '#333',
+                    lineHeight: '1',
                   }}
                 >
                   {data.total}
                 </div>
                 <div
                   style={{
-                    fontSize: "14px",
-                    color: "#666",
-                    fontWeight: "500",
-                    marginTop: "4px",
+                    fontSize: '14px',
+                    color: '#666',
+                    fontWeight: '500',
+                    marginTop: '4px',
                   }}
                 >
                   Total
@@ -145,26 +145,26 @@ export const StatusChart: React.FC<StatusChartProps> = ({
             {/* Legend */}
             <div
               style={{
-                display: "flex",
-                justifyContent: "center",
-                flexWrap: "wrap",
-                gap: "16px",
-                maxWidth: "300px",
+                display: 'flex',
+                justifyContent: 'center',
+                flexWrap: 'wrap',
+                gap: '16px',
+                maxWidth: '300px',
               }}
             >
               {data.success > 0 && (
                 <div
-                  style={{ display: "flex", alignItems: "center", gap: "6px" }}
+                  style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
                 >
                   <div
                     style={{
-                      width: "12px",
-                      height: "12px",
-                      backgroundColor: "#37a460",
-                      borderRadius: "2px",
+                      width: '12px',
+                      height: '12px',
+                      backgroundColor: '#37a460',
+                      borderRadius: '2px',
                     }}
                   />
-                  <span style={{ fontSize: "12px", color: "#333" }}>
+                  <span style={{ fontSize: '12px', color: '#333' }}>
                     Success: {data.success}
                   </span>
                 </div>
@@ -172,17 +172,17 @@ export const StatusChart: React.FC<StatusChartProps> = ({
 
               {data.running > 0 && (
                 <div
-                  style={{ display: "flex", alignItems: "center", gap: "6px" }}
+                  style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
                 >
                   <div
                     style={{
-                      width: "12px",
-                      height: "12px",
-                      backgroundColor: "#85d2ab",
-                      borderRadius: "2px",
+                      width: '12px',
+                      height: '12px',
+                      backgroundColor: '#85d2ab',
+                      borderRadius: '2px',
                     }}
                   />
-                  <span style={{ fontSize: "12px", color: "#333" }}>
+                  <span style={{ fontSize: '12px', color: '#333' }}>
                     Running: {data.running}
                   </span>
                 </div>
@@ -190,17 +190,17 @@ export const StatusChart: React.FC<StatusChartProps> = ({
 
               {data.error > 0 && (
                 <div
-                  style={{ display: "flex", alignItems: "center", gap: "6px" }}
+                  style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
                 >
                   <div
                     style={{
-                      width: "12px",
-                      height: "12px",
-                      backgroundColor: "#e57373",
-                      borderRadius: "2px",
+                      width: '12px',
+                      height: '12px',
+                      backgroundColor: '#e57373',
+                      borderRadius: '2px',
                     }}
                   />
-                  <span style={{ fontSize: "12px", color: "#333" }}>
+                  <span style={{ fontSize: '12px', color: '#333' }}>
                     Error: {data.error}
                   </span>
                 </div>
@@ -208,17 +208,17 @@ export const StatusChart: React.FC<StatusChartProps> = ({
 
               {waiting > 0 && (
                 <div
-                  style={{ display: "flex", alignItems: "center", gap: "6px" }}
+                  style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
                 >
                   <div
                     style={{
-                      width: "12px",
-                      height: "12px",
-                      backgroundColor: "#d9d9d9",
-                      borderRadius: "2px",
+                      width: '12px',
+                      height: '12px',
+                      backgroundColor: '#d9d9d9',
+                      borderRadius: '2px',
                     }}
                   />
-                  <span style={{ fontSize: "12px", color: "#333" }}>
+                  <span style={{ fontSize: '12px', color: '#333' }}>
                     Waiting: {waiting}
                   </span>
                 </div>
@@ -228,7 +228,7 @@ export const StatusChart: React.FC<StatusChartProps> = ({
         )}
 
         {loading && (
-          <div style={{ textAlign: "center", color: "#666" }}>
+          <div style={{ textAlign: 'center', color: '#666' }}>
             Loading chart...
           </div>
         )}

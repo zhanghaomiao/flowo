@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useState } from 'react';
 
 export interface WorkflowState {
   selectedRule: string | null;
@@ -10,7 +10,7 @@ export const useWorkflowState = () => {
   const [state, setState] = useState<WorkflowState>({
     selectedRule: null,
     highlightedRule: null,
-    activeTab: "jobs",
+    activeTab: 'jobs',
   });
 
   const setSelectedRule = useCallback((rule: string | null) => {

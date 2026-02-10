@@ -1,85 +1,162 @@
 import {
   DashboardOutlined,
   HomeOutlined,
-  QuestionCircleOutlined,
-} from "@ant-design/icons";
-import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
+  LogoutOutlined,
+  SettingOutlined,
+  UserOutlined,
+} from '@ant-design/icons';
+import { type QueryClient } from '@tanstack/react-query';
+import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import {
-  createRootRoute,
   Link,
   Outlet,
+  createRootRouteWithContext,
   useLocation,
-} from "@tanstack/react-router";
-import { Layout, Menu } from "antd";
+  useNavigate,
+} from '@tanstack/react-router';
+import { Avatar, Dropdown, Layout, Menu, Space } from 'antd';
+
+import { type AuthContextType, useAuth } from '../auth';
+
+export interface MyRouterContext {
+  auth: AuthContextType;
+  queryClient: QueryClient;
+}
 
 const { Header, Content } = Layout;
 
 const menuItems = [
   {
-    key: "/",
+    key: '/',
     icon: <HomeOutlined />,
     label: <Link to="/">Workflows</Link>,
   },
   {
-    key: "/dashboard",
+    key: '/dashboard',
     icon: <DashboardOutlined />,
     label: <Link to="/dashboard">Dashboard</Link>,
-  },
-  {
-    key: "/about",
-    icon: <QuestionCircleOutlined />,
-    label: <Link to="/about">About</Link>,
   },
 ];
 
 function RootComponent() {
+  const { logout } = useAuth();
+  const navigate = useNavigate();
   const location = useLocation();
 
   // Determine the selected menu key based on current pathname
   const getSelectedKey = () => {
     const pathname = location.pathname;
-    if (pathname === "/") return "/";
-    if (pathname.startsWith("/dashboard")) return "/dashboard";
-    if (pathname.startsWith("/about")) return "/about";
+    if (pathname === '/') return '/';
+    if (pathname.startsWith('/dashboard')) return '/dashboard';
+    if (pathname.startsWith('/profile')) return '/profile';
     // For workflow detail pages (/workflow/xxx), don't highlight any menu item
-    return "";
+    if (pathname.startsWith('/workflow')) return '/';
+    return '';
   };
 
+  const isPublicRoute =
+    location.pathname === '/login' || location.pathname === '/register';
+
   return (
-    <Layout style={{ minHeight: "100vh", width: "100%" }}>
-      <Header
-        style={{
-          display: "flex",
-          alignItems: "center",
-          padding: "0 12px",
-        }}
-      >
-        <div
+    <Layout style={{ minHeight: '100vh', width: '100%' }}>
+      {!isPublicRoute && (
+        <Header
           style={{
-            color: "white",
-            fontSize: "18px",
-            fontWeight: "bold",
-            marginRight: "24px",
+            display: 'flex',
+            alignItems: 'center',
+            padding: '0 12px',
           }}
         >
-          FlowO
-        </div>
-        <Menu
-          theme="dark"
-          mode="horizontal"
-          style={{ flex: 1, minWidth: 0 }}
-          items={menuItems}
-          selectedKeys={[getSelectedKey()]}
-        />
-      </Header>
-      <Content style={{ padding: "0px", minWidth: "80%", maxWidth: "100%" }}>
+          <div
+            style={{
+              color: 'white',
+              fontSize: '18px',
+              fontWeight: 'bold',
+              marginRight: '24px',
+            }}
+          >
+            FlowO
+          </div>
+          <Menu
+            theme="dark"
+            mode="horizontal"
+            style={{ flex: 1, minWidth: 0 }}
+            items={menuItems}
+            selectedKeys={[getSelectedKey()]}
+          />
+          <div
+            style={{
+              marginLeft: 'auto',
+              display: 'flex',
+              alignItems: 'center',
+            }}
+          >
+            <Dropdown
+              menu={{
+                items: [
+                  {
+                    key: 'settings',
+                    icon: <SettingOutlined />,
+                    label: 'Settings',
+                    onClick: () => navigate({ to: '/profile' }),
+                  },
+                  {
+                    type: 'divider',
+                  },
+                  {
+                    key: 'logout',
+                    icon: <LogoutOutlined />,
+                    danger: true,
+                    label: 'Logout',
+                    onClick: logout,
+                  },
+                ],
+              }}
+              placement="bottomRight"
+              arrow
+            >
+              <div
+                style={{
+                  color: 'white',
+                  display: 'flex',
+                  alignItems: 'center',
+                  padding: '4px 8px',
+                  borderRadius: '8px',
+                  transition: 'background 0.3s',
+                  cursor: 'pointer',
+                }}
+                onMouseEnter={(e) =>
+                  (e.currentTarget.style.background = 'rgba(255,255,255,0.1)')
+                }
+                onMouseLeave={(e) =>
+                  (e.currentTarget.style.background = 'transparent')
+                }
+              >
+                <Space>
+                  <Avatar icon={<UserOutlined />} size="small" />
+                </Space>
+              </div>
+            </Dropdown>
+          </div>
+        </Header>
+      )}
+      <Content style={{ padding: '0px', minWidth: '80%', maxWidth: '100%' }}>
         <Outlet />
       </Content>
+      <Layout.Footer
+        style={{
+          textAlign: 'center',
+          padding: '12px 0',
+          color: 'gray',
+        }}
+      >
+        FlowO v{__APP_VERSION__} ©{new Date().getFullYear()} Created by Iregene
+      </Layout.Footer>
       <ReactQueryDevtools initialIsOpen={false} />
     </Layout>
   );
 }
 
-export const Route = createRootRoute({
+export const Route = createRootRouteWithContext<MyRouterContext>()({
   component: RootComponent,
 });

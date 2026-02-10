@@ -1,25 +1,88 @@
 services:
+  postgresql:
+    image: postgres:15-alpine
+    container_name: flowo-postgres-dev
+    env_file:
+      - .env
+    volumes:
+      - postgres_data_dev:/var/lib/postgresql/data
+    networks:
+      - flowo-dev-network
+    restart: unless-stopped
+
   flowo-backend:
     build:
-      context: ./backend
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: Dockerfile.backend
     container_name: flowo-backend-dev
+    userns_mode: "keep-id"
     env_file:
       - .env
     environment:
-      POSTGRES_DB: ${POSTGRES_DB:-flowo_logs}
-      POSTGRES_USER: ${POSTGRES_USER:-flowo}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-flowo_password}
       POSTGRES_HOST: postgresql
-      POSTGRES_PORT: ${POSTGRES_PORT:-5432}
-      TZ: ${TZ:-Asia/Shanghai}
+      POSTGRES_PORT: 5432
     volumes:
-      - ./backend:/app
-      - ${FLOWO_WORKING_PATH:-.}:/work_dir:ro
+      - ${FLOWO_WORKING_PATH:-.}:${CONTAINER_MOUNT_PATH:-/work_dir}:ro
+      - ./app:/app/app # Mount local app directory for hot-reload
+      - ./pyproject.toml:/app/pyproject.toml
+      - ./alembic.ini:/app/alembic.ini
     depends_on:
-      alembic-migrations:
-        condition: service_completed_successfully
+      - postgresql
     networks:
-      - flowo-network
+      - flowo-dev-network
     restart: unless-stopped
-    command: sleep infinity
+    # Use uvicorn with --reload for development
+    command:
+      - sh
+      - -c
+      - |
+        echo '🚀 Starting backend setup...'
+        echo 'Running database migrations...'
+        alembic upgrade head
+        echo '✅ Database migrations completed!'
+        echo 'Starting application with reload...'
+        exec uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+  flowo-frontend:
+    image: node:22-alpine
+    container_name: flowo-frontend-dev
+    working_dir: /app
+    volumes:
+      - ./frontend:/app
+    environment:
+      VITE_API_BASE_PATH: http://localhost:3100
+    networks:
+      - flowo-dev-network
+    restart: unless-stopped
+    command: ["sh", "-c", "npm install && npm run dev -- --host 0.0.0.0"]
+
+  # 2. Caddy (作为网关，指向宿主机)
+  caddy:
+    image: caddy:2-alpine
+    container_name: caddy-dev
+    env_file:
+      - .env
+    environment:
+      FRONTEND_PORT: 5173 # Vite dev server port
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - ${FLOWO_WORKING_PATH:-.}:${CONTAINER_MOUNT_PATH:-/flowo-data}:ro
+      - caddy_data_dev:/data
+      - caddy_config_dev:/config
+    ports:
+      - "${PORT:-3100}:80"
+    depends_on:
+      - flowo-backend
+      - flowo-frontend
+    networks:
+      - flowo-dev-network
+    restart: unless-stopped
+
+volumes:
+  postgres_data_dev:
+  caddy_data_dev:
+  caddy_config_dev:
+
+networks:
+  flowo-dev-network:
+    driver: bridge

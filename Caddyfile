@@ -15,7 +15,7 @@
 
     # Handle API requests - proxy to backend
     handle /api/v1/* {
-        reverse_proxy flowo-backend
+        reverse_proxy flowo-backend:8000
         
         # Apply security headers to API routes
         header {
@@ -39,6 +39,7 @@
     # Handle static file serving for work directory
     handle_path /files/* {
         # Handle CORS preflight requests
+        uri strip_prefix {$CONTAINER_MOUNT_PATH}
         @options {
             method OPTIONS
         }
@@ -49,11 +50,11 @@
             Access-Control-Max-Age "86400"
         }
         respond @options 200
-        
-        root * /work_dir
+        root * {$CONTAINER_MOUNT_PATH}
+
         file_server {
             browse
-            hide .snakemake *.smk flowo_logs
+            # hide .snakemake *.smk flowo_logs
         }
         
         # Set caching headers for different file types
@@ -159,7 +160,8 @@
 
     # Handle frontend application - proxy to frontend service
     handle  {
-        reverse_proxy flowo-frontend:80
+        # 使用环境变量，默认 80 (生产环境)，开发环境可传入 5173
+        reverse_proxy flowo-frontend:{$FRONTEND_PORT:80}
         
         # Apply security headers only to frontend routes
         header {

@@ -1,22 +1,20 @@
 import {
+  getJobOptions,
+  getLogsOptions,
+  useGetJobsQuery,
+} from '@/client/@tanstack/react-query.gen';
+import type { JobResponse, Status } from '@/client/types.gen';
+import { DurationCell, calculateDuration } from '@/components/common/common';
+import { FileViewerModal, MultiFileViewer } from '@/components/shared/viewers';
+import { formatDateCompact, getStatusColor } from '@/utils/formatters';
+import {
   FileTextOutlined,
   InfoCircleOutlined,
-  ReloadOutlined,
-} from "@ant-design/icons";
-import { Button, Table, Tag, Tooltip } from "antd";
-import type { ColumnsType } from "antd/es/table";
-import React, { useEffect, useState } from "react";
-
-import type { Status } from "../../api/api";
-import type { JobResponse } from "../../api/client";
-import { useWorkflowJobs } from "../../hooks/useQueries";
-import { useJobDetail, useJobLogs } from "../../hooks/useQueries";
-import { useWorkflowJobsWithSSE } from "../../hooks/useQueriesWithSSE";
-import { formatDateCompact, getStatusColor } from "../../utils/formatters";
-import FilesViewer from "../code/FilesViewer";
-import FileViewer from "../code/FileViewer";
-import { calculateDuration, DurationCell } from "../common/common";
-import LiveUpdatesIndicator from "../LiveUpdatesIndicator";
+} from '@ant-design/icons';
+import { useQuery } from '@tanstack/react-query';
+import { Button, Table, Tag, Tooltip } from 'antd';
+import type { ColumnsType } from 'antd/es/table';
+import React, { useEffect, useState } from 'react';
 
 interface JobTableProps {
   workflowId?: string;
@@ -27,9 +25,7 @@ interface JobTableProps {
 
 const JobTable: React.FC<JobTableProps> = ({
   workflowId,
-  workflowStatus,
   ruleName,
-  showRefreshButton = true,
 }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
@@ -57,82 +53,70 @@ const JobTable: React.FC<JobTableProps> = ({
     setPageSize(20);
   }, [ruleName]);
 
-  const needsSSE = workflowStatus === "RUNNING";
+  const { data: jobs, isLoading } =
+    useGetJobsQuery({
+      path: { workflow_id: workflowId! },
+      query: {
+        limit: pageSize,
+        offset: offset,
+        status: status,
+        rule_name: ruleName,
+        order_by_started: true,
+        descending: true,
+      },
+    });
 
-  const sseResult = useWorkflowJobsWithSSE({
-    workflowId: workflowId!,
-    limit: pageSize,
-    offset: offset,
-    status: status,
-    ruleName: ruleName,
-    orderByStarted: true,
-    descending: true,
+  const { data: jobDetailData } = useQuery({
+    ...getJobOptions({
+      path: { job_id: jobDetailModal.jobId },
+    }),
+    enabled: jobDetailModal.visible && jobDetailModal.jobId > 0 ? true : false,
+  })
+
+  const { data: jobLogsData } = useQuery({
+    ...getLogsOptions({
+      path: { job_id: jobLogsModal.jobId },
+    }),
+    enabled: jobLogsModal.visible && jobLogsModal.jobId > 0 ? true : false,
   });
-
-  const staticResult = useWorkflowJobs(
-    workflowId!,
-    pageSize,
-    offset,
-    true,
-    true,
-    ruleName,
-    status,
-    !needsSSE, // Only enable when not using SSE
-  );
-
-  // Conditionally select which result to use
-  const result = needsSSE ? sseResult : staticResult;
-
-  const { data: jobDetailData } = useJobDetail(
-    jobDetailModal.jobId,
-    jobDetailModal.visible,
-  );
-  const { data: jobLogsData } = useJobLogs(
-    jobLogsModal.jobId,
-    jobLogsModal.visible,
-  );
-
-  const { data: jobs, isLoading, error, refetch } = result;
-
-  const { isSSEConnected } = needsSSE ? sseResult : { isSSEConnected: false };
 
   const columns: ColumnsType<JobResponse> = [
     {
-      title: "Rule name",
-      dataIndex: "rule_name",
-      key: "rule_name",
+      title: 'Rule name',
+      dataIndex: 'rule_name',
+      key: 'rule_name',
       width: 100,
       render: (ruleName: string) => (
-        <code style={{ fontSize: "14px", fontWeight: "bold" }}>{ruleName}</code>
+        <code style={{ fontSize: '14px', fontWeight: 'bold' }}>{ruleName}</code>
       ),
       sorter: (a, b) => (a.rule_id ?? 0) - (b.rule_id ?? 0),
     },
     {
-      title: "Status",
-      dataIndex: "status",
-      key: "status",
+      title: 'Status',
+      dataIndex: 'status',
+      key: 'status',
       width: 100,
       render: (status: Status) => (
         <Tag
           color={getStatusColor(status)}
-          style={{ textTransform: "uppercase" }}
+          style={{ textTransform: 'uppercase' }}
         >
           {status}
         </Tag>
       ),
       filters: [
-        { text: "Success", value: "SUCCESS" },
-        { text: "Running", value: "RUNNING" },
-        { text: "Error", value: "ERROR" },
-        { text: "Waiting", value: "WAITING" },
+        { text: 'Success', value: 'SUCCESS' },
+        { text: 'Running', value: 'RUNNING' },
+        { text: 'Error', value: 'ERROR' },
+        { text: 'Waiting', value: 'WAITING' },
       ],
       filteredValue: status ? [status] : null,
       onFilter: (value, record) => record.status === value,
     },
     {
-      title: "Started At",
-      dataIndex: "started_at",
-      key: "started_at",
+      title: 'Started At',
+      dataIndex: 'started_at',
+      key: 'started_at',
       width: 140,
       render: (startedAt: string | null) => formatDateCompact(startedAt),
       sorter: (a, b) => {
@@ -142,9 +126,9 @@ const JobTable: React.FC<JobTableProps> = ({
       },
     },
     {
-      title: "End Time",
-      dataIndex: "end_time",
-      key: "end_time",
+      title: 'End Time',
+      dataIndex: 'end_time',
+      key: 'end_time',
       width: 140,
       render: (endTime: string | null) => formatDateCompact(endTime),
       sorter: (a, b) => {
@@ -154,9 +138,9 @@ const JobTable: React.FC<JobTableProps> = ({
       },
     },
     {
-      title: "Duration (min:sec)",
-      dataIndex: "duration",
-      key: "duration",
+      title: 'Duration (min:sec)',
+      dataIndex: 'duration',
+      key: 'duration',
       width: 40,
       render: (_, record) => <DurationCell record={record} />,
       sorter: (a, b) => {
@@ -166,26 +150,26 @@ const JobTable: React.FC<JobTableProps> = ({
       },
     },
     {
-      title: "Threads",
-      dataIndex: "threads",
-      key: "threads",
+      title: 'Threads',
+      dataIndex: 'threads',
+      key: 'threads',
       width: 30,
-      render: (threads: number | null) => threads ?? "-",
+      render: (threads: number | null) => threads ?? '-',
       sorter: (a, b) => (a.threads ?? 0) - (b.threads ?? 0),
     },
     {
-      title: "Wildcards",
-      dataIndex: "wildcards",
+      title: 'Wildcards',
+      dataIndex: 'wildcards',
       width: 150,
       render: (wildcards: string | null) => {
-        if (!wildcards) return "-";
+        if (!wildcards) return '-';
 
         try {
           const wildcardsObj =
-            typeof wildcards === "string" ? JSON.parse(wildcards) : wildcards;
+            typeof wildcards === 'string' ? JSON.parse(wildcards) : wildcards;
           const entries = Object.entries(wildcardsObj);
 
-          if (entries.length === 0) return "-";
+          if (entries.length === 0) return '-';
 
           // Show first 2 key-value pairs as tags, rest in tooltip
           const visibleEntries = entries.slice(0, 3);
@@ -193,19 +177,19 @@ const JobTable: React.FC<JobTableProps> = ({
 
           const tooltipContent =
             entries.length > 3 ? (
-              <div style={{ maxWidth: "300px" }}>
-                <div style={{ marginBottom: "8px", fontWeight: "bold" }}>
+              <div style={{ maxWidth: '300px' }}>
+                <div style={{ marginBottom: '8px', fontWeight: 'bold' }}>
                   All Wildcards:
                 </div>
                 {entries.map(([key, value]) => (
                   <div
                     key={key}
                     style={{
-                      marginBottom: "4px",
-                      padding: "2px 6px",
-                      backgroundColor: "rgba(255,255,255,0.1)",
-                      borderRadius: "3px",
-                      fontSize: "12px",
+                      marginBottom: '4px',
+                      padding: '2px 6px',
+                      backgroundColor: 'rgba(255,255,255,0.1)',
+                      borderRadius: '3px',
+                      fontSize: '12px',
                     }}
                   >
                     <strong>{key}:</strong> {String(value)}
@@ -216,7 +200,7 @@ const JobTable: React.FC<JobTableProps> = ({
 
           return (
             <div
-              style={{ display: "flex", flexDirection: "column", gap: "2px" }}
+              style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}
             >
               {visibleEntries.map(([key, value]) => (
                 <Tag
@@ -224,11 +208,11 @@ const JobTable: React.FC<JobTableProps> = ({
                   color="blue"
                   style={{
                     margin: 0,
-                    fontSize: "11px",
-                    maxWidth: "180px",
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                    whiteSpace: "nowrap",
+                    fontSize: '11px',
+                    maxWidth: '180px',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
                   }}
                   title={`${key}: ${value}`}
                 >
@@ -241,9 +225,9 @@ const JobTable: React.FC<JobTableProps> = ({
                     color="default"
                     style={{
                       margin: 0,
-                      fontSize: "11px",
-                      cursor: "pointer",
-                      border: "1px dashed #d9d9d9",
+                      fontSize: '11px',
+                      cursor: 'pointer',
+                      border: '1px dashed #d9d9d9',
                     }}
                   >
                     +{hiddenEntries.length} more...
@@ -257,10 +241,10 @@ const JobTable: React.FC<JobTableProps> = ({
             <Tooltip title={wildcards} placement="topLeft">
               <Tag
                 color="orange"
-                style={{ fontSize: "11px", cursor: "pointer" }}
+                style={{ fontSize: '11px', cursor: 'pointer' }}
               >
                 {wildcards.length > 15
-                  ? wildcards.substring(0, 15) + "..."
+                  ? wildcards.substring(0, 15) + '...'
                   : wildcards}
               </Tag>
             </Tooltip>
@@ -269,19 +253,19 @@ const JobTable: React.FC<JobTableProps> = ({
       },
     },
     {
-      title: "Files",
-      key: "files",
+      title: 'Files',
+      key: 'files',
       width: 100,
-      align: "center",
+      align: 'center',
       render: (_, record) => {
         return (
           <div
             style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              width: "100%",
-              height: "100%",
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: '100%',
+              height: '100%',
             }}
           >
             <Tooltip title="View Job Logs">
@@ -314,65 +298,18 @@ const JobTable: React.FC<JobTableProps> = ({
     <div>
       <div
         style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          margin: "10px 0",
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          margin: '2px 0',
         }}
       >
-        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-          {needsSSE ? (
-            <LiveUpdatesIndicator
-              isConnected={isSSEConnected}
-              showReconnectButton={false}
-            />
-          ) : (
-            <div
-              style={{
-                fontSize: "12px",
-                color: "#666",
-                display: "flex",
-                alignItems: "center",
-              }}
-            >
-              <span>📊</span>
-              <span>Static Data (Workflow {workflowStatus || "Unknown"})</span>
-            </div>
-          )}
-        </div>
-        <div style={{ display: "flex", alignItems: "center" }}>
-          {showRefreshButton && (
-            <Button
-              icon={<ReloadOutlined />}
-              onClick={() => refetch()}
-              loading={isLoading}
-            >
-              Refresh
-            </Button>
-          )}
-        </div>
       </div>
-
-      {error && (
-        <div
-          style={{
-            color: "#ff4d4f",
-            backgroundColor: "#fff2f0",
-            border: "1px solid #ffccc7",
-            borderRadius: "6px",
-            padding: "8px 12px",
-            marginBottom: "16px",
-          }}
-        >
-          Error loading jobs:{" "}
-          {error instanceof Error ? error.message : "Unknown error"}
-        </div>
-      )}
 
       <Table
         columns={columns}
         dataSource={jobs?.jobs ?? []}
-        rowKey={(record) => record.id ?? ""}
+        rowKey={(record) => record.id ?? ''}
         loading={isLoading}
         onChange={(_, filters) => {
           if (filters.status !== undefined) {
@@ -392,8 +329,8 @@ const JobTable: React.FC<JobTableProps> = ({
           showQuickJumper: true,
           showTotal: (total, range) =>
             `${range[0]}-${range[1]} of ${total} jobs`,
-          pageSizeOptions: ["10", "20", "50", "100"],
-          position: ["bottomCenter"],
+          pageSizeOptions: ['10', '20', '50', '100'],
+          position: ['bottomCenter'],
           onChange: (page, size) => {
             setCurrentPage(page);
             if (size !== pageSize) {
@@ -408,23 +345,23 @@ const JobTable: React.FC<JobTableProps> = ({
         }}
         size="small"
         bordered
-        style={{ backgroundColor: "white" }}
+        style={{ backgroundColor: 'white' }}
       />
 
-      <FileViewer
+      <FileViewerModal
         key={`jobDetail`}
         title={`Detail -  Job ${jobDetailModal.jobId}`}
         visible={jobDetailModal.visible}
         onClose={() => setJobDetailModal({ visible: false, jobId: 0 })}
-        fileContent={JSON.stringify(jobDetailData, null, 2) || ""}
+        fileContent={JSON.stringify(jobDetailData, null, 2) || ''}
         fileFormat="json"
       />
 
-      <FilesViewer
-        key={`jobLogs`}
+      <MultiFileViewer
+        key={`jobLogs-${jobLogsModal.jobId}`}
         visible={jobLogsModal.visible}
         onClose={() => setJobLogsModal({ visible: false, jobId: 0 })}
-        fileContent={jobLogsData ?? {}}
+        fileContent={jobLogsData || {}}
         jobId={jobLogsModal.jobId}
       />
     </div>
