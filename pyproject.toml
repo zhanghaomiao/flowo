@@ -26,7 +26,7 @@ license = {text = "MIT"}
 name = "snakemake-logger-plugin-flowo"
 readme = "README.md"
 requires-python = ">=3.12"
-version = "0.1.12"
+version = "1.0.1"
 
 dependencies = [
   "pydantic>=2.11.5",
