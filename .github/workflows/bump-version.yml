@@ -12,6 +12,11 @@ on:
           - patch
           - minor
           - major
+      description:
+        description: "Release description (optional)"
+        required: false
+        default: ""
+        type: string
 
 jobs:
   bump-version:
@@ -63,16 +68,21 @@ jobs:
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
 
+          DESC="${{ github.event.inputs.description }}"
+          if [ -z "$DESC" ]; then
+            DESC="chore: bump version to ${{ steps.bump.outputs.NEW_VERSION }}"
+          fi
+
           git add pyproject.toml frontend/package.json
-          git commit -m "chore: bump version to ${{ steps.bump.outputs.NEW_VERSION }}"
+          git commit -m "$DESC"
 
           # === 关键修改：防冲突保险 ===
           # 在打 Tag 和推送前，先拉取远程最新代码。
           # 如果有变动，rebase 会自动把我们的版本修改通过去。
           git pull --rebase origin ${{ github.ref_name }}
 
-          # 打 Tag
-          git tag "v${{ steps.bump.outputs.NEW_VERSION }}"
+          # 打带描述的附注 Tag
+          git tag -a "v${{ steps.bump.outputs.NEW_VERSION }}" -m "$DESC"
 
           # === 关键修改：原子推送 ===
           # --atomic 保证代码和 Tag 要么一起成功，要么一起失败，防止出现"代码推了但Tag没推"的情况

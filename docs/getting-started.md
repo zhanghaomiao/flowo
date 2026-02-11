@@ -19,13 +19,27 @@ FlowO consists of several services orchestrated via Docker Compose.
 
 Copy the `env.example` to `.env`. In most cases, you only need to modify `FLOWO_WORKING_PATH` to point to the directory where you run your Snakemake workflows.
 
-## Reverse Proxy Configuration
+### 3. User & Group IDs (Linux)
+
+To ensure FlowO has correct permissions to read your workflow logs and files, it is recommended to set your current User ID (`UID`) and Group ID (`GID`) in the `.env` file:
+
+```env
+# .env
+UID=1000
+GID=1000
+```
+
+You can find your IDs by running `id -u` and `id -g` in your terminal.
+
+<!-- prettier-ignore -->
+!!! warning "UID and GID"
+    By default, these values are set to `0` (root). Running FlowO as **root** is a security risk and may lead to file permission issues (files created by FlowO will be owned by root). Always use your local user IDs.
+
+### 4. Reverse Proxy Configuration (Optional)
 
 If you are deploying FlowO behind a reverse proxy (like Nginx Proxy Manager, Caddy, or Traefik) using a custom domain (e.g., `http://flowo.iregene-bio.com`), you need to ensure the Snakemake plugin can correctly find the API.
 
 By default, FlowO calculates its host URL based on the internal `PROTOCOL`, `DOMAIN`, and `PORT`. When using a reverse proxy on standard ports (80/443), this calculation might include the internal port (e.g., `:3101`), which is not accessible from the outside.
-
-### Setting FLOWO_HOST
 
 To fix this, you should manually define the external URL in your `.env` file:
 
@@ -36,19 +50,7 @@ FLOWO_HOST=http://flowo.iregene-bio.com
 
 Once set, the "Generate Config" command in the dashboard and the CLI utility will use this URL.
 
-### Nginx Proxy Manager (NPM) Tips
-
-If you use NPM, ensure the following:
-
-- **Forward Host**: Use the LAN IP of your server.
-- **Forward Port**: `3101` (or your configured `PORT`).
-- **Websockets Support**: **Enabled** (Required for real-time progress).
-
-```bash
-cp env.example .env
-```
-
-### 3. Start Services (Recommended: Single Image)
+### 5. Start Services (Recommended: Single Image)
 
 Start the FlowO web service using our **unified** single image. This is the fastest and most stable way to get started.
 
@@ -60,7 +62,7 @@ docker compose -f docker/compose.yml up -d
 docker compose up -d
 ```
 
-### 4. Start Services (Advanced: Multiple Containers)
+### 6. Start Services (Advanced: Multiple Containers)
 
 If you prefer a microservices-style deployment with separate containers for Backend, Frontend, and Caddy:
 

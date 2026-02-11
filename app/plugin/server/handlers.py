@@ -36,11 +36,14 @@ class WorkflowStartedHandler(BaseEventHandler[WorkflowStartedSchema]):
             flowo_working_path=settings.FLOWO_WORKING_PATH,
             name=context.get("flowo_project_name"),
             tags=context.get("flowo_tags"),
+            logfile=context.get("logfile"),
             directory=context.get("workdir"),
             config=context.get("config"),
             dryrun=context.get("dryrun", False),
             status=Status.RUNNING,
             started_at=datetime.now(),
+            # maybe we need to get configfiles later
+            # configfiles=context.get("configfiles"),
         )
         session.add(workflow)
         context["current_workflow_id"] = data.workflow_id

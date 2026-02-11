@@ -319,7 +319,7 @@ export const BoxPlot = ({
     },
     xAxis: {
       type: 'value',
-      name: 'Duration (minutes)',
+      name: 'ln(minutes + 1)',
       nameLocation: 'middle',
       nameGap: 30,
       nameTextStyle: {
@@ -383,11 +383,11 @@ export const BoxPlot = ({
         const categoryName = categories[params.dataIndex];
         return `
           <strong>${categoryName}</strong><br/>
-          Max: ${data[4].toFixed(2)}m<br/>
-          Q3: ${data[3].toFixed(2)}m<br/>
-          Median: ${data[2].toFixed(2)}m<br/>
-          Q1: ${data[1].toFixed(2)}m<br/>
-          Min: ${data[0].toFixed(2)}m
+          Max: ${data[4].toFixed(2)}<br/>
+          Q3: ${data[3].toFixed(2)}<br/>
+          Median: ${data[2].toFixed(2)}<br/>
+          Q1: ${data[1].toFixed(2)}<br/>
+          Min: ${data[0].toFixed(2)}
         `;
       },
     },

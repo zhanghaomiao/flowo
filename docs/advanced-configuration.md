@@ -11,7 +11,13 @@ FlowO is configured primarily through environment variables. This page provides 
 | `DOMAIN`     | Domain name for the application.         | No       | `localhost`       |
 | `PROTOCOL`   | Protocol used (http/https).              | No       | `http`            |
 | `FLOWO_HOST` | The external URL used for API reporting. | No       | _Calculated_      |
+| `UID`        | User ID for the container process.       | No       | `0` (root)        |
+| `GID`        | Group ID for the container process.      | No       | `0` (root)        |
 | `TZ`         | Timezone setting.                        | No       | `Asia/Shanghai`   |
+
+<!-- prettier-ignore -->
+!!! warning "UID and GID"
+    By default, these values are set to `0` (root). Running FlowO as **root** is a security risk and may lead to file permission issues (files created by FlowO will be owned by root). Always use your local user IDs.
 
 <!-- prettier-ignore -->
 !!! warning
