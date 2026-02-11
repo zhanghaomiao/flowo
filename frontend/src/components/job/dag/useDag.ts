@@ -1,15 +1,14 @@
+import { useMemo } from 'react';
+
+import type { Edge, Node } from '@xyflow/react';
+import { MarkerType, Position } from '@xyflow/react';
+
 import {
   useGetRuleGraphQuery,
   useGetRuleStatusQuery,
 } from '@/client/@tanstack/react-query.gen';
 import type { RuleStatusResponse } from '@/client/types.gen';
-import {
-  type LayoutDirection,
-  getLayoutedElements,
-} from '@/utils/graphLayout';
-import type { Edge, Node } from '@xyflow/react';
-import { MarkerType, Position } from '@xyflow/react';
-import { useMemo } from 'react';
+import { getLayoutedElements, type LayoutDirection } from '@/utils/graphLayout';
 
 // 常量定义
 const NODE_WIDTH = 150;
@@ -127,8 +126,12 @@ export const useWorkflowGraph = ({
       nodeHeight: NODE_HEIGHT,
     });
 
+    // Reference forceLayoutRecalc to satisfy exhaustive-deps
+    // it's used as a trigger for re-layout
+    void forceLayoutRecalc;
+
     return { nodes: layout.nodes, edges: layout.edges };
-  }, [graphData, layoutDirection, forceLayoutRecalc]); 
+  }, [graphData, layoutDirection, forceLayoutRecalc]);
 
   // 4. 计算样式字典 (Lightweight Calculation)
   // 专门响应 ruleStatus 的变化，计算飞快
@@ -137,11 +140,11 @@ export const useWorkflowGraph = ({
 
     nodes.forEach((node) => {
       const ruleName = node.data.rule as string;
-      
+
       // 获取当前状态
       const statusInfo = ruleStatus?.[ruleName] || null;
       const status = statusInfo?.status || 'unscheduled';
-      
+
       const isSelected = selectedRule === ruleName;
       const isHighlighted = highlightedRule === ruleName;
       const isUnscheduled = !statusInfo;

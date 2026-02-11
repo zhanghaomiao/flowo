@@ -24,10 +24,7 @@ async def get_client_config(
     from app.core.config import settings
 
     return {
-        "POSTGRES_USER": settings.POSTGRES_USER,
-        "POSTGRES_PASSWORD": settings.POSTGRES_PASSWORD,
-        "POSTGRES_DB": settings.POSTGRES_DB,
-        "POSTGRES_HOST": settings.POSTGRES_HOST,
-        "POSTGRES_PORT": settings.POSTGRES_PORT,
         "FLOWO_WORKING_PATH": settings.FLOWO_WORKING_PATH,
+        "FLOWO_HOST": settings.FLOWO_HOST,
+        "API_V1_STR": settings.API_V1_STR,
     }

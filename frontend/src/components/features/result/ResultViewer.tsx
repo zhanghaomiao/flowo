@@ -1,27 +1,32 @@
-import React, { useState, useEffect } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
-import { useListFilesQuery, listFilesOptions } from '@/client/@tanstack/react-query.gen';
-import { client } from '@/client/client.gen';
+import React, { useEffect, useState } from 'react';
+
 import {
   DownloadOutlined,
+  FileOutlined,
   FullscreenOutlined,
-  FileOutlined
 } from '@ant-design/icons';
+import { useQueryClient } from '@tanstack/react-query';
 import {
-  Tree,
-  Splitter,
-  Card,
   Button,
-  Spin,
+  Card,
   Empty,
-  Modal,
   message,
+  Modal,
+  Space,
+  Spin,
+  Splitter,
+  Tree,
   Typography,
-  Space
 } from 'antd';
 
-import { updateTreeData, transformApiNodeToTreeNode } from './FileUtils';
+import {
+  listFilesOptions,
+  useListFilesQuery,
+} from '@/client/@tanstack/react-query.gen';
+import { client } from '@/client/client.gen';
+
 import { FilePreview } from './FilePreview';
+import { transformApiNodeToTreeNode, updateTreeData } from './FileUtils';
 import type { AntdTreeNode, ResultViewerProps } from './types';
 
 const { Text } = Typography;
@@ -32,13 +37,14 @@ export const ResultViewer: React.FC<ResultViewerProps> = ({ workflowId }) => {
   // State
   const [treeData, setTreeData] = useState<AntdTreeNode[]>([]);
   const [loadedKeys, setLoadedKeys] = useState<Set<React.Key>>(new Set());
-  const [selectedNodeData, setSelectedNodeData] = useState<AntdTreeNode | null>(null);
+  const [selectedNodeData, setSelectedNodeData] = useState<AntdTreeNode | null>(
+    null,
+  );
   const [isFullscreenOpen, setIsFullscreenOpen] = useState(false);
 
   const { data: rootFiles, isLoading } = useListFilesQuery({
-    query: { workflow_id: workflowId, path: '' }
+    query: { workflow_id: workflowId, path: '' },
   });
-
 
   useEffect(() => {
     if (rootFiles) {
@@ -49,34 +55,39 @@ export const ResultViewer: React.FC<ResultViewerProps> = ({ workflowId }) => {
     }
   }, [rootFiles]);
 
-  const onLoadData = ({ key, children }: any) => {
-    return new Promise<void>(async (resolve) => {
+  const onLoadData = ({ key, children }: AntdTreeNode) => {
+    return new Promise<void>((resolve) => {
       if ((children && children.length > 0) || loadedKeys.has(key)) {
         resolve();
         return;
       }
 
-      try {
-        const data = await queryClient.fetchQuery(
-          listFilesOptions({
-            query: { workflow_id: workflowId, path: key as string }
-          })
-        );
+      (async () => {
+        try {
+          const data = await queryClient.fetchQuery(
+            listFilesOptions({
+              query: { workflow_id: workflowId, path: key as string },
+            }),
+          );
 
-        const childNodes = data.map(transformApiNodeToTreeNode);
-        setTreeData((origin) => updateTreeData(origin, key, childNodes));
-        setLoadedKeys((prev) => new Set(prev).add(key));
+          const childNodes = data.map(transformApiNodeToTreeNode);
+          setTreeData((origin) => updateTreeData(origin, key, childNodes));
+          setLoadedKeys((prev) => new Set(prev).add(key));
 
-        resolve();
-      } catch (err) {
-        console.error(err);
-        message.error("Failed to load directory");
-        resolve();
-      }
+          resolve();
+        } catch (err) {
+          console.error(err);
+          message.error('Failed to load directory');
+          resolve();
+        }
+      })();
     });
   };
 
-  const handleSelect = (selectedKeys: React.Key[], info: any) => {
+  const handleSelect = (
+    selectedKeys: React.Key[],
+    info: { node: AntdTreeNode },
+  ) => {
     if (info.node) {
       setSelectedNodeData(info.node);
     }
@@ -84,14 +95,20 @@ export const ResultViewer: React.FC<ResultViewerProps> = ({ workflowId }) => {
 
   const handleDownload = () => {
     if (!selectedNodeData) return;
-    const url = client.buildUrl({ url: `${selectedNodeData.url}?download=true` });
+    const url = client.buildUrl({
+      url: `${selectedNodeData.url}?download=true`,
+    });
     window.open(url, '_blank');
   };
 
   // 4. 渲染内容
   const renderContent = () => {
     if (isLoading) {
-      return <div style={{ padding: 50, textAlign: 'center' }}><Spin size="large" /></div>;
+      return (
+        <div style={{ padding: 50, textAlign: 'center' }}>
+          <Spin size="large" />
+        </div>
+      );
     }
 
     if (!treeData || treeData.length === 0) {
@@ -102,7 +119,11 @@ export const ResultViewer: React.FC<ResultViewerProps> = ({ workflowId }) => {
       <Splitter style={{ height: '100%' }}>
         {/* 左侧：文件树 */}
         <Splitter.Panel defaultSize="30%" min="20%">
-          <Card style={{ height: '100%', overflow: 'auto' }} styles={{ body: { padding: 12 } }} bordered={false}>
+          <Card
+            style={{ height: '100%', overflow: 'auto' }}
+            styles={{ body: { padding: 12 } }}
+            bordered={false}
+          >
             <Tree
               treeData={treeData}
               loadData={onLoadData}
@@ -115,20 +136,28 @@ export const ResultViewer: React.FC<ResultViewerProps> = ({ workflowId }) => {
         </Splitter.Panel>
 
         <Splitter.Panel>
-          <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+          <div
+            style={{ display: 'flex', flexDirection: 'column', height: '100%' }}
+          >
             {/* 右侧头部工具栏 */}
-            <div style={{
-              padding: '12px',
-              borderBottom: '1px solid #f0f0f0',
-              background: '#fff',
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center'
-            }}>
+            <div
+              style={{
+                padding: '12px',
+                borderBottom: '1px solid #f0f0f0',
+                background: '#fff',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+              }}
+            >
               <Text strong style={{ fontSize: 16 }}>
                 {selectedNodeData ? (
-                  <Space><FileOutlined /> {selectedNodeData.title}</Space>
-                ) : "File Preview"}
+                  <Space>
+                    <FileOutlined /> {selectedNodeData.title}
+                  </Space>
+                ) : (
+                  'File Preview'
+                )}
               </Text>
 
               <Space>
@@ -149,8 +178,18 @@ export const ResultViewer: React.FC<ResultViewerProps> = ({ workflowId }) => {
               </Space>
             </div>
 
-            <div style={{ flex: 1, overflow: 'hidden', padding: 16, background: '#fafafa' }}>
-              <Card style={{ height: '100%' }} styles={{ body: { height: '100%', padding: 0 } }}>
+            <div
+              style={{
+                flex: 1,
+                overflow: 'hidden',
+                padding: 16,
+                background: '#fafafa',
+              }}
+            >
+              <Card
+                style={{ height: '100%' }}
+                styles={{ body: { height: '100%', padding: 0 } }}
+              >
                 <FilePreview nodeData={selectedNodeData} />
               </Card>
             </div>
@@ -162,7 +201,6 @@ export const ResultViewer: React.FC<ResultViewerProps> = ({ workflowId }) => {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-
       {renderContent()}
       <Modal
         open={isFullscreenOpen}
@@ -170,7 +208,7 @@ export const ResultViewer: React.FC<ResultViewerProps> = ({ workflowId }) => {
         width="95vw"
         style={{ top: 20 }}
         footer={null}
-        title={selectedNodeData?.title || "Preview"}
+        title={selectedNodeData?.title || 'Preview'}
         destroyOnHidden
         styles={{ body: { height: '85vh', padding: 0 } }}
       >

@@ -5,7 +5,8 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 
 # Install dependencies
-RUN npm install 
+RUN --mount=type=cache,target=/root/.npm \
+    npm ci
 
 
 # Copy source code
@@ -26,4 +27,4 @@ COPY nginx.conf /etc/nginx/nginx.conf
 EXPOSE 80
 
 # Start nginx
-CMD ["nginx", "-g", "daemon off;"] 
+CMD ["nginx", "-g", "daemon off;"]

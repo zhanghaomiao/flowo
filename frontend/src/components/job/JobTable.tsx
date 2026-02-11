@@ -1,20 +1,19 @@
+import React, { useEffect, useState } from 'react';
+
+import { FileTextOutlined, InfoCircleOutlined } from '@ant-design/icons';
+import { useQuery } from '@tanstack/react-query';
+import { Button, Table, Tag, Tooltip } from 'antd';
+import type { ColumnsType } from 'antd/es/table';
+
 import {
   getJobOptions,
   getLogsOptions,
   useGetJobsQuery,
 } from '@/client/@tanstack/react-query.gen';
 import type { JobResponse, Status } from '@/client/types.gen';
-import { DurationCell, calculateDuration } from '@/components/common/common';
+import { calculateDuration, DurationCell } from '@/components/common/common';
 import { FileViewerModal, MultiFileViewer } from '@/components/shared/viewers';
 import { formatDateCompact, getStatusColor } from '@/utils/formatters';
-import {
-  FileTextOutlined,
-  InfoCircleOutlined,
-} from '@ant-design/icons';
-import { useQuery } from '@tanstack/react-query';
-import { Button, Table, Tag, Tooltip } from 'antd';
-import type { ColumnsType } from 'antd/es/table';
-import React, { useEffect, useState } from 'react';
 
 interface JobTableProps {
   workflowId?: string;
@@ -23,10 +22,7 @@ interface JobTableProps {
   showRefreshButton?: boolean;
 }
 
-const JobTable: React.FC<JobTableProps> = ({
-  workflowId,
-  ruleName,
-}) => {
+const JobTable: React.FC<JobTableProps> = ({ workflowId, ruleName }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
   const [status, setStatus] = useState<Status | null>(null);
@@ -53,25 +49,24 @@ const JobTable: React.FC<JobTableProps> = ({
     setPageSize(20);
   }, [ruleName]);
 
-  const { data: jobs, isLoading } =
-    useGetJobsQuery({
-      path: { workflow_id: workflowId! },
-      query: {
-        limit: pageSize,
-        offset: offset,
-        status: status,
-        rule_name: ruleName,
-        order_by_started: true,
-        descending: true,
-      },
-    });
+  const { data: jobs, isLoading } = useGetJobsQuery({
+    path: { workflow_id: workflowId! },
+    query: {
+      limit: pageSize,
+      offset: offset,
+      status: status,
+      rule_name: ruleName,
+      order_by_started: true,
+      descending: true,
+    },
+  });
 
   const { data: jobDetailData } = useQuery({
     ...getJobOptions({
       path: { job_id: jobDetailModal.jobId },
     }),
     enabled: jobDetailModal.visible && jobDetailModal.jobId > 0 ? true : false,
-  })
+  });
 
   const { data: jobLogsData } = useQuery({
     ...getLogsOptions({
@@ -303,8 +298,7 @@ const JobTable: React.FC<JobTableProps> = ({
           alignItems: 'center',
           margin: '2px 0',
         }}
-      >
-      </div>
+      ></div>
 
       <Table
         columns={columns}

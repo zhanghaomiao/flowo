@@ -10,6 +10,7 @@ FlowO is configured primarily through environment variables. This page provides 
 | `PORT`       | The host port Caddy listens on.          | No       | `3100`            |
 | `DOMAIN`     | Domain name for the application.         | No       | `localhost`       |
 | `PROTOCOL`   | Protocol used (http/https).              | No       | `http`            |
+| `FLOWO_HOST` | The external URL used for API reporting. | No       | _Calculated_      |
 | `TZ`         | Timezone setting.                        | No       | `Asia/Shanghai`   |
 
 <!-- prettier-ignore -->

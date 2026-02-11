@@ -1,9 +1,10 @@
-import { ExclamationCircleOutlined } from '@ant-design/icons';
-import { Alert, Switch, Typography } from 'antd';
 import React, { useMemo, useState } from 'react';
 
-import VirtualizedCodeViewer from './VirtualizedCodeViewer';
+import { ExclamationCircleOutlined } from '@ant-design/icons';
+import { Alert, Switch, Typography } from 'antd';
+
 import type { FileViewerProps } from './types';
+import VirtualizedCodeViewer from './VirtualizedCodeViewer';
 
 const { Text } = Typography;
 
@@ -13,11 +14,9 @@ const MAX_LINES_FOR_HIGHLIGHTING = 5000;
 const LARGE_FILE_PREVIEW_LINES = 5000;
 
 export const TextViewer: React.FC<FileViewerProps> = ({
-  src,
   content,
   fileName,
   fileFormat = 'yaml',
-  fullscreen = false,
   showFileName = false,
 }) => {
   const [forceHighlighting, setForceHighlighting] = useState(false);

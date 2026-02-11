@@ -1,10 +1,14 @@
 // Universal file viewer components
-export { TextViewer } from './TextViewer';
-export { ImageViewer } from './ImageViewer';
-export { TableViewer } from './TableViewer';
-export { IframeViewer } from './IframeViewer';
 export { FileViewerModal } from './FileViewerModal';
+export { IframeViewer } from './IframeViewer';
+export { ImageViewer } from './ImageViewer';
 export { MultiFileViewer } from './MultiFileViewer';
+export { TableViewer } from './TableViewer';
+export { TextViewer } from './TextViewer';
 
 // Types
-export type { FileViewerProps, FileViewerModalProps, MultiFileViewerProps } from './types';
+export type {
+  FileViewerModalProps,
+  FileViewerProps,
+  MultiFileViewerProps,
+} from './types';

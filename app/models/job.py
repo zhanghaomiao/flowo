@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any
 
 from sqlalchemy import DateTime, Enum, ForeignKey
@@ -52,7 +52,7 @@ class Job(Base):
     priority: Mapped[int | None]
     status: Mapped[Status] = mapped_column(Enum(Status), default="WAITING")
     started_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
+        DateTime(timezone=True), default=lambda: datetime.now(UTC)
     )
     end_time: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     group_id: Mapped[int | None]

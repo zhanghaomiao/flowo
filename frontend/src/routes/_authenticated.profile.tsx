@@ -1,11 +1,5 @@
-import {
-  createTokenMutation,
-  deleteTokenMutation,
-  listTokensOptions,
-  listTokensQueryKey,
-  usersCurrentUserOptions,
-} from '@/client/@tanstack/react-query.gen';
-import { UserTokenResponse } from '@/client/types.gen';
+import { useState } from 'react';
+
 import {
   CheckOutlined,
   CopyOutlined,
@@ -23,6 +17,7 @@ import {
   Descriptions,
   Form,
   Input,
+  message,
   Modal,
   Popconfirm,
   Row,
@@ -32,15 +27,20 @@ import {
   Tabs,
   Tag,
   Tooltip,
-  Typography,
-  message,
 } from 'antd';
 import dayjs from 'dayjs';
-import { useState } from 'react';
+
+import {
+  createTokenMutation,
+  deleteTokenMutation,
+  getClientConfigOptions,
+  listTokensOptions,
+  listTokensQueryKey,
+  usersCurrentUserOptions,
+} from '@/client/@tanstack/react-query.gen';
+import { UserTokenResponse } from '@/client/types.gen';
 
 import { useAuth } from '../auth';
-
-const { Text, Paragraph } = Typography;
 
 const CodeBlock = ({ text }: { text: string }) => {
   const [copied, setCopied] = useState(false);
@@ -94,7 +94,7 @@ export const Route = createFileRoute('/_authenticated/profile')({
 });
 
 function ProfileComponent() {
-  const { token, logout } = useAuth();
+  const { token } = useAuth();
   const queryClient = useQueryClient();
   const [isTokenModalVisible, setIsTokenModalVisible] = useState(false);
   const [newTokenName, setNewTokenName] = useState('');
@@ -105,7 +105,7 @@ function ProfileComponent() {
   const [targetToken, setTargetToken] = useState<string | null>(null);
   const [targetTokenName, setTargetTokenName] = useState<string>('');
 
-  const { data: user } = useQuery({
+  useQuery({
     ...usersCurrentUserOptions({
       headers: {
         Authorization: `Bearer ${token}`,
@@ -140,16 +140,11 @@ function ProfileComponent() {
   );
 
   const { data: clientConfig } = useQuery({
-    queryKey: ['clientConfig'],
-    queryFn: async () => {
-      const response = await fetch('/api/v1/utils/client-config', {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      if (!response.ok) throw new Error('Failed to fetch config');
-      return response.json();
-    },
+    ...getClientConfigOptions({
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }),
     enabled: !!token,
   });
 
@@ -193,14 +188,9 @@ function ProfileComponent() {
           headers: { Authorization: `Bearer ${token}` },
         }),
       });
-    } catch (err) {
+    } catch {
       message.error('Failed to delete token');
     }
-  };
-
-  const handleLogout = () => {
-    logout();
-    message.success('Logged out successfully');
   };
 
   const getConfigFileContent = (t: string) => {
@@ -316,13 +306,13 @@ FLOWO_WORKING_PATH=${clientConfig.FLOWO_WORKING_PATH}`;
                   title: 'Action',
                   key: 'action',
                   width: 150,
-                  render: (_: any, record: UserTokenResponse) => (
+                  render: (_: unknown, record: UserTokenResponse) => (
                     <Space>
                       <Button
                         size="small"
                         type="link"
                         onClick={() => {
-                          setTargetToken((record as any).token || '');
+                          setTargetToken(record.token || '');
                           setTargetTokenName(record.name);
                           setConfigModalVisible(true);
                         }}

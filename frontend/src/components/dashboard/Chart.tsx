@@ -1,7 +1,9 @@
+import React from 'react';
+
 import { Empty } from 'antd';
 import ReactECharts from 'echarts-for-react';
+
 import 'echarts-wordcloud';
-import React from 'react';
 
 const CHART_FONT_FAMILY =
   "-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif";
@@ -401,7 +403,13 @@ export const BoxPlot = ({
 };
 
 export const WordCloud = React.memo(
-  ({ data, title }: { data: Array<{ name: string; value: number }>; title: string }) => {
+  ({
+    data,
+    title,
+  }: {
+    data: Array<{ name: string; value: number }>;
+    title: string;
+  }) => {
     if (!data || data.length === 0) {
       return (
         <Empty

@@ -1,6 +1,7 @@
+import React, { useState } from 'react';
+
 import { Spin, Table } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
-import React, { useState } from 'react';
 
 import type { FileViewerProps } from './types';
 

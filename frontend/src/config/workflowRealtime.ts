@@ -1,16 +1,17 @@
-import { client } from '@/client/client.gen';
-import { useQueryClient } from '@tanstack/react-query';
-import debounce from 'lodash/debounce';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
-const TAG_WORKFLOWS = 'workflow';
-const TAG_JOBS = 'job';
+import { Query, QueryClient, useQueryClient } from '@tanstack/react-query';
+import debounce from 'lodash/debounce';
 
-// 辅助函数：基于 Tag 的 Invalidate
-const invalidateByTag = (queryClient: any, tag: string) => {
+import { client } from '@/client/client.gen';
+import { getSseTicket } from '@/client/sdk.gen';
+
+const TAG_WORKFLOWS = 'workflow';
+
+const invalidateByTag = (queryClient: QueryClient, tag: string) => {
   return queryClient.invalidateQueries({
-    predicate: (query: any) => {
-      const keyObj = query.queryKey[0] as any;
+    predicate: (query: Query) => {
+      const keyObj = query.queryKey[0] as { tags?: string[] };
       return Array.isArray(keyObj?.tags) && keyObj.tags.includes(tag);
     },
   });
@@ -60,18 +61,17 @@ export const useWorkflowRealtime = (workflows: string[] = []) => {
 
       try {
         // 1. Get short-lived ticket
-        const ticketRes = await fetch('/api/v1/sse/ticket', {
-          method: 'POST',
+        const ticketRes = await getSseTicket({
           headers: {
             Authorization: `Bearer ${token}`,
           },
         });
 
-        if (!ticketRes.ok) {
+        if (ticketRes.error) {
           throw new Error('Failed to obtain SSE ticket');
         }
 
-        const { ticket } = await ticketRes.json();
+        const { ticket } = ticketRes.data as { ticket: string };
 
         if (!isActive) return;
 
@@ -105,7 +105,7 @@ export const useWorkflowRealtime = (workflows: string[] = []) => {
           if (!isActive) return;
           try {
             const data = JSON.parse(event.data);
-            const { table, operation, id, workflow_id } = data;
+            const { table, id, workflow_id } = data;
 
             if (data.operation === 'UPDATE' && !data.new_status) return;
             if (data.operation === 'INSERT' || data.operation === 'DELETE') {

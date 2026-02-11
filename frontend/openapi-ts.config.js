@@ -5,7 +5,7 @@ export default defineConfig({
   output: 'src/client',
   plugins: [
     {
-      baseUrl: false, 
+      baseUrl: false,
       name: '@hey-api/client-fetch',
     },
     {
@@ -14,8 +14,8 @@ export default defineConfig({
       mutationOptions: true,
       useQuery: true,
       queryKeys: {
-        tags: true
-      } ,
+        tags: true,
+      },
     },
   ],
 });

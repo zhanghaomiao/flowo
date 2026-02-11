@@ -1,11 +1,10 @@
 import uuid
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any
 
 from sqlalchemy import JSON, DateTime, Enum, ForeignKey, String
 from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from datetime import timezone
 
 from .base import Base
 from .enums import Status
@@ -21,7 +20,7 @@ class Workflow(Base):
     id: Mapped[uuid.UUID] = mapped_column(primary_key=True)
     snakefile: Mapped[str | None]
     started_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
+        DateTime(timezone=True), default=lambda: datetime.now(UTC)
     )
     end_time: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     status: Mapped[Status] = mapped_column(

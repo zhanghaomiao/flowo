@@ -1,7 +1,8 @@
+import React, { memo } from 'react';
+
 import type { NodeProps } from '@xyflow/react';
 import { Handle, Position } from '@xyflow/react';
 import { Tooltip } from 'antd';
-import React, { memo } from 'react';
 
 // Multi-progress bar component for showing job status breakdown
 const MultiProgressBar = ({

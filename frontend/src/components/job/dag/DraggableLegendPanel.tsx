@@ -1,5 +1,6 @@
-import { Card } from 'antd';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+
+import { Card } from 'antd';
 
 const STATUS_COLORS = {
   unscheduled: '#E0E0E0',

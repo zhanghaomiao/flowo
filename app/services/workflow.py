@@ -89,7 +89,7 @@ class WorkflowService:
         if end_at:
             filters.append(
                 or_(
-                    Workflow.end_time == None,  # 仍在运行
+                    Workflow.end_time.is_(None),  # 仍在运行
                     Workflow.end_time <= str(end_at),  # 已结束，且时间早于end_at
                 )
             )
@@ -346,7 +346,7 @@ class WorkflowService:
         query = (
             select(Workflow.id)
             .outerjoin(Job, Workflow.id == Job.workflow_id)
-            .where(Job.id == None)
+            .where(Job.id.is_(None))
         )
         result = await self.db_session.execute(query)
         workflows_without_jobs = result.all()

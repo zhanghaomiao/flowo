@@ -19,6 +19,31 @@ FlowO consists of several services orchestrated via Docker Compose.
 
 Copy the `env.example` to `.env`. In most cases, you only need to modify `FLOWO_WORKING_PATH` to point to the directory where you run your Snakemake workflows.
 
+## Reverse Proxy Configuration
+
+If you are deploying FlowO behind a reverse proxy (like Nginx Proxy Manager, Caddy, or Traefik) using a custom domain (e.g., `http://flowo.iregene-bio.com`), you need to ensure the Snakemake plugin can correctly find the API.
+
+By default, FlowO calculates its host URL based on the internal `PROTOCOL`, `DOMAIN`, and `PORT`. When using a reverse proxy on standard ports (80/443), this calculation might include the internal port (e.g., `:3101`), which is not accessible from the outside.
+
+### Setting FLOWO_HOST
+
+To fix this, you should manually define the external URL in your `.env` file:
+
+```env
+# .env
+FLOWO_HOST=http://flowo.iregene-bio.com
+```
+
+Once set, the "Generate Config" command in the dashboard and the CLI utility will use this URL.
+
+### Nginx Proxy Manager (NPM) Tips
+
+If you use NPM, ensure the following:
+
+- **Forward Host**: Use the LAN IP of your server.
+- **Forward Port**: `3101` (or your configured `PORT`).
+- **Websockets Support**: **Enabled** (Required for real-time progress).
+
 ```bash
 cp env.example .env
 ```

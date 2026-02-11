@@ -1,8 +1,8 @@
-# Stage 1: 构建前端
 FROM node:22-alpine AS frontend-builder
 WORKDIR /app/frontend
 COPY frontend/package.json frontend/package-lock.json ./
-RUN npm install
+RUN --mount=type=cache,target=/root/.npm \
+    npm ci
 COPY frontend/ ./
 RUN npm run build
 
@@ -15,11 +15,9 @@ RUN groupadd --system --gid 1000 flowo \
 
 WORKDIR /app
 
-# 环境变量 (配置国内源)
-ENV UV_INDEX_URL=https://mirrors.aliyun.com/pypi/simple/ \
-    UV_LINK_MODE=copy \
-    UV_NO_DEV=1 \
-    PATH="/app/.venv/bin:$PATH"
+ENV  UV_LINK_MODE=copy \
+     UV_NO_DEV=1 \
+     PATH="/app/.venv/bin:$PATH"
 
 COPY --from=caddy-source /usr/bin/caddy /usr/bin/caddy
 

@@ -1,5 +1,6 @@
-import { Card } from 'antd';
 import React from 'react';
+
+import { Card } from 'antd';
 
 interface StatusData {
   success: number;

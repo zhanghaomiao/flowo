@@ -50,7 +50,7 @@ async def list_files(
                 is_dir = entry.is_dir()
 
                 if not is_dir:
-                    ext = os.path.splitext(entry.name)[1].lower()
+                    pass
 
                 relative_key = f"{path}/{entry.name}" if path else entry.name
                 if relative_key.startswith("/"):

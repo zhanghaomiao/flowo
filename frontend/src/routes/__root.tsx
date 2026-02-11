@@ -9,9 +9,9 @@ import {
 import { type QueryClient } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import {
+  createRootRouteWithContext,
   Link,
   Outlet,
-  createRootRouteWithContext,
   useLocation,
   useNavigate,
 } from '@tanstack/react-router';

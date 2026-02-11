@@ -1,14 +1,15 @@
-import { client } from '@/client/client.gen';
+import React from 'react';
+
 import { useQuery } from '@tanstack/react-query';
-import { Alert, Spin, Result } from 'antd';
-import React, { useMemo } from 'react';
+import { Alert, Result, Spin } from 'antd';
 
 import {
-  TextViewer,
+  IframeViewer,
   ImageViewer,
   TableViewer,
-  IframeViewer,
+  TextViewer,
 } from '@/components/shared/viewers';
+
 import {
   formatFileSize,
   getFileExtension,
@@ -18,22 +19,69 @@ import {
 } from './FileUtils';
 import type { SelectedNodeData } from './types';
 
-
 interface FilePreviewProps {
   nodeData: SelectedNodeData | null; // 允许为 null
   fullscreen?: boolean;
 }
 
-export const FilePreview: React.FC<FilePreviewProps> = ({ nodeData, fullscreen = false }) => {
+// Text file viewer that fetches content
+const TextFileViewer: React.FC<{
+  src: string | undefined;
+  extension: string;
+}> = ({ src, extension }) => {
+  const { data, isLoading, isError } = useQuery({
+    queryKey: ['fileContent', src],
+    queryFn: async () => {
+      if (!src) return '';
+      const response = await fetch(src);
+      if (!response.ok) throw new Error('Failed to load file');
+      return response.text();
+    },
+    enabled: !!src,
+    staleTime: 1000 * 60 * 10, // 缓存 10 分钟
+    retry: 1,
+  });
+
+  if (!src) {
+    return (
+      <Result status="error" title="No source URL provided for text file." />
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <div style={{ textAlign: 'center', padding: 50 }}>
+        <Spin tip="Loading content..." />
+      </div>
+    );
+  }
+
+  if (isError) {
+    return <Result status="error" title="Failed to load file content" />;
+  }
+
+  return (
+    <div style={{ height: '100%', overflow: 'hidden' }}>
+      <TextViewer content={data || ''} fileFormat={extension} />
+    </div>
+  );
+};
+
+export const FilePreview: React.FC<FilePreviewProps> = ({
+  nodeData,
+  fullscreen = false,
+}) => {
   if (!nodeData || nodeData.type !== 'file') {
     return (
-      <div style={{
-        height: '100%',
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        color: '#999'
-      }}>
+      <div
+        style={{
+          height: '100%',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          color: '#999',
+        }}
+      >
         Select a file to preview
       </div>
     );
@@ -42,7 +90,6 @@ export const FilePreview: React.FC<FilePreviewProps> = ({ nodeData, fullscreen =
   const { url, nodeData: data } = nodeData;
   const title = data.title || '';
   const fileSize = data.fileSize || 0;
-
 
   const category = getFileTypeCategory(title as string);
   const extension = getFileExtension(title as string);
@@ -83,47 +130,15 @@ export const FilePreview: React.FC<FilePreviewProps> = ({ nodeData, fullscreen =
     }
   };
 
-  // Text file viewer that fetches content
-  const TextFileViewer: React.FC<{ src: string | undefined; extension: string }> = ({ src, extension }) => {
-    if (!src) {
-      return <Result status="error" title="No source URL provided for text file." />;
-    }
-    const { data, isLoading, isError } = useQuery({
-      queryKey: ['fileContent', src],
-      queryFn: async () => {
-        const response = await fetch(src);
-        if (!response.ok) throw new Error('Failed to load file');
-        return response.text();
-      },
-      staleTime: 1000 * 60 * 10, // 缓存 10 分钟
-      retry: 1
-    });
-
-    if (isLoading) {
-      return <div style={{ textAlign: 'center', padding: 50 }}><Spin tip="Loading content..." /></div>;
-    }
-
-    if (isError) {
-      return <Result status="error" title="Failed to load file content" />;
-    }
-
-    return (
-      <div style={{ height: '100%', overflow: 'hidden' }}>
-        <TextViewer
-          content={data || ''}
-          fileFormat={extension}
-        />
-      </div>
-    );
-  };
-
   return (
-    <div style={{
-      height: '100%',
-      display: 'flex',
-      flexDirection: 'column',
-      padding: fullscreen ? 0 : '8px'
-    }}>
+    <div
+      style={{
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        padding: fullscreen ? 0 : '8px',
+      }}
+    >
       {shouldShowPreviewWarning(fileSize, title as string) && (
         <Alert
           message="Large File"

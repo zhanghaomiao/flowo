@@ -1,3 +1,5 @@
+import React from 'react';
+
 import {
   FileImageOutlined,
   FileOutlined,
@@ -7,7 +9,9 @@ import {
   Html5Outlined,
   TableOutlined, // 增加 CSV 图标
 } from '@ant-design/icons';
-import React from 'react';
+
+import { FileNode } from '@/client/types.gen';
+
 import type { AntdTreeNode, FileSizeThresholds, FileTypes } from './types';
 
 // =================================================================
@@ -18,7 +22,7 @@ import type { AntdTreeNode, FileSizeThresholds, FileTypes } from './types';
 export const FILE_SIZE_THRESHOLDS: FileSizeThresholds = {
   default: {
     PREVIEW_WARNING: 10 * 1024 * 1024, // 10MB
-    PREVIEW_BLOCK: 50 * 1024 * 1024,   // 50MB
+    PREVIEW_BLOCK: 50 * 1024 * 1024, // 50MB
     DOWNLOAD_WARNING: 100 * 1024 * 1024, // 100MB
   },
   pdf: {
@@ -43,7 +47,19 @@ export const FILE_TYPES: FileTypes = {
   images: ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'svg', 'webp', 'ico'],
   pdfs: ['pdf'],
   html: ['html', 'htm'],
-  text: ['txt', 'log', 'md', 'rst', 'json', 'yaml', 'yml', 'xml', 'js', 'ts', 'css'],
+  text: [
+    'txt',
+    'log',
+    'md',
+    'rst',
+    'json',
+    'yaml',
+    'yml',
+    'xml',
+    'js',
+    'ts',
+    'css',
+  ],
   csv: ['csv', 'tsv'],
 };
 
@@ -117,26 +133,39 @@ export const formatFileSize = (bytes: number | null): string => {
 export const getFileThresholds = (filename: string) => {
   const category = getFileTypeCategory(filename);
   switch (category) {
-    case 'pdf': return FILE_SIZE_THRESHOLDS.pdf;
-    case 'html': return FILE_SIZE_THRESHOLDS.html;
-    case 'image': return FILE_SIZE_THRESHOLDS.image;
-    default: return FILE_SIZE_THRESHOLDS.default;
+    case 'pdf':
+      return FILE_SIZE_THRESHOLDS.pdf;
+    case 'html':
+      return FILE_SIZE_THRESHOLDS.html;
+    case 'image':
+      return FILE_SIZE_THRESHOLDS.image;
+    default:
+      return FILE_SIZE_THRESHOLDS.default;
   }
 };
 
-export const isFileTooLargeForPreview = (fileSize: number | null, filename: string): boolean => {
+export const isFileTooLargeForPreview = (
+  fileSize: number | null,
+  filename: string,
+): boolean => {
   if (fileSize === null) return false;
   const thresholds = getFileThresholds(filename);
   return fileSize > thresholds.PREVIEW_BLOCK;
 };
 
-export const shouldShowPreviewWarning = (fileSize: number | null, filename: string): boolean => {
+export const shouldShowPreviewWarning = (
+  fileSize: number | null,
+  filename: string,
+): boolean => {
   if (fileSize === null) return false;
   const thresholds = getFileThresholds(filename);
   return fileSize > thresholds.PREVIEW_WARNING;
 };
 
-export const shouldShowDownloadWarning = (fileSize: number | null, filename: string): boolean => {
+export const shouldShowDownloadWarning = (
+  fileSize: number | null,
+  filename: string,
+): boolean => {
   if (fileSize === null) return false;
   const thresholds = getFileThresholds(filename);
   return fileSize > thresholds.DOWNLOAD_WARNING;
@@ -150,7 +179,7 @@ export const shouldShowDownloadWarning = (fileSize: number | null, filename: str
 export const updateTreeData = (
   list: AntdTreeNode[],
   key: React.Key,
-  children: AntdTreeNode[]
+  children: AntdTreeNode[],
 ): AntdTreeNode[] => {
   return list.map((node) => {
     if (node.key === key) {
@@ -166,8 +195,8 @@ export const updateTreeData = (
   });
 };
 
-export const transformApiNodeToTreeNode = (item: any): AntdTreeNode => {
-  const isLeaf = item.isLeaf !== undefined ? item.isLeaf : !item.is_dir;
+export const transformApiNodeToTreeNode = (item: FileNode): AntdTreeNode => {
+  const isLeaf = item.isLeaf;
 
   let fileUrl: string | undefined = undefined;
 

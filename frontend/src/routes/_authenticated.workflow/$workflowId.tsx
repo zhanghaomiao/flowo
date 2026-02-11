@@ -1,3 +1,15 @@
+import { useEffect, useState } from 'react';
+
+import {
+  ClockCircleOutlined,
+  CodeOutlined,
+  FileOutlined,
+  UnorderedListOutlined,
+} from '@ant-design/icons';
+import { useQuery } from '@tanstack/react-query';
+import { createFileRoute } from '@tanstack/react-router';
+import { Splitter, Tabs } from 'antd';
+
 import {
   getSnakefileOptions,
   useGetDetailQuery,
@@ -11,16 +23,6 @@ import WorkflowProgress from '@/components/workflow/WorkflowProgress.tsx';
 import WorkflowTimeline from '@/components/workflow/WorkflowTimeline.tsx';
 import { useWorkflowRealtime } from '@/config/workflowRealtime';
 import { useWorkflowState } from '@/hooks/useWorkflowState.ts';
-import {
-  ClockCircleOutlined,
-  CodeOutlined,
-  FileOutlined,
-  UnorderedListOutlined,
-} from '@ant-design/icons';
-import { useQuery } from '@tanstack/react-query';
-import { createFileRoute } from '@tanstack/react-router';
-import { Splitter, Tabs } from 'antd';
-import { useEffect, useState } from 'react';
 
 export const Route = createFileRoute('/_authenticated/workflow/$workflowId')({
   component: WorkflowDetail,
@@ -66,7 +68,6 @@ function WorkflowDetail() {
     }),
     enabled: enableSnakefile,
   });
-
 
   return (
     <div style={{ width: '96%', margin: '0 auto' }}>

@@ -25,4 +25,10 @@ export interface MultiFileViewerProps {
 }
 
 // File type categories
-export type FileTypeCategory = 'text' | 'image' | 'pdf' | 'html' | 'csv' | 'other';
+export type FileTypeCategory =
+  | 'text'
+  | 'image'
+  | 'pdf'
+  | 'html'
+  | 'csv'
+  | 'other';

@@ -1,4 +1,3 @@
-import { registerRegisterMutation } from '@/client/@tanstack/react-query.gen';
 import {
   ArrowRightOutlined,
   LockOutlined,
@@ -6,8 +5,16 @@ import {
   UserAddOutlined,
 } from '@ant-design/icons';
 import { useMutation } from '@tanstack/react-query';
-import { Link, createFileRoute, useNavigate } from '@tanstack/react-router';
+import { createFileRoute, Link, useNavigate } from '@tanstack/react-router';
 import { App, Button, Card, Form, Input, Typography } from 'antd';
+
+import { registerRegisterMutation } from '@/client/@tanstack/react-query.gen';
+import { RegisterRegisterError } from '@/client/types.gen';
+
+interface RegisterFormValues {
+  email: string;
+  password: string;
+}
 
 const { Title, Text } = Typography;
 
@@ -20,7 +27,7 @@ function RegisterComponent() {
   const registerMutation = useMutation(registerRegisterMutation());
   const { message } = App.useApp();
 
-  const onFinish = async (values: any) => {
+  const onFinish = async (values: RegisterFormValues) => {
     try {
       await registerMutation.mutateAsync({
         body: {
@@ -30,14 +37,21 @@ function RegisterComponent() {
       });
       message.success('Registration successful! Please login.');
       navigate({ to: '/login' });
-    } catch (error: any) {
+    } catch (err: unknown) {
+      const error = err as RegisterRegisterError;
       console.error('Registration error details:', error);
       if (error?.detail === 'REGISTER_USER_ALREADY_EXISTS') {
         message.error('Registration failed. Email is already registered.');
       } else if (typeof error?.detail === 'string') {
         message.error(error.detail);
-      } else if (error?.response?.data?.detail) {
-        message.error(error.response.data.detail);
+      } else if (
+        (error as { response?: { data?: { detail?: string } } })?.response?.data
+          ?.detail
+      ) {
+        message.error(
+          (error as { response: { data: { detail: string } } }).response.data
+            .detail,
+        );
       } else {
         message.error('Registration failed. Please try again.');
       }

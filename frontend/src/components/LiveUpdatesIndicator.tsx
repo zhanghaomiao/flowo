@@ -1,6 +1,7 @@
+import React, { useMemo } from 'react';
+
 import { LoadingOutlined } from '@ant-design/icons';
 import { Tooltip } from 'antd';
-import React, { useMemo } from 'react';
 
 export type ConnectionStatus = 'OFF' | 'CONNECTING' | 'ONLINE' | 'ERROR';
 
@@ -51,7 +52,7 @@ const LiveUpdatesIndicator: React.FC<LiveUpdatesIndicatorProps> = ({
   }, [status, retryCount]);
 
   return (
-    <Tooltip title={config.tooltip} placement='bottom'>
+    <Tooltip title={config.tooltip} placement="bottom">
       <div
         // 只有出错时，点击圆点才触发重连
         onClick={status === 'ERROR' ? onReconnect : undefined}
@@ -59,7 +60,7 @@ const LiveUpdatesIndicator: React.FC<LiveUpdatesIndicatorProps> = ({
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          width: '24px',  // 增加一点点击热区
+          width: '24px', // 增加一点点击热区
           height: '24px',
           cursor: config.cursor,
         }}

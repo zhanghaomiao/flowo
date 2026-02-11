@@ -1,6 +1,6 @@
 import secrets
 import uuid
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -19,7 +19,7 @@ class UserTokenService:
         token_str = f"flw_{secrets.token_urlsafe(32)}"
         expires_at = None
         if data.ttl_days is not None:
-            expires_at = datetime.now(timezone.utc) + timedelta(days=data.ttl_days)
+            expires_at = datetime.now(UTC) + timedelta(days=data.ttl_days)
 
         user_token = UserToken(
             name=data.name, token=token_str, user_id=user_id, expires_at=expires_at
@@ -53,7 +53,7 @@ class UserTokenService:
         if not user_token:
             return None
 
-        if user_token.expires_at and user_token.expires_at < datetime.now(timezone.utc):
+        if user_token.expires_at and user_token.expires_at < datetime.now(UTC):
             # Token expired
             return None
 

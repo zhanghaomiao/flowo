@@ -42,15 +42,6 @@ class SummaryService:
                 running=result.running or 0,
             )
         if item == "job":
-            stmt = select(Workflow).where(Workflow.run_info.is_not(None))
-            if user_id:
-                stmt = stmt.where(Workflow.user_id == user_id)
-
-            workflows = (await self.db_session.execute(stmt)).scalars().all()
-            total = sum(
-                [wf.run_info.get("total", 0) for wf in workflows if wf.run_info]
-            )
-
             stmt = select(
                 func.count().filter(Job.status == "SUCCESS").label("success"),
                 func.count().filter(Job.status == "ERROR").label("error"),
@@ -104,7 +95,7 @@ class SummaryService:
 
             results = (await self.db_session.execute(stmt.limit(limit))).all()
 
-            return {name: count for name, count in results}
+            return dict(results)
 
         elif item == "user":
             stmt = (
@@ -127,7 +118,7 @@ class SummaryService:
 
             results = (await self.db_session.execute(stmt.limit(limit))).all()
 
-            return {user: count for user, count in results}
+            return dict(results)
 
         if item == "tag":
             stmt = select(Workflow).where(Workflow.run_info.is_not(None))
@@ -290,14 +281,13 @@ class SummaryService:
                 "min": round(math.log(min_duration / 60 + 1), 2),
             }
 
-        sorted_durations_map = {
-            k: v
-            for k, v in sorted(
+        sorted_durations_map = dict(
+            sorted(
                 durations_map.items(),
                 key=lambda item: item[1]["median"],
                 reverse=True,
             )
-        }
+        )
         return sorted_durations_map
 
     async def check_database_health(self) -> ServiceStatus:

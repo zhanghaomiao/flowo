@@ -1,5 +1,6 @@
-import WorkflowTable from '@/components/workflow/WorkflowTable';
 import { createFileRoute } from '@tanstack/react-router';
+
+import WorkflowTable from '@/components/workflow/WorkflowTable';
 
 export const Route = createFileRoute('/_authenticated/')({
   component: Index,

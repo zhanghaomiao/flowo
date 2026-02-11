@@ -1,11 +1,13 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { RouterProvider, createRouter } from '@tanstack/react-router';
-import { App, ConfigProvider } from 'antd';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 
-import { AuthProvider, useAuth } from './auth';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { createRouter, RouterProvider } from '@tanstack/react-router';
+import { App, ConfigProvider } from 'antd';
+
 import './index.css';
+
+import { AuthProvider, useAuth } from './auth';
 import { routeTree } from './routeTree.gen';
 
 const queryClient = new QueryClient({

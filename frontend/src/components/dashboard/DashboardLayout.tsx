@@ -1,12 +1,5 @@
-import {
-  postPruningMutation,
-  useGetActivityQuery,
-  useGetRuleDurationQuery,
-  useGetRuleErrorQuery,
-  useGetStatusQuery,
-  useGetSystemHealthQuery,
-  useGetSystemResourcesQuery,
-} from '@/client/@tanstack/react-query.gen';
+import React, { useMemo, useState } from 'react';
+
 import {
   CloudServerOutlined,
   DatabaseOutlined,
@@ -22,14 +15,23 @@ import {
   Button,
   Card,
   Col,
+  message,
   Popconfirm,
   Progress,
   Row,
   Space,
   Statistic,
-  message,
 } from 'antd';
-import React, { useMemo, useState } from 'react';
+
+import {
+  postPruningMutation,
+  useGetActivityQuery,
+  useGetRuleDurationQuery,
+  useGetRuleErrorQuery,
+  useGetStatusQuery,
+  useGetSystemHealthQuery,
+  useGetSystemResourcesQuery,
+} from '@/client/@tanstack/react-query.gen';
 
 import { BarChart, BoxPlot, StackedBarChart, WordCloud } from './Chart';
 import { StatusChart } from './StatusChart';

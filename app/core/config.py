@@ -1,5 +1,6 @@
 from pathlib import Path
 
+from pydantic import model_validator
 from pydantic_settings import BaseSettings
 
 
@@ -36,7 +37,14 @@ class Settings(BaseSettings):
 
     # FlowO Specific Settings (shared with plugin)
     FLOWO_USER_TOKEN: str | None = None
-    FLOWO_HOST: str = f"{PROTOCOL}://{DOMAIN}:{PORT}"
+    FLOWO_HOST: str | None = None
+
+    @model_validator(mode="after")
+    def set_flowo_defaults(self) -> "Settings":
+        if self.FLOWO_HOST is None:
+            self.FLOWO_HOST = f"{self.PROTOCOL}://{self.DOMAIN}:{self.PORT}"
+        return self
+
     FLOWO_WORKING_PATH: str = "/tmp/flowo_working_dir"
     CONTAINER_MOUNT_PATH: str = "/work_dir"
 

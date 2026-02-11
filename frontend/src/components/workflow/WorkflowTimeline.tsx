@@ -1,9 +1,11 @@
-import { getTimelinesOptions } from '@/client/@tanstack/react-query.gen';
-import { useQuery } from '@tanstack/react-query';
-import { Alert, Card, Spin } from 'antd';
 import React, { useMemo } from 'react';
 import { useEffect, useRef } from 'react';
 import { Chart } from 'react-google-charts';
+
+import { useQuery } from '@tanstack/react-query';
+import { Alert, Card, Spin } from 'antd';
+
+import { getTimelinesOptions } from '@/client/@tanstack/react-query.gen';
 
 interface ChartWrapper {
   draw: () => void;
@@ -183,7 +185,7 @@ const WorkflowTimeline: React.FC<WorkflowTimelineProps> = ({
       }
 
       // Add individual job tasks
-      jobDatas.forEach((jobData: any, jobIndex: number) => {
+      jobDatas.forEach((jobData: unknown, jobIndex: number) => {
         const [jobId, startTime, endTime, status] = jobData as [
           string,
           Date,

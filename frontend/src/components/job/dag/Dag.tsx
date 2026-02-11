@@ -1,8 +1,13 @@
-import DraggableLegendPanel from '@/components/job/dag/DraggableLegendPanel';
-import LayoutControlPanel from '@/components/job/dag/LayoutControlPanel';
-import ProgressNode from '@/components/job/dag/NodeProgressBar';
-import { useWorkflowGraph } from '@/components/job/dag/useDag';
-import { type LayoutDirection, getLayoutInfo } from '@/utils/graphLayout';
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
+
 import { FullscreenExitOutlined, FullscreenOutlined } from '@ant-design/icons';
 import type { Node, NodeProps } from '@xyflow/react';
 import {
@@ -18,17 +23,15 @@ import {
   useNodesState,
   useReactFlow,
 } from '@xyflow/react';
-import '@xyflow/react/dist/style.css';
 import { Tooltip } from 'antd';
-import React, {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+
+import DraggableLegendPanel from '@/components/job/dag/DraggableLegendPanel';
+import LayoutControlPanel from '@/components/job/dag/LayoutControlPanel';
+import ProgressNode from '@/components/job/dag/NodeProgressBar';
+import { useWorkflowGraph } from '@/components/job/dag/useDag';
+import { getLayoutInfo, type LayoutDirection } from '@/utils/graphLayout';
+
+import '@xyflow/react/dist/style.css';
 
 // Type for styling properties - matches what useWorkflowGraph returns
 type NodeStylingData = {
@@ -102,7 +105,6 @@ const WorkflowGraphInner: React.FC<WorkflowGraphProps> = ({
   const [forceLayoutRecalc, setForceLayoutRecalc] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const isFittingView = useRef(false);
-
 
   // Use the custom hook for graph data
   const {
@@ -178,11 +180,11 @@ const WorkflowGraphInner: React.FC<WorkflowGraphProps> = ({
     } else {
       isLayoutChange.current = false;
     }
-  }, [flowNodes]);
+  }, [flowNodes, reactFlowInstance, setNodes]);
 
   useEffect(() => {
     setEdges(flowEdges);
-  }, [flowEdges]);
+  }, [flowEdges, setEdges]);
 
   useEffect(() => {
     if (nodes.length > 0 && isInitialLoad.current && reactFlowInstance) {

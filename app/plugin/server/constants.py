@@ -1,7 +1,7 @@
-from enum import Enum
+from enum import StrEnum
 
 
-class EventName(str, Enum):
+class EventName(StrEnum):
     WORKFLOW_STARTED = "workflow_started"
     RUN_INFO = "run_info"
     JOB_INFO = "job_info"

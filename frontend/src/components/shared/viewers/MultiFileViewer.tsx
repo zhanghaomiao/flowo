@@ -1,10 +1,11 @@
+import React, { useEffect, useState } from 'react';
+
 import {
   CloseOutlined,
   FileOutlined,
   FileTextOutlined,
 } from '@ant-design/icons';
 import { Button, Col, Empty, Modal, Row, Tooltip } from 'antd';
-import React, { useEffect, useState } from 'react';
 
 import { TextViewer } from './TextViewer';
 import type { MultiFileViewerProps } from './types';
@@ -79,7 +80,10 @@ export const MultiFileViewer: React.FC<MultiFileViewerProps> = ({
       ) : (
         <Row style={{ height: '100%' }}>
           {/* File List Sidebar */}
-          <Col span={6} style={{ borderRight: '1px solid #d9d9d9', padding: '16px' }}>
+          <Col
+            span={6}
+            style={{ borderRight: '1px solid #d9d9d9', padding: '16px' }}
+          >
             <div style={{ marginBottom: '16px' }}>
               <strong>Files ({filePaths.length})</strong>
             </div>
@@ -92,9 +96,13 @@ export const MultiFileViewer: React.FC<MultiFileViewerProps> = ({
                     padding: '8px 12px',
                     marginBottom: '4px',
                     cursor: 'pointer',
-                    backgroundColor: selectedFile === filePath ? '#e6f7ff' : 'transparent',
+                    backgroundColor:
+                      selectedFile === filePath ? '#e6f7ff' : 'transparent',
                     borderRadius: '4px',
-                    border: selectedFile === filePath ? '1px solid #1890ff' : '1px solid transparent',
+                    border:
+                      selectedFile === filePath
+                        ? '1px solid #1890ff'
+                        : '1px solid transparent',
                     display: 'flex',
                     alignItems: 'center',
                     gap: '8px',
@@ -102,12 +110,14 @@ export const MultiFileViewer: React.FC<MultiFileViewerProps> = ({
                 >
                   <FileTextOutlined />
                   <Tooltip title={filePath}>
-                    <span style={{
-                      flex: 1,
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap'
-                    }}>
+                    <span
+                      style={{
+                        flex: 1,
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
                       {getFileName(filePath)}
                     </span>
                   </Tooltip>
@@ -120,12 +130,14 @@ export const MultiFileViewer: React.FC<MultiFileViewerProps> = ({
           <Col span={18} style={{ padding: '16px', height: '100%' }}>
             {selectedFile ? (
               <div style={{ height: '100%' }}>
-                <div style={{
-                  marginBottom: '16px',
-                  padding: '8px 12px',
-                  backgroundColor: '#f5f5f5',
-                  borderRadius: '4px'
-                }}>
+                <div
+                  style={{
+                    marginBottom: '16px',
+                    padding: '8px 12px',
+                    backgroundColor: '#f5f5f5',
+                    borderRadius: '4px',
+                  }}
+                >
                   <FileOutlined style={{ marginRight: '8px' }} />
                   <strong>{getFileName(selectedFile)}</strong>
                 </div>

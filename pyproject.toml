@@ -44,6 +44,7 @@ dev = [
   "black>=23.0.0",
   "ruff>=0.1.0",
   "mypy>=1.0.0",
+  "pre-commit>=3.5.0",
 ]
 docs = [
   "mkdocs>=1.6.0",
@@ -76,12 +77,14 @@ flowo = "snakemake_logger_plugin_flowo.plugin.LogHandler"
 
 [tool.ruff]
 exclude = ["app/alembic/"]
-ignore = ["E501", "B008"]
 line-length = 88
-select = ["E", "W", "F", "I", "B", "C4", "UP"]
 target-version = "py312"
 
-[tool.ruff.per-file-ignores]
+[tool.ruff.lint]
+ignore = ["E501", "B008"]
+select = ["E", "W", "F", "I", "B", "C4", "UP"]
+
+[tool.ruff.lint.per-file-ignores]
 "__init__.py" = ["F401"]
 
 [[tool.uv.index]]

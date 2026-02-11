@@ -1,5 +1,6 @@
-import { Button, Modal } from 'antd';
 import React from 'react';
+
+import { Button, Modal } from 'antd';
 
 import { TextViewer } from './TextViewer';
 import type { FileViewerModalProps } from './types';

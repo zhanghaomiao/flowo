@@ -1,3 +1,31 @@
+import { useCallback, useMemo, useState } from 'react';
+
+import Icon, {
+  DeleteOutlined,
+  FileTextOutlined,
+  InfoCircleOutlined,
+  ReloadOutlined,
+  SettingOutlined,
+} from '@ant-design/icons';
+import {
+  Query,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query';
+import { Link } from '@tanstack/react-router';
+import {
+  Button,
+  message,
+  Popconfirm,
+  Progress,
+  Space,
+  Table,
+  Tag,
+  Tooltip,
+} from 'antd';
+import type { ColumnsType } from 'antd/es/table';
+
 import SnakemakeIcon from '@/assets/snakemake.svg?react';
 import {
   deleteWorkflowMutation,
@@ -9,8 +37,8 @@ import {
   getWorkflowsQueryKey,
 } from '@/client/@tanstack/react-query.gen';
 import type { Status, WorkflowResponse } from '@/client/types.gen';
-import LiveUpdatesIndicator from '@/components/LiveUpdatesIndicator';
 import { DurationCell } from '@/components/common/common';
+import LiveUpdatesIndicator from '@/components/LiveUpdatesIndicator';
 import { FileViewerModal, MultiFileViewer } from '@/components/shared/viewers';
 import WorkflowTag from '@/components/workflow/WorkflowTag';
 import { useWorkflowRealtime } from '@/config/workflowRealtime';
@@ -19,27 +47,6 @@ import {
   getStatusColor,
   getWorkflowProgressStatus,
 } from '@/utils/formatters';
-import Icon, {
-  DeleteOutlined,
-  FileTextOutlined,
-  InfoCircleOutlined,
-  ReloadOutlined,
-  SettingOutlined,
-} from '@ant-design/icons';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Link } from '@tanstack/react-router';
-import {
-  Button,
-  Popconfirm,
-  Progress,
-  Space,
-  Table,
-  Tag,
-  Tooltip,
-  message,
-} from 'antd';
-import type { ColumnsType } from 'antd/es/table';
-import { useCallback, useMemo, useState } from 'react';
 
 import WorkflowSearch from './WorkflowSearch';
 
@@ -158,8 +165,8 @@ const WorkflowTable = () => {
     ...deleteWorkflowMutation(),
     onSuccess: () => {
       queryClient.invalidateQueries({
-        predicate: (query: any) => {
-          const keyObj = query.queryKey[0] as any;
+        predicate: (query: Query) => {
+          const keyObj = query.queryKey[0] as { tags?: string[] };
           return (
             Array.isArray(keyObj?.tags) && keyObj.tags.includes('workflow')
           );
@@ -245,7 +252,7 @@ const WorkflowTable = () => {
       type: 'success',
       content: 'Workflows refreshed successfully!',
     });
-  }, [queryClient, messageApi]);
+  }, [queryClient, messageApi, queryParams]);
 
   const columns: ColumnsType<WorkflowResponse> = [
     {

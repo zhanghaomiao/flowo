@@ -1,6 +1,6 @@
 // Result viewer components
-export { ResultViewer } from './ResultViewer';
 export { FilePreview } from './FilePreview';
+export { ResultViewer } from './ResultViewer';
 
 // Utilities
 export {

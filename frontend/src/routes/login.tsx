@@ -1,13 +1,16 @@
-import { authJwtLoginMutation } from '@/client/@tanstack/react-query.gen';
+import { useEffect, useState } from 'react';
+
 import {
   ArrowRightOutlined,
   LockOutlined,
   MailOutlined,
 } from '@ant-design/icons';
 import { useMutation } from '@tanstack/react-query';
-import { Link, createFileRoute, useNavigate } from '@tanstack/react-router';
+import { createFileRoute, Link, useNavigate } from '@tanstack/react-router';
 import { App, Button, Card, Form, Input, Modal, Typography } from 'antd';
-import { useEffect, useState } from 'react';
+
+import { authJwtLoginMutation } from '@/client/@tanstack/react-query.gen';
+import { AuthJwtLoginError } from '@/client/types.gen';
 
 import { useAuth } from '../auth';
 
@@ -40,7 +43,12 @@ function LoginComponent() {
     }
   }, [isAuthenticated, navigate, redirect]);
 
-  const onFinish = async (values: any) => {
+  interface LoginFormValues {
+    email: string;
+    password: string;
+  }
+
+  const onFinish = async (values: LoginFormValues) => {
     try {
       const data = await loginMutation.mutateAsync({
         body: {
@@ -55,15 +63,22 @@ function LoginComponent() {
       } else {
         message.error('Login failed. No token received.');
       }
-    } catch (error: any) {
+    } catch (err: unknown) {
+      const error = err as AuthJwtLoginError;
       console.error('Login error details:', error);
       if (error?.detail === 'LOGIN_BAD_CREDENTIALS') {
         message.error('Invalid email or password. Please try again.');
       } else if (typeof error?.detail === 'string') {
         message.error(error.detail);
-      } else if (error?.response?.data?.detail) {
+      } else if (
+        (error as { response?: { data?: { detail?: string } } })?.response?.data
+          ?.detail
+      ) {
         // Fallback for some client versions
-        message.error(error.response.data.detail);
+        message.error(
+          (error as { response: { data: { detail: string } } }).response.data
+            .detail,
+        );
       } else {
         message.error('Login failed. Please check your credentials.');
       }
@@ -220,7 +235,9 @@ function LoginComponent() {
           </Form.Item>
 
           <div style={{ textAlign: 'center', marginTop: 32 }}>
-            <Text style={{ color: '#666666' }}>Don't have an account?</Text>{' '}
+            <Text style={{ color: '#666666' }}>
+              Don&apos;t have an account?
+            </Text>{' '}
             <Link to="/register" style={{ color: '#00A2FF', fontWeight: 500 }}>
               Create now
             </Link>
