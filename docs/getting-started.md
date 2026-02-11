@@ -23,18 +23,28 @@ Copy the `env.example` to `.env`. In most cases, you only need to modify `FLOWO_
 cp env.example .env
 ```
 
-### 3. Start Services (Recommended)
+### 3. Start Services (Recommended: Single Image)
 
-Start the Flowo web service using our pre-built images. This is the fastest way to get started and requires no local build.
+Start the FlowO web service using our **unified** single image. This is the fastest and most stable way to get started.
 
 ```bash
+# Using pre-built image (Fastest)
 docker compose -f docker/compose.yml up -d
+
+# OR Building from source
+docker compose up -d
 ```
 
-Alternatively, if you want to build from source (e.g., for development), run:
+### 4. Start Services (Advanced: Multiple Containers)
+
+If you prefer a microservices-style deployment with separate containers for Backend, Frontend, and Caddy:
 
 ```bash
-docker compose up -d
+# Using pre-built images
+docker compose -f docker/compose.multiple.yml up -d
+
+# OR Building from source
+docker compose -f docker-compose.multiple.yml up -d
 ```
 
 ![login](assets/images/login.png)
@@ -42,10 +52,8 @@ Open [http://localhost:3100](http://localhost:3100) in your browser. Create your
 
 This will spin up:
 
-- **PostgreSQL**: Stores all workflow data.
-- **Backend (FastAPI)**: The core API service.
-- **Frontend (React)**: The monitoring dashboard.
-- **Caddy**: Reverse proxy handling unified access to the stack.
+- **FlowO Web Service**: A single container including Backend (FastAPI), Frontend (React), and Caddy reverse proxy.
+- **Postgres**: Stores all workflow data.
 
 ## Client-side Installation
 

@@ -1,0 +1,59 @@
+services:
+  db:
+    image: postgres:15-alpine
+    env_file:
+      - .env
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${POSTGRES_USER:-flowo} -d ${POSTGRES_DB:-flowo_logs}",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  flowo-backend:
+    image: ghcr.io/zhanghaomiao/flowo/backend:latest
+    env_file:
+      - .env
+    environment:
+      POSTGRES_HOST: db
+      POSTGRES_PORT: 5432
+    volumes:
+      - ${FLOWO_WORKING_PATH:-.}:${CONTAINER_MOUNT_PATH:-/flowo-data}:ro
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  flowo-frontend:
+    image: ghcr.io/zhanghaomiao/flowo/frontend:latest
+    restart: unless-stopped
+
+  caddy:
+    image: caddy:2-alpine
+    env_file:
+      - .env
+    environment:
+      BACKEND_TARGET: flowo-backend:8000
+      FRONTEND_TARGET: flowo-frontend:80
+    volumes:
+      - ../Caddyfile:/etc/caddy/Caddyfile
+      - ${FLOWO_WORKING_PATH:-.}:${CONTAINER_MOUNT_PATH:-/flowo-data}:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    ports:
+      - "${PORT:-3101}:80"
+    depends_on:
+      - flowo-backend
+      - flowo-frontend
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  caddy_data:
+  caddy_config:

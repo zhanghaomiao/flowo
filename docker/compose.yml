@@ -1,13 +1,10 @@
 services:
-  postgresql:
+  db:
     image: postgres:15-alpine
-    container_name: flowo-postgres
     env_file:
       - .env
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    networks:
-      - flowo-network
     healthcheck:
       test:
         [
@@ -19,54 +16,21 @@ services:
       retries: 5
     restart: unless-stopped
 
-  flowo-backend:
-    image: ghcr.io/zhanghaomiao/flowo/backend:latest
-    container_name: flowo-backend
+  flowo:
+    image: ghcr.io/zhanghaomiao/flowo:latest
     env_file:
       - .env
     environment:
-      POSTGRES_HOST: postgresql
+      POSTGRES_HOST: db
       POSTGRES_PORT: 5432
     volumes:
-      - ${FLOWO_WORKING_PATH:-.}:${CONTAINER_MOUNT_PATH:-/work_dir}:ro
-    depends_on:
-      postgresql:
-        condition: service_healthy
-    networks:
-      - flowo-network
-    restart: unless-stopped
-
-  flowo-frontend:
-    image: ghcr.io/zhanghaomiao/flowo/frontend:latest
-    container_name: flowo-frontend
-    networks:
-      - flowo-network
-    restart: unless-stopped
-
-  caddy:
-    image: caddy:2-alpine
-    container_name: caddy
-    env_file:
-      - .env
-    volumes:
-      - ../Caddyfile:/etc/caddy/Caddyfile
       - ${FLOWO_WORKING_PATH:-.}:${CONTAINER_MOUNT_PATH:-/flowo-data}:ro
-      - caddy_data:/data
-      - caddy_config:/config
     ports:
-      - "${PORT:-3100}:80"
+      - "${PORT:-3101}:80"
     depends_on:
-      - flowo-backend
-      - flowo-frontend
-    networks:
-      - flowo-network
+      db:
+        condition: service_healthy
     restart: unless-stopped
 
 volumes:
   postgres_data:
-  caddy_data:
-  caddy_config:
-
-networks:
-  flowo-network:
-    driver: bridge

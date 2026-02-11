@@ -3,6 +3,21 @@ from pathlib import Path
 from pydantic_settings import BaseSettings
 
 
+def get_env_files() -> list[str]:
+    """Safely get environment files, avoiding permission errors in containers."""
+    files = [".env"]
+    try:
+        # Check for user-level config
+        home_cfg = Path.home() / ".config/flowo/.env"
+        # In Docker, Path.home() might be /root. Check if we have access.
+        if home_cfg.is_file():
+            files.append(str(home_cfg))
+    except (PermissionError, RuntimeError):
+        # Fallback if home directory is restricted
+        pass
+    return files
+
+
 class Settings(BaseSettings):
     PROJECT_NAME: str = "flowo"
     API_V1_STR: str = "/api/v1"
@@ -28,14 +43,12 @@ class Settings(BaseSettings):
     SECRET_KEY: str = "YOUR_SECRET_KEY"  # SHOULD BE CHANGED IN PRODUCTION
     BACKEND_CORS_ORIGINS: list[str] = ["http://localhost", "http://localhost:3100"]
 
-    class Config:
-        env_file = (
-            str(Path.home() / ".config/flowo/.env"),
-            ".env",
-        )
-        env_file_encoding = "utf-8"
-        case_sensitive = True
-        extra = "allow"
+    model_config = {
+        "env_file": get_env_files(),
+        "env_file_encoding": "utf-8",
+        "case_sensitive": True,
+        "extra": "allow",
+    }
 
     @property
     def SQLALCHEMY_DATABASE_URI(self) -> str:

@@ -1,5 +1,5 @@
 # Caddyfile for flowo Logger Plugin PostgreSQL
-# 
+#
 # This configuration provides:
 # 1. Reverse proxy for /api/v1/* requests to the backend service
 # 2. Static file server for /work_dir with caching for images, PDFs, and HTML files
@@ -15,8 +15,8 @@
 
     # Handle API requests - proxy to backend
     handle /api/v1/* {
-        reverse_proxy flowo-backend:8000
-        
+        reverse_proxy {$BACKEND_TARGET:localhost:8000}
+
         # Apply security headers to API routes
         header {
             -Server
@@ -26,8 +26,8 @@
     }
 
     handle /docs* {
-        reverse_proxy flowo-backend
-        
+        reverse_proxy {$BACKEND_TARGET:localhost:8000}
+
         # Apply security headers to docs routes
         header {
             -Server
@@ -56,7 +56,7 @@
             browse
             # hide .snakemake *.smk flowo_logs
         }
-        
+
         # Set caching headers for different file types
         @images {
             path *.jpg *.jpeg *.png *.gif *.bmp *.svg *.webp *.ico
@@ -129,7 +129,7 @@
             path *.csv *.tsv
         }
         header @csv {
-            Cache-Control "public, max-age=3600"    
+            Cache-Control "public, max-age=3600"
             Content-Type "text/csv; charset=utf-8"
             # CORS headers for CSV files
             Access-Control-Allow-Origin "*"
@@ -158,11 +158,27 @@
         }
     }
 
-    # Handle frontend application - proxy to frontend service
-    handle  {
-        # 使用环境变量，默认 80 (生产环境)，开发环境可传入 5173
-        reverse_proxy flowo-frontend:{$FRONTEND_PORT:80}
-        
+    # Handle frontend application
+    handle {
+        # If FRONTEND_TARGET is set (dev environment), reverse proxy to it
+        @proxy_frontend {
+            expression "{$FRONTEND_TARGET}" != ""
+        }
+        reverse_proxy @proxy_frontend {$FRONTEND_TARGET}
+
+        # Otherwise, serve static files (production/single-image environment)
+        @static_frontend {
+            expression "{$FRONTEND_TARGET}" == ""
+        }
+        handle @static_frontend {
+            root * /app/frontend/dist
+            file_server {
+                index index.html
+            }
+            # Fallback for single-page application routing
+            try_files {path} /index.html
+        }
+
         # Apply security headers only to frontend routes
         header {
             # Remove server identification
@@ -183,10 +199,10 @@
             expression {http.error.status_code} == 404
         }
         respond @404 "File not found" 404
-        
+
         @5xx {
             expression {http.error.status_code} >= 500
         }
         respond @5xx "Server error" {http.error.status_code}
     }
-} 
+}

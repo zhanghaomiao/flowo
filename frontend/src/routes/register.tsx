@@ -7,7 +7,7 @@ import {
 } from '@ant-design/icons';
 import { useMutation } from '@tanstack/react-query';
 import { Link, createFileRoute, useNavigate } from '@tanstack/react-router';
-import { Button, Card, Form, Input, Typography, message } from 'antd';
+import { App, Button, Card, Form, Input, Typography } from 'antd';
 
 const { Title, Text } = Typography;
 
@@ -18,6 +18,7 @@ export const Route = createFileRoute('/register')({
 function RegisterComponent() {
   const navigate = useNavigate();
   const registerMutation = useMutation(registerRegisterMutation());
+  const { message } = App.useApp();
 
   const onFinish = async (values: any) => {
     try {
@@ -30,8 +31,16 @@ function RegisterComponent() {
       message.success('Registration successful! Please login.');
       navigate({ to: '/login' });
     } catch (error: any) {
-      console.error(error);
-      message.error('Registration failed. Email might already be taken.');
+      console.error('Registration error details:', error);
+      if (error?.detail === 'REGISTER_USER_ALREADY_EXISTS') {
+        message.error('Registration failed. Email is already registered.');
+      } else if (typeof error?.detail === 'string') {
+        message.error(error.detail);
+      } else if (error?.response?.data?.detail) {
+        message.error(error.response.data.detail);
+      } else {
+        message.error('Registration failed. Please try again.');
+      }
     }
   };
 

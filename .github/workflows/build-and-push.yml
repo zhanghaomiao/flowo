@@ -18,12 +18,18 @@ jobs:
     strategy:
       matrix:
         include:
+          - component: flowo
+            context: .
+            dockerfile: ./Dockerfile
+            suffix: ""
           - component: backend
             context: .
             dockerfile: ./Dockerfile.backend
+            suffix: "/backend"
           - component: frontend
             context: ./frontend
             dockerfile: ./frontend/Dockerfile
+            suffix: "/frontend"
 
     steps:
       - uses: actions/checkout@v4
@@ -39,7 +45,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/${{ matrix.component }}
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}${{ matrix.suffix }}
           tags: |
             type=ref,event=tag
             type=raw,value=latest,enable={{is_default_branch}}
@@ -59,8 +65,6 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           platforms: linux/amd64,linux/arm64
-          build-args: |
-            VITE_API_BASE_PATH=http://localhost:3100
 
   create-release:
     runs-on: ubuntu-latest

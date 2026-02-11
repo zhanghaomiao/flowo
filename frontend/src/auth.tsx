@@ -17,12 +17,10 @@ client.setConfig({
   auth: () => localStorage.getItem('token') || undefined,
 });
 
-// Add interceptor for 401 Unauthorized errors
+// Add interceptor for 401 Unauthorized errors and general error handling
 client.interceptors.response.use((response) => {
   if (response.status === 401) {
     localStorage.removeItem('token');
-    // Using window.location instead of router to avoid complex dependency cycles in auth.tsx
-    // The router context needs auth, and auth might need router for navigation.
     const currentPath = window.location.pathname + window.location.search;
     if (!currentPath.includes('/login')) {
       window.location.href = `/login?redirect=${encodeURIComponent(currentPath)}`;
