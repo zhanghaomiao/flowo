@@ -18,6 +18,7 @@ services:
 
   flowo:
     image: ghcr.io/zhanghaomiao/flowo:latest
+    user: "${UID:-0}:${GID:-0}"
     env_file:
       - .env
     environment:

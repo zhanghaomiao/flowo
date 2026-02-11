@@ -58,7 +58,17 @@ async def close_workflow(
         workflow.status = Status.ERROR
     else:
         workflow.status = Status.SUCCESS
-        workflow.end_time = datetime.now()
+
+    workflow.end_time = datetime.now()
+
+    # Auto-pruning: Force update any remaining RUNNING jobs to the workflow terminal status
+    from sqlalchemy import update
+
+    db.execute(
+        update(Job)
+        .where(Job.workflow_id == workflow.id, Job.status == Status.RUNNING)
+        .values(status=workflow.status, end_time=workflow.end_time)
+    )
 
     db.commit()
     return {"status": workflow.status}

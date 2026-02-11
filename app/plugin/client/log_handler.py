@@ -77,6 +77,7 @@ class FlowoLogHandler(Handler):
         }
 
         self.file_handler = self._init_file_handler()
+        self._client = self._init_http_client()
 
         # Mapping EventName -> Parser method
         self._parsers = {
@@ -135,23 +136,33 @@ class FlowoLogHandler(Handler):
         except Exception as e:
             logger.debug(f"Failed to process event {event_name}: {e}")
 
+    def _init_http_client(self) -> httpx.Client:
+        """Initialize a persistent HTTP client for connection pooling."""
+        headers = {}
+        if settings.FLOWO_USER_TOKEN:
+            headers["Authorization"] = f"Bearer {settings.FLOWO_USER_TOKEN}"
+
+        return httpx.Client(
+            headers=headers,
+            timeout=10.0,
+            limits=httpx.Limits(max_connections=20, max_keepalive_connections=10),
+        )
+
     def _send_to_api(self, event: str, data: dict) -> None:
         if not settings.FLOWO_USER_TOKEN:
             return
 
         url = f"{settings.FLOWO_HOST.rstrip('/')}{settings.API_V1_STR}/reports/"
-        headers = {"Authorization": f"Bearer {settings.FLOWO_USER_TOKEN}"}
         payload = {"event": event, "record": data, "context": self.context}
 
         try:
-            with httpx.Client(timeout=10.0) as client:
-                resp = client.post(url, json=payload, headers=headers)
-                if resp.status_code == 200:
-                    updated = resp.json().get("context")
-                    if updated:
-                        self.context.update(updated)
-                else:
-                    logger.warning(f"API reporting failed: {resp.status_code}")
+            resp = self._client.post(url, json=payload)
+            if resp.status_code == 200:
+                updated = resp.json().get("context")
+                if updated:
+                    self.context.update(updated)
+            else:
+                logger.warning(f"API reporting failed: {resp.status_code} {resp.text}")
         except Exception as e:
             logger.warning(f"Error reporting to API: {e}")
 
@@ -186,14 +197,14 @@ class FlowoLogHandler(Handler):
             url = (
                 f"{settings.FLOWO_HOST.rstrip('/')}{settings.API_V1_STR}/reports/close"
             )
-            headers = {"Authorization": f"Bearer {settings.FLOWO_USER_TOKEN}"}
             params = {"workflow_id": str(workflow_id)}
             try:
-                with httpx.Client(timeout=10.0) as client:
-                    client.post(url, params=params, headers=headers)
+                self._client.post(url, params=params)
             except Exception as e:
                 logger.warning(f"Error closing workflow: {e}")
 
+        # Close the persistent client
+        self._client.close()
         super().close()
 
 

@@ -14,6 +14,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.backend
+    user: "${UID:-0}:${GID:-0}"
     container_name: flowo-backend-dev
     userns_mode: "keep-id"
     env_file:

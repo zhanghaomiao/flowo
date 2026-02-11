@@ -40,7 +40,7 @@ COPY --chown=flowo:flowo --from=frontend-builder /app/frontend/dist /app/fronten
 
 COPY Caddyfile /etc/caddy/Caddyfile
 COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
-RUN mkdir -p /var/log/supervisor && chown -R flowo:flowo /var/log/supervisor
+RUN mkdir -p /var/log/supervisor && chmod 777 /var/log/supervisor
 
 COPY --chown=flowo:flowo docker-entrypoint.sh /usr/local/bin/
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
