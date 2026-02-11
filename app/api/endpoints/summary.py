@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import Literal
 
 import psutil
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.session import get_async_session
@@ -100,10 +100,7 @@ async def post_pruning(
     db: AsyncSession = Depends(get_async_session),
     user: User = Depends(current_active_user),
 ):
-    # Only superusers can prune
-    if not user.is_superuser:
-        raise HTTPException(status_code=403, detail="Not authorized to prune")
-    return await WorkflowService(db).pruning()
+    return await WorkflowService(db).pruning(user_id=user.id)
 
 
 @router.get("/health", response_model=SystemHealthResponse)

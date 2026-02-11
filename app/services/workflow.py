@@ -1,6 +1,6 @@
 import uuid
 from collections import Counter, defaultdict
-from datetime import datetime
+from datetime import UTC, datetime, timedelta
 from itertools import chain, groupby
 from operator import itemgetter
 from typing import Any
@@ -341,12 +341,19 @@ class WorkflowService:
 
         return {k: make_response(k) for k, _ in run_info.items() if k != "total"}
 
-    async def pruning(self):
+    async def pruning(self, user_id: uuid.UUID):
+        # Only delete empty workflows started more than 10 minutes ago
+        threshold = datetime.now(UTC) - timedelta(minutes=10)
+
         # 删除没有任何jobs的workflows
         query = (
             select(Workflow.id)
             .outerjoin(Job, Workflow.id == Job.workflow_id)
-            .where(Job.id.is_(None))
+            .where(
+                Job.id.is_(None),
+                Workflow.started_at < threshold,
+                Workflow.user_id == user_id,
+            )
         )
         result = await self.db_session.execute(query)
         workflows_without_jobs = result.all()
@@ -362,11 +369,16 @@ class WorkflowService:
                 delete(Workflow).where(Workflow.id == workflow_id)
             )
 
-        # 如果workflow为error，将其所有running的jobs改为error
+        # 如果workflow为error且已结束，将其所有running的jobs改为error
         query = (
             select(Job.id)
             .join(Workflow, Job.workflow_id == Workflow.id)
-            .where(Job.status == "RUNNING", Workflow.status == "ERROR")
+            .where(
+                Job.status == Status.RUNNING,
+                Workflow.status == Status.ERROR,
+                Workflow.end_time.is_not(None),
+                Workflow.user_id == user_id,
+            )
             .distinct()
         )
         result = await self.db_session.execute(query)
@@ -377,14 +389,19 @@ class WorkflowService:
             from sqlalchemy import update
 
             await self.db_session.execute(
-                update(Job).where(Job.id == job_id).values(status="ERROR")
+                update(Job).where(Job.id == job_id).values(status=Status.ERROR)
             )
 
-        # 如果workflow为success的，将其所有的running的jobs改为success
+        # 如果workflow为success且已结束，将其所有的running的jobs改为success
         query = (
             select(Job.id)
             .join(Workflow, Job.workflow_id == Workflow.id)
-            .where(Job.status == "RUNNING", Workflow.status == "SUCCESS")
+            .where(
+                Job.status == Status.RUNNING,
+                Workflow.status == Status.SUCCESS,
+                Workflow.end_time.is_not(None),
+                Workflow.user_id == user_id,
+            )
             .distinct()
         )
         result = await self.db_session.execute(query)
@@ -395,7 +412,7 @@ class WorkflowService:
             from sqlalchemy import update
 
             await self.db_session.execute(
-                update(Job).where(Job.id == job_id).values(status="SUCCESS")
+                update(Job).where(Job.id == job_id).values(status=Status.SUCCESS)
             )
 
         await self.db_session.commit()
