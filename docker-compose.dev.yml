@@ -31,6 +31,8 @@ services:
       - db
     networks:
       - flowo-dev-network
+    ports:
+      - "8000:8000"
     restart: unless-stopped
     # Use uvicorn with --reload for development
     command:
@@ -52,6 +54,8 @@ services:
       - ./frontend:/app
     networks:
       - flowo-dev-network
+    ports:
+      - "5173:5173"
     restart: unless-stopped
     command: ["sh", "-c", "npm install && npm run dev -- --host 0.0.0.0"]
 

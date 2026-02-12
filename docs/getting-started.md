@@ -17,7 +17,7 @@ FlowO consists of several services orchestrated via Docker Compose.
 
 ### 2. Setup environment
 
-Copy the `env.example` to `.env`. In most cases, you only need to modify `FLOWO_WORKING_PATH` to point to the directory where you run your Snakemake workflows.
+Download the [env.example](https://raw.githubusercontent.com/zhanghaomiao/flowo/main/env.example) and save it as `.env`. In most cases, you only need to modify `FLOWO_WORKING_PATH` to point to the directory where you run your Snakemake workflows.
 
 ### 3. User & Group IDs (Linux)
 
@@ -35,11 +35,17 @@ You can find your IDs by running `id -u` and `id -g` in your terminal.
 !!! warning "UID and GID"
     By default, these values are set to `0` (root). Running FlowO as **root** is a security risk and may lead to file permission issues (files created by FlowO will be owned by root). Always use your local user IDs.
 
-### 4. Reverse Proxy Configuration (Optional)
+### 4. Reverse Proxy Configuration (Optional but Recommended)
 
-If you are deploying FlowO behind a reverse proxy (like Nginx Proxy Manager, Caddy, or Traefik) using a custom domain (e.g., `http://flowo.iregene-bio.com`), you need to ensure the Snakemake plugin can correctly find the API.
+<!-- prettier-ignore -->
+!!! warning "Security: Use HTTPS"
+    It is **strongly recommended** to run FlowO behind a reverse proxy (like Nginx, Caddy, or Traefik) configured with **HTTPS**.
 
-By default, FlowO calculates its host URL based on the internal `PROTOCOL`, `DOMAIN`, and `PORT`. When using a reverse proxy on standard ports (80/443), this calculation might include the internal port (e.g., `:3101`), which is not accessible from the outside.
+    The `FLOWO_USER_TOKEN` is sent in HTTP headers. If you use plain HTTP over a public network, your token could be intercepted. HTTPS encrypts this traffic, securing your credentials.
+
+If you are deploying FlowO behind a reverse proxy using a custom domain (e.g., `https://flowo.iregene-bio.com`), you need to ensure the Snakemake plugin can correctly find the API.
+
+By default, FlowO calculates its host URL based on the internal `PROTOCOL`, `DOMAIN`, and `PORT`. When using a reverse proxy on standard ports (80/443), this calculation might include the internal port (e.g., `:3100`), which is not accessible from the outside.
 
 To fix this, you should manually define the external URL in your `.env` file:
 
@@ -48,31 +54,27 @@ To fix this, you should manually define the external URL in your `.env` file:
 FLOWO_HOST=http://flowo.iregene-bio.com
 ```
 
-Once set, the "Generate Config" command in the dashboard and the CLI utility will use this URL.
+Once set, the "show" command in the user profile and the CLI utility will use this URL.
 
-### 5. Start Services (Recommended: Single Image)
+### 5. Start Services
 
 Start the FlowO web service using our **unified** single image. This is the fastest and most stable way to get started.
 
+You can download the recommended [compose.yml](https://raw.githubusercontent.com/zhanghaomiao/flowo/main/docker/compose.yml) file.
+
 ```bash
 # Using pre-built image (Fastest)
-docker compose -f docker/compose.yml up -d
-
-# OR Building from source
-docker compose up -d
+docker compose -f compose.yml up -d
 ```
 
-### 6. Start Services (Advanced: Multiple Containers)
-
-If you prefer a microservices-style deployment with separate containers for Backend, Frontend, and Caddy:
-
-```bash
-# Using pre-built images
-docker compose -f docker/compose.multiple.yml up -d
-
-# OR Building from source
-docker compose -f docker-compose.multiple.yml up -d
-```
+> **Optional: Multiple Containers**
+>
+> If you prefer a microservices-style deployment with separate containers for Backend, Frontend, and Caddy, you can use the [compose.multiple.yml](https://raw.githubusercontent.com/zhanghaomiao/flowo/main/docker/compose.multiple.yml).
+>
+> ```bash
+> # Using pre-built images (Advanced)
+> docker compose -f compose.multiple.yml up -d
+> ```
 
 ![login](assets/images/login.png)
 Open [http://localhost:3100](http://localhost:3100) in your browser. Create your account and log in. If you see the Flowo interface and the "Live Updates" icon is green, congratulations—your Flowo web service is running successfully!
@@ -100,7 +102,7 @@ Next, create a token, which is required to configure the snakemake-logger-plugin
 ### 3. Configure the CLI
 
 ![cli](assets/images/cli.png)
-After that, click Config to access a CLI snippet. Copy and run this command in the terminal where snakemake-logger-plugin-flowo is installed. Once it finishes executing, the setup will be complete.
+After that, copy and run this command in the terminal where snakemake-logger-plugin-flowo is installed. Once it finishes executing, the setup will be complete.
 
 ## Usage with Snakemake
 

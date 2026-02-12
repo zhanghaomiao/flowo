@@ -1,6 +1,6 @@
 # Welcome to FlowO 🌊
 
-**FlowO** (Flow Output) is a unified PostgreSQL-based logging plugin and backend for **Snakemake**.
+**FlowO** is a unified PostgreSQL-based logging plugin and backend for **Snakemake**.
 
 It provides a seamless way to track, store, and visualize your bioinformatics workflows in real-time, leveraging the power of PostgreSQL for structured logging and a modern React-based frontend for monitoring.
 
