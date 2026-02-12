@@ -81,36 +81,7 @@ pre,
   margin: 0 auto;
 }
 
-/* Ensure code content is left-aligned */
-pre,
-code,
-.react-syntax-highlighter {
-  text-align: left !important;
-}
-
-/* Override any inherited text alignment for code containers */
-.react-syntax-highlighter,
-.react-syntax-highlighter * {
-  text-align: left !important;
-}
-
-/* Code viewer container specific styles */
-.code-viewer-container {
-  text-align: left !important;
-}
-
-.code-viewer-container * {
-  text-align: left !important;
-}
-
 /* Snakefile viewer container specific styles */
-.snakefile-viewer-container {
-  text-align: left !important;
-}
-
-.snakefile-viewer-container * {
-  text-align: left !important;
-}
 
 a {
   font-weight: 500;
@@ -126,3 +97,5 @@ h1 {
   font-size: 3.2em;
   line-height: 1.1;
 }
+
+

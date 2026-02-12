@@ -1507,9 +1507,7 @@ export type GetConfigfilesResponses = {
      *
      * Successful Response
      */
-    200: {
-        [key: string]: string;
-    };
+    200: Array<PathContent>;
 };
 
 export type GetConfigfilesResponse = GetConfigfilesResponses[keyof GetConfigfilesResponses];

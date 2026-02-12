@@ -2,7 +2,7 @@ import React from 'react';
 
 import { Button, Modal } from 'antd';
 
-import { TextViewer } from './TextViewer';
+import { CodeViewer } from './CodeViewer';
 import type { FileViewerModalProps } from './types';
 
 export const FileViewerModal: React.FC<FileViewerModalProps> = ({
@@ -35,7 +35,7 @@ export const FileViewerModal: React.FC<FileViewerModalProps> = ({
       width={1000}
       styles={{ body: { height: '75vh', padding: '16px', top: 20 } }}
     >
-      <TextViewer content={fileContent} fileFormat={fileFormat} />
+      <CodeViewer content={fileContent} fileFormat={fileFormat} />
     </Modal>
   );
 };

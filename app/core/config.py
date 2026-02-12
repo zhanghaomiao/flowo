@@ -6,7 +6,7 @@ from pydantic_settings import BaseSettings
 
 def get_env_files() -> list[str]:
     """Safely get environment files, avoiding permission errors in containers."""
-    files = [".env"]
+    files = []
     try:
         # Check for user-level config
         home_cfg = Path.home() / ".config/flowo/.env"
@@ -16,6 +16,7 @@ def get_env_files() -> list[str]:
     except (PermissionError, RuntimeError):
         # Fallback if home directory is restricted
         pass
+    files.append(".env")
     return files
 
 

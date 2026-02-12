@@ -18,7 +18,7 @@ import type { Status } from '@/client/types.gen';
 import { ResultViewer } from '@/components/features/result/ResultViewer.tsx';
 import WorkflowGraph from '@/components/job/dag/Dag';
 import JobTable from '@/components/job/JobTable.tsx';
-import { TextViewer } from '@/components/shared/viewers';
+import { CodeViewer } from '@/components/shared/viewers';
 import WorkflowProgress from '@/components/workflow/WorkflowProgress.tsx';
 import WorkflowTimeline from '@/components/workflow/WorkflowTimeline.tsx';
 import { useWorkflowRealtime } from '@/config/workflowRealtime';
@@ -184,7 +184,7 @@ function WorkflowDetail() {
               <div
                 style={{
                   flex: 1,
-                  height: '100%',
+                  minHeight: 0, // Allow flex to shrink/grow correctly
                   overflow: 'hidden',
                   position: 'relative',
                 }}
@@ -225,7 +225,7 @@ function WorkflowDetail() {
                 )}
 
                 {activeTab === 'code' && (
-                  <TextViewer
+                  <CodeViewer
                     content={snakefileContent?.content as string}
                     fileFormat="python"
                   />

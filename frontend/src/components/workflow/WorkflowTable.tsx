@@ -431,7 +431,7 @@ const WorkflowTable = () => {
     {
       title: 'Progress',
       key: 'progress',
-      width: 25,
+      width: 30,
       fixed: 'right',
       align: 'right',
       render: (_, record) => {
@@ -461,7 +461,8 @@ const WorkflowTable = () => {
     {
       title: 'Files',
       key: 'files',
-      width: 40,
+      fixed: 'right',
+      width: 45,
       align: 'center',
       render: (_, record) => {
         return (
@@ -675,12 +676,11 @@ const WorkflowTable = () => {
         key={`config-${configModal.workflowId}`}
         visible={configModal.visible}
         onClose={() => setConfigModal({ visible: false, workflowId: '' })}
-        fileContent={Object.fromEntries(
-          Object.entries(configData || {}).map(([key, value]) => [
-            key,
-            value || '',
-          ]),
-        )}
+        fileContent={
+          Array.isArray(configData)
+            ? Object.fromEntries(configData.map((f) => [f.path, f.content]))
+            : {}
+        }
         workflowId={configModal.workflowId}
       />
 
