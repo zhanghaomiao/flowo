@@ -42,8 +42,7 @@ class WorkflowStartedHandler(BaseEventHandler[WorkflowStartedSchema]):
             dryrun=context.get("dryrun", False),
             status=Status.RUNNING,
             started_at=datetime.now(),
-            # maybe we need to get configfiles later
-            # configfiles=context.get("configfiles"),
+            configfiles=context.get("configfiles"),
         )
         session.add(workflow)
         context["current_workflow_id"] = data.workflow_id

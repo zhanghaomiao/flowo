@@ -75,7 +75,7 @@ services:
       - caddy_data_dev:/data
       - caddy_config_dev:/config
     ports:
-      - "${PORT:-3101}:80"
+      - "${PORT:-3100}:80"
     depends_on:
       - flowo-backend
       - flowo-frontend

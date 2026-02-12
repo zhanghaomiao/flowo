@@ -7,7 +7,7 @@ import {
 } from '@ant-design/icons';
 import { Button, Col, Empty, Modal, Row, Tooltip } from 'antd';
 
-import { TextViewer } from './TextViewer';
+import { CodeViewer } from './CodeViewer';
 import type { MultiFileViewerProps } from './types';
 
 // Get file format for viewer
@@ -142,7 +142,7 @@ export const MultiFileViewer: React.FC<MultiFileViewerProps> = ({
                   <strong>{getFileName(selectedFile)}</strong>
                 </div>
                 <div style={{ height: 'calc(100% - 60px)' }}>
-                  <TextViewer
+                  <CodeViewer
                     content={selectedContent}
                     fileName={getFileName(selectedFile)}
                     fileFormat={getFileFormat(selectedFile)}

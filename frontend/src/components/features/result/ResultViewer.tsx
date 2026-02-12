@@ -130,7 +130,7 @@ export const ResultViewer: React.FC<ResultViewerProps> = ({ workflowId }) => {
               onSelect={handleSelect}
               showIcon
               blockNode
-              height={500} // 虚拟滚动
+              height={600} // 虚拟滚动
             />
           </Card>
         </Splitter.Panel>

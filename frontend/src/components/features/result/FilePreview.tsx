@@ -4,10 +4,10 @@ import { useQuery } from '@tanstack/react-query';
 import { Alert, Result, Spin } from 'antd';
 
 import {
+  CodeViewer,
   IframeViewer,
   ImageViewer,
   TableViewer,
-  TextViewer,
 } from '@/components/shared/viewers';
 
 import {
@@ -62,7 +62,7 @@ const TextFileViewer: React.FC<{
 
   return (
     <div style={{ height: '100%', overflow: 'hidden' }}>
-      <TextViewer content={data || ''} fileFormat={extension} />
+      <CodeViewer content={data || ''} fileFormat={extension} />
     </div>
   );
 };

@@ -186,16 +186,18 @@ class WorkflowService:
                 status_code=404, detail="configfiles or workflow not found"
             )
 
-        data = {}
+        data = []
         for configfile in workflow.configfiles:
             try:
-                configfile_path = str(configfile).replace(
-                    workflow.flowo_working_path, "/work_dir/"
-                )
-                with open(configfile_path) as f:
-                    data[configfile] = f.read()
+                content = get_file_content(configfile)
+                content.path = configfile
+                data.append(content)
             except Exception as e:
-                data[configfile] = f"Failed to open file: {str(e)}"
+                data.append(
+                    PathContent(
+                        path=configfile, content=f"Error reading file: {str(e)}"
+                    )
+                )
 
         return data
 

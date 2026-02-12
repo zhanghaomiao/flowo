@@ -132,7 +132,12 @@ class FlowoLogHandler(Handler):
             schema_data = parser_func(record)
 
             # 2. Send to API
-            self._send_to_api(event_name, schema_data.model_dump(mode="json"))
+            data = schema_data.model_dump(mode="json")
+
+            if event_name == "workflow_started":
+                self.context["configfiles"] = self._get_configfiles()
+
+            self._send_to_api(event_name, data)
         except Exception as e:
             logger.debug(f"Failed to process event {event_name}: {e}")
 
@@ -189,8 +194,26 @@ class FlowoLogHandler(Handler):
             )
             return
 
+    def _get_configfiles(self) -> list[str]:
+        """Extract configfiles from global snakemake workflow object."""
+        try:
+            import snakemake.workflow
+
+            if (
+                hasattr(snakemake.workflow, "workflow")
+                and snakemake.workflow.workflow
+                and hasattr(snakemake.workflow.workflow, "configfiles")
+            ):
+                return [str(f) for f in snakemake.workflow.workflow.configfiles]
+        except Exception as e:
+            logger.debug(f"Failed to access snakemake workflow configfiles: {e}")
+        return []
+
     def close(self) -> None:
         self.file_handler.close()
+
+        if self._client.is_closed:
+            return
 
         workflow_id = self.context.get("current_workflow_id")
         if workflow_id and settings.FLOWO_USER_TOKEN:

@@ -165,7 +165,7 @@ async def get_workflow_log(
     return await service.get_workflow_log(workflow_id)
 
 
-@router.get("/{workflow_id}/configfiles", response_model=dict[str, str])
+@router.get("/{workflow_id}/configfiles", response_model=list[PathContent])
 async def get_configfiles(
     workflow_id: uuid.UUID,
     db: AsyncSession = Depends(get_async_session),
