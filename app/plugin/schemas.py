@@ -13,9 +13,16 @@ class ErrorSchema(BaseModel):
     line: str | None = None
 
 
+class RuleInfoSchema(BaseModel):
+    name: str
+    code: str | None = None
+    language: str | None = None
+
+
 class WorkflowStartedSchema(BaseModel):
     workflow_id: uuid.UUID
     snakefile: str
+    rules: list[RuleInfoSchema] = Field(default_factory=list)
 
 
 class RunInfoSchema(BaseModel):

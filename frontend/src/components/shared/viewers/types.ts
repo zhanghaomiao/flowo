@@ -6,6 +6,7 @@ export interface FileViewerProps {
   fileFormat?: string;
   fullscreen?: boolean;
   showFileName?: boolean;
+  title?: string;
 }
 
 export interface FileViewerModalProps {

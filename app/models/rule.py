@@ -1,7 +1,7 @@
 import uuid
 from typing import TYPE_CHECKING
 
-from sqlalchemy import ForeignKey
+from sqlalchemy import ForeignKey, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .base import Base
@@ -16,6 +16,8 @@ class Rule(Base):
     __tablename__ = "rules"
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str]
+    code: Mapped[str | None] = mapped_column(type_=Text, nullable=True)
+    language: Mapped[str | None] = mapped_column(nullable=True)
     workflow_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("workflows.id"))
     workflow: Mapped["Workflow"] = relationship("Workflow", back_populates="rules")
     jobs: Mapped[list["Job"]] = relationship(

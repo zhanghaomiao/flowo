@@ -314,6 +314,38 @@ export type ResourcesSummary = {
 };
 
 /**
+ * RuleListResponse
+ */
+export type RuleListResponse = {
+    /**
+     * Rules
+     */
+    rules: Array<RuleResponse>;
+};
+
+/**
+ * RuleResponse
+ */
+export type RuleResponse = {
+    /**
+     * Id
+     */
+    id: number;
+    /**
+     * Name
+     */
+    name: string;
+    /**
+     * Code
+     */
+    code?: string | null;
+    /**
+     * Language
+     */
+    language?: string | null;
+};
+
+/**
  * RuleStatusResponse
  */
 export type RuleStatusResponse = {
@@ -1419,6 +1451,36 @@ export type GetRuleStatusResponses = {
 };
 
 export type GetRuleStatusResponse = GetRuleStatusResponses[keyof GetRuleStatusResponses];
+
+export type GetRulesData = {
+    body?: never;
+    path: {
+        /**
+         * Workflow Id
+         */
+        workflow_id: string;
+    };
+    query?: never;
+    url: '/api/v1/workflows/{workflow_id}/rules';
+};
+
+export type GetRulesErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type GetRulesError = GetRulesErrors[keyof GetRulesErrors];
+
+export type GetRulesResponses = {
+    /**
+     * Successful Response
+     */
+    200: RuleListResponse;
+};
+
+export type GetRulesResponse = GetRulesResponses[keyof GetRulesResponses];
 
 export type GetSnakefileData = {
     body?: never;

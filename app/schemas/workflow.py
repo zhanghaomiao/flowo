@@ -56,3 +56,16 @@ class RuleStatusResponse(BaseModel):
     error: str
     total: str
     status: str
+
+
+class RuleResponse(BaseModel):
+    id: int
+    name: str
+    code: str | None = None
+    language: str | None = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class RuleListResponse(BaseModel):
+    rules: list[RuleResponse]

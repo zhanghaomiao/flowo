@@ -7,12 +7,14 @@ import type { FileViewerProps } from './types';
 
 const { Text } = Typography;
 
-export const CodeViewer: React.FC<FileViewerProps> = ({
-  content,
-  fileName,
-  fileFormat = 'yaml',
-  showFileName = false,
-}) => {
+export const CodeViewer: React.FC<FileViewerProps> = (props) => {
+  const {
+    content,
+    fileName,
+    fileFormat = 'yaml',
+    showFileName = false,
+    title,
+  } = props;
   const fileContent = content || '';
 
   const fileAnalysis = useMemo(() => {
@@ -65,7 +67,7 @@ export const CodeViewer: React.FC<FileViewerProps> = ({
         flexDirection: 'column',
       }}
     >
-      {showFileName && fileName && (
+      {(showFileName || title) && (
         <div
           style={{
             display: 'flex',
@@ -80,10 +82,12 @@ export const CodeViewer: React.FC<FileViewerProps> = ({
           }}
         >
           <div>
-            <Text strong>{fileName}</Text>
-            <Text type="secondary" style={{ marginLeft: 8 }}>
-              {fileAnalysis.lineCount} lines ({fileAnalysis.sizeInKB} KB)
-            </Text>
+            <Text strong>{title || fileName}</Text>
+            {fileAnalysis.lineCount > 0 && (
+              <Text type="secondary" style={{ marginLeft: 8 }}>
+                {fileAnalysis.lineCount} lines ({fileAnalysis.sizeInKB} KB)
+              </Text>
+            )}
           </div>
         </div>
       )}

@@ -11,6 +11,7 @@ from app.models import Status, User
 from app.schemas import (
     JobListResponse,
     Message,
+    RuleListResponse,
     RuleStatusResponse,
     WorkflowDetialResponse,
     WorkflowListResponse,
@@ -137,6 +138,20 @@ async def get_rule_status(
     if not wf or (wf.user_id != user.id and not user.is_superuser):
         raise HTTPException(status_code=404, detail="Workflow not found")
     return await service.get_rule_status(workflow_id=workflow_id)
+
+
+@router.get("/{workflow_id}/rules", response_model=RuleListResponse)
+async def get_rules(
+    workflow_id: uuid.UUID,
+    db: AsyncSession = Depends(get_async_session),
+    user: User = Depends(current_active_user),
+):
+    service = WorkflowService(db)
+    wf = await service.get_workflow(workflow_id)
+    if not wf or (wf.user_id != user.id and not user.is_superuser):
+        raise HTTPException(status_code=404, detail="Workflow not found")
+    rules = await service.get_rules(workflow_id=workflow_id)
+    return RuleListResponse(rules=rules)
 
 
 @router.get("/{workflow_id}/snakefile", response_model=PathContent)
