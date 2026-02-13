@@ -1,4 +1,5 @@
 import {
+  AppstoreOutlined,
   DashboardOutlined,
   HomeOutlined,
   LogoutOutlined,
@@ -33,6 +34,11 @@ const menuItems = [
     label: <Link to="/">Workflows</Link>,
   },
   {
+    key: '/templates',
+    icon: <AppstoreOutlined />,
+    label: <Link to="/templates">Templates</Link>,
+  },
+  {
     key: '/dashboard',
     icon: <DashboardOutlined />,
     label: <Link to="/dashboard">Dashboard</Link>,
@@ -48,6 +54,7 @@ function RootComponent() {
   const getSelectedKey = () => {
     const pathname = location.pathname;
     if (pathname === '/') return '/';
+    if (pathname.startsWith('/templates')) return '/templates';
     if (pathname.startsWith('/dashboard')) return '/dashboard';
     if (pathname.startsWith('/profile')) return '/profile';
     // For workflow detail pages (/workflow/xxx), don't highlight any menu item
