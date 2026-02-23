@@ -113,7 +113,6 @@ const WorkflowGraphInner: React.FC<WorkflowGraphProps> = ({
     nodeStyling,
     isLoading,
     error,
-    ruleStatus,
   } = useWorkflowGraph({
     workflowId,
     layoutDirection,
@@ -207,16 +206,9 @@ const WorkflowGraphInner: React.FC<WorkflowGraphProps> = ({
   const handleNodeClick = useCallback(
     (event: React.MouseEvent, node: Node) => {
       const ruleName = node.data.rule as string;
-
-      // Check if the node is unscheduled and disable click
-      const isUnscheduled = !ruleStatus || !(ruleName in ruleStatus);
-      if (isUnscheduled) {
-        return; // Don't handle click for unscheduled nodes
-      }
-
       onNodeClick?.(ruleName);
     },
-    [onNodeClick, ruleStatus],
+    [onNodeClick],
   );
 
   // Handle layout direction change
