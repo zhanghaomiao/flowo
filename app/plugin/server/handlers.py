@@ -45,6 +45,19 @@ class WorkflowStartedHandler(BaseEventHandler[WorkflowStartedSchema]):
             configfiles=context.get("configfiles"),
         )
         session.add(workflow)
+
+        # Add rules if provided
+        rules = [
+            Rule(
+                name=rule_info.name,
+                code=rule_info.code,
+                language=rule_info.language,
+                workflow_id=workflow.id,
+            )
+            for rule_info in data.rules
+        ]
+        session.add_all(rules)
+
         context["current_workflow_id"] = data.workflow_id
 
 

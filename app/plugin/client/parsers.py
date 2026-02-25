@@ -11,11 +11,74 @@ from ..schemas import (
     JobInfoSchema,
     JobStartedSchema,
     RuleGraphSchema,
+    RuleInfoSchema,
     RunInfoSchema,
     WorkflowStartedSchema,
 )
 
 logger = logging.getLogger("snakemake.flowo")
+
+
+def _extract_rules() -> list[RuleInfoSchema]:
+    """Extract all rules and their source code from the global snakemake workflow object."""
+    rules = []
+    try:
+        import snakemake.workflow
+        from snakemake import notebook, wrapper
+        from snakemake.io import contains_wildcard
+        from snakemake.script import get_source
+
+        wf = snakemake.workflow.workflow
+        if not wf:
+            return []
+
+        for rule in wf.rules:
+            sources = []
+            language = None
+            try:
+                if rule.shellcmd is not None:
+                    sources = [rule.shellcmd]
+                    language = "bash"
+                elif rule.script is not None and not contains_wildcard(rule.script):
+                    _, source, language, _, _ = get_source(
+                        rule.script, wf.sourcecache, rule.basedir
+                    )
+                    sources = [source]
+                elif rule.wrapper is not None and not contains_wildcard(rule.wrapper):
+                    wrapper_script = wrapper.get_script(
+                        rule.wrapper,
+                        wf.sourcecache,
+                        prefix=wf.workflow_settings.wrapper_prefix,
+                    )
+                    _, source, language, _, _ = get_source(
+                        wrapper_script, wf.sourcecache
+                    )
+                    sources = [source]
+                elif rule.notebook is not None and not contains_wildcard(rule.notebook):
+                    _, source, language, _, _ = get_source(
+                        rule.notebook, wf.sourcecache, rule.basedir
+                    )
+                    # For notebooks, we try to split to get the underlying language
+                    if language and "_" in language:
+                        language = language.split("_")[1]
+                    sources = notebook.get_cell_sources(source)
+                else:
+                    # run: directive or wildcard scripted rules
+                    sources = []
+                    language = "python" if rule.is_run else None
+
+                code = "\n\n".join(sources) if sources else None
+                rules.append(
+                    RuleInfoSchema(name=rule.name, code=code, language=language)
+                )
+            except Exception as e:
+                logger.debug(f"Failed to extract code for rule {rule.name}: {e}")
+                rules.append(RuleInfoSchema(name=rule.name))
+
+    except Exception as e:
+        logger.debug(f"Failed to access snakemake workflow rules: {e}")
+
+    return rules
 
 
 class RecordParser:
@@ -26,6 +89,7 @@ class RecordParser:
         return WorkflowStartedSchema(
             workflow_id=record.workflow_id,
             snakefile=str(getattr(record, "snakefile", "")),
+            rules=_extract_rules(),
         )
 
     @staticmethod

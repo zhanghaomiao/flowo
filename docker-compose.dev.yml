@@ -8,6 +8,8 @@ services:
       - postgres_data_dev:/var/lib/postgresql/data
     networks:
       - flowo-dev-network
+    ports:
+      - "5555:5432"
     restart: unless-stopped
 
   flowo-backend:

@@ -272,7 +272,7 @@ class WorkflowService:
 
         run_info = await self.get_workflow_run_info(workflow_id=workflow_id)
         if not run_info:
-            return []
+            return {}
 
         for job in jobs:
             rule_name_dict[job.rule_name] = rule_name_dict.get(job.rule_name, 0) + 1
@@ -300,6 +300,11 @@ class WorkflowService:
             results[rule_name] = sorted([job[1:] for job in jobs], key=itemgetter(1))
 
         return results
+
+    async def get_rules(self, workflow_id: uuid.UUID) -> list[Rule]:
+        query = select(Rule).where(Rule.workflow_id == workflow_id)
+        result = await self.db_session.execute(query)
+        return result.scalars().all()
 
     async def get_rule_status(self, workflow_id: uuid.UUID):
         # {rule name : [success, running, error, total, status]}

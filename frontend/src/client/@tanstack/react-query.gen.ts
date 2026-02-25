@@ -3,8 +3,8 @@
 import { type DefaultError, type InfiniteData, infiniteQueryOptions, queryOptions, type UseMutationOptions, useQuery } from '@tanstack/react-query';
 
 import { client } from '../client.gen';
-import { authJwtLogin, authJwtLogout, closeWorkflow, createToken, deleteToken, deleteWorkflow, getActivity, getAllTags, getClientConfig, getConfigfiles, getDetail, getJob, getJobOutputs, getJobs, getLogs, getProgress, getRuleDuration, getRuleError, getRuleGraph, getRuleStatus, getSnakefile, getSseTicket, getStatus, getSystemHealth, getSystemResources, getTimelines, getWorkflowIdByName, getWorkflowLog, getWorkflows, listFiles, listTokens, type Options, postPruning, readFile, registerRegister, reportEvent, streamEvents, usersCurrentUser, usersDeleteUser, usersPatchCurrentUser, usersPatchUser, usersUser } from '../sdk.gen';
-import type { AuthJwtLoginData, AuthJwtLoginError, AuthJwtLoginResponse, AuthJwtLogoutData, CloseWorkflowData, CloseWorkflowError, CreateTokenData, CreateTokenError, CreateTokenResponse, DeleteTokenData, DeleteTokenError, DeleteWorkflowData, DeleteWorkflowError, GetActivityData, GetActivityError, GetActivityResponse, GetAllTagsData, GetAllTagsResponse, GetClientConfigData, GetClientConfigResponse, GetConfigfilesData, GetConfigfilesError, GetConfigfilesResponse, GetDetailData, GetDetailError, GetDetailResponse, GetJobData, GetJobError, GetJobOutputsData, GetJobOutputsError, GetJobOutputsResponse, GetJobResponse, GetJobsData, GetJobsError, GetJobsResponse, GetLogsData, GetLogsError, GetLogsResponse, GetProgressData, GetProgressError, GetProgressResponse, GetRuleDurationData, GetRuleDurationError, GetRuleDurationResponse, GetRuleErrorData, GetRuleErrorError, GetRuleErrorResponse, GetRuleGraphData, GetRuleGraphError, GetRuleGraphResponse, GetRuleStatusData, GetRuleStatusError, GetRuleStatusResponse, GetSnakefileData, GetSnakefileError, GetSnakefileResponse, GetSseTicketData, GetStatusData, GetStatusError, GetStatusResponse, GetSystemHealthData, GetSystemHealthResponse, GetSystemResourcesData, GetSystemResourcesResponse, GetTimelinesData, GetTimelinesError, GetTimelinesResponse, GetWorkflowIdByNameData, GetWorkflowIdByNameError, GetWorkflowIdByNameResponse, GetWorkflowLogData, GetWorkflowLogError, GetWorkflowLogResponse, GetWorkflowsData, GetWorkflowsError, GetWorkflowsResponse, ListFilesData, ListFilesError, ListFilesResponse, ListTokensData, ListTokensResponse, PostPruningData, PostPruningResponse, ReadFileData, ReadFileError, ReadFileResponse, RegisterRegisterData, RegisterRegisterError, RegisterRegisterResponse, ReportEventData, ReportEventError, StreamEventsData, StreamEventsError, UsersCurrentUserData, UsersCurrentUserResponse, UsersDeleteUserData, UsersDeleteUserError, UsersDeleteUserResponse, UsersPatchCurrentUserData, UsersPatchCurrentUserError, UsersPatchCurrentUserResponse, UsersPatchUserData, UsersPatchUserError, UsersPatchUserResponse, UsersUserData, UsersUserError, UsersUserResponse } from '../types.gen';
+import { authJwtLogin, authJwtLogout, closeWorkflow, createToken, deleteToken, deleteWorkflow, getActivity, getAllTags, getClientConfig, getConfigfiles, getDetail, getJob, getJobOutputs, getJobs, getLogs, getProgress, getRuleDuration, getRuleError, getRuleGraph, getRules, getRuleStatus, getSnakefile, getSseTicket, getStatus, getSystemHealth, getSystemResources, getTimelines, getWorkflowIdByName, getWorkflowLog, getWorkflows, listFiles, listTokens, type Options, postPruning, readFile, registerRegister, reportEvent, streamEvents, usersCurrentUser, usersDeleteUser, usersPatchCurrentUser, usersPatchUser, usersUser } from '../sdk.gen';
+import type { AuthJwtLoginData, AuthJwtLoginError, AuthJwtLoginResponse, AuthJwtLogoutData, CloseWorkflowData, CloseWorkflowError, CreateTokenData, CreateTokenError, CreateTokenResponse, DeleteTokenData, DeleteTokenError, DeleteWorkflowData, DeleteWorkflowError, GetActivityData, GetActivityError, GetActivityResponse, GetAllTagsData, GetAllTagsResponse, GetClientConfigData, GetClientConfigResponse, GetConfigfilesData, GetConfigfilesError, GetConfigfilesResponse, GetDetailData, GetDetailError, GetDetailResponse, GetJobData, GetJobError, GetJobOutputsData, GetJobOutputsError, GetJobOutputsResponse, GetJobResponse, GetJobsData, GetJobsError, GetJobsResponse, GetLogsData, GetLogsError, GetLogsResponse, GetProgressData, GetProgressError, GetProgressResponse, GetRuleDurationData, GetRuleDurationError, GetRuleDurationResponse, GetRuleErrorData, GetRuleErrorError, GetRuleErrorResponse, GetRuleGraphData, GetRuleGraphError, GetRuleGraphResponse, GetRulesData, GetRulesError, GetRulesResponse, GetRuleStatusData, GetRuleStatusError, GetRuleStatusResponse, GetSnakefileData, GetSnakefileError, GetSnakefileResponse, GetSseTicketData, GetStatusData, GetStatusError, GetStatusResponse, GetSystemHealthData, GetSystemHealthResponse, GetSystemResourcesData, GetSystemResourcesResponse, GetTimelinesData, GetTimelinesError, GetTimelinesResponse, GetWorkflowIdByNameData, GetWorkflowIdByNameError, GetWorkflowIdByNameResponse, GetWorkflowLogData, GetWorkflowLogError, GetWorkflowLogResponse, GetWorkflowsData, GetWorkflowsError, GetWorkflowsResponse, ListFilesData, ListFilesError, ListFilesResponse, ListTokensData, ListTokensResponse, PostPruningData, PostPruningResponse, ReadFileData, ReadFileError, ReadFileResponse, RegisterRegisterData, RegisterRegisterError, RegisterRegisterResponse, ReportEventData, ReportEventError, StreamEventsData, StreamEventsError, UsersCurrentUserData, UsersCurrentUserResponse, UsersDeleteUserData, UsersDeleteUserError, UsersDeleteUserResponse, UsersPatchCurrentUserData, UsersPatchCurrentUserError, UsersPatchCurrentUserResponse, UsersPatchUserData, UsersPatchUserError, UsersPatchUserResponse, UsersUserData, UsersUserError, UsersUserResponse } from '../types.gen';
 
 /**
  * Auth:Jwt.Login
@@ -543,6 +543,29 @@ export const getRuleStatusOptions = (options: Options<GetRuleStatusData>) => que
  * Get Rule Status
  */
 export const useGetRuleStatusQuery = (options: Options<GetRuleStatusData>) => useQuery(getRuleStatusOptions(options));
+
+export const getRulesQueryKey = (options: Options<GetRulesData>) => createQueryKey('getRules', options, false, ['workflow']);
+
+/**
+ * Get Rules
+ */
+export const getRulesOptions = (options: Options<GetRulesData>) => queryOptions<GetRulesResponse, GetRulesError, GetRulesResponse, ReturnType<typeof getRulesQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await getRules({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: getRulesQueryKey(options)
+});
+
+/**
+ * Get Rules
+ */
+export const useGetRulesQuery = (options: Options<GetRulesData>) => useQuery(getRulesOptions(options));
 
 export const getSnakefileQueryKey = (options: Options<GetSnakefileData>) => createQueryKey('getSnakefile', options, false, ['workflow']);
 

@@ -11,10 +11,11 @@ import { createFileRoute } from '@tanstack/react-router';
 import { Splitter, Tabs } from 'antd';
 
 import {
+  getRulesOptions,
   getSnakefileOptions,
   useGetDetailQuery,
 } from '@/client/@tanstack/react-query.gen';
-import type { Status } from '@/client/types.gen';
+import type { RuleResponse, Status } from '@/client/types.gen';
 import { ResultViewer } from '@/components/features/result/ResultViewer.tsx';
 import WorkflowGraph from '@/components/job/dag/Dag';
 import JobTable from '@/components/job/JobTable.tsx';
@@ -57,7 +58,12 @@ function WorkflowDetail() {
 
   const workflowStatus = workflow?.status;
   const handleNodeClick = (ruleName: string) => {
-    setSelectedRule(selectedRule === ruleName ? null : ruleName);
+    if (selectedRule === ruleName) {
+      setSelectedRule(null);
+    } else {
+      setSelectedRule(ruleName);
+      setActiveTab('code');
+    }
   };
 
   const { data: snakefileContent } = useQuery({
@@ -66,8 +72,23 @@ function WorkflowDetail() {
         workflow_id: workflowId as string,
       },
     }),
-    enabled: enableSnakefile,
+    enabled: enableSnakefile && !selectedRule,
   });
+
+  const { data: rulesData } = useQuery(
+    Object.assign(
+      getRulesOptions({
+        path: {
+          workflow_id: workflowId as string,
+        },
+      }),
+      { enabled: enableSnakefile && !!selectedRule },
+    ),
+  );
+
+  const selectedRuleData = selectedRule
+    ? rulesData?.rules?.find((r: RuleResponse) => r.name === selectedRule)
+    : null;
 
   return (
     <div style={{ width: '96%', margin: '0 auto' }}>
@@ -226,8 +247,14 @@ function WorkflowDetail() {
 
                 {activeTab === 'code' && (
                   <CodeViewer
-                    content={snakefileContent?.content as string}
-                    fileFormat="python"
+                    content={
+                      (selectedRule
+                        ? (selectedRuleData?.code ??
+                          'No code found for this rule')
+                        : (snakefileContent?.content as string)) || ''
+                    }
+                    fileFormat={selectedRuleData?.language || 'python'}
+                    title={selectedRule ? `Rule: ${selectedRule}` : 'Snakefile'}
                   />
                 )}
                 {activeTab === 'result' && (
