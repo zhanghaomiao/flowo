@@ -50,12 +50,14 @@ class Settings(BaseSettings):
     CONTAINER_MOUNT_PATH: str = "/work_dir"
 
     # Template management
-    TEMPLATE_DIR: str | None = None  # Defaults to FLOWO_WORKING_PATH/templates
+    TEMPLATE_DIR: str | None = None  # Defaults to CONTAINER_MOUNT_PATH/templates
 
     @model_validator(mode="after")
     def set_template_defaults(self) -> "Settings":
         if self.TEMPLATE_DIR is None:
-            self.TEMPLATE_DIR = str(Path(self.FLOWO_WORKING_PATH) / "templates")
+            # Use CONTAINER_MOUNT_PATH (container-side) for file storage,
+            # FLOWO_WORKING_PATH is the host-side path used for Docker volume mapping
+            self.TEMPLATE_DIR = str(Path(self.CONTAINER_MOUNT_PATH) / "templates")
         return self
 
     # Optional Git sync for templates

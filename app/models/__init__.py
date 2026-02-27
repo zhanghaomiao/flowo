@@ -4,6 +4,7 @@ from .file import File
 from .job import Job
 from .rule import Rule
 from .user import User
+from .user_settings import UserSettings
 from .user_token import UserToken
 from .workflow import Workflow
 
@@ -16,5 +17,6 @@ __all__ = [
     "File",
     "Error",
     "User",
+    "UserSettings",
     "UserToken",
 ]

@@ -13,11 +13,14 @@ import { Route as RegisterRouteImport } from './routes/register'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated.index'
+import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated.settings'
 import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticated.profile'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated.dashboard'
 import { Route as AuthenticatedWorkflowIndexRouteImport } from './routes/_authenticated.workflow/index'
+import { Route as AuthenticatedTemplatesIndexRouteImport } from './routes/_authenticated.templates/index'
 import { Route as AuthenticatedDashboardIndexRouteImport } from './routes/_authenticated.Dashboard/index'
 import { Route as AuthenticatedWorkflowWorkflowIdRouteImport } from './routes/_authenticated.workflow/$workflowId'
+import { Route as AuthenticatedTemplatesTemplateSlugRouteImport } from './routes/_authenticated.templates/$templateSlug'
 
 const RegisterRoute = RegisterRouteImport.update({
   id: '/register',
@@ -38,6 +41,11 @@ const AuthenticatedIndexRoute = AuthenticatedIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 const AuthenticatedProfileRoute = AuthenticatedProfileRouteImport.update({
   id: '/profile',
   path: '/profile',
@@ -54,6 +62,12 @@ const AuthenticatedWorkflowIndexRoute =
     path: '/workflow/',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedTemplatesIndexRoute =
+  AuthenticatedTemplatesIndexRouteImport.update({
+    id: '/templates/',
+    path: '/templates/',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedDashboardIndexRoute =
   AuthenticatedDashboardIndexRouteImport.update({
     id: '/Dashboard/',
@@ -66,6 +80,12 @@ const AuthenticatedWorkflowWorkflowIdRoute =
     path: '/workflow/$workflowId',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedTemplatesTemplateSlugRoute =
+  AuthenticatedTemplatesTemplateSlugRouteImport.update({
+    id: '/templates/$templateSlug',
+    path: '/templates/$templateSlug',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof AuthenticatedIndexRoute
@@ -73,8 +93,11 @@ export interface FileRoutesByFullPath {
   '/register': typeof RegisterRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/profile': typeof AuthenticatedProfileRoute
+  '/settings': typeof AuthenticatedSettingsRoute
+  '/templates/$templateSlug': typeof AuthenticatedTemplatesTemplateSlugRoute
   '/workflow/$workflowId': typeof AuthenticatedWorkflowWorkflowIdRoute
   '/Dashboard/': typeof AuthenticatedDashboardIndexRoute
+  '/templates/': typeof AuthenticatedTemplatesIndexRoute
   '/workflow/': typeof AuthenticatedWorkflowIndexRoute
 }
 export interface FileRoutesByTo {
@@ -82,9 +105,12 @@ export interface FileRoutesByTo {
   '/register': typeof RegisterRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/profile': typeof AuthenticatedProfileRoute
+  '/settings': typeof AuthenticatedSettingsRoute
   '/': typeof AuthenticatedIndexRoute
+  '/templates/$templateSlug': typeof AuthenticatedTemplatesTemplateSlugRoute
   '/workflow/$workflowId': typeof AuthenticatedWorkflowWorkflowIdRoute
   '/Dashboard': typeof AuthenticatedDashboardIndexRoute
+  '/templates': typeof AuthenticatedTemplatesIndexRoute
   '/workflow': typeof AuthenticatedWorkflowIndexRoute
 }
 export interface FileRoutesById {
@@ -94,9 +120,12 @@ export interface FileRoutesById {
   '/register': typeof RegisterRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/profile': typeof AuthenticatedProfileRoute
+  '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
+  '/_authenticated/templates/$templateSlug': typeof AuthenticatedTemplatesTemplateSlugRoute
   '/_authenticated/workflow/$workflowId': typeof AuthenticatedWorkflowWorkflowIdRoute
   '/_authenticated/Dashboard/': typeof AuthenticatedDashboardIndexRoute
+  '/_authenticated/templates/': typeof AuthenticatedTemplatesIndexRoute
   '/_authenticated/workflow/': typeof AuthenticatedWorkflowIndexRoute
 }
 export interface FileRouteTypes {
@@ -107,8 +136,11 @@ export interface FileRouteTypes {
     | '/register'
     | '/dashboard'
     | '/profile'
+    | '/settings'
+    | '/templates/$templateSlug'
     | '/workflow/$workflowId'
     | '/Dashboard/'
+    | '/templates/'
     | '/workflow/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -116,9 +148,12 @@ export interface FileRouteTypes {
     | '/register'
     | '/dashboard'
     | '/profile'
+    | '/settings'
     | '/'
+    | '/templates/$templateSlug'
     | '/workflow/$workflowId'
     | '/Dashboard'
+    | '/templates'
     | '/workflow'
   id:
     | '__root__'
@@ -127,9 +162,12 @@ export interface FileRouteTypes {
     | '/register'
     | '/_authenticated/dashboard'
     | '/_authenticated/profile'
+    | '/_authenticated/settings'
     | '/_authenticated/'
+    | '/_authenticated/templates/$templateSlug'
     | '/_authenticated/workflow/$workflowId'
     | '/_authenticated/Dashboard/'
+    | '/_authenticated/templates/'
     | '/_authenticated/workflow/'
   fileRoutesById: FileRoutesById
 }
@@ -169,6 +207,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedIndexRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/settings': {
+      id: '/_authenticated/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof AuthenticatedSettingsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/profile': {
       id: '/_authenticated/profile'
       path: '/profile'
@@ -190,6 +235,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedWorkflowIndexRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/templates/': {
+      id: '/_authenticated/templates/'
+      path: '/templates'
+      fullPath: '/templates/'
+      preLoaderRoute: typeof AuthenticatedTemplatesIndexRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/Dashboard/': {
       id: '/_authenticated/Dashboard/'
       path: '/Dashboard'
@@ -204,24 +256,38 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedWorkflowWorkflowIdRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/templates/$templateSlug': {
+      id: '/_authenticated/templates/$templateSlug'
+      path: '/templates/$templateSlug'
+      fullPath: '/templates/$templateSlug'
+      preLoaderRoute: typeof AuthenticatedTemplatesTemplateSlugRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
   }
 }
 
 interface AuthenticatedRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedProfileRoute: typeof AuthenticatedProfileRoute
+  AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
+  AuthenticatedTemplatesTemplateSlugRoute: typeof AuthenticatedTemplatesTemplateSlugRoute
   AuthenticatedWorkflowWorkflowIdRoute: typeof AuthenticatedWorkflowWorkflowIdRoute
   AuthenticatedDashboardIndexRoute: typeof AuthenticatedDashboardIndexRoute
+  AuthenticatedTemplatesIndexRoute: typeof AuthenticatedTemplatesIndexRoute
   AuthenticatedWorkflowIndexRoute: typeof AuthenticatedWorkflowIndexRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedProfileRoute: AuthenticatedProfileRoute,
+  AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
+  AuthenticatedTemplatesTemplateSlugRoute:
+    AuthenticatedTemplatesTemplateSlugRoute,
   AuthenticatedWorkflowWorkflowIdRoute: AuthenticatedWorkflowWorkflowIdRoute,
   AuthenticatedDashboardIndexRoute: AuthenticatedDashboardIndexRoute,
+  AuthenticatedTemplatesIndexRoute: AuthenticatedTemplatesIndexRoute,
   AuthenticatedWorkflowIndexRoute: AuthenticatedWorkflowIndexRoute,
 }
 

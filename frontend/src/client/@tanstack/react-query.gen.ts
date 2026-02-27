@@ -3,8 +3,8 @@
 import { type DefaultError, type InfiniteData, infiniteQueryOptions, queryOptions, type UseMutationOptions, useQuery } from '@tanstack/react-query';
 
 import { client } from '../client.gen';
-import { authJwtLogin, authJwtLogout, closeWorkflow, createToken, deleteToken, deleteWorkflow, getActivity, getAllTags, getClientConfig, getConfigfiles, getDetail, getJob, getJobOutputs, getJobs, getLogs, getProgress, getRuleDuration, getRuleError, getRuleGraph, getRules, getRuleStatus, getSnakefile, getSseTicket, getStatus, getSystemHealth, getSystemResources, getTimelines, getWorkflowIdByName, getWorkflowLog, getWorkflows, listFiles, listTokens, type Options, postPruning, readFile, registerRegister, reportEvent, streamEvents, usersCurrentUser, usersDeleteUser, usersPatchCurrentUser, usersPatchUser, usersUser } from '../sdk.gen';
-import type { AuthJwtLoginData, AuthJwtLoginError, AuthJwtLoginResponse, AuthJwtLogoutData, CloseWorkflowData, CloseWorkflowError, CreateTokenData, CreateTokenError, CreateTokenResponse, DeleteTokenData, DeleteTokenError, DeleteWorkflowData, DeleteWorkflowError, GetActivityData, GetActivityError, GetActivityResponse, GetAllTagsData, GetAllTagsResponse, GetClientConfigData, GetClientConfigResponse, GetConfigfilesData, GetConfigfilesError, GetConfigfilesResponse, GetDetailData, GetDetailError, GetDetailResponse, GetJobData, GetJobError, GetJobOutputsData, GetJobOutputsError, GetJobOutputsResponse, GetJobResponse, GetJobsData, GetJobsError, GetJobsResponse, GetLogsData, GetLogsError, GetLogsResponse, GetProgressData, GetProgressError, GetProgressResponse, GetRuleDurationData, GetRuleDurationError, GetRuleDurationResponse, GetRuleErrorData, GetRuleErrorError, GetRuleErrorResponse, GetRuleGraphData, GetRuleGraphError, GetRuleGraphResponse, GetRulesData, GetRulesError, GetRulesResponse, GetRuleStatusData, GetRuleStatusError, GetRuleStatusResponse, GetSnakefileData, GetSnakefileError, GetSnakefileResponse, GetSseTicketData, GetStatusData, GetStatusError, GetStatusResponse, GetSystemHealthData, GetSystemHealthResponse, GetSystemResourcesData, GetSystemResourcesResponse, GetTimelinesData, GetTimelinesError, GetTimelinesResponse, GetWorkflowIdByNameData, GetWorkflowIdByNameError, GetWorkflowIdByNameResponse, GetWorkflowLogData, GetWorkflowLogError, GetWorkflowLogResponse, GetWorkflowsData, GetWorkflowsError, GetWorkflowsResponse, ListFilesData, ListFilesError, ListFilesResponse, ListTokensData, ListTokensResponse, PostPruningData, PostPruningResponse, ReadFileData, ReadFileError, ReadFileResponse, RegisterRegisterData, RegisterRegisterError, RegisterRegisterResponse, ReportEventData, ReportEventError, StreamEventsData, StreamEventsError, UsersCurrentUserData, UsersCurrentUserResponse, UsersDeleteUserData, UsersDeleteUserError, UsersDeleteUserResponse, UsersPatchCurrentUserData, UsersPatchCurrentUserError, UsersPatchCurrentUserResponse, UsersPatchUserData, UsersPatchUserError, UsersPatchUserResponse, UsersUserData, UsersUserError, UsersUserResponse } from '../types.gen';
+import { authJwtLogin, authJwtLogout, closeWorkflow, createTemplate, createToken, deleteFile, deleteTemplate, deleteToken, deleteWorkflow, exportTemplate, getActivity, getAllTags, getClientConfig, getConfigfiles, getDetail, getJob, getJobOutputs, getJobs, getLogs, getProgress, getRuleDuration, getRuleError, getRuleGraph, getRules, getRuleStatus, getSettings, getSnakefile, getSseTicket, getStatus, getSystemHealth, getSystemResources, getTemplate, getTemplateDag, getTimelines, getWorkflowIdByName, getWorkflowLog, getWorkflows, gitPull, gitPush, importFromGit, listFiles, listTemplates, listTokens, type Options, postPruning, readFile, readFile2, registerRegister, reportEvent, streamEvents, testGitConnection, testSmtpConnection, updateSettings, updateTemplate, uploadTemplate, usersCurrentUser, usersDeleteUser, usersPatchCurrentUser, usersPatchUser, usersUser, writeFile } from '../sdk.gen';
+import type { AuthJwtLoginData, AuthJwtLoginError, AuthJwtLoginResponse, AuthJwtLogoutData, CloseWorkflowData, CloseWorkflowError, CreateTemplateData, CreateTemplateError, CreateTemplateResponse, CreateTokenData, CreateTokenError, CreateTokenResponse, DeleteFileData, DeleteFileError, DeleteTemplateData, DeleteTemplateError, DeleteTokenData, DeleteTokenError, DeleteWorkflowData, DeleteWorkflowError, ExportTemplateData, ExportTemplateError, GetActivityData, GetActivityError, GetActivityResponse, GetAllTagsData, GetAllTagsResponse, GetClientConfigData, GetClientConfigResponse, GetConfigfilesData, GetConfigfilesError, GetConfigfilesResponse, GetDetailData, GetDetailError, GetDetailResponse, GetJobData, GetJobError, GetJobOutputsData, GetJobOutputsError, GetJobOutputsResponse, GetJobResponse, GetJobsData, GetJobsError, GetJobsResponse, GetLogsData, GetLogsError, GetLogsResponse, GetProgressData, GetProgressError, GetProgressResponse, GetRuleDurationData, GetRuleDurationError, GetRuleDurationResponse, GetRuleErrorData, GetRuleErrorError, GetRuleErrorResponse, GetRuleGraphData, GetRuleGraphError, GetRuleGraphResponse, GetRulesData, GetRulesError, GetRulesResponse, GetRuleStatusData, GetRuleStatusError, GetRuleStatusResponse, GetSettingsData, GetSettingsResponse, GetSnakefileData, GetSnakefileError, GetSnakefileResponse, GetSseTicketData, GetStatusData, GetStatusError, GetStatusResponse, GetSystemHealthData, GetSystemHealthResponse, GetSystemResourcesData, GetSystemResourcesResponse, GetTemplateDagData, GetTemplateDagError, GetTemplateData, GetTemplateError, GetTemplateResponse, GetTimelinesData, GetTimelinesError, GetTimelinesResponse, GetWorkflowIdByNameData, GetWorkflowIdByNameError, GetWorkflowIdByNameResponse, GetWorkflowLogData, GetWorkflowLogError, GetWorkflowLogResponse, GetWorkflowsData, GetWorkflowsError, GetWorkflowsResponse, GitPullData, GitPushData, GitPushError, ImportFromGitData, ImportFromGitError, ImportFromGitResponse, ListFilesData, ListFilesError, ListFilesResponse, ListTemplatesData, ListTemplatesError, ListTemplatesResponse, ListTokensData, ListTokensResponse, PostPruningData, PostPruningResponse, ReadFile2Data, ReadFile2Error, ReadFile2Response, ReadFileData, ReadFileError, ReadFileResponse, RegisterRegisterData, RegisterRegisterError, RegisterRegisterResponse, ReportEventData, ReportEventError, StreamEventsData, StreamEventsError, TestGitConnectionData, TestGitConnectionError, TestGitConnectionResponse, TestSmtpConnectionData, TestSmtpConnectionError, TestSmtpConnectionResponse, UpdateSettingsData, UpdateSettingsError, UpdateSettingsResponse, UpdateTemplateData, UpdateTemplateError, UpdateTemplateResponse, UploadTemplateData, UploadTemplateError, UploadTemplateResponse, UsersCurrentUserData, UsersCurrentUserResponse, UsersDeleteUserData, UsersDeleteUserError, UsersDeleteUserResponse, UsersPatchCurrentUserData, UsersPatchCurrentUserError, UsersPatchCurrentUserResponse, UsersPatchUserData, UsersPatchUserError, UsersPatchUserResponse, UsersUserData, UsersUserError, UsersUserResponse, WriteFileData, WriteFileError, WriteFileResponse } from '../types.gen';
 
 /**
  * Auth:Jwt.Login
@@ -1004,6 +1004,403 @@ export const deleteTokenMutation = (options?: Partial<Options<DeleteTokenData>>)
     const mutationOptions: UseMutationOptions<unknown, DeleteTokenError, Options<DeleteTokenData>> = {
         mutationFn: async (fnOptions) => {
             const { data } = await deleteToken({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const listTemplatesQueryKey = (options?: Options<ListTemplatesData>) => createQueryKey('listTemplates', options, false, ['templates']);
+
+/**
+ * List Templates
+ *
+ * List all workflow templates.
+ */
+export const listTemplatesOptions = (options?: Options<ListTemplatesData>) => queryOptions<ListTemplatesResponse, ListTemplatesError, ListTemplatesResponse, ReturnType<typeof listTemplatesQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await listTemplates({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: listTemplatesQueryKey(options)
+});
+
+/**
+ * List Templates
+ *
+ * List all workflow templates.
+ */
+export const useListTemplatesQuery = (options?: Options<ListTemplatesData>) => useQuery(listTemplatesOptions(options));
+
+/**
+ * Create Template
+ *
+ * Create a new workflow template with an empty Snakefile.
+ */
+export const createTemplateMutation = (options?: Partial<Options<CreateTemplateData>>): UseMutationOptions<CreateTemplateResponse, CreateTemplateError, Options<CreateTemplateData>> => {
+    const mutationOptions: UseMutationOptions<CreateTemplateResponse, CreateTemplateError, Options<CreateTemplateData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await createTemplate({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+/**
+ * Delete Template
+ *
+ * Delete a template and all its files.
+ */
+export const deleteTemplateMutation = (options?: Partial<Options<DeleteTemplateData>>): UseMutationOptions<unknown, DeleteTemplateError, Options<DeleteTemplateData>> => {
+    const mutationOptions: UseMutationOptions<unknown, DeleteTemplateError, Options<DeleteTemplateData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await deleteTemplate({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const getTemplateQueryKey = (options: Options<GetTemplateData>) => createQueryKey('getTemplate', options, false, ['templates']);
+
+/**
+ * Get Template
+ *
+ * Get template detail with file inventory.
+ */
+export const getTemplateOptions = (options: Options<GetTemplateData>) => queryOptions<GetTemplateResponse, GetTemplateError, GetTemplateResponse, ReturnType<typeof getTemplateQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await getTemplate({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: getTemplateQueryKey(options)
+});
+
+/**
+ * Get Template
+ *
+ * Get template detail with file inventory.
+ */
+export const useGetTemplateQuery = (options: Options<GetTemplateData>) => useQuery(getTemplateOptions(options));
+
+/**
+ * Update Template
+ *
+ * Update template metadata.
+ */
+export const updateTemplateMutation = (options?: Partial<Options<UpdateTemplateData>>): UseMutationOptions<UpdateTemplateResponse, UpdateTemplateError, Options<UpdateTemplateData>> => {
+    const mutationOptions: UseMutationOptions<UpdateTemplateResponse, UpdateTemplateError, Options<UpdateTemplateData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await updateTemplate({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+/**
+ * Delete File
+ *
+ * Delete a file from a template.
+ */
+export const deleteFileMutation = (options?: Partial<Options<DeleteFileData>>): UseMutationOptions<unknown, DeleteFileError, Options<DeleteFileData>> => {
+    const mutationOptions: UseMutationOptions<unknown, DeleteFileError, Options<DeleteFileData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await deleteFile({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const readFile2QueryKey = (options: Options<ReadFile2Data>) => createQueryKey('readFile2', options, false, ['templates']);
+
+/**
+ * Read File
+ *
+ * Read a file from a template.
+ */
+export const readFile2Options = (options: Options<ReadFile2Data>) => queryOptions<ReadFile2Response, ReadFile2Error, ReadFile2Response, ReturnType<typeof readFile2QueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await readFile2({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: readFile2QueryKey(options)
+});
+
+/**
+ * Read File
+ *
+ * Read a file from a template.
+ */
+export const useReadFile2Query = (options: Options<ReadFile2Data>) => useQuery(readFile2Options(options));
+
+/**
+ * Write File
+ *
+ * Create or update a file in a template.
+ */
+export const writeFileMutation = (options?: Partial<Options<WriteFileData>>): UseMutationOptions<WriteFileResponse, WriteFileError, Options<WriteFileData>> => {
+    const mutationOptions: UseMutationOptions<WriteFileResponse, WriteFileError, Options<WriteFileData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await writeFile({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const exportTemplateQueryKey = (options: Options<ExportTemplateData>) => createQueryKey('exportTemplate', options, false, ['templates']);
+
+/**
+ * Export Template
+ *
+ * Download a template as a .tar.gz archive.
+ */
+export const exportTemplateOptions = (options: Options<ExportTemplateData>) => queryOptions<unknown, ExportTemplateError, unknown, ReturnType<typeof exportTemplateQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await exportTemplate({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: exportTemplateQueryKey(options)
+});
+
+/**
+ * Export Template
+ *
+ * Download a template as a .tar.gz archive.
+ */
+export const useExportTemplateQuery = (options: Options<ExportTemplateData>) => useQuery(exportTemplateOptions(options));
+
+/**
+ * Upload Template
+ *
+ * Upload a .tar.gz archive as a new template.
+ */
+export const uploadTemplateMutation = (options?: Partial<Options<UploadTemplateData>>): UseMutationOptions<UploadTemplateResponse, UploadTemplateError, Options<UploadTemplateData>> => {
+    const mutationOptions: UseMutationOptions<UploadTemplateResponse, UploadTemplateError, Options<UploadTemplateData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await uploadTemplate({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const getTemplateDagQueryKey = (options: Options<GetTemplateDagData>) => createQueryKey('getTemplateDag', options, false, ['templates']);
+
+/**
+ * Get Template Dag
+ *
+ * Generate DAG preview from the template's Snakefile.
+ */
+export const getTemplateDagOptions = (options: Options<GetTemplateDagData>) => queryOptions<unknown, GetTemplateDagError, unknown, ReturnType<typeof getTemplateDagQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await getTemplateDag({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: getTemplateDagQueryKey(options)
+});
+
+/**
+ * Get Template Dag
+ *
+ * Generate DAG preview from the template's Snakefile.
+ */
+export const useGetTemplateDagQuery = (options: Options<GetTemplateDagData>) => useQuery(getTemplateDagOptions(options));
+
+/**
+ * Git Push
+ *
+ * Push all templates to a Git remote (monorepo).
+ *
+ * Accepts an optional remote_url override and access token for private repos.
+ * Returns the remote URL on success so the frontend can display it as a
+ * shareable link.
+ */
+export const gitPushMutation = (options?: Partial<Options<GitPushData>>): UseMutationOptions<unknown, GitPushError, Options<GitPushData>> => {
+    const mutationOptions: UseMutationOptions<unknown, GitPushError, Options<GitPushData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await gitPush({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+/**
+ * Git Pull
+ *
+ * Pull templates from the configured Git remote.
+ */
+export const gitPullMutation = (options?: Partial<Options<GitPullData>>): UseMutationOptions<unknown, DefaultError, Options<GitPullData>> => {
+    const mutationOptions: UseMutationOptions<unknown, DefaultError, Options<GitPullData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await gitPull({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+/**
+ * Import From Git
+ *
+ * Clone a Git repository and import all templates found inside.
+ *
+ * Accepts the root of a monorepo (multiple template subdirectories) or
+ * a single-template repo.  Returns the list of imported templates.
+ */
+export const importFromGitMutation = (options?: Partial<Options<ImportFromGitData>>): UseMutationOptions<ImportFromGitResponse, ImportFromGitError, Options<ImportFromGitData>> => {
+    const mutationOptions: UseMutationOptions<ImportFromGitResponse, ImportFromGitError, Options<ImportFromGitData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await importFromGit({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const getSettingsQueryKey = (options?: Options<GetSettingsData>) => createQueryKey('getSettings', options, false, ['settings']);
+
+/**
+ * Get Settings
+ *
+ * Get the current user's settings (creates empty row if none exist).
+ */
+export const getSettingsOptions = (options?: Options<GetSettingsData>) => queryOptions<GetSettingsResponse, DefaultError, GetSettingsResponse, ReturnType<typeof getSettingsQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await getSettings({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: getSettingsQueryKey(options)
+});
+
+/**
+ * Get Settings
+ *
+ * Get the current user's settings (creates empty row if none exist).
+ */
+export const useGetSettingsQuery = (options?: Options<GetSettingsData>) => useQuery(getSettingsOptions(options));
+
+/**
+ * Update Settings
+ *
+ * Upsert user settings.
+ */
+export const updateSettingsMutation = (options?: Partial<Options<UpdateSettingsData>>): UseMutationOptions<UpdateSettingsResponse, UpdateSettingsError, Options<UpdateSettingsData>> => {
+    const mutationOptions: UseMutationOptions<UpdateSettingsResponse, UpdateSettingsError, Options<UpdateSettingsData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await updateSettings({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+/**
+ * Test Git Connection
+ *
+ * Test Git connectivity by running git ls-remote on the given URL.
+ */
+export const testGitConnectionMutation = (options?: Partial<Options<TestGitConnectionData>>): UseMutationOptions<TestGitConnectionResponse, TestGitConnectionError, Options<TestGitConnectionData>> => {
+    const mutationOptions: UseMutationOptions<TestGitConnectionResponse, TestGitConnectionError, Options<TestGitConnectionData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await testGitConnection({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+/**
+ * Test Smtp Connection
+ *
+ * Test SMTP connectivity by attempting a connection + optional AUTH.
+ */
+export const testSmtpConnectionMutation = (options?: Partial<Options<TestSmtpConnectionData>>): UseMutationOptions<TestSmtpConnectionResponse, TestSmtpConnectionError, Options<TestSmtpConnectionData>> => {
+    const mutationOptions: UseMutationOptions<TestSmtpConnectionResponse, TestSmtpConnectionError, Options<TestSmtpConnectionData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await testSmtpConnection({
                 ...options,
                 ...fnOptions,
                 throwOnError: true

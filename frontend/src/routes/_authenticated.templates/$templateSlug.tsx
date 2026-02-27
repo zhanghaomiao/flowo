@@ -10,9 +10,5 @@ export const Route = createFileRoute('/_authenticated/templates/$templateSlug')(
 
 function TemplateDetailPage() {
   const { templateSlug } = Route.useParams();
-  return (
-    <div style={{ width: '96%', margin: '0 auto' }}>
-      <TemplateDetail slug={templateSlug} />
-    </div>
-  );
+  return <TemplateDetail slug={templateSlug} />;
 }

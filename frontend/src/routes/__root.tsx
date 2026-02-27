@@ -106,7 +106,7 @@ function RootComponent() {
                     key: 'settings',
                     icon: <SettingOutlined />,
                     label: 'Settings',
-                    onClick: () => navigate({ to: '/profile' }),
+                    onClick: () => navigate({ to: '/settings' }),
                   },
                   {
                     key: 'docs',

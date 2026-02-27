@@ -201,6 +201,67 @@ def _validate_path(slug: str, file_path: str) -> Path:
     return full_path
 
 
+def _parse_dot_to_graph_json(dot_string: str) -> dict[str, Any]:
+    """Parse DOT output from 'snakemake --rulegraph' into the same
+    {nodes, links} JSON format used by workflow.rulegraph_data.
+
+    Example DOT input:
+        digraph snakemake_rulegraph {
+            node[style="rounded"];
+            0[label = "all", ...];
+            1[label = "rule_a", ...];
+            0 -> 1;
+        }
+
+    Returns:
+        {"nodes": [{"rule": "all"}, {"rule": "rule_a"}],
+         "links": [{"source": 0, "target": 1,
+                     "sourcerule": "all", "targetrule": "rule_a"}]}
+    """
+    nodes: list[dict[str, str]] = []
+    links: list[dict[str, Any]] = []
+    id_to_rule: dict[int, str] = {}
+
+    # Match node definitions: 0[label = "all", ...]
+    node_pattern = re.compile(r'(\d+)\[label\s*=\s*"([^"]+)"')
+    # Match edge definitions: 0 -> 1
+    edge_pattern = re.compile(r"(\d+)\s*->\s*(\d+)")
+
+    for line in dot_string.splitlines():
+        line = line.strip()
+
+        node_match = node_pattern.search(line)
+        if node_match:
+            node_id = int(node_match.group(1))
+            rule_name = node_match.group(2)
+            id_to_rule[node_id] = rule_name
+            continue
+
+        edge_match = edge_pattern.search(line)
+        if edge_match:
+            source_id = int(edge_match.group(1))
+            target_id = int(edge_match.group(2))
+            links.append(
+                {
+                    "source": source_id,
+                    "target": target_id,
+                    "sourcerule": "",  # filled below
+                    "targetrule": "",
+                }
+            )
+
+    # Build nodes list in ID order
+    for node_id in sorted(id_to_rule):
+        nodes.append({"rule": id_to_rule[node_id]})
+
+    # Fill in rule names for links
+    for link in links:
+        link["sourcerule"] = id_to_rule.get(link["source"], "")
+        link["targetrule"] = id_to_rule.get(link["target"], "")
+
+    return {"nodes": nodes, "links": links}
+
+
 class TemplateService:
     """Service for managing Snakemake workflow templates."""
 
@@ -297,7 +358,12 @@ class TemplateService:
         }
         _write_metadata(template_path, metadata)
 
-        return {**metadata, "slug": slug}
+        return {
+            **metadata,
+            "slug": slug,
+            "file_count": 1,
+            "has_snakefile": True,
+        }
 
     def get_template(self, slug: str) -> dict[str, Any]:
         """Get template detail with file inventory."""
@@ -310,10 +376,16 @@ class TemplateService:
         meta = _read_metadata(template_path)
         inventory = _get_file_inventory(template_path)
 
+        # Count files
+        file_count = sum(len(files) for files in inventory.values())
+        has_snakefile = len(inventory.get("snakefile", [])) > 0
+
         return {
             **meta,
             "slug": slug,
             "files": inventory,
+            "file_count": file_count,
+            "has_snakefile": has_snakefile,
             "categories": {
                 cat: {
                     "dir": info["dir"],
@@ -400,6 +472,7 @@ class TemplateService:
         return {
             "path": file_path,
             "name": full_path.name,
+            "content": content,
             "language": _detect_language(file_path),
             "lines": content.count("\n") + 1,
             "size": full_path.stat().st_size,
@@ -526,7 +599,11 @@ class TemplateService:
         return {**meta, "slug": slug}
 
     def generate_dag(self, slug: str) -> dict[str, Any]:
-        """Generate DAG data by running snakemake --rulegraph."""
+        """Generate DAG data by running snakemake --rulegraph.
+
+        Returns the same {nodes, links} JSON format as workflow.rulegraph_data
+        so the frontend can reuse the existing DAG rendering components.
+        """
         template_dir = _get_template_dir()
         template_path = template_dir / slug
         snakefile = template_path / "workflow" / "Snakefile"
@@ -551,90 +628,150 @@ class TemplateService:
             )
 
             if result.returncode != 0:
-                return {
-                    "success": False,
-                    "error": result.stderr,
-                    "dot": None,
-                }
+                raise HTTPException(
+                    status_code=400,
+                    detail=result.stderr or "Failed to generate DAG",
+                )
 
-            return {
-                "success": True,
-                "error": None,
-                "dot": result.stdout,
-            }
+            return _parse_dot_to_graph_json(result.stdout)
 
-        except FileNotFoundError:
-            return {
-                "success": False,
-                "error": "snakemake is not installed on the server",
-                "dot": None,
-            }
-        except subprocess.TimeoutExpired:
-            return {
-                "success": False,
-                "error": "DAG generation timed out",
-                "dot": None,
-            }
+        except HTTPException:
+            raise
+        except FileNotFoundError as e:
+            raise HTTPException(
+                status_code=500,
+                detail="snakemake is not installed on the server",
+            ) from e
+        except subprocess.TimeoutExpired as e:
+            raise HTTPException(
+                status_code=504,
+                detail="DAG generation timed out",
+            ) from e
 
-    def git_push(self) -> dict[str, str]:
-        """Push all templates to the configured Git remote."""
-        if not settings.TEMPLATE_GIT_REMOTE:
+    def git_push(
+        self,
+        remote_url: str | None = None,
+        token: str | None = None,
+    ) -> dict[str, str]:
+        """Push all templates to a Git remote (monorepo).
+
+        Args:
+            remote_url: Override the global TEMPLATE_GIT_REMOTE setting.
+            token: Personal access token for private repos.
+
+        Returns the remote URL so the caller can display it as the share link.
+        """
+        effective_remote = remote_url or settings.TEMPLATE_GIT_REMOTE
+        if not effective_remote:
             raise HTTPException(
                 status_code=400,
-                detail="TEMPLATE_GIT_REMOTE is not configured",
+                detail=(
+                    "No Git remote configured. "
+                    "Set TEMPLATE_GIT_REMOTE or provide a remote_url."
+                ),
             )
 
         template_dir = _get_template_dir()
-        git_dir = template_dir
 
         try:
-            # Initialize git if needed
-            if not (git_dir / ".git").exists():
-                subprocess.run(["git", "init"], cwd=str(git_dir), check=True)
-                remote_url = self._build_git_url()
+            # Initialise repo once
+            if not (template_dir / ".git").exists():
                 subprocess.run(
-                    ["git", "remote", "add", "origin", remote_url],
-                    cwd=str(git_dir),
+                    ["git", "init", "-b", "main"],
+                    cwd=str(template_dir),
                     check=True,
+                    capture_output=True,
+                )
+                subprocess.run(
+                    ["git", "config", "user.email", "flowo@localhost"],
+                    cwd=str(template_dir),
+                    check=True,
+                    capture_output=True,
+                )
+                subprocess.run(
+                    ["git", "config", "user.name", "FlowO"],
+                    cwd=str(template_dir),
+                    check=True,
+                    capture_output=True,
                 )
 
-            # Add, commit, push
-            subprocess.run(["git", "add", "-A"], cwd=str(git_dir), check=True)
-
-            result = subprocess.run(
-                ["git", "status", "--porcelain"],
-                cwd=str(git_dir),
+            # Set (or update) the remote
+            built_url = self._build_git_url(effective_remote, token)
+            existing = subprocess.run(
+                ["git", "remote"],
+                cwd=str(template_dir),
                 capture_output=True,
                 text=True,
             )
-            if not result.stdout.strip():
-                return {"status": "nothing to push"}
+            if "origin" in existing.stdout.split():
+                subprocess.run(
+                    ["git", "remote", "set-url", "origin", built_url],
+                    cwd=str(template_dir),
+                    check=True,
+                    capture_output=True,
+                )
+            else:
+                subprocess.run(
+                    ["git", "remote", "add", "origin", built_url],
+                    cwd=str(template_dir),
+                    check=True,
+                    capture_output=True,
+                )
+
+            # Ensure .gitignore ignores nothing important
+            gitignore = template_dir / ".gitignore"
+            if not gitignore.exists():
+                gitignore.write_text("# FlowO templates\n")
+
+            subprocess.run(
+                ["git", "add", "-A"],
+                cwd=str(template_dir),
+                check=True,
+                capture_output=True,
+            )
+
+            status = subprocess.run(
+                ["git", "status", "--porcelain"],
+                cwd=str(template_dir),
+                capture_output=True,
+                text=True,
+            )
+            if not status.stdout.strip():
+                return {
+                    "status": "nothing_to_push",
+                    "remote_url": effective_remote,
+                }
 
             subprocess.run(
                 [
                     "git",
                     "commit",
                     "-m",
-                    f"FlowO template sync {datetime.now(UTC).isoformat()}",
+                    f"FlowO sync {datetime.now(UTC).strftime('%Y-%m-%d %H:%M')}",
                 ],
-                cwd=str(git_dir),
+                cwd=str(template_dir),
                 check=True,
+                capture_output=True,
             )
             subprocess.run(
-                ["git", "push", "-u", "origin", "main"],
-                cwd=str(git_dir),
+                ["git", "push", "-u", "origin", "main", "--force-with-lease"],
+                cwd=str(template_dir),
                 check=True,
             )
 
-            return {"status": "pushed successfully"}
+            return {"status": "pushed", "remote_url": effective_remote}
+
         except subprocess.CalledProcessError as e:
+            stderr = (
+                e.stderr.decode() if isinstance(e.stderr, bytes) else (e.stderr or "")
+            )
             raise HTTPException(
                 status_code=500,
-                detail=f"Git push failed: {e}",
+                detail=f"Git push failed: {stderr or str(e)}",
             ) from e
 
     def git_pull(self) -> dict[str, str]:
-        """Pull templates from the configured Git remote."""
+        """Pull / clone the configured remote into the template directory."""
         if not settings.TEMPLATE_GIT_REMOTE:
             raise HTTPException(
                 status_code=400,
@@ -642,25 +779,22 @@ class TemplateService:
             )
 
         template_dir = _get_template_dir()
+        built_url = self._build_git_url(settings.TEMPLATE_GIT_REMOTE)
 
         try:
             if not (template_dir / ".git").exists():
-                # Clone fresh
-                remote_url = self._build_git_url()
                 # Clone into a temp dir, then move contents
                 with tempfile.TemporaryDirectory() as tmp:
                     subprocess.run(
-                        ["git", "clone", remote_url, tmp],
+                        ["git", "clone", built_url, tmp],
                         check=True,
                     )
-                    # Move .git and all files
                     for item in Path(tmp).iterdir():
                         target = template_dir / item.name
                         if target.exists():
-                            if target.is_dir():
-                                shutil.rmtree(target)
-                            else:
-                                target.unlink()
+                            shutil.rmtree(
+                                target
+                            ) if target.is_dir() else target.unlink()
                         shutil.move(str(item), str(target))
             else:
                 subprocess.run(
@@ -676,13 +810,129 @@ class TemplateService:
                 detail=f"Git pull failed: {e}",
             ) from e
 
-    def _build_git_url(self) -> str:
-        """Build Git remote URL with optional token auth."""
-        url = settings.TEMPLATE_GIT_REMOTE
-        if settings.TEMPLATE_GIT_TOKEN and url.startswith("https://"):
-            # Insert token: https://TOKEN@github.com/...
-            url = url.replace(
-                "https://",
-                f"https://{settings.TEMPLATE_GIT_TOKEN}@",
-            )
+    def import_from_git(
+        self,
+        git_url: str,
+        token: str | None = None,
+        owner: str = "",
+    ) -> list[dict[str, Any]]:
+        """Clone a Git repository and import each top-level subdirectory
+        that looks like a FlowO template (has .flowo.json or workflow/Snakefile).
+
+        Returns a list of imported TemplateSummary dicts.
+        """
+        built_url = self._build_git_url(git_url, token)
+        template_dir = _get_template_dir()
+        imported: list[dict[str, Any]] = []
+
+        with tempfile.TemporaryDirectory() as tmp:
+            try:
+                subprocess.run(
+                    ["git", "clone", "--depth", "1", built_url, tmp],
+                    check=True,
+                    capture_output=True,
+                    text=True,
+                    timeout=120,
+                )
+            except subprocess.CalledProcessError as e:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Failed to clone repository: {e.stderr or str(e)}",
+                ) from e
+            except subprocess.TimeoutExpired as e:
+                raise HTTPException(
+                    status_code=504, detail="Git clone timed out"
+                ) from e
+
+            tmp_path = Path(tmp)
+
+            # Collect candidate template directories:
+            # 1. root itself (if it has workflow/Snakefile or .flowo.json)
+            # 2. top-level subdirectories
+            candidates: list[Path] = []
+
+            root_snakefile = tmp_path / "workflow" / "Snakefile"
+            root_meta = tmp_path / ".flowo.json"
+            if root_snakefile.exists() or root_meta.exists():
+                candidates.append(tmp_path)
+            else:
+                for child in sorted(tmp_path.iterdir()):
+                    if child.is_dir() and not child.name.startswith("."):
+                        has_snakefile = (child / "workflow" / "Snakefile").exists()
+                        has_meta = (child / ".flowo.json").exists()
+                        if has_snakefile or has_meta:
+                            candidates.append(child)
+
+            if not candidates:
+                raise HTTPException(
+                    status_code=400,
+                    detail=(
+                        "No FlowO templates found in the repository. "
+                        "Each template directory must contain workflow/Snakefile "
+                        "or .flowo.json."
+                    ),
+                )
+
+            now = datetime.now(UTC).isoformat()
+            for candidate in candidates:
+                meta = _read_metadata(candidate)
+                slug = meta.get("slug") or _slugify(
+                    candidate.name if candidate != tmp_path else Path(git_url).stem
+                )
+
+                # Handle slug collisions
+                target = template_dir / slug
+                if target.exists():
+                    slug = (
+                        f"{slug}-imported-{datetime.now(UTC).strftime('%Y%m%d%H%M%S')}"
+                    )
+                    target = template_dir / slug
+
+                shutil.copytree(str(candidate), str(target))
+
+                # Ensure metadata is complete
+                if not meta:
+                    meta = {
+                        "name": slug.replace("-", " ").title(),
+                        "slug": slug,
+                        "description": "",
+                        "version": "0.1.0",
+                        "owner": owner,
+                        "tags": [],
+                        "is_public": False,
+                        "source_url": git_url,
+                        "created_at": now,
+                        "updated_at": now,
+                    }
+                else:
+                    meta.setdefault("slug", slug)
+                    meta.setdefault("source_url", git_url)
+                    meta["updated_at"] = now
+
+                _write_metadata(target, meta)
+
+                inventory = _get_file_inventory(target)
+                file_count = sum(len(f) for f in inventory.values())
+                has_snakefile = len(inventory.get("snakefile", [])) > 0
+
+                imported.append(
+                    {
+                        **meta,
+                        "slug": slug,
+                        "file_count": file_count,
+                        "has_snakefile": has_snakefile,
+                    }
+                )
+
+        return imported
+
+    def _build_git_url(
+        self,
+        url: str,
+        token: str | None = None,
+    ) -> str:
+        """Build a Git URL with optional token authentication."""
+        effective_token = token or settings.TEMPLATE_GIT_TOKEN
+        if effective_token and url.startswith("https://"):
+            url = url.replace("https://", f"https://{effective_token}@", 1)
         return url

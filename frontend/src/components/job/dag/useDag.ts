@@ -1,11 +1,13 @@
 import { useMemo } from 'react';
 
+import { useQuery } from '@tanstack/react-query';
 import type { Edge, Node } from '@xyflow/react';
 import { MarkerType, Position } from '@xyflow/react';
 
 import {
-  useGetRuleGraphQuery,
-  useGetRuleStatusQuery,
+  getRuleGraphOptions,
+  getRuleStatusOptions,
+  getTemplateDagOptions,
 } from '@/client/@tanstack/react-query.gen';
 import type { RuleStatusResponse } from '@/client/types.gen';
 import { getLayoutedElements, type LayoutDirection } from '@/utils/graphLayout';
@@ -45,7 +47,8 @@ interface GraphData {
 }
 
 interface UseWorkflowGraphProps {
-  workflowId: string;
+  workflowId?: string;
+  templateSlug?: string;
   layoutDirection: LayoutDirection;
   selectedRule?: string | null;
   highlightedRule?: string | null;
@@ -54,28 +57,47 @@ interface UseWorkflowGraphProps {
 
 export const useWorkflowGraph = ({
   workflowId,
+  templateSlug,
   layoutDirection,
   selectedRule,
   highlightedRule,
   forceLayoutRecalc = 0,
 }: UseWorkflowGraphProps) => {
+  const isWorkflow = !!workflowId;
+
   // 1. 获取图谱结构 (Layout Data)
   const {
-    data: graphData,
-    isLoading: isGraphLoading,
-    error: graphError,
-  } = useGetRuleGraphQuery({
-    path: { workflow_id: workflowId },
+    data: workflowGraphData,
+    isLoading: isWorkflowGraphLoading,
+    error: workflowGraphError,
+  } = useQuery({
+    ...getRuleGraphOptions({ path: { workflow_id: workflowId ?? '' } }),
+    enabled: isWorkflow,
   });
 
-  // 2. 获取实时状态 (Status Data)
-  // 当 SSE 触发 invalidation 时，这个 hook 会自动重刷
+  const {
+    data: templateGraphData,
+    isLoading: isTemplateGraphLoading,
+    error: templateGraphError,
+  } = useQuery({
+    ...getTemplateDagOptions({ path: { slug: templateSlug ?? '' } }),
+    enabled: !isWorkflow,
+  });
+
+  const graphData = isWorkflow ? workflowGraphData : templateGraphData;
+  const isGraphLoading = isWorkflow
+    ? isWorkflowGraphLoading
+    : isTemplateGraphLoading;
+  const graphError = isWorkflow ? workflowGraphError : templateGraphError;
+
+  // 2. 获取实时状态 (Status Data) - Only for workflows
   const {
     data: ruleStatus,
     isLoading: isRuleStatusLoading,
     error: ruleStatusError,
-  } = useGetRuleStatusQuery({
-    path: { workflow_id: workflowId },
+  } = useQuery({
+    ...getRuleStatusOptions({ path: { workflow_id: workflowId ?? '' } }),
+    enabled: isWorkflow,
   });
 
   // 3. 计算基础布局 (Heavy Calculation)
@@ -147,12 +169,14 @@ export const useWorkflowGraph = ({
 
       const isSelected = selectedRule === ruleName;
       const isHighlighted = highlightedRule === ruleName;
-      const isUnscheduled = !statusInfo;
+      const isUnscheduled = isWorkflow ? !statusInfo : false; // Templates don't appear as unscheduled
 
       // 颜色逻辑
-      let backgroundColor = STATUS_COLORS[status] || STATUS_COLORS.unscheduled;
-      let textColor = '#000000';
-      let borderColor = '#1890ff';
+      let backgroundColor = isWorkflow
+        ? STATUS_COLORS[status] || STATUS_COLORS.unscheduled
+        : '#f0f5ff'; // Template nodes are blue-ish
+      let textColor = isWorkflow ? '#000000' : '#1d39c4';
+      let borderColor = isWorkflow ? '#1890ff' : '#597ef7';
       let boxShadow = 'none';
 
       if (isSelected) {
@@ -177,7 +201,7 @@ export const useWorkflowGraph = ({
     });
 
     return styling;
-  }, [nodes, ruleStatus, selectedRule, highlightedRule]); // 这里依赖 ruleStatus
+  }, [nodes, ruleStatus, selectedRule, highlightedRule, isWorkflow]);
 
   return {
     nodes,

@@ -2,18 +2,13 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import { CloseOutlined, SaveOutlined } from '@ant-design/icons';
 import Editor, { type OnMount } from '@monaco-editor/react';
-import {
-  Button,
-  message,
-  Space,
-  Spin,
-  Tabs,
-  Tag,
-  Tooltip,
-  Typography,
-} from 'antd';
+import { useMutation, useQuery } from '@tanstack/react-query';
+import { Button, message, Spin, Tabs, Tooltip, Typography } from 'antd';
 
-import { useTemplateFile, useWriteTemplateFile } from '@/api/templates';
+import {
+  readFile2Options,
+  writeFileMutation,
+} from '@/client/@tanstack/react-query.gen';
 
 const { Text } = Typography;
 
@@ -53,23 +48,38 @@ interface FileTab {
 interface Props {
   slug: string;
   openFiles: string[];
+  activeFile?: string;
   onClose: (filePath: string) => void;
+  onCloseAll?: () => void;
 }
 
-const TemplateEditor: React.FC<Props> = ({ slug, openFiles, onClose }) => {
+const TemplateEditor: React.FC<Props> = ({
+  slug,
+  openFiles,
+  activeFile,
+  onClose,
+  onCloseAll,
+}) => {
   const [tabs, setTabs] = useState<Map<string, FileTab>>(new Map());
   const [activeKey, setActiveKey] = useState<string>('');
   const editorRef = useRef<Parameters<OnMount>[0] | null>(null);
 
-  const writeFileMutation = useWriteTemplateFile(slug);
+  const writeFileMut = useMutation(writeFileMutation());
+
+  // Sync active tab when parent changes activeFile
+  useEffect(() => {
+    if (activeFile && openFiles.includes(activeFile)) {
+      setActiveKey(activeFile);
+    }
+  }, [activeFile, openFiles]);
 
   // Load files when openFiles change
   useEffect(() => {
     const newFiles = openFiles.filter((f) => !tabs.has(f));
-    if (newFiles.length > 0) {
+    if (newFiles.length > 0 && !activeFile) {
       setActiveKey(openFiles[openFiles.length - 1]);
     }
-  }, [openFiles, tabs]);
+  }, [openFiles, tabs, activeFile]);
 
   const activeTab = tabs.get(activeKey);
 
@@ -79,9 +89,14 @@ const TemplateEditor: React.FC<Props> = ({ slug, openFiles, onClose }) => {
       if (!tab || !tab.dirty) return;
 
       try {
-        await writeFileMutation.mutateAsync({
-          filePath,
-          content: tab.content,
+        await writeFileMut.mutateAsync({
+          body: {
+            content: tab.content,
+          },
+          path: {
+            file_path: filePath,
+            slug,
+          },
         });
         setTabs((prev) => {
           const next = new Map(prev);
@@ -100,7 +115,7 @@ const TemplateEditor: React.FC<Props> = ({ slug, openFiles, onClose }) => {
         message.error('Failed to save file');
       }
     },
-    [tabs, writeFileMutation],
+    [tabs, writeFileMut, slug],
   );
 
   const handleSaveAll = useCallback(async () => {
@@ -109,21 +124,6 @@ const TemplateEditor: React.FC<Props> = ({ slug, openFiles, onClose }) => {
       await handleSave(tab.key);
     }
   }, [tabs, handleSave]);
-
-  const handleRevert = useCallback((filePath: string) => {
-    setTabs((prev) => {
-      const next = new Map(prev);
-      const tab = next.get(filePath);
-      if (tab) {
-        next.set(filePath, {
-          ...tab,
-          content: tab.originalContent,
-          dirty: false,
-        });
-      }
-      return next;
-    });
-  }, []);
 
   const handleContentChange = useCallback(
     (filePath: string, newContent: string | undefined) => {
@@ -179,54 +179,69 @@ const TemplateEditor: React.FC<Props> = ({ slug, openFiles, onClose }) => {
 
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-      {/* Top bar */}
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          padding: '4px 12px',
-          borderBottom: '1px solid #f0f0f0',
-          backgroundColor: '#fafafa',
-          flexShrink: 0,
-        }}
-      >
-        <Space size={4}>{hasDirty && <Tag color="orange">Unsaved</Tag>}</Space>
-        <Space size={4}>
-          <Button
-            size="small"
-            icon={<SaveOutlined />}
-            disabled={!activeTab?.dirty}
-            onClick={() => activeKey && handleSave(activeKey)}
-          >
-            Save
-          </Button>
-          <Button size="small" disabled={!hasDirty} onClick={handleSaveAll}>
-            Save All
-          </Button>
-          {activeTab?.dirty && (
-            <Button size="small" onClick={() => handleRevert(activeKey)}>
-              Revert
-            </Button>
-          )}
-        </Space>
-      </div>
-
-      {/* File Tabs */}
+      {/* File Tabs with integrated actions */}
       {openFiles.length > 0 && (
         <Tabs
           activeKey={activeKey}
           onChange={setActiveKey}
           type="card"
           size="small"
-          style={{ flexShrink: 0 }}
+          className="template-editor-tabs"
+          style={{ flexShrink: 0, marginBottom: 0 }}
+          tabBarExtraContent={
+            <span
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 4,
+                paddingRight: 8,
+              }}
+            >
+              <Tooltip title="Save (Ctrl+S)">
+                <Button
+                  size="small"
+                  type="text"
+                  icon={<SaveOutlined />}
+                  disabled={!activeTab?.dirty}
+                  onClick={() => activeKey && handleSave(activeKey)}
+                />
+              </Tooltip>
+              <Tooltip title="Save All">
+                <Button
+                  size="small"
+                  type="text"
+                  disabled={!hasDirty}
+                  onClick={handleSaveAll}
+                  style={{ fontSize: 12 }}
+                >
+                  Save All
+                </Button>
+              </Tooltip>
+              {onCloseAll && (
+                <Tooltip title="Close editor">
+                  <Button
+                    size="small"
+                    type="text"
+                    onClick={onCloseAll}
+                    icon={<CloseOutlined />}
+                  />
+                </Tooltip>
+              )}
+            </span>
+          }
           items={openFiles.map((filePath) => {
             const tab = tabs.get(filePath);
             const name = filePath.split('/').pop() || filePath;
             return {
               key: filePath,
               label: (
-                <Space size={4}>
+                <span
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 4,
+                  }}
+                >
                   <span>{name}</span>
                   {tab?.dirty && (
                     <span style={{ color: '#faad14', fontWeight: 'bold' }}>
@@ -242,7 +257,7 @@ const TemplateEditor: React.FC<Props> = ({ slug, openFiles, onClose }) => {
                       }}
                     />
                   </Tooltip>
-                </Space>
+                </span>
               ),
             };
           })}
@@ -311,13 +326,17 @@ const FileEditorPanel: React.FC<FileEditorPanelProps> = ({
   onContentChange,
   onEditorMount,
 }) => {
-  const { data, isLoading } = useTemplateFile(slug, filePath);
+  const { data, isLoading } = useQuery({
+    ...readFile2Options({
+      path: { slug, file_path: filePath },
+    }),
+    enabled: !!slug && !!filePath && slug !== '{slug}',
+  });
   const tab = tabs.get(filePath);
 
   // Initialize tab when data loads
   useEffect(() => {
     if (data && !tabs.has(filePath)) {
-      const language = detectLanguage(filePath);
       setTabs((prev) => {
         const next = new Map(prev);
         next.set(filePath, {
@@ -326,7 +345,7 @@ const FileEditorPanel: React.FC<FileEditorPanelProps> = ({
           content: data.content,
           originalContent: data.content,
           dirty: false,
-          language,
+          language: data.language || detectLanguage(filePath),
         });
         return next;
       });
@@ -357,7 +376,7 @@ const FileEditorPanel: React.FC<FileEditorPanelProps> = ({
       onChange={(value) => onContentChange(filePath, value)}
       onMount={onEditorMount}
       options={{
-        fontSize: 14,
+        fontSize: 12,
         lineNumbers: 'on',
         readOnly: false,
         scrollBeyondLastLine: false,

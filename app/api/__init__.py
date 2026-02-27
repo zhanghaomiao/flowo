@@ -6,6 +6,7 @@ from app.api.endpoints import (
     jobs,
     outputs,
     reports,
+    settings,
     sse,
     summary,
     templates,
@@ -26,3 +27,4 @@ api_router.include_router(files.router, prefix="/files", tags=["files"])
 api_router.include_router(reports.router, prefix="/reports", tags=["reports"])
 api_router.include_router(tokens.router, prefix="/tokens", tags=["tokens"])
 api_router.include_router(templates.router, prefix="/templates", tags=["templates"])
+api_router.include_router(settings.router, prefix="/settings", tags=["settings"])

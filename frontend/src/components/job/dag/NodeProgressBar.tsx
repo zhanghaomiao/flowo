@@ -176,7 +176,7 @@ const ProgressNode: React.FC<NodeProps> = ({ data }) => {
               maxWidth: '130px',
             }}
           >
-            {rule} ({statusInfo?.total})
+            {rule} {statusInfo ? `(${statusInfo.total})` : ''}
           </div>
         </Tooltip>
 

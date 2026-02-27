@@ -1,0 +1,395 @@
+/* TemplateDetail.css - Modern template detail page styles */
+
+/* ── Compact toolbar ──────────────────────────────── */
+.template-detail-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 0;
+  margin-bottom: 10px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.template-toolbar-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  flex-wrap: wrap;
+}
+
+.template-toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.template-toolbar-divider {
+  width: 1px;
+  height: 20px;
+  background-color: #e5e7eb;
+  margin: 0 4px;
+}
+
+.template-back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: #9ca3af;
+  cursor: pointer;
+  transition: color 0.2s;
+  font-weight: 500;
+}
+
+.template-back-link:hover {
+  color: #4f46e5;
+}
+
+.template-toolbar-sep {
+  color: #d1d5db;
+  font-size: 12px;
+}
+
+.template-toolbar-name {
+  font-weight: 700;
+  font-size: 14px;
+  color: #111827;
+  cursor: default;
+}
+
+/* ── Main content layout ─────────────────────────── */
+.template-detail-content {
+  display: flex;
+  gap: 16px;
+}
+
+.template-file-panel {
+  flex: 0 0 320px;
+  min-width: 0;
+}
+
+/* ── Fold/collapse chevron ───────────────────────── */
+.template-category-chevron {
+  font-size: 10px;
+  color: #9ca3af;
+  transition: transform 0.2s ease;
+}
+
+.template-category-chevron.expanded {
+  transform: rotate(90deg);
+}
+
+.template-editor-panel {
+  flex: 1;
+  min-width: 0;
+}
+
+.template-editor-card {
+  position: sticky;
+  top: 16px;
+}
+
+/* ── Editor tabs ─────────────────────────────────── */
+.template-editor-tabs.ant-tabs {
+  margin-bottom: 0 !important;
+}
+
+.template-editor-tabs .ant-tabs-nav {
+  margin-bottom: 0 !important;
+}
+
+.template-editor-tabs .ant-tabs-content-holder {
+  display: none;
+}
+
+/* ── Category sections ───────────────────────────── */
+.template-category-panel {
+  border: 1px solid #f0f0f0;
+  border-radius: 8px;
+  margin-bottom: 8px;
+  overflow: hidden;
+  transition:
+    box-shadow 0.2s,
+    border-color 0.2s;
+  background: #fff;
+}
+
+.template-category-panel:hover {
+  border-color: #d9d9f0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.template-category-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 10px;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.15s;
+}
+
+.template-category-header:hover {
+  background: #fafbff;
+}
+
+.template-category-header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.template-category-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  font-size: 12px;
+}
+
+.template-category-icon.snakefile {
+  background: #fef3c7;
+  color: #d97706;
+}
+.template-category-icon.rules {
+  background: #ede9fe;
+  color: #7c3aed;
+}
+.template-category-icon.envs {
+  background: #d1fae5;
+  color: #059669;
+}
+.template-category-icon.scripts {
+  background: #dbeafe;
+  color: #2563eb;
+}
+.template-category-icon.config {
+  background: #fce7f3;
+  color: #db2777;
+}
+.template-category-icon.notebooks {
+  background: #fef9c3;
+  color: #ca8a04;
+}
+.template-category-icon.report {
+  background: #ffedd5;
+  color: #ea580c;
+}
+
+.template-category-label {
+  font-weight: 600;
+  font-size: 13px;
+  color: #1f2937;
+}
+
+.template-category-actions {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.template-category-actions .ant-btn {
+  border-radius: 6px;
+}
+
+/* ── File list items ─────────────────────────────── */
+.template-file-list {
+  border-top: 1px solid #f5f5f5;
+}
+
+.template-file-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 10px 4px 36px;
+  transition: background 0.15s;
+  cursor: pointer;
+  border-bottom: 1px solid #fafafa;
+}
+
+.template-file-item:last-child {
+  border-bottom: none;
+}
+
+.template-file-item:hover {
+  background: #f8faff;
+}
+
+.template-file-item-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+
+.template-file-name {
+  font-weight: 500;
+  font-size: 13px;
+  color: #374151;
+  cursor: pointer;
+  transition: color 0.15s;
+}
+
+.template-file-name:hover {
+  color: #4f46e5;
+}
+
+.template-file-meta {
+  font-size: 11px;
+  color: #9ca3af;
+}
+
+.template-file-actions {
+  display: flex;
+  gap: 2px;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.template-file-item:hover .template-file-actions {
+  opacity: 1;
+}
+
+/* ── Toolbar Button Styling ──────────────────────── */
+.template-toolbar-right .ant-btn {
+  font-weight: 500;
+  font-size: 12px;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: #374151;
+  background: transparent;
+  border: 1px solid #e5e7eb;
+  transition: all 0.15s ease;
+  box-shadow: none;
+}
+
+.template-toolbar-right .ant-btn:hover {
+  background: #f5f5f5;
+  border-color: #d1d5db;
+  color: #111827;
+}
+
+.template-btn-delete {
+  color: #dc2626 !important;
+}
+
+.template-btn-delete:hover {
+  background: #fef2f2 !important;
+  border-color: #fca5a5 !important;
+  color: #dc2626 !important;
+}
+
+/* ── Right Panel: header + body ───────────────────── */
+.template-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-bottom: none;
+  border-radius: 8px 8px 0 0;
+  height: 40px;
+}
+
+.template-panel-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: #6b7280;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Segmented control inside panel header — prominent selected state */
+.template-panel-header .ant-segmented {
+  background: #f3f4f6;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.template-panel-header .ant-segmented-item-selected {
+  background: #4f46e5;
+  color: #fff !important;
+  border-radius: 4px;
+  font-weight: 600;
+  box-shadow: 0 1px 4px rgba(79, 70, 229, 0.3);
+}
+
+.template-panel-header .ant-segmented-item-selected .anticon,
+.template-panel-header .ant-segmented-item-selected span {
+  color: #fff !important;
+}
+
+.template-panel-body {
+  border: 1px solid #e5e7eb;
+  border-top: none;
+  border-radius: 0 0 8px 8px;
+  overflow: hidden;
+  height: calc(100vh - 210px);
+}
+
+/* ── Layout toggle in toolbar (legacy, now in panel) ─ */
+.template-layout-toggle.ant-segmented {
+  background-color: #f3f4f6;
+  padding: 2px;
+  border-radius: 6px;
+}
+.template-layout-toggle .ant-segmented-item-selected {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+
+/* ── Footer metadata ─────────────────────────────── */
+.template-detail-footer {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  flex-wrap: wrap;
+  padding: 16px 0;
+  margin-top: 8px;
+  border-top: 1px solid #f0f0f0;
+}
+
+.template-footer-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: #9ca3af;
+}
+
+.template-footer-item .anticon {
+  font-size: 14px;
+}
+
+.template-footer-value {
+  color: #6b7280;
+  font-weight: 500;
+}
+
+/* ── Responsive adjustments ──────────────────────── */
+@media (max-width: 1024px) {
+  .template-detail-header-top {
+    flex-direction: column;
+  }
+
+  .template-actions {
+    flex-wrap: wrap;
+  }
+
+  .template-detail-content {
+    flex-direction: column;
+  }
+
+  .template-file-item {
+    padding-left: 44px;
+  }
+}
