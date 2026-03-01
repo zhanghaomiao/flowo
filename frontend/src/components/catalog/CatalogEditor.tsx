@@ -53,7 +53,7 @@ interface Props {
   onCloseAll?: () => void;
 }
 
-const TemplateEditor: React.FC<Props> = ({
+const CatalogEditor: React.FC<Props> = ({
   slug,
   openFiles,
   activeFile,
@@ -186,7 +186,7 @@ const TemplateEditor: React.FC<Props> = ({
           onChange={setActiveKey}
           type="card"
           size="small"
-          className="template-editor-tabs"
+          className="catalog-editor-tabs"
           style={{ flexShrink: 0, marginBottom: 0 }}
           tabBarExtraContent={
             <span
@@ -399,4 +399,4 @@ const FileEditorPanel: React.FC<FileEditorPanelProps> = ({
   );
 };
 
-export default TemplateEditor;
+export default CatalogEditor;

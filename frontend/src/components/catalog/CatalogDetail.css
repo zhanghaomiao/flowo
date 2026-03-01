@@ -1,7 +1,7 @@
-/* TemplateDetail.css - Modern template detail page styles */
+/* CatalogDetail.css - Modern catalog detail page styles */
 
 /* ── Compact toolbar ──────────────────────────────── */
-.template-detail-toolbar {
+.catalog-detail-toolbar {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -10,7 +10,7 @@
   border-bottom: 1px solid #f0f0f0;
 }
 
-.template-toolbar-left {
+.catalog-toolbar-left {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -18,21 +18,21 @@
   flex-wrap: wrap;
 }
 
-.template-toolbar-right {
+.catalog-toolbar-right {
   display: flex;
   align-items: center;
   gap: 8px;
   flex-shrink: 0;
 }
 
-.template-toolbar-divider {
+.catalog-toolbar-divider {
   width: 1px;
   height: 20px;
   background-color: #e5e7eb;
   margin: 0 4px;
 }
 
-.template-back-link {
+.catalog-back-link {
   display: inline-flex;
   align-items: center;
   gap: 4px;
@@ -43,16 +43,16 @@
   font-weight: 500;
 }
 
-.template-back-link:hover {
+.catalog-back-link:hover {
   color: #4f46e5;
 }
 
-.template-toolbar-sep {
+.catalog-toolbar-sep {
   color: #d1d5db;
   font-size: 12px;
 }
 
-.template-toolbar-name {
+.catalog-toolbar-name {
   font-weight: 700;
   font-size: 14px;
   color: #111827;
@@ -60,52 +60,52 @@
 }
 
 /* ── Main content layout ─────────────────────────── */
-.template-detail-content {
+.catalog-detail-content {
   display: flex;
   gap: 16px;
 }
 
-.template-file-panel {
+.catalog-file-panel {
   flex: 0 0 320px;
   min-width: 0;
 }
 
 /* ── Fold/collapse chevron ───────────────────────── */
-.template-category-chevron {
+.catalog-category-chevron {
   font-size: 10px;
   color: #9ca3af;
   transition: transform 0.2s ease;
 }
 
-.template-category-chevron.expanded {
+.catalog-category-chevron.expanded {
   transform: rotate(90deg);
 }
 
-.template-editor-panel {
+.catalog-editor-panel {
   flex: 1;
   min-width: 0;
 }
 
-.template-editor-card {
+.catalog-editor-card {
   position: sticky;
   top: 16px;
 }
 
 /* ── Editor tabs ─────────────────────────────────── */
-.template-editor-tabs.ant-tabs {
+.catalog-editor-tabs.ant-tabs {
   margin-bottom: 0 !important;
 }
 
-.template-editor-tabs .ant-tabs-nav {
+.catalog-editor-tabs .ant-tabs-nav {
   margin-bottom: 0 !important;
 }
 
-.template-editor-tabs .ant-tabs-content-holder {
+.catalog-editor-tabs .ant-tabs-content-holder {
   display: none;
 }
 
 /* ── Category sections ───────────────────────────── */
-.template-category-panel {
+.catalog-category-panel {
   border: 1px solid #f0f0f0;
   border-radius: 8px;
   margin-bottom: 8px;
@@ -116,12 +116,12 @@
   background: #fff;
 }
 
-.template-category-panel:hover {
+.catalog-category-panel:hover {
   border-color: #d9d9f0;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
 
-.template-category-header {
+.catalog-category-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -131,17 +131,17 @@
   transition: background 0.15s;
 }
 
-.template-category-header:hover {
+.catalog-category-header:hover {
   background: #fafbff;
 }
 
-.template-category-header-left {
+.catalog-category-header-left {
   display: flex;
   align-items: center;
   gap: 10px;
 }
 
-.template-category-icon {
+.catalog-category-icon {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -151,57 +151,57 @@
   font-size: 12px;
 }
 
-.template-category-icon.snakefile {
+.catalog-category-icon.snakefile {
   background: #fef3c7;
   color: #d97706;
 }
-.template-category-icon.rules {
+.catalog-category-icon.rules {
   background: #ede9fe;
   color: #7c3aed;
 }
-.template-category-icon.envs {
+.catalog-category-icon.envs {
   background: #d1fae5;
   color: #059669;
 }
-.template-category-icon.scripts {
+.catalog-category-icon.scripts {
   background: #dbeafe;
   color: #2563eb;
 }
-.template-category-icon.config {
+.catalog-category-icon.config {
   background: #fce7f3;
   color: #db2777;
 }
-.template-category-icon.notebooks {
+.catalog-category-icon.notebooks {
   background: #fef9c3;
   color: #ca8a04;
 }
-.template-category-icon.report {
+.catalog-category-icon.report {
   background: #ffedd5;
   color: #ea580c;
 }
 
-.template-category-label {
+.catalog-category-label {
   font-weight: 600;
   font-size: 13px;
   color: #1f2937;
 }
 
-.template-category-actions {
+.catalog-category-actions {
   display: flex;
   gap: 4px;
   align-items: center;
 }
 
-.template-category-actions .ant-btn {
+.catalog-category-actions .ant-btn {
   border-radius: 6px;
 }
 
 /* ── File list items ─────────────────────────────── */
-.template-file-list {
+.catalog-file-list {
   border-top: 1px solid #f5f5f5;
 }
 
-.template-file-item {
+.catalog-file-item {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -211,15 +211,15 @@
   border-bottom: 1px solid #fafafa;
 }
 
-.template-file-item:last-child {
+.catalog-file-item:last-child {
   border-bottom: none;
 }
 
-.template-file-item:hover {
+.catalog-file-item:hover {
   background: #f8faff;
 }
 
-.template-file-item-info {
+.catalog-file-item-info {
   display: flex;
   flex-direction: column;
   gap: 2px;
@@ -227,7 +227,7 @@
   flex: 1;
 }
 
-.template-file-name {
+.catalog-file-name {
   font-weight: 500;
   font-size: 13px;
   color: #374151;
@@ -235,28 +235,28 @@
   transition: color 0.15s;
 }
 
-.template-file-name:hover {
+.catalog-file-name:hover {
   color: #4f46e5;
 }
 
-.template-file-meta {
+.catalog-file-meta {
   font-size: 11px;
   color: #9ca3af;
 }
 
-.template-file-actions {
+.catalog-file-actions {
   display: flex;
   gap: 2px;
   opacity: 0;
   transition: opacity 0.2s;
 }
 
-.template-file-item:hover .template-file-actions {
+.catalog-file-item:hover .catalog-file-actions {
   opacity: 1;
 }
 
 /* ── Toolbar Button Styling ──────────────────────── */
-.template-toolbar-right .ant-btn {
+.catalog-toolbar-right .ant-btn {
   font-weight: 500;
   font-size: 12px;
   border-radius: 6px;
@@ -270,24 +270,24 @@
   box-shadow: none;
 }
 
-.template-toolbar-right .ant-btn:hover {
+.catalog-toolbar-right .ant-btn:hover {
   background: #f5f5f5;
   border-color: #d1d5db;
   color: #111827;
 }
 
-.template-btn-delete {
+.catalog-btn-delete {
   color: #dc2626 !important;
 }
 
-.template-btn-delete:hover {
+.catalog-btn-delete:hover {
   background: #fef2f2 !important;
   border-color: #fca5a5 !important;
   color: #dc2626 !important;
 }
 
 /* ── Right Panel: header + body ───────────────────── */
-.template-panel-header {
+.catalog-panel-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -299,7 +299,7 @@
   height: 40px;
 }
 
-.template-panel-title {
+.catalog-panel-title {
   font-size: 12px;
   font-weight: 600;
   color: #6b7280;
@@ -309,13 +309,13 @@
 }
 
 /* Segmented control inside panel header — prominent selected state */
-.template-panel-header .ant-segmented {
+.catalog-panel-header .ant-segmented {
   background: #f3f4f6;
   font-size: 12px;
   font-weight: 500;
 }
 
-.template-panel-header .ant-segmented-item-selected {
+.catalog-panel-header .ant-segmented-item-selected {
   background: #4f46e5;
   color: #fff !important;
   border-radius: 4px;
@@ -323,12 +323,12 @@
   box-shadow: 0 1px 4px rgba(79, 70, 229, 0.3);
 }
 
-.template-panel-header .ant-segmented-item-selected .anticon,
-.template-panel-header .ant-segmented-item-selected span {
+.catalog-panel-header .ant-segmented-item-selected .anticon,
+.catalog-panel-header .ant-segmented-item-selected span {
   color: #fff !important;
 }
 
-.template-panel-body {
+.catalog-panel-body {
   border: 1px solid #e5e7eb;
   border-top: none;
   border-radius: 0 0 8px 8px;
@@ -337,18 +337,17 @@
 }
 
 /* ── Layout toggle in toolbar (legacy, now in panel) ─ */
-.template-layout-toggle.ant-segmented {
+.catalog-layout-toggle.ant-segmented {
   background-color: #f3f4f6;
   padding: 2px;
   border-radius: 6px;
 }
-.template-layout-toggle .ant-segmented-item-selected {
+.catalog-layout-toggle .ant-segmented-item-selected {
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
-
 /* ── Footer metadata ─────────────────────────────── */
-.template-detail-footer {
+.catalog-detail-footer {
   display: flex;
   align-items: center;
   gap: 24px;
@@ -358,7 +357,7 @@
   border-top: 1px solid #f0f0f0;
 }
 
-.template-footer-item {
+.catalog-footer-item {
   display: inline-flex;
   align-items: center;
   gap: 5px;
@@ -366,30 +365,170 @@
   color: #9ca3af;
 }
 
-.template-footer-item .anticon {
+.catalog-footer-item .anticon {
   font-size: 14px;
 }
 
-.template-footer-value {
+.catalog-footer-value {
   color: #6b7280;
   font-weight: 500;
 }
 
-/* ── Responsive adjustments ──────────────────────── */
+/* ── File Tree Styles (VS Code Theme) ───────────────────────────── */
+.catalog-file-tree-container {
+  display: flex;
+  flex-direction: column;
+  background: var(--vscode-editor-background, #ffffff);
+  border: 1px solid #e5e7eb;
+  border-radius: 4px;
+  overflow: hidden;
+  height: calc(100vh - 210px);
+}
+
+.catalog-tree-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 10px;
+  background: var(--vscode-sideBarTitle-background, #f3f4f6);
+  border-bottom: 1px solid #e5e7eb;
+  font-size: 11px;
+  text-transform: uppercase;
+  font-weight: 600;
+  color: var(--vscode-sideBarTitle-foreground, #6b7280);
+  letter-spacing: 0.5px;
+}
+
+.catalog-tree-actions {
+  display: flex;
+  gap: 2px;
+}
+
+.catalog-file-tree {
+  overflow-y: auto;
+  font-size: 13px;
+  background: transparent;
+  font-family:
+    -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu',
+    'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+  padding-top: 4px;
+}
+
+.catalog-file-tree .ant-tree-list {
+  padding-bottom: 10px;
+}
+
+/* Base Node Reset */
+.catalog-file-tree .ant-tree-treenode {
+  padding: 0 !important;
+  width: 100%;
+}
+
+.catalog-file-tree .ant-tree-node-content-wrapper {
+  border-radius: 0 !important;
+  min-height: 26px;
+  line-height: 26px;
+  display: inline-flex;
+  align-items: center;
+  transition: background-color 0s;
+  padding: 0;
+  width: calc(100% - 24px);
+}
+
+/* Hover State */
+.catalog-file-tree .ant-tree-node-content-wrapper:hover {
+  background-color: var(--vscode-list-hoverBackground, #e8eaed) !important;
+}
+
+/* Selected State */
+.catalog-file-tree .ant-tree-node-selected {
+  background-color: var(
+    --vscode-list-inactiveSelectionBackground,
+    #e4e6f1
+  ) !important;
+  color: var(--vscode-list-activeSelectionForeground, inherit);
+}
+
+/* Tree Render Item */
+.tree-node-render {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  height: 26px;
+}
+
+.tree-node-title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tree-node-actions {
+  display: flex;
+  gap: 2px;
+  opacity: 0;
+  padding-left: 8px;
+}
+
+/* Inactive button styles to match VS Code UI */
+.tree-node-actions .ant-btn {
+  color: #6b7280;
+}
+.tree-node-actions .ant-btn:hover {
+  color: #111827;
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.ant-tree-node-content-wrapper:hover .tree-node-actions {
+  opacity: 1;
+}
+
+.ant-tree-treenode-selected .tree-node-actions {
+  opacity: 1;
+}
+
+/* Custom Switcher indenting */
+.catalog-file-tree .ant-tree-switcher {
+  width: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #6b7280;
+}
+
+/* Indent Guidelines */
+.catalog-file-tree .ant-tree-indent-unit {
+  width: 16px;
+  position: relative;
+}
+.catalog-file-tree .ant-tree-indent-unit::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 8px;
+  border-left: 1px solid #e5e7eb;
+  transition: opacity 0.2s;
+  opacity: 0;
+}
+.catalog-file-tree:hover .ant-tree-indent-unit::before {
+  opacity: 1;
+}
+
+/* Responsive adjustments */
 @media (max-width: 1024px) {
-  .template-detail-header-top {
+  .catalog-detail-header-top {
     flex-direction: column;
   }
 
-  .template-actions {
+  .catalog-actions {
     flex-wrap: wrap;
   }
 
-  .template-detail-content {
+  .catalog-detail-content {
     flex-direction: column;
-  }
-
-  .template-file-item {
-    padding-left: 44px;
   }
 }

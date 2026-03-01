@@ -1,3 +1,4 @@
+from .catalog import Catalog
 from .enums import FileType, Status
 from .error import Error
 from .file import File
@@ -19,4 +20,5 @@ __all__ = [
     "User",
     "UserSettings",
     "UserToken",
+    "Catalog",
 ]

@@ -1,11 +1,13 @@
+import json
 import logging
 from datetime import datetime
+from pathlib import Path
 from typing import Any
 
 from sqlalchemy.orm import Session
 
 from ...core.config import settings
-from ...models import Error, File, Job, Rule, Workflow
+from ...models import Catalog, Error, File, Job, Rule, Workflow
 from ...models.enums import FileType, Status
 from ..schemas import (
     ErrorSchema,
@@ -28,6 +30,37 @@ class WorkflowStartedHandler(BaseEventHandler[WorkflowStartedSchema]):
     def handle(
         self, data: WorkflowStartedSchema, session: Session, context: dict[str, Any]
     ) -> None:
+        # Try to associate with a catalog
+        catalog_id = None
+        workdir = context.get("workdir")
+        if workdir:
+            workdir_path = Path(workdir).resolve()
+            catalog_root = Path(settings.CATALOG_DIR).resolve()
+
+            if str(workdir_path).startswith(str(catalog_root)):
+                # This workflow is running inside a catalog item
+                slug = workdir_path.relative_to(catalog_root).parts[0]
+
+                # Fetch catalog from DB
+                catalog = session.query(Catalog).filter_by(slug=slug).first()
+                if catalog:
+                    catalog_id = catalog.id
+
+                    # Update metadata from .flowo.json if exists
+                    meta_file = workdir_path / ".flowo.json"
+                    if meta_file.exists():
+                        try:
+                            with open(meta_file) as f:
+                                meta = json.load(f)
+                                if "name" in meta:
+                                    catalog.name = meta["name"]
+                                if "tags" in meta:
+                                    catalog.tags = meta["tags"]
+                        except Exception as e:
+                            print(
+                                f"Error updating catalog metadata from .flowo.json: {e}"
+                            )
+
         workflow = Workflow(
             id=data.workflow_id,
             snakefile=data.snakefile,
@@ -43,6 +76,7 @@ class WorkflowStartedHandler(BaseEventHandler[WorkflowStartedSchema]):
             status=Status.RUNNING,
             started_at=datetime.now(),
             configfiles=context.get("configfiles"),
+            catalog_id=catalog_id,
         )
         session.add(workflow)
 
@@ -188,6 +222,11 @@ class RuleGraphHandler(BaseEventHandler[RuleGraphSchema]):
         workflow = session.get(Workflow, workflow_id)
         if workflow:
             workflow.rulegraph_data = data.rulegraph
+            if workflow.catalog_id:
+                # Cache the successful DAG in the catalog
+                catalog = session.get(Catalog, workflow.catalog_id)
+                if catalog:
+                    catalog.rulegraph_data = data.rulegraph
 
 
 class ErrorHandler(BaseEventHandler[ErrorSchema]):

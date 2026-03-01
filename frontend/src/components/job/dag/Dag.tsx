@@ -8,7 +8,11 @@ import React, {
   useState,
 } from 'react';
 
-import { FullscreenExitOutlined, FullscreenOutlined } from '@ant-design/icons';
+import {
+  FullscreenExitOutlined,
+  FullscreenOutlined,
+  SyncOutlined,
+} from '@ant-design/icons';
 import type { Node, NodeProps } from '@xyflow/react';
 import {
   Background,
@@ -23,12 +27,12 @@ import {
   useNodesState,
   useReactFlow,
 } from '@xyflow/react';
-import { Tooltip } from 'antd';
+import { Button, Tooltip } from 'antd';
 
 import DraggableLegendPanel from '@/components/job/dag/DraggableLegendPanel';
 import LayoutControlPanel from '@/components/job/dag/LayoutControlPanel';
 import ProgressNode from '@/components/job/dag/NodeProgressBar';
-import { useWorkflowGraph } from '@/components/job/dag/useDag';
+import { type GraphData, useWorkflowGraph } from '@/components/job/dag/useDag';
 import { getLayoutInfo, type LayoutDirection } from '@/utils/graphLayout';
 
 import '@xyflow/react/dist/style.css';
@@ -83,11 +87,12 @@ const StyledProgressNode: React.FC<NodeProps> = (props) => {
 
 interface WorkflowGraphProps {
   workflowId?: string;
-  templateSlug?: string;
+  catalogSlug?: string;
   onNodeClick?: (ruleName: string) => void;
   selectedRule?: string | null;
   onClearRule?: () => void;
   highlightedRule?: string | null;
+  initialData?: GraphData | string | null;
 }
 
 const nodeTypes = {
@@ -97,11 +102,12 @@ const nodeTypes = {
 // Inner component that uses useReactFlow
 const WorkflowGraphInner: React.FC<WorkflowGraphProps> = ({
   workflowId,
-  templateSlug,
+  catalogSlug,
   onNodeClick,
   selectedRule,
   onClearRule,
   highlightedRule,
+  initialData,
 }) => {
   const [layoutDirection, setLayoutDirection] = useState<LayoutDirection>('TB');
   const [forceLayoutRecalc, setForceLayoutRecalc] = useState(0);
@@ -117,11 +123,12 @@ const WorkflowGraphInner: React.FC<WorkflowGraphProps> = ({
     error,
   } = useWorkflowGraph({
     workflowId,
-    templateSlug,
+    catalogSlug,
     layoutDirection,
     selectedRule,
     highlightedRule,
     forceLayoutRecalc,
+    initialData,
   });
 
   const reactFlowInstance = useReactFlow();
@@ -276,21 +283,69 @@ const WorkflowGraphInner: React.FC<WorkflowGraphProps> = ({
   }
 
   if (error) {
+    const errorMessage =
+      error instanceof Error ? error.message : 'Unknown error';
+
     return (
       <div
         style={{
+          height: '100%',
           display: 'flex',
+          flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
+          padding: '24px',
           background: '#fff2f0',
           border: '1px solid #ffccc7',
           borderRadius: '6px',
-          color: '#ff4d4f',
         }}
       >
-        <div>
-          Error loading graph:{' '}
-          {error instanceof Error ? error.message : 'Unknown error'}
+        <div
+          style={{
+            maxWidth: '800px',
+            width: '100%',
+          }}
+        >
+          <div
+            style={{
+              color: '#ff4d4f',
+              fontSize: '16px',
+              fontWeight: 600,
+              marginBottom: '12px',
+              display: 'flex',
+              alignItems: 'center',
+            }}
+          >
+            <span style={{ marginRight: '8px' }}>⚠️</span>
+            DAG Generation Failed
+          </div>
+          <pre
+            style={{
+              background: '#ffffff',
+              padding: '16px',
+              borderRadius: '4px',
+              border: '1px solid #ffccc7',
+              fontSize: '12px',
+              lineHeight: '1.5',
+              maxHeight: '400px',
+              overflow: 'auto',
+              whiteSpace: 'pre-wrap',
+              wordBreak: 'break-word',
+              color: '#555',
+              fontFamily: 'monospace',
+            }}
+          >
+            {errorMessage}
+          </pre>
+          <div style={{ marginTop: '16px', textAlign: 'right' }}>
+            <Button
+              size="small"
+              onClick={() => window.location.reload()}
+              icon={<SyncOutlined />}
+            >
+              Retry
+            </Button>
+          </div>
         </div>
       </div>
     );
@@ -324,7 +379,7 @@ const WorkflowGraphInner: React.FC<WorkflowGraphProps> = ({
         backgroundColor: isFullscreen ? '#fafafa' : 'transparent',
       }}
     >
-      {!isFullscreen && !templateSlug && <DraggableLegendPanel />}
+      {!isFullscreen && !catalogSlug && <DraggableLegendPanel />}
       <div
         style={{
           height: isFullscreen ? '100%' : '96%',

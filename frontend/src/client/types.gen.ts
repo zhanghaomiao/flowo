@@ -49,13 +49,245 @@ export type BodyAuthJwtLoginApiV1AuthJwtLoginPost = {
 };
 
 /**
- * Body_upload_template_api_v1_templates_upload_post
+ * Body_upload_catalog_api_v1_catalog_upload_post
  */
-export type BodyUploadTemplateApiV1TemplatesUploadPost = {
+export type BodyUploadCatalogApiV1CatalogUploadPost = {
     /**
      * File
      */
     file: Blob | File;
+};
+
+/**
+ * CatalogCreateRequest
+ */
+export type CatalogCreateRequest = {
+    /**
+     * Name
+     */
+    name: string;
+    /**
+     * Description
+     */
+    description?: string;
+    /**
+     * Tags
+     */
+    tags?: Array<string>;
+};
+
+/**
+ * CatalogDetail
+ */
+export type CatalogDetail = {
+    /**
+     * Name
+     */
+    name: string;
+    /**
+     * Slug
+     */
+    slug: string;
+    /**
+     * Description
+     */
+    description?: string;
+    /**
+     * Version
+     */
+    version?: string;
+    /**
+     * Owner
+     */
+    owner?: string;
+    /**
+     * Tags
+     */
+    tags?: Array<string>;
+    /**
+     * Is Public
+     */
+    is_public?: boolean;
+    /**
+     * Source Url
+     */
+    source_url?: string;
+    /**
+     * Created At
+     */
+    created_at: string;
+    /**
+     * Updated At
+     */
+    updated_at: string;
+    /**
+     * File Count
+     */
+    file_count: number;
+    /**
+     * Has Snakefile
+     */
+    has_snakefile: boolean;
+    /**
+     * Files
+     */
+    files: Array<CatalogFileInfo>;
+    /**
+     * Categories
+     */
+    categories?: {
+        [key: string]: unknown;
+    };
+    /**
+     * Rulegraph Data
+     */
+    rulegraph_data?: {
+        [key: string]: unknown;
+    } | null;
+};
+
+/**
+ * CatalogFileContent
+ */
+export type CatalogFileContent = {
+    /**
+     * Path
+     */
+    path: string;
+    /**
+     * Name
+     */
+    name: string;
+    /**
+     * Content
+     */
+    content: string;
+    /**
+     * Language
+     */
+    language: string;
+    /**
+     * Lines
+     */
+    lines: number;
+    /**
+     * Size
+     */
+    size: number;
+};
+
+/**
+ * CatalogFileInfo
+ */
+export type CatalogFileInfo = {
+    /**
+     * Name
+     */
+    name: string;
+    /**
+     * Path
+     */
+    path: string;
+    /**
+     * Is Dir
+     */
+    is_dir?: boolean;
+    /**
+     * Lines
+     */
+    lines: number;
+    /**
+     * Size
+     */
+    size: number;
+    /**
+     * Modified
+     */
+    modified: string;
+};
+
+/**
+ * CatalogSummary
+ */
+export type CatalogSummary = {
+    /**
+     * Name
+     */
+    name: string;
+    /**
+     * Slug
+     */
+    slug: string;
+    /**
+     * Description
+     */
+    description?: string;
+    /**
+     * Version
+     */
+    version?: string;
+    /**
+     * Owner
+     */
+    owner?: string;
+    /**
+     * Tags
+     */
+    tags?: Array<string>;
+    /**
+     * Is Public
+     */
+    is_public?: boolean;
+    /**
+     * Source Url
+     */
+    source_url?: string;
+    /**
+     * Created At
+     */
+    created_at: string;
+    /**
+     * Updated At
+     */
+    updated_at: string;
+    /**
+     * File Count
+     */
+    file_count: number;
+    /**
+     * Has Snakefile
+     */
+    has_snakefile: boolean;
+};
+
+/**
+ * CatalogUpdateRequest
+ */
+export type CatalogUpdateRequest = {
+    /**
+     * Name
+     */
+    name?: string | null;
+    /**
+     * Description
+     */
+    description?: string | null;
+    /**
+     * Version
+     */
+    version?: string | null;
+    /**
+     * Tags
+     */
+    tags?: Array<string> | null;
+    /**
+     * Is Public
+     */
+    is_public?: boolean | null;
+    /**
+     * Source Url
+     */
+    source_url?: string | null;
 };
 
 /**
@@ -332,6 +564,20 @@ export type PathContent = {
 };
 
 /**
+ * RenameRequest
+ */
+export type RenameRequest = {
+    /**
+     * Old Path
+     */
+    old_path: string;
+    /**
+     * New Path
+     */
+    new_path: string;
+};
+
+/**
  * ReportPayload
  */
 export type ReportPayload = {
@@ -485,6 +731,32 @@ export type StatusSummary = {
 };
 
 /**
+ * SyncResponse
+ */
+export type SyncResponse = {
+    /**
+     * Status
+     */
+    status: string;
+    /**
+     * Timestamp
+     */
+    timestamp: string;
+    /**
+     * Added
+     */
+    added: number;
+    /**
+     * Updated
+     */
+    updated: number;
+    /**
+     * Removed
+     */
+    removed: number;
+};
+
+/**
  * SystemHealthResponse
  */
 export type SystemHealthResponse = {
@@ -494,252 +766,6 @@ export type SystemHealthResponse = {
      * Overall Status
      */
     overall_status: string;
-};
-
-/**
- * TemplateCategoryInfo
- */
-export type TemplateCategoryInfo = {
-    /**
-     * Dir
-     */
-    dir: string;
-    /**
-     * Required
-     */
-    required: boolean;
-    /**
-     * Extensions
-     */
-    extensions: Array<string>;
-    /**
-     * Count
-     */
-    count: number;
-};
-
-/**
- * TemplateCreateRequest
- */
-export type TemplateCreateRequest = {
-    /**
-     * Name
-     */
-    name: string;
-    /**
-     * Description
-     */
-    description?: string;
-    /**
-     * Tags
-     */
-    tags?: Array<string>;
-};
-
-/**
- * TemplateDetail
- */
-export type TemplateDetail = {
-    /**
-     * Name
-     */
-    name: string;
-    /**
-     * Slug
-     */
-    slug: string;
-    /**
-     * Description
-     */
-    description?: string;
-    /**
-     * Version
-     */
-    version?: string;
-    /**
-     * Owner
-     */
-    owner?: string;
-    /**
-     * Tags
-     */
-    tags?: Array<string>;
-    /**
-     * Is Public
-     */
-    is_public?: boolean;
-    /**
-     * Source Url
-     */
-    source_url?: string;
-    /**
-     * Created At
-     */
-    created_at: string;
-    /**
-     * Updated At
-     */
-    updated_at: string;
-    /**
-     * File Count
-     */
-    file_count: number;
-    /**
-     * Has Snakefile
-     */
-    has_snakefile: boolean;
-    /**
-     * Files
-     */
-    files: {
-        [key: string]: Array<TemplateFileInfo>;
-    };
-    /**
-     * Categories
-     */
-    categories: {
-        [key: string]: TemplateCategoryInfo;
-    };
-};
-
-/**
- * TemplateFileContent
- */
-export type TemplateFileContent = {
-    /**
-     * Path
-     */
-    path: string;
-    /**
-     * Name
-     */
-    name: string;
-    /**
-     * Content
-     */
-    content: string;
-    /**
-     * Language
-     */
-    language: string;
-    /**
-     * Lines
-     */
-    lines: number;
-    /**
-     * Size
-     */
-    size: number;
-};
-
-/**
- * TemplateFileInfo
- */
-export type TemplateFileInfo = {
-    /**
-     * Name
-     */
-    name: string;
-    /**
-     * Path
-     */
-    path: string;
-    /**
-     * Lines
-     */
-    lines: number;
-    /**
-     * Size
-     */
-    size: number;
-    /**
-     * Modified
-     */
-    modified: string;
-};
-
-/**
- * TemplateSummary
- */
-export type TemplateSummary = {
-    /**
-     * Name
-     */
-    name: string;
-    /**
-     * Slug
-     */
-    slug: string;
-    /**
-     * Description
-     */
-    description?: string;
-    /**
-     * Version
-     */
-    version?: string;
-    /**
-     * Owner
-     */
-    owner?: string;
-    /**
-     * Tags
-     */
-    tags?: Array<string>;
-    /**
-     * Is Public
-     */
-    is_public?: boolean;
-    /**
-     * Source Url
-     */
-    source_url?: string;
-    /**
-     * Created At
-     */
-    created_at: string;
-    /**
-     * Updated At
-     */
-    updated_at: string;
-    /**
-     * File Count
-     */
-    file_count: number;
-    /**
-     * Has Snakefile
-     */
-    has_snakefile: boolean;
-};
-
-/**
- * TemplateUpdateRequest
- */
-export type TemplateUpdateRequest = {
-    /**
-     * Name
-     */
-    name?: string | null;
-    /**
-     * Description
-     */
-    description?: string | null;
-    /**
-     * Version
-     */
-    version?: string | null;
-    /**
-     * Tags
-     */
-    tags?: Array<string> | null;
-    /**
-     * Is Public
-     */
-    is_public?: boolean | null;
-    /**
-     * Source Url
-     */
-    source_url?: string | null;
 };
 
 /**
@@ -2514,7 +2540,7 @@ export type DeleteTokenResponses = {
     200: unknown;
 };
 
-export type ListTemplatesData = {
+export type ListCatalogsData = {
     body?: never;
     path?: never;
     query?: {
@@ -2531,55 +2557,71 @@ export type ListTemplatesData = {
          */
         tags?: string | null;
     };
-    url: '/api/v1/templates';
+    url: '/api/v1/catalog';
 };
 
-export type ListTemplatesErrors = {
+export type ListCatalogsErrors = {
     /**
      * Validation Error
      */
     422: HttpValidationError;
 };
 
-export type ListTemplatesError = ListTemplatesErrors[keyof ListTemplatesErrors];
+export type ListCatalogsError = ListCatalogsErrors[keyof ListCatalogsErrors];
 
-export type ListTemplatesResponses = {
+export type ListCatalogsResponses = {
     /**
-     * Response List Templates Api V1 Templates Get
+     * Response List Catalogs Api V1 Catalog Get
      *
      * Successful Response
      */
-    200: Array<TemplateSummary>;
+    200: Array<CatalogSummary>;
 };
 
-export type ListTemplatesResponse = ListTemplatesResponses[keyof ListTemplatesResponses];
+export type ListCatalogsResponse = ListCatalogsResponses[keyof ListCatalogsResponses];
 
-export type CreateTemplateData = {
-    body: TemplateCreateRequest;
+export type CreateCatalogData = {
+    body: CatalogCreateRequest;
     path?: never;
     query?: never;
-    url: '/api/v1/templates';
+    url: '/api/v1/catalog';
 };
 
-export type CreateTemplateErrors = {
+export type CreateCatalogErrors = {
     /**
      * Validation Error
      */
     422: HttpValidationError;
 };
 
-export type CreateTemplateError = CreateTemplateErrors[keyof CreateTemplateErrors];
+export type CreateCatalogError = CreateCatalogErrors[keyof CreateCatalogErrors];
 
-export type CreateTemplateResponses = {
+export type CreateCatalogResponses = {
     /**
      * Successful Response
      */
-    201: TemplateSummary;
+    201: CatalogSummary;
 };
 
-export type CreateTemplateResponse = CreateTemplateResponses[keyof CreateTemplateResponses];
+export type CreateCatalogResponse = CreateCatalogResponses[keyof CreateCatalogResponses];
 
-export type DeleteTemplateData = {
+export type SyncCatalogsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/catalog/sync';
+};
+
+export type SyncCatalogsResponses = {
+    /**
+     * Successful Response
+     */
+    200: SyncResponse;
+};
+
+export type SyncCatalogsResponse = SyncCatalogsResponses[keyof SyncCatalogsResponses];
+
+export type DeleteCatalogData = {
     body?: never;
     path: {
         /**
@@ -2588,26 +2630,26 @@ export type DeleteTemplateData = {
         slug: string;
     };
     query?: never;
-    url: '/api/v1/templates/{slug}';
+    url: '/api/v1/catalog/{slug}';
 };
 
-export type DeleteTemplateErrors = {
+export type DeleteCatalogErrors = {
     /**
      * Validation Error
      */
     422: HttpValidationError;
 };
 
-export type DeleteTemplateError = DeleteTemplateErrors[keyof DeleteTemplateErrors];
+export type DeleteCatalogError = DeleteCatalogErrors[keyof DeleteCatalogErrors];
 
-export type DeleteTemplateResponses = {
+export type DeleteCatalogResponses = {
     /**
      * Successful Response
      */
     200: unknown;
 };
 
-export type GetTemplateData = {
+export type GetCatalogData = {
     body?: never;
     path: {
         /**
@@ -2616,29 +2658,29 @@ export type GetTemplateData = {
         slug: string;
     };
     query?: never;
-    url: '/api/v1/templates/{slug}';
+    url: '/api/v1/catalog/{slug}';
 };
 
-export type GetTemplateErrors = {
+export type GetCatalogErrors = {
     /**
      * Validation Error
      */
     422: HttpValidationError;
 };
 
-export type GetTemplateError = GetTemplateErrors[keyof GetTemplateErrors];
+export type GetCatalogError = GetCatalogErrors[keyof GetCatalogErrors];
 
-export type GetTemplateResponses = {
+export type GetCatalogResponses = {
     /**
      * Successful Response
      */
-    200: TemplateDetail;
+    200: CatalogDetail;
 };
 
-export type GetTemplateResponse = GetTemplateResponses[keyof GetTemplateResponses];
+export type GetCatalogResponse = GetCatalogResponses[keyof GetCatalogResponses];
 
-export type UpdateTemplateData = {
-    body: TemplateUpdateRequest;
+export type UpdateCatalogData = {
+    body: CatalogUpdateRequest;
     path: {
         /**
          * Slug
@@ -2646,26 +2688,26 @@ export type UpdateTemplateData = {
         slug: string;
     };
     query?: never;
-    url: '/api/v1/templates/{slug}';
+    url: '/api/v1/catalog/{slug}';
 };
 
-export type UpdateTemplateErrors = {
+export type UpdateCatalogErrors = {
     /**
      * Validation Error
      */
     422: HttpValidationError;
 };
 
-export type UpdateTemplateError = UpdateTemplateErrors[keyof UpdateTemplateErrors];
+export type UpdateCatalogError = UpdateCatalogErrors[keyof UpdateCatalogErrors];
 
-export type UpdateTemplateResponses = {
+export type UpdateCatalogResponses = {
     /**
      * Successful Response
      */
-    200: TemplateSummary;
+    200: CatalogSummary;
 };
 
-export type UpdateTemplateResponse = UpdateTemplateResponses[keyof UpdateTemplateResponses];
+export type UpdateCatalogResponse = UpdateCatalogResponses[keyof UpdateCatalogResponses];
 
 export type DeleteFileData = {
     body?: never;
@@ -2680,7 +2722,7 @@ export type DeleteFileData = {
         file_path: string;
     };
     query?: never;
-    url: '/api/v1/templates/{slug}/files/{file_path}';
+    url: '/api/v1/catalog/{slug}/files/{file_path}';
 };
 
 export type DeleteFileErrors = {
@@ -2712,7 +2754,7 @@ export type ReadFile2Data = {
         file_path: string;
     };
     query?: never;
-    url: '/api/v1/templates/{slug}/files/{file_path}';
+    url: '/api/v1/catalog/{slug}/files/{file_path}';
 };
 
 export type ReadFile2Errors = {
@@ -2728,7 +2770,7 @@ export type ReadFile2Responses = {
     /**
      * Successful Response
      */
-    200: TemplateFileContent;
+    200: CatalogFileContent;
 };
 
 export type ReadFile2Response = ReadFile2Responses[keyof ReadFile2Responses];
@@ -2746,7 +2788,7 @@ export type WriteFileData = {
         file_path: string;
     };
     query?: never;
-    url: '/api/v1/templates/{slug}/files/{file_path}';
+    url: '/api/v1/catalog/{slug}/files/{file_path}';
 };
 
 export type WriteFileErrors = {
@@ -2762,65 +2804,104 @@ export type WriteFileResponses = {
     /**
      * Successful Response
      */
-    200: TemplateFileContent;
+    200: CatalogFileContent;
 };
 
 export type WriteFileResponse = WriteFileResponses[keyof WriteFileResponses];
 
-export type ExportTemplateData = {
+export type DeleteDirectoryData = {
     body?: never;
     path: {
         /**
          * Slug
          */
         slug: string;
+        /**
+         * Directory Path
+         */
+        directory_path: string;
     };
     query?: never;
-    url: '/api/v1/templates/{slug}/export';
+    url: '/api/v1/catalog/{slug}/dirs/{directory_path}';
 };
 
-export type ExportTemplateErrors = {
+export type DeleteDirectoryErrors = {
     /**
      * Validation Error
      */
     422: HttpValidationError;
 };
 
-export type ExportTemplateError = ExportTemplateErrors[keyof ExportTemplateErrors];
+export type DeleteDirectoryError = DeleteDirectoryErrors[keyof DeleteDirectoryErrors];
 
-export type ExportTemplateResponses = {
+export type DeleteDirectoryResponses = {
     /**
      * Successful Response
      */
     200: unknown;
 };
 
-export type UploadTemplateData = {
-    body: BodyUploadTemplateApiV1TemplatesUploadPost;
-    path?: never;
+export type CreateDirectoryData = {
+    body?: never;
+    path: {
+        /**
+         * Slug
+         */
+        slug: string;
+        /**
+         * Directory Path
+         */
+        directory_path: string;
+    };
     query?: never;
-    url: '/api/v1/templates/upload';
+    url: '/api/v1/catalog/{slug}/dirs/{directory_path}';
 };
 
-export type UploadTemplateErrors = {
+export type CreateDirectoryErrors = {
     /**
      * Validation Error
      */
     422: HttpValidationError;
 };
 
-export type UploadTemplateError = UploadTemplateErrors[keyof UploadTemplateErrors];
+export type CreateDirectoryError = CreateDirectoryErrors[keyof CreateDirectoryErrors];
 
-export type UploadTemplateResponses = {
+export type CreateDirectoryResponses = {
     /**
      * Successful Response
      */
-    201: TemplateSummary;
+    200: unknown;
 };
 
-export type UploadTemplateResponse = UploadTemplateResponses[keyof UploadTemplateResponses];
+export type RenamePathData = {
+    body: RenameRequest;
+    path: {
+        /**
+         * Slug
+         */
+        slug: string;
+    };
+    query?: never;
+    url: '/api/v1/catalog/{slug}/rename';
+};
 
-export type GetTemplateDagData = {
+export type RenamePathErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type RenamePathError = RenamePathErrors[keyof RenamePathErrors];
+
+export type RenamePathResponses = {
+    /**
+     * Successful Response
+     */
+    200: unknown;
+};
+
+export type ExportCatalogData = {
     body?: never;
     path: {
         /**
@@ -2829,19 +2910,72 @@ export type GetTemplateDagData = {
         slug: string;
     };
     query?: never;
-    url: '/api/v1/templates/{slug}/dag';
+    url: '/api/v1/catalog/{slug}/export';
 };
 
-export type GetTemplateDagErrors = {
+export type ExportCatalogErrors = {
     /**
      * Validation Error
      */
     422: HttpValidationError;
 };
 
-export type GetTemplateDagError = GetTemplateDagErrors[keyof GetTemplateDagErrors];
+export type ExportCatalogError = ExportCatalogErrors[keyof ExportCatalogErrors];
 
-export type GetTemplateDagResponses = {
+export type ExportCatalogResponses = {
+    /**
+     * Successful Response
+     */
+    200: unknown;
+};
+
+export type UploadCatalogData = {
+    body: BodyUploadCatalogApiV1CatalogUploadPost;
+    path?: never;
+    query?: never;
+    url: '/api/v1/catalog/upload';
+};
+
+export type UploadCatalogErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type UploadCatalogError = UploadCatalogErrors[keyof UploadCatalogErrors];
+
+export type UploadCatalogResponses = {
+    /**
+     * Successful Response
+     */
+    201: CatalogSummary;
+};
+
+export type UploadCatalogResponse = UploadCatalogResponses[keyof UploadCatalogResponses];
+
+export type GetCatalogDagData = {
+    body?: never;
+    path: {
+        /**
+         * Slug
+         */
+        slug: string;
+    };
+    query?: never;
+    url: '/api/v1/catalog/{slug}/dag';
+};
+
+export type GetCatalogDagErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type GetCatalogDagError = GetCatalogDagErrors[keyof GetCatalogDagErrors];
+
+export type GetCatalogDagResponses = {
     /**
      * Successful Response
      */
@@ -2852,7 +2986,7 @@ export type GitPushData = {
     body: GitPushRequest;
     path?: never;
     query?: never;
-    url: '/api/v1/templates/git/push';
+    url: '/api/v1/catalog/git/push';
 };
 
 export type GitPushErrors = {
@@ -2875,7 +3009,7 @@ export type GitPullData = {
     body?: never;
     path?: never;
     query?: never;
-    url: '/api/v1/templates/git/pull';
+    url: '/api/v1/catalog/git/pull';
 };
 
 export type GitPullResponses = {
@@ -2889,7 +3023,7 @@ export type ImportFromGitData = {
     body: ImportFromGitRequest;
     path?: never;
     query?: never;
-    url: '/api/v1/templates/import/git';
+    url: '/api/v1/catalog/import/git';
 };
 
 export type ImportFromGitErrors = {
@@ -2903,11 +3037,11 @@ export type ImportFromGitError = ImportFromGitErrors[keyof ImportFromGitErrors];
 
 export type ImportFromGitResponses = {
     /**
-     * Response Import From Git Api V1 Templates Import Git Post
+     * Response Import From Git Api V1 Catalog Import Git Post
      *
      * Successful Response
      */
-    201: Array<TemplateSummary>;
+    201: Array<CatalogSummary>;
 };
 
 export type ImportFromGitResponse = ImportFromGitResponses[keyof ImportFromGitResponses];

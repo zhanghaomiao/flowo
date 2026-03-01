@@ -3,8 +3,8 @@
 import { type DefaultError, type InfiniteData, infiniteQueryOptions, queryOptions, type UseMutationOptions, useQuery } from '@tanstack/react-query';
 
 import { client } from '../client.gen';
-import { authJwtLogin, authJwtLogout, closeWorkflow, createTemplate, createToken, deleteFile, deleteTemplate, deleteToken, deleteWorkflow, exportTemplate, getActivity, getAllTags, getClientConfig, getConfigfiles, getDetail, getJob, getJobOutputs, getJobs, getLogs, getProgress, getRuleDuration, getRuleError, getRuleGraph, getRules, getRuleStatus, getSettings, getSnakefile, getSseTicket, getStatus, getSystemHealth, getSystemResources, getTemplate, getTemplateDag, getTimelines, getWorkflowIdByName, getWorkflowLog, getWorkflows, gitPull, gitPush, importFromGit, listFiles, listTemplates, listTokens, type Options, postPruning, readFile, readFile2, registerRegister, reportEvent, streamEvents, testGitConnection, testSmtpConnection, updateSettings, updateTemplate, uploadTemplate, usersCurrentUser, usersDeleteUser, usersPatchCurrentUser, usersPatchUser, usersUser, writeFile } from '../sdk.gen';
-import type { AuthJwtLoginData, AuthJwtLoginError, AuthJwtLoginResponse, AuthJwtLogoutData, CloseWorkflowData, CloseWorkflowError, CreateTemplateData, CreateTemplateError, CreateTemplateResponse, CreateTokenData, CreateTokenError, CreateTokenResponse, DeleteFileData, DeleteFileError, DeleteTemplateData, DeleteTemplateError, DeleteTokenData, DeleteTokenError, DeleteWorkflowData, DeleteWorkflowError, ExportTemplateData, ExportTemplateError, GetActivityData, GetActivityError, GetActivityResponse, GetAllTagsData, GetAllTagsResponse, GetClientConfigData, GetClientConfigResponse, GetConfigfilesData, GetConfigfilesError, GetConfigfilesResponse, GetDetailData, GetDetailError, GetDetailResponse, GetJobData, GetJobError, GetJobOutputsData, GetJobOutputsError, GetJobOutputsResponse, GetJobResponse, GetJobsData, GetJobsError, GetJobsResponse, GetLogsData, GetLogsError, GetLogsResponse, GetProgressData, GetProgressError, GetProgressResponse, GetRuleDurationData, GetRuleDurationError, GetRuleDurationResponse, GetRuleErrorData, GetRuleErrorError, GetRuleErrorResponse, GetRuleGraphData, GetRuleGraphError, GetRuleGraphResponse, GetRulesData, GetRulesError, GetRulesResponse, GetRuleStatusData, GetRuleStatusError, GetRuleStatusResponse, GetSettingsData, GetSettingsResponse, GetSnakefileData, GetSnakefileError, GetSnakefileResponse, GetSseTicketData, GetStatusData, GetStatusError, GetStatusResponse, GetSystemHealthData, GetSystemHealthResponse, GetSystemResourcesData, GetSystemResourcesResponse, GetTemplateDagData, GetTemplateDagError, GetTemplateData, GetTemplateError, GetTemplateResponse, GetTimelinesData, GetTimelinesError, GetTimelinesResponse, GetWorkflowIdByNameData, GetWorkflowIdByNameError, GetWorkflowIdByNameResponse, GetWorkflowLogData, GetWorkflowLogError, GetWorkflowLogResponse, GetWorkflowsData, GetWorkflowsError, GetWorkflowsResponse, GitPullData, GitPushData, GitPushError, ImportFromGitData, ImportFromGitError, ImportFromGitResponse, ListFilesData, ListFilesError, ListFilesResponse, ListTemplatesData, ListTemplatesError, ListTemplatesResponse, ListTokensData, ListTokensResponse, PostPruningData, PostPruningResponse, ReadFile2Data, ReadFile2Error, ReadFile2Response, ReadFileData, ReadFileError, ReadFileResponse, RegisterRegisterData, RegisterRegisterError, RegisterRegisterResponse, ReportEventData, ReportEventError, StreamEventsData, StreamEventsError, TestGitConnectionData, TestGitConnectionError, TestGitConnectionResponse, TestSmtpConnectionData, TestSmtpConnectionError, TestSmtpConnectionResponse, UpdateSettingsData, UpdateSettingsError, UpdateSettingsResponse, UpdateTemplateData, UpdateTemplateError, UpdateTemplateResponse, UploadTemplateData, UploadTemplateError, UploadTemplateResponse, UsersCurrentUserData, UsersCurrentUserResponse, UsersDeleteUserData, UsersDeleteUserError, UsersDeleteUserResponse, UsersPatchCurrentUserData, UsersPatchCurrentUserError, UsersPatchCurrentUserResponse, UsersPatchUserData, UsersPatchUserError, UsersPatchUserResponse, UsersUserData, UsersUserError, UsersUserResponse, WriteFileData, WriteFileError, WriteFileResponse } from '../types.gen';
+import { authJwtLogin, authJwtLogout, closeWorkflow, createCatalog, createDirectory, createToken, deleteCatalog, deleteDirectory, deleteFile, deleteToken, deleteWorkflow, exportCatalog, getActivity, getAllTags, getCatalog, getCatalogDag, getClientConfig, getConfigfiles, getDetail, getJob, getJobOutputs, getJobs, getLogs, getProgress, getRuleDuration, getRuleError, getRuleGraph, getRules, getRuleStatus, getSettings, getSnakefile, getSseTicket, getStatus, getSystemHealth, getSystemResources, getTimelines, getWorkflowIdByName, getWorkflowLog, getWorkflows, gitPull, gitPush, importFromGit, listCatalogs, listFiles, listTokens, type Options, postPruning, readFile, readFile2, registerRegister, renamePath, reportEvent, streamEvents, syncCatalogs, testGitConnection, testSmtpConnection, updateCatalog, updateSettings, uploadCatalog, usersCurrentUser, usersDeleteUser, usersPatchCurrentUser, usersPatchUser, usersUser, writeFile } from '../sdk.gen';
+import type { AuthJwtLoginData, AuthJwtLoginError, AuthJwtLoginResponse, AuthJwtLogoutData, CloseWorkflowData, CloseWorkflowError, CreateCatalogData, CreateCatalogError, CreateCatalogResponse, CreateDirectoryData, CreateDirectoryError, CreateTokenData, CreateTokenError, CreateTokenResponse, DeleteCatalogData, DeleteCatalogError, DeleteDirectoryData, DeleteDirectoryError, DeleteFileData, DeleteFileError, DeleteTokenData, DeleteTokenError, DeleteWorkflowData, DeleteWorkflowError, ExportCatalogData, ExportCatalogError, GetActivityData, GetActivityError, GetActivityResponse, GetAllTagsData, GetAllTagsResponse, GetCatalogDagData, GetCatalogDagError, GetCatalogData, GetCatalogError, GetCatalogResponse, GetClientConfigData, GetClientConfigResponse, GetConfigfilesData, GetConfigfilesError, GetConfigfilesResponse, GetDetailData, GetDetailError, GetDetailResponse, GetJobData, GetJobError, GetJobOutputsData, GetJobOutputsError, GetJobOutputsResponse, GetJobResponse, GetJobsData, GetJobsError, GetJobsResponse, GetLogsData, GetLogsError, GetLogsResponse, GetProgressData, GetProgressError, GetProgressResponse, GetRuleDurationData, GetRuleDurationError, GetRuleDurationResponse, GetRuleErrorData, GetRuleErrorError, GetRuleErrorResponse, GetRuleGraphData, GetRuleGraphError, GetRuleGraphResponse, GetRulesData, GetRulesError, GetRulesResponse, GetRuleStatusData, GetRuleStatusError, GetRuleStatusResponse, GetSettingsData, GetSettingsResponse, GetSnakefileData, GetSnakefileError, GetSnakefileResponse, GetSseTicketData, GetStatusData, GetStatusError, GetStatusResponse, GetSystemHealthData, GetSystemHealthResponse, GetSystemResourcesData, GetSystemResourcesResponse, GetTimelinesData, GetTimelinesError, GetTimelinesResponse, GetWorkflowIdByNameData, GetWorkflowIdByNameError, GetWorkflowIdByNameResponse, GetWorkflowLogData, GetWorkflowLogError, GetWorkflowLogResponse, GetWorkflowsData, GetWorkflowsError, GetWorkflowsResponse, GitPullData, GitPushData, GitPushError, ImportFromGitData, ImportFromGitError, ImportFromGitResponse, ListCatalogsData, ListCatalogsError, ListCatalogsResponse, ListFilesData, ListFilesError, ListFilesResponse, ListTokensData, ListTokensResponse, PostPruningData, PostPruningResponse, ReadFile2Data, ReadFile2Error, ReadFile2Response, ReadFileData, ReadFileError, ReadFileResponse, RegisterRegisterData, RegisterRegisterError, RegisterRegisterResponse, RenamePathData, RenamePathError, ReportEventData, ReportEventError, StreamEventsData, StreamEventsError, SyncCatalogsData, SyncCatalogsResponse, TestGitConnectionData, TestGitConnectionError, TestGitConnectionResponse, TestSmtpConnectionData, TestSmtpConnectionError, TestSmtpConnectionResponse, UpdateCatalogData, UpdateCatalogError, UpdateCatalogResponse, UpdateSettingsData, UpdateSettingsError, UpdateSettingsResponse, UploadCatalogData, UploadCatalogError, UploadCatalogResponse, UsersCurrentUserData, UsersCurrentUserResponse, UsersDeleteUserData, UsersDeleteUserError, UsersDeleteUserResponse, UsersPatchCurrentUserData, UsersPatchCurrentUserError, UsersPatchCurrentUserResponse, UsersPatchUserData, UsersPatchUserError, UsersPatchUserResponse, UsersUserData, UsersUserError, UsersUserResponse, WriteFileData, WriteFileError, WriteFileResponse } from '../types.gen';
 
 /**
  * Auth:Jwt.Login
@@ -1014,16 +1014,16 @@ export const deleteTokenMutation = (options?: Partial<Options<DeleteTokenData>>)
     return mutationOptions;
 };
 
-export const listTemplatesQueryKey = (options?: Options<ListTemplatesData>) => createQueryKey('listTemplates', options, false, ['templates']);
+export const listCatalogsQueryKey = (options?: Options<ListCatalogsData>) => createQueryKey('listCatalogs', options, false, ['catalog']);
 
 /**
- * List Templates
+ * List Catalogs
  *
- * List all workflow templates.
+ * List all workflow catalogs.
  */
-export const listTemplatesOptions = (options?: Options<ListTemplatesData>) => queryOptions<ListTemplatesResponse, ListTemplatesError, ListTemplatesResponse, ReturnType<typeof listTemplatesQueryKey>>({
+export const listCatalogsOptions = (options?: Options<ListCatalogsData>) => queryOptions<ListCatalogsResponse, ListCatalogsError, ListCatalogsResponse, ReturnType<typeof listCatalogsQueryKey>>({
     queryFn: async ({ queryKey, signal }) => {
-        const { data } = await listTemplates({
+        const { data } = await listCatalogs({
             ...options,
             ...queryKey[0],
             signal,
@@ -1031,25 +1031,25 @@ export const listTemplatesOptions = (options?: Options<ListTemplatesData>) => qu
         });
         return data;
     },
-    queryKey: listTemplatesQueryKey(options)
+    queryKey: listCatalogsQueryKey(options)
 });
 
 /**
- * List Templates
+ * List Catalogs
  *
- * List all workflow templates.
+ * List all workflow catalogs.
  */
-export const useListTemplatesQuery = (options?: Options<ListTemplatesData>) => useQuery(listTemplatesOptions(options));
+export const useListCatalogsQuery = (options?: Options<ListCatalogsData>) => useQuery(listCatalogsOptions(options));
 
 /**
- * Create Template
+ * Create Catalog
  *
- * Create a new workflow template with an empty Snakefile.
+ * Create a new workflow catalog with an empty Snakefile.
  */
-export const createTemplateMutation = (options?: Partial<Options<CreateTemplateData>>): UseMutationOptions<CreateTemplateResponse, CreateTemplateError, Options<CreateTemplateData>> => {
-    const mutationOptions: UseMutationOptions<CreateTemplateResponse, CreateTemplateError, Options<CreateTemplateData>> = {
+export const createCatalogMutation = (options?: Partial<Options<CreateCatalogData>>): UseMutationOptions<CreateCatalogResponse, CreateCatalogError, Options<CreateCatalogData>> => {
+    const mutationOptions: UseMutationOptions<CreateCatalogResponse, CreateCatalogError, Options<CreateCatalogData>> = {
         mutationFn: async (fnOptions) => {
-            const { data } = await createTemplate({
+            const { data } = await createCatalog({
                 ...options,
                 ...fnOptions,
                 throwOnError: true
@@ -1061,14 +1061,14 @@ export const createTemplateMutation = (options?: Partial<Options<CreateTemplateD
 };
 
 /**
- * Delete Template
+ * Sync Catalogs
  *
- * Delete a template and all its files.
+ * Manual sync of filesystem catalogs with the database.
  */
-export const deleteTemplateMutation = (options?: Partial<Options<DeleteTemplateData>>): UseMutationOptions<unknown, DeleteTemplateError, Options<DeleteTemplateData>> => {
-    const mutationOptions: UseMutationOptions<unknown, DeleteTemplateError, Options<DeleteTemplateData>> = {
+export const syncCatalogsMutation = (options?: Partial<Options<SyncCatalogsData>>): UseMutationOptions<SyncCatalogsResponse, DefaultError, Options<SyncCatalogsData>> => {
+    const mutationOptions: UseMutationOptions<SyncCatalogsResponse, DefaultError, Options<SyncCatalogsData>> = {
         mutationFn: async (fnOptions) => {
-            const { data } = await deleteTemplate({
+            const { data } = await syncCatalogs({
                 ...options,
                 ...fnOptions,
                 throwOnError: true
@@ -1079,16 +1079,35 @@ export const deleteTemplateMutation = (options?: Partial<Options<DeleteTemplateD
     return mutationOptions;
 };
 
-export const getTemplateQueryKey = (options: Options<GetTemplateData>) => createQueryKey('getTemplate', options, false, ['templates']);
+/**
+ * Delete Catalog
+ *
+ * Delete a catalog and all its files.
+ */
+export const deleteCatalogMutation = (options?: Partial<Options<DeleteCatalogData>>): UseMutationOptions<unknown, DeleteCatalogError, Options<DeleteCatalogData>> => {
+    const mutationOptions: UseMutationOptions<unknown, DeleteCatalogError, Options<DeleteCatalogData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await deleteCatalog({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const getCatalogQueryKey = (options: Options<GetCatalogData>) => createQueryKey('getCatalog', options, false, ['catalog']);
 
 /**
- * Get Template
+ * Get Catalog
  *
- * Get template detail with file inventory.
+ * Get catalog detail with file inventory.
  */
-export const getTemplateOptions = (options: Options<GetTemplateData>) => queryOptions<GetTemplateResponse, GetTemplateError, GetTemplateResponse, ReturnType<typeof getTemplateQueryKey>>({
+export const getCatalogOptions = (options: Options<GetCatalogData>) => queryOptions<GetCatalogResponse, GetCatalogError, GetCatalogResponse, ReturnType<typeof getCatalogQueryKey>>({
     queryFn: async ({ queryKey, signal }) => {
-        const { data } = await getTemplate({
+        const { data } = await getCatalog({
             ...options,
             ...queryKey[0],
             signal,
@@ -1096,25 +1115,25 @@ export const getTemplateOptions = (options: Options<GetTemplateData>) => queryOp
         });
         return data;
     },
-    queryKey: getTemplateQueryKey(options)
+    queryKey: getCatalogQueryKey(options)
 });
 
 /**
- * Get Template
+ * Get Catalog
  *
- * Get template detail with file inventory.
+ * Get catalog detail with file inventory.
  */
-export const useGetTemplateQuery = (options: Options<GetTemplateData>) => useQuery(getTemplateOptions(options));
+export const useGetCatalogQuery = (options: Options<GetCatalogData>) => useQuery(getCatalogOptions(options));
 
 /**
- * Update Template
+ * Update Catalog
  *
- * Update template metadata.
+ * Update catalog metadata.
  */
-export const updateTemplateMutation = (options?: Partial<Options<UpdateTemplateData>>): UseMutationOptions<UpdateTemplateResponse, UpdateTemplateError, Options<UpdateTemplateData>> => {
-    const mutationOptions: UseMutationOptions<UpdateTemplateResponse, UpdateTemplateError, Options<UpdateTemplateData>> = {
+export const updateCatalogMutation = (options?: Partial<Options<UpdateCatalogData>>): UseMutationOptions<UpdateCatalogResponse, UpdateCatalogError, Options<UpdateCatalogData>> => {
+    const mutationOptions: UseMutationOptions<UpdateCatalogResponse, UpdateCatalogError, Options<UpdateCatalogData>> = {
         mutationFn: async (fnOptions) => {
-            const { data } = await updateTemplate({
+            const { data } = await updateCatalog({
                 ...options,
                 ...fnOptions,
                 throwOnError: true
@@ -1128,7 +1147,7 @@ export const updateTemplateMutation = (options?: Partial<Options<UpdateTemplateD
 /**
  * Delete File
  *
- * Delete a file from a template.
+ * Delete a file from a catalog.
  */
 export const deleteFileMutation = (options?: Partial<Options<DeleteFileData>>): UseMutationOptions<unknown, DeleteFileError, Options<DeleteFileData>> => {
     const mutationOptions: UseMutationOptions<unknown, DeleteFileError, Options<DeleteFileData>> = {
@@ -1144,12 +1163,12 @@ export const deleteFileMutation = (options?: Partial<Options<DeleteFileData>>): 
     return mutationOptions;
 };
 
-export const readFile2QueryKey = (options: Options<ReadFile2Data>) => createQueryKey('readFile2', options, false, ['templates']);
+export const readFile2QueryKey = (options: Options<ReadFile2Data>) => createQueryKey('readFile2', options, false, ['catalog']);
 
 /**
  * Read File
  *
- * Read a file from a template.
+ * Read a file from a catalog.
  */
 export const readFile2Options = (options: Options<ReadFile2Data>) => queryOptions<ReadFile2Response, ReadFile2Error, ReadFile2Response, ReturnType<typeof readFile2QueryKey>>({
     queryFn: async ({ queryKey, signal }) => {
@@ -1167,14 +1186,14 @@ export const readFile2Options = (options: Options<ReadFile2Data>) => queryOption
 /**
  * Read File
  *
- * Read a file from a template.
+ * Read a file from a catalog.
  */
 export const useReadFile2Query = (options: Options<ReadFile2Data>) => useQuery(readFile2Options(options));
 
 /**
  * Write File
  *
- * Create or update a file in a template.
+ * Create or update a file in a catalog.
  */
 export const writeFileMutation = (options?: Partial<Options<WriteFileData>>): UseMutationOptions<WriteFileResponse, WriteFileError, Options<WriteFileData>> => {
     const mutationOptions: UseMutationOptions<WriteFileResponse, WriteFileError, Options<WriteFileData>> = {
@@ -1190,42 +1209,15 @@ export const writeFileMutation = (options?: Partial<Options<WriteFileData>>): Us
     return mutationOptions;
 };
 
-export const exportTemplateQueryKey = (options: Options<ExportTemplateData>) => createQueryKey('exportTemplate', options, false, ['templates']);
-
 /**
- * Export Template
+ * Delete Directory
  *
- * Download a template as a .tar.gz archive.
+ * Delete a directory and all its contents.
  */
-export const exportTemplateOptions = (options: Options<ExportTemplateData>) => queryOptions<unknown, ExportTemplateError, unknown, ReturnType<typeof exportTemplateQueryKey>>({
-    queryFn: async ({ queryKey, signal }) => {
-        const { data } = await exportTemplate({
-            ...options,
-            ...queryKey[0],
-            signal,
-            throwOnError: true
-        });
-        return data;
-    },
-    queryKey: exportTemplateQueryKey(options)
-});
-
-/**
- * Export Template
- *
- * Download a template as a .tar.gz archive.
- */
-export const useExportTemplateQuery = (options: Options<ExportTemplateData>) => useQuery(exportTemplateOptions(options));
-
-/**
- * Upload Template
- *
- * Upload a .tar.gz archive as a new template.
- */
-export const uploadTemplateMutation = (options?: Partial<Options<UploadTemplateData>>): UseMutationOptions<UploadTemplateResponse, UploadTemplateError, Options<UploadTemplateData>> => {
-    const mutationOptions: UseMutationOptions<UploadTemplateResponse, UploadTemplateError, Options<UploadTemplateData>> = {
+export const deleteDirectoryMutation = (options?: Partial<Options<DeleteDirectoryData>>): UseMutationOptions<unknown, DeleteDirectoryError, Options<DeleteDirectoryData>> => {
+    const mutationOptions: UseMutationOptions<unknown, DeleteDirectoryError, Options<DeleteDirectoryData>> = {
         mutationFn: async (fnOptions) => {
-            const { data } = await uploadTemplate({
+            const { data } = await deleteDirectory({
                 ...options,
                 ...fnOptions,
                 throwOnError: true
@@ -1236,16 +1228,54 @@ export const uploadTemplateMutation = (options?: Partial<Options<UploadTemplateD
     return mutationOptions;
 };
 
-export const getTemplateDagQueryKey = (options: Options<GetTemplateDagData>) => createQueryKey('getTemplateDag', options, false, ['templates']);
+/**
+ * Create Directory
+ *
+ * Create a new directory in the catalog.
+ */
+export const createDirectoryMutation = (options?: Partial<Options<CreateDirectoryData>>): UseMutationOptions<unknown, CreateDirectoryError, Options<CreateDirectoryData>> => {
+    const mutationOptions: UseMutationOptions<unknown, CreateDirectoryError, Options<CreateDirectoryData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await createDirectory({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
 
 /**
- * Get Template Dag
+ * Rename Path
  *
- * Generate DAG preview from the template's Snakefile.
+ * Rename a file or directory in the catalog.
  */
-export const getTemplateDagOptions = (options: Options<GetTemplateDagData>) => queryOptions<unknown, GetTemplateDagError, unknown, ReturnType<typeof getTemplateDagQueryKey>>({
+export const renamePathMutation = (options?: Partial<Options<RenamePathData>>): UseMutationOptions<unknown, RenamePathError, Options<RenamePathData>> => {
+    const mutationOptions: UseMutationOptions<unknown, RenamePathError, Options<RenamePathData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await renamePath({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const exportCatalogQueryKey = (options: Options<ExportCatalogData>) => createQueryKey('exportCatalog', options, false, ['catalog']);
+
+/**
+ * Export Catalog
+ *
+ * Download a catalog as a .tar.gz archive.
+ */
+export const exportCatalogOptions = (options: Options<ExportCatalogData>) => queryOptions<unknown, ExportCatalogError, unknown, ReturnType<typeof exportCatalogQueryKey>>({
     queryFn: async ({ queryKey, signal }) => {
-        const { data } = await getTemplateDag({
+        const { data } = await exportCatalog({
             ...options,
             ...queryKey[0],
             signal,
@@ -1253,24 +1283,69 @@ export const getTemplateDagOptions = (options: Options<GetTemplateDagData>) => q
         });
         return data;
     },
-    queryKey: getTemplateDagQueryKey(options)
+    queryKey: exportCatalogQueryKey(options)
 });
 
 /**
- * Get Template Dag
+ * Export Catalog
  *
- * Generate DAG preview from the template's Snakefile.
+ * Download a catalog as a .tar.gz archive.
  */
-export const useGetTemplateDagQuery = (options: Options<GetTemplateDagData>) => useQuery(getTemplateDagOptions(options));
+export const useExportCatalogQuery = (options: Options<ExportCatalogData>) => useQuery(exportCatalogOptions(options));
+
+/**
+ * Upload Catalog
+ *
+ * Upload a .tar.gz archive as a new catalog.
+ */
+export const uploadCatalogMutation = (options?: Partial<Options<UploadCatalogData>>): UseMutationOptions<UploadCatalogResponse, UploadCatalogError, Options<UploadCatalogData>> => {
+    const mutationOptions: UseMutationOptions<UploadCatalogResponse, UploadCatalogError, Options<UploadCatalogData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await uploadCatalog({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const getCatalogDagQueryKey = (options: Options<GetCatalogDagData>) => createQueryKey('getCatalogDag', options, false, ['catalog']);
+
+/**
+ * Get Catalog Dag
+ *
+ * Generate DAG preview from the catalog's Snakefile.
+ */
+export const getCatalogDagOptions = (options: Options<GetCatalogDagData>) => queryOptions<unknown, GetCatalogDagError, unknown, ReturnType<typeof getCatalogDagQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await getCatalogDag({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: getCatalogDagQueryKey(options)
+});
+
+/**
+ * Get Catalog Dag
+ *
+ * Generate DAG preview from the catalog's Snakefile.
+ */
+export const useGetCatalogDagQuery = (options: Options<GetCatalogDagData>) => useQuery(getCatalogDagOptions(options));
 
 /**
  * Git Push
  *
- * Push all templates to a Git remote (monorepo).
+ * Push all catalogs to a Git remote (monorepo).
  *
- * Accepts an optional remote_url override and access token for private repos.
- * Returns the remote URL on success so the frontend can display it as a
- * shareable link.
+ * Accepts an optional remote_url override and access token.
+ * If not provided, uses the saved settings for the current user.
  */
 export const gitPushMutation = (options?: Partial<Options<GitPushData>>): UseMutationOptions<unknown, GitPushError, Options<GitPushData>> => {
     const mutationOptions: UseMutationOptions<unknown, GitPushError, Options<GitPushData>> = {
@@ -1289,7 +1364,7 @@ export const gitPushMutation = (options?: Partial<Options<GitPushData>>): UseMut
 /**
  * Git Pull
  *
- * Pull templates from the configured Git remote.
+ * Pull catalogs from the user's configured Git remote.
  */
 export const gitPullMutation = (options?: Partial<Options<GitPullData>>): UseMutationOptions<unknown, DefaultError, Options<GitPullData>> => {
     const mutationOptions: UseMutationOptions<unknown, DefaultError, Options<GitPullData>> = {
@@ -1308,10 +1383,7 @@ export const gitPullMutation = (options?: Partial<Options<GitPullData>>): UseMut
 /**
  * Import From Git
  *
- * Clone a Git repository and import all templates found inside.
- *
- * Accepts the root of a monorepo (multiple template subdirectories) or
- * a single-template repo.  Returns the list of imported templates.
+ * Clone a Git repository and import all catalogs found inside.
  */
 export const importFromGitMutation = (options?: Partial<Options<ImportFromGitData>>): UseMutationOptions<ImportFromGitResponse, ImportFromGitError, Options<ImportFromGitData>> => {
     const mutationOptions: UseMutationOptions<ImportFromGitResponse, ImportFromGitError, Options<ImportFromGitData>> = {
@@ -1376,7 +1448,7 @@ export const updateSettingsMutation = (options?: Partial<Options<UpdateSettingsD
 /**
  * Test Git Connection
  *
- * Test Git connectivity by running git ls-remote on the given URL.
+ * Test Git connectivity via GitService.
  */
 export const testGitConnectionMutation = (options?: Partial<Options<TestGitConnectionData>>): UseMutationOptions<TestGitConnectionResponse, TestGitConnectionError, Options<TestGitConnectionData>> => {
     const mutationOptions: UseMutationOptions<TestGitConnectionResponse, TestGitConnectionError, Options<TestGitConnectionData>> = {

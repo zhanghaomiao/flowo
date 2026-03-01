@@ -100,7 +100,10 @@ function useUpdateSettings(token: string | null) {
         },
         body: JSON.stringify(body),
       });
-      if (!res.ok) throw new Error('Failed to save settings');
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.detail || 'Failed to save settings');
+      }
       return res.json() as Promise<UserSettings>;
     },
     onSuccess: () => void qc.invalidateQueries({ queryKey: ['user-settings'] }),
@@ -114,15 +117,29 @@ function useTestGit(token: string | null) {
     { remote_url: string; token?: string | null }
   >({
     mutationFn: async (body) => {
-      const res = await fetch(`${API_BASE}/test/git`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(body),
-      });
-      return res.json() as Promise<ConnectionTestResult>;
+      try {
+        const res = await fetch(`${API_BASE}/test/git`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(body),
+        });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          return {
+            success: false,
+            message: err.detail || `Server error (${res.status})`,
+          };
+        }
+        return res.json() as Promise<ConnectionTestResult>;
+      } catch (e) {
+        return {
+          success: false,
+          message: e instanceof Error ? e.message : 'Network error',
+        };
+      }
     },
   });
 }
@@ -140,15 +157,29 @@ function useTestSmtp(token: string | null) {
     }
   >({
     mutationFn: async (body) => {
-      const res = await fetch(`${API_BASE}/test/smtp`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(body),
-      });
-      return res.json() as Promise<ConnectionTestResult>;
+      try {
+        const res = await fetch(`${API_BASE}/test/smtp`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(body),
+        });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          return {
+            success: false,
+            message: err.detail || `Server error (${res.status})`,
+          };
+        }
+        return res.json() as Promise<ConnectionTestResult>;
+      } catch (e) {
+        return {
+          success: false,
+          message: e instanceof Error ? e.message : 'Network error',
+        };
+      }
     },
   });
 }
@@ -222,14 +253,27 @@ function GitSection({
   }
 
   const save = async () => {
-    const v = await form.validateFields();
-    await updateMut.mutateAsync({
-      ...initial,
-      git_remote_url: v.git_remote_url || null,
-      git_token: v.git_token || null,
-    });
-    message.success('Git settings saved');
-    onSave();
+    try {
+      const v = await form.validateFields();
+      await updateMut.mutateAsync({
+        ...initial,
+        git_remote_url: v.git_remote_url || null,
+        git_token: v.git_token || null,
+      });
+      message.success('Git settings saved');
+      onSave();
+    } catch (e) {
+      if (
+        typeof e === 'object' &&
+        e !== null &&
+        'name' in e &&
+        e.name === 'ValidationError'
+      )
+        return;
+      message.error(
+        e instanceof Error ? e.message : 'Failed to save Git settings',
+      );
+    }
   };
 
   const test = async () => {
@@ -248,7 +292,7 @@ function GitSection({
     <>
       <SectionHeader
         title="Git Integration"
-        subtitle="Push and share templates via a Git monorepo."
+        subtitle="Push and share catalogs via a Git repository."
       />
       <Form form={form} layout="vertical" style={{ maxWidth: 560 }}>
         <Form.Item
@@ -258,7 +302,7 @@ function GitSection({
         >
           <Input
             prefix={<BranchesOutlined style={{ color: '#bbb' }} />}
-            placeholder="https://github.com/your-org/flowo-templates"
+            placeholder="https://gitlab.com/your-org/flowo-catalogs"
             allowClear
           />
         </Form.Item>
@@ -273,7 +317,7 @@ function GitSection({
           }
         >
           <Input.Password
-            placeholder="ghp_xxxxxxxxxxxx"
+            placeholder="your-personal-access-token"
             autoComplete="off"
             allowClear
           />
@@ -312,7 +356,7 @@ function GitSection({
         showIcon
         message={
           <span style={{ fontSize: 12 }}>
-            Use <strong>Push to Git</strong> in any template to sync, then share
+            Use <strong>Push to Git</strong> in any catalog to sync, then share
             the URL with others via <strong>Import from Git URL</strong>.
           </span>
         }
@@ -357,18 +401,31 @@ function SmtpSection({
   }
 
   const save = async () => {
-    const v = await form.validateFields();
-    await updateMut.mutateAsync({
-      ...initial,
-      smtp_host: v.smtp_host || null,
-      smtp_port: v.smtp_port || null,
-      smtp_user: v.smtp_user || null,
-      smtp_password: v.smtp_password || null,
-      smtp_from: v.smtp_from || null,
-      smtp_use_tls: v.smtp_use_tls ?? true,
-    });
-    message.success('SMTP settings saved');
-    onSave();
+    try {
+      const v = await form.validateFields();
+      await updateMut.mutateAsync({
+        ...initial,
+        smtp_host: v.smtp_host || null,
+        smtp_port: v.smtp_port || null,
+        smtp_user: v.smtp_user || null,
+        smtp_password: v.smtp_password || null,
+        smtp_from: v.smtp_from || null,
+        smtp_use_tls: v.smtp_use_tls ?? true,
+      });
+      message.success('SMTP settings saved');
+      onSave();
+    } catch (e) {
+      if (
+        typeof e === 'object' &&
+        e !== null &&
+        'name' in e &&
+        e.name === 'ValidationError'
+      )
+        return;
+      message.error(
+        e instanceof Error ? e.message : 'Failed to save SMTP settings',
+      );
+    }
   };
 
   const test = async () => {
@@ -900,31 +957,36 @@ export function SettingsPage({ token }: SettingsPageProps) {
           padding: '24px 32px',
           background: '#fafafa',
           minHeight: 'calc(100vh - 64px)',
+          overflowY: 'auto',
         }}
       >
-        {isLoading ? (
-          <div style={{ textAlign: 'center', paddingTop: 60 }}>
-            <LoadingOutlined style={{ fontSize: 28, color: '#4f46e5' }} />
-          </div>
-        ) : (
-          <>
-            {activeSection === 'git' && settings && (
-              <GitSection
-                initial={settings}
-                token={token}
-                onSave={() => void refetch()}
-              />
-            )}
-            {activeSection === 'smtp' && settings && (
-              <SmtpSection
-                initial={settings}
-                token={token}
-                onSave={() => void refetch()}
-              />
-            )}
-            {activeSection === 'tokens' && <TokensSection authToken={token} />}
-          </>
-        )}
+        <div style={{ maxWidth: 800, margin: '0 auto' }}>
+          {isLoading ? (
+            <div style={{ textAlign: 'center', paddingTop: 60 }}>
+              <LoadingOutlined style={{ fontSize: 28, color: '#4f46e5' }} />
+            </div>
+          ) : (
+            <>
+              {activeSection === 'git' && settings && (
+                <GitSection
+                  initial={settings}
+                  token={token}
+                  onSave={() => void refetch()}
+                />
+              )}
+              {activeSection === 'smtp' && settings && (
+                <SmtpSection
+                  initial={settings}
+                  token={token}
+                  onSave={() => void refetch()}
+                />
+              )}
+              {activeSection === 'tokens' && (
+                <TokensSection authToken={token} />
+              )}
+            </>
+          )}
+        </div>
       </Content>
     </Layout>
   );

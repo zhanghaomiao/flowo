@@ -4,9 +4,9 @@ import {
   CloudDownloadOutlined,
   DeleteOutlined,
   DownloadOutlined,
-  FileOutlined,
   PlusOutlined,
   SearchOutlined,
+  SyncOutlined,
 } from '@ant-design/icons';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
@@ -21,25 +21,28 @@ import {
   Space,
   Table,
   Tag,
+  Tooltip,
   Typography,
 } from 'antd';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 
 import {
-  createTemplateMutation,
-  deleteTemplateMutation,
+  createCatalogMutation,
+  deleteCatalogMutation,
+  gitPullMutation,
   importFromGitMutation,
-  listTemplatesQueryKey,
-  useListTemplatesQuery,
+  listCatalogsQueryKey,
+  syncCatalogsMutation,
+  useListCatalogsQuery,
 } from '@/client/@tanstack/react-query.gen';
-import type { TemplateSummary } from '@/client/types.gen';
+import type { CatalogSummary } from '@/client/types.gen';
 
 dayjs.extend(relativeTime);
 
 const { Title } = Typography;
 
-const TemplateList: React.FC = () => {
+const CatalogList: React.FC = () => {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState('');
   const [createOpen, setCreateOpen] = useState(false);
@@ -47,12 +50,24 @@ const TemplateList: React.FC = () => {
   const [form] = Form.useForm();
   const [gitImportForm] = Form.useForm();
 
-  const { data: templates, isLoading } = useListTemplatesQuery({
+  const { data: catalogs, isLoading } = useListCatalogsQuery({
     query: { search: search || undefined },
   });
-  const createMutation = useMutation(createTemplateMutation());
-  const deleteMutation = useMutation(deleteTemplateMutation());
+  const createMutation = useMutation(createCatalogMutation());
+  const deleteMutation = useMutation(deleteCatalogMutation());
   const importGitMutation = useMutation(importFromGitMutation());
+  const gitPullMut = useMutation(gitPullMutation());
+  const syncMutation = useMutation(syncCatalogsMutation());
+
+  const handleSync = async () => {
+    try {
+      await syncMutation.mutateAsync({});
+      queryClient.invalidateQueries({ queryKey: listCatalogsQueryKey() });
+      message.success('Database synchronized with filesystem');
+    } catch {
+      // Handled by client
+    }
+  };
 
   const handleCreate = async () => {
     try {
@@ -70,8 +85,8 @@ const TemplateList: React.FC = () => {
           tags: tagsArray,
         },
       });
-      queryClient.invalidateQueries({ queryKey: listTemplatesQueryKey() });
-      message.success('Template created');
+      queryClient.invalidateQueries({ queryKey: listCatalogsQueryKey() });
+      message.success('Catalog created');
       setCreateOpen(false);
       form.resetFields();
     } catch {
@@ -88,10 +103,10 @@ const TemplateList: React.FC = () => {
           token: values.token || null,
         },
       });
-      queryClient.invalidateQueries({ queryKey: listTemplatesQueryKey() });
+      queryClient.invalidateQueries({ queryKey: listCatalogsQueryKey() });
       const count = Array.isArray(imported) ? imported.length : 1;
       message.success(
-        `Successfully imported ${count} template${count > 1 ? 's' : ''} from Git!`,
+        `Successfully imported ${count} catalog${count > 1 ? 's' : ''} from Git!`,
       );
       setImportGitOpen(false);
       gitImportForm.resetFields();
@@ -105,11 +120,11 @@ const TemplateList: React.FC = () => {
       title: 'Name',
       dataIndex: 'name',
       key: 'name',
-      render: (name: string, record: TemplateSummary) => (
+      render: (name: string, record: CatalogSummary) => (
         <Space>
           <Link
-            to="/templates/$templateSlug"
-            params={{ templateSlug: record.slug }}
+            to="/catalog/$catalogSlug"
+            params={{ catalogSlug: record.slug }}
             style={{ fontWeight: 500 }}
           >
             {name}
@@ -137,25 +152,14 @@ const TemplateList: React.FC = () => {
           </Tag>
         )),
     },
-    {
-      title: 'Files',
-      dataIndex: 'file_count',
-      key: 'file_count',
-      width: 80,
-      render: (count: number) => (
-        <Space size={4}>
-          <FileOutlined />
-          {count}
-        </Space>
-      ),
-    },
+
     {
       title: 'Updated',
       dataIndex: 'updated_at',
       key: 'updated_at',
       width: 140,
       render: (date: string) => dayjs(date).fromNow(),
-      sorter: (a: TemplateSummary, b: TemplateSummary) =>
+      sorter: (a: CatalogSummary, b: CatalogSummary) =>
         dayjs(a.updated_at).unix() - dayjs(b.updated_at).unix(),
       defaultSortOrder: 'descend' as const,
     },
@@ -163,23 +167,23 @@ const TemplateList: React.FC = () => {
       title: 'Actions',
       key: 'actions',
       width: 120,
-      render: (_: unknown, record: TemplateSummary) => (
+      render: (_: unknown, record: CatalogSummary) => (
         <Space>
           <Button
             size="small"
             icon={<DownloadOutlined />}
-            href={`/api/v1/templates/${record.slug}/export`}
+            href={`/api/v1/catalogs/${record.slug}/export`}
             title="Download"
           />
           <Popconfirm
             title={`Delete "${record.name}"?`}
-            description="This will permanently delete the template and all its files."
+            description="This will permanently delete the catalog and all its files."
             onConfirm={async () => {
               await deleteMutation.mutateAsync({ path: { slug: record.slug } });
               queryClient.invalidateQueries({
-                queryKey: listTemplatesQueryKey(),
+                queryKey: listCatalogsQueryKey(),
               });
-              message.success('Template deleted');
+              message.success('Catalog deleted');
             }}
             okText="Delete"
             okType="danger"
@@ -209,29 +213,58 @@ const TemplateList: React.FC = () => {
         }}
       >
         <Title level={3} style={{ margin: 0 }}>
-          Workflow Templates
+          Catalog
         </Title>
         <Space>
           <Input
-            placeholder="Search templates..."
+            placeholder="Search catalogs..."
             prefix={<SearchOutlined />}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             style={{ width: 250 }}
             allowClear
           />
+          <Tooltip title="Sync with filesystem (detect manual changes)">
+            <Button
+              icon={<SyncOutlined spin={syncMutation.isPending} />}
+              onClick={handleSync}
+              loading={syncMutation.isPending}
+            />
+          </Tooltip>
           <Dropdown
             menu={{
               items: [
                 {
                   key: 'new',
-                  label: 'Create blank template',
+                  label: 'Create blank catalog',
                   icon: <PlusOutlined />,
                   onClick: () => setCreateOpen(true),
                 },
                 {
+                  key: 'sync_git',
+                  label: 'Sync from Git (Pull)',
+                  icon: <SyncOutlined />,
+                  onClick: async () => {
+                    try {
+                      await gitPullMut.mutateAsync({});
+                      queryClient.invalidateQueries({
+                        queryKey: listCatalogsQueryKey(),
+                      });
+                      message.success('Catalogs synced from Git successfully');
+                    } catch {
+                      // Handled by mutation
+                    }
+                  },
+                },
+                {
+                  key: 'sync_fs',
+                  label: 'Force Sync Filesystem',
+                  icon: <SyncOutlined />,
+                  onClick: handleSync,
+                },
+                {
                   key: 'git',
-                  label: 'Import from Git URL',
+                  label: 'Import from custom Git URL',
                   icon: <CloudDownloadOutlined />,
                   onClick: () => setImportGitOpen(true),
                 },
@@ -239,24 +272,24 @@ const TemplateList: React.FC = () => {
             }}
           >
             <Button type="primary" icon={<PlusOutlined />}>
-              New Template
+              New Workflow
             </Button>
           </Dropdown>
         </Space>
       </div>
 
       <Table
-        dataSource={templates || []}
+        dataSource={catalogs || []}
         columns={columns}
         rowKey="slug"
         loading={isLoading}
         pagination={{ pageSize: 20, showSizeChanger: true }}
-        locale={{ emptyText: 'No templates found. Create your first one!' }}
+        locale={{ emptyText: 'No catalogs found. Create your first one!' }}
       />
 
-      {/* Create Template Modal */}
+      {/* Create Catalog Modal */}
       <Modal
-        title="Create New Template"
+        title="Create New Workflow"
         open={createOpen}
         onOk={handleCreate}
         onCancel={() => {
@@ -269,7 +302,7 @@ const TemplateList: React.FC = () => {
         <Form form={form} layout="vertical">
           <Form.Item
             name="name"
-            label="Template Name"
+            label="Catalog Name"
             rules={[{ required: true, message: 'Please enter a name' }]}
           >
             <Input placeholder="e.g. RNA-Seq Pipeline" />
@@ -293,7 +326,7 @@ const TemplateList: React.FC = () => {
             <CloudDownloadOutlined
               style={{ marginRight: 8, color: '#4f46e5' }}
             />
-            Import Templates from Git
+            Import Catalogs from Git
           </span>
         }
         open={importGitOpen}
@@ -310,9 +343,9 @@ const TemplateList: React.FC = () => {
             name="git_url"
             label="Git Repository URL"
             rules={[{ required: true, message: 'Please enter a Git URL' }]}
-            extra="Supports GitHub, GitLab, or any public/private Git repo. Monorepos with multiple templates are fully supported."
+            extra="Supports GitHub, GitLab, or any public/private Git repo. Monorepos with multiple catalogs are fully supported."
           >
-            <Input placeholder="https://github.com/your-org/flowo-templates" />
+            <Input placeholder="https://github.com/your-org/flowo-catalogs" />
           </Form.Item>
           <Form.Item
             name="token"
@@ -327,4 +360,4 @@ const TemplateList: React.FC = () => {
   );
 };
 
-export default TemplateList;
+export default CatalogList;

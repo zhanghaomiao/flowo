@@ -49,20 +49,20 @@ class Settings(BaseSettings):
     FLOWO_WORKING_PATH: str = "/tmp/flowo_working_dir"
     CONTAINER_MOUNT_PATH: str = "/work_dir"
 
-    # Template management
-    TEMPLATE_DIR: str | None = None  # Defaults to CONTAINER_MOUNT_PATH/templates
+    # Catalog management
+    CATALOG_DIR: str | None = None  # Defaults to CONTAINER_MOUNT_PATH/catalog
 
     @model_validator(mode="after")
-    def set_template_defaults(self) -> "Settings":
-        if self.TEMPLATE_DIR is None:
+    def set_catalog_defaults(self) -> "Settings":
+        if self.CATALOG_DIR is None:
             # Use CONTAINER_MOUNT_PATH (container-side) for file storage,
             # FLOWO_WORKING_PATH is the host-side path used for Docker volume mapping
-            self.TEMPLATE_DIR = str(Path(self.CONTAINER_MOUNT_PATH) / "templates")
+            self.CATALOG_DIR = str(Path(self.CONTAINER_MOUNT_PATH) / "catalog")
         return self
 
-    # Optional Git sync for templates
-    TEMPLATE_GIT_REMOTE: str | None = None  # e.g. https://github.com/user/workflows
-    TEMPLATE_GIT_TOKEN: str | None = None  # PAT for private repos
+    # Optional Git sync for catalogs
+    CATALOG_GIT_REMOTE: str | None = None  # e.g. https://github.com/user/workflows
+    CATALOG_GIT_TOKEN: str | None = None  # PAT for private repos
 
     SECRET_KEY: str = "YOUR_SECRET_KEY"  # SHOULD BE CHANGED IN PRODUCTION
     BACKEND_CORS_ORIGINS: list[str] = ["http://localhost", "http://localhost:3100"]
