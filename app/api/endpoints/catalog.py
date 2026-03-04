@@ -2,10 +2,12 @@
 REST API endpoints for Snakemake workflow catalog management.
 """
 
+import os
+import tempfile
 from typing import Any
 
-from fastapi import APIRouter, Depends, Query, UploadFile
-from fastapi.responses import StreamingResponse
+from fastapi import APIRouter, Depends, File, Query, UploadFile
+from fastapi.responses import FileResponse, StreamingResponse
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -244,19 +246,27 @@ async def rename_path(
 # --- Export / Import ---
 
 
-@router.get("/{slug}/export")
-def export_catalog(
+@router.get("/{slug}/download")
+async def download_catalog(
     slug: str,
+    format: str = "tar.gz",
     user: User = Depends(current_active_user),
     svc: CatalogService = Depends(get_catalog_service),
 ):
-    """Download a catalog as a .tar.gz archive."""
-    buffer = svc.export_archive(slug)
-    return StreamingResponse(
-        buffer,
-        media_type="application/gzip",
-        headers={"Content-Disposition": f"attachment; filename={slug}.tar.gz"},
-    )
+    """Download a catalog as a compressed archive (zip or tar.gz)."""
+    if format == "zip":
+        zip_path = await svc.download_catalog(slug)
+        return FileResponse(
+            zip_path, media_type="application/zip", filename=f"{slug}.zip"
+        )
+    else:
+        # Default to tar.gz (export)
+        buffer = svc.export_archive(slug)
+        return StreamingResponse(
+            buffer,
+            media_type="application/gzip",
+            headers={"Content-Disposition": f"attachment; filename={slug}.tar.gz"},
+        )
 
 
 @router.post("/upload", status_code=201, response_model=CatalogSummary)
@@ -267,6 +277,37 @@ async def upload_catalog(
 ):
     """Upload a .tar.gz archive as a new catalog."""
     return await svc.import_archive(file, owner=user.email or str(user.id))
+
+
+@router.get("/{slug}/export")
+async def export_catalog(
+    slug: str,
+    user: User = Depends(current_active_user),
+    svc: CatalogService = Depends(get_catalog_service),
+):
+    """Alias for download_catalog with tar.gz format."""
+    return await download_catalog(slug, format="tar.gz", user=user, svc=svc)
+
+
+@router.post("/{slug}/sync")
+async def sync_catalog_zip(
+    slug: str,
+    file: UploadFile = File(...),
+    user: User = Depends(current_active_user),
+    svc: CatalogService = Depends(get_catalog_service),
+):
+    """Sync a catalog from a .zip archive provided by CLI."""
+    # Save uploaded file to a temporary location
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".zip") as tmp:
+        content = await file.read()
+        tmp.write(content)
+        tmp_path = tmp.name
+
+    try:
+        return await svc.sync_catalog(slug, tmp_path, user)
+    finally:
+        if os.path.exists(tmp_path):
+            os.remove(tmp_path)
 
 
 # --- DAG preview ---

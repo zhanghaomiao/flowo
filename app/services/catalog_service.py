@@ -781,6 +781,61 @@ class CatalogService:
             await self._sync_from_filesystem(force=True)
             return await self.get_catalog(slug)
 
+    async def download_catalog(self, slug: str) -> str:
+        """Packages the catalog directory into a ZIP and returns the path."""
+        catalog_dir = _get_catalog_dir()
+        catalog_path = catalog_dir / slug
+
+        if not catalog_path.exists():
+            raise HTTPException(status_code=404, detail="Catalog not found")
+
+        # Create a temporary ZIP file
+        temp_dir = tempfile.mkdtemp()
+        zip_base = Path(temp_dir) / f"catalog_{slug}"
+        zip_path = shutil.make_archive(str(zip_base), "zip", catalog_path)
+
+        return zip_path
+
+    async def sync_catalog(self, slug: str, zip_file_path: str, user: Any):
+        """Unpacks a ZIP into the catalog directory and handles Git sync."""
+        catalog_dir = _get_catalog_dir()
+        catalog_path = catalog_dir / slug
+
+        if not catalog_path.exists():
+            raise HTTPException(status_code=404, detail="Catalog not found")
+
+        # 1. Unpack ZIP
+        shutil.unpack_archive(zip_file_path, catalog_path)
+
+        # 2. Update DB/meta synchronization
+        await self._sync_from_filesystem(force=True)
+
+        # 3. Check for Git remote
+        query = select(Catalog).where(Catalog.slug == slug)
+        result = await self.db_session.execute(query)
+        catalog = result.scalar_one_or_none()
+
+        if catalog and catalog.source_url:
+            try:
+                # Use GitService to push changes
+                await git_service.push_workflow_changes(
+                    local_dir=catalog_path,
+                    remote_url=catalog.source_url,
+                    # Token should be handled via settings ideally,
+                    # but for now we follow the existing pattern in workflows.py
+                    commit_message=f"Sync from CLI by user {user.email or user.id}",
+                )
+            except Exception as e:
+                from .. import logger
+
+                logger.error(f"Failed to push catalog to Git: {str(e)}")
+                return {"status": "success", "git_sync": "failed", "error": str(e)}
+
+        return {
+            "status": "success",
+            "git_sync": "success" if catalog and catalog.source_url else "none",
+        }
+
     async def generate_dag(self, slug: str) -> dict[str, Any]:
         """Return cached DAG data from DB. No dynamic generation fallback."""
         query = select(Catalog).where(Catalog.slug == slug)

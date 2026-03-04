@@ -328,6 +328,73 @@ class GitService:
 
         return imported_slugs
 
+    async def push_workflow_changes(
+        self,
+        local_dir: Path,
+        remote_url: str,
+        token: str | None = None,
+        branch: str = "main",
+        commit_message: str = "Workflow sync",
+    ) -> str:
+        """Push local workflow changes to a Git repository."""
+        # Reuse existing logic for auth and setup
+        auth_url = self._prepare_url(remote_url, token)
+
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            tmp_path = Path(tmp_dir)
+            repo_path = tmp_path / "repo"
+
+            # 1. Clone or init
+            try:
+                self._run_git(
+                    [
+                        "clone",
+                        "--depth",
+                        "1",
+                        "--branch",
+                        branch,
+                        auth_url,
+                        str(repo_path),
+                    ]
+                )
+            except Exception:
+                repo_path.mkdir(parents=True, exist_ok=True)
+                self._run_git(["init"], cwd=repo_path)
+                self._run_git(["remote", "add", "origin", auth_url], cwd=repo_path)
+
+            # 2. Config identity
+            self._run_git(["config", "user.email", "flowo@iregene.com"], cwd=repo_path)
+            self._run_git(["config", "user.name", "FlowO Bot"], cwd=repo_path)
+
+            # 3. Synchronize files (excluding git stuff)
+            for item in repo_path.iterdir():
+                if item.name == ".git":
+                    continue
+                if item.is_dir():
+                    shutil.rmtree(item)
+                else:
+                    item.unlink()
+
+            for item in local_dir.iterdir():
+                if item.name == ".git":
+                    continue
+                dest = repo_path / item.name
+                if item.is_dir():
+                    shutil.copytree(item, dest, ignore=shutil.ignore_patterns(".git"))
+                else:
+                    shutil.copy2(item, dest)
+
+            # 4. Commit and push
+            self._run_git(["add", "-A"], cwd=repo_path)
+            status = self._run_git(["status", "--porcelain"], cwd=repo_path)
+            if not status.stdout.strip():
+                return "nothing_to_push"
+
+            self._run_git(["commit", "-m", commit_message], cwd=repo_path)
+            self._run_git(["push", "origin", branch], cwd=repo_path)
+
+            return "pushed"
+
 
 # Global singleton
 git_service = GitService()

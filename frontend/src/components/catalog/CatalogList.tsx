@@ -37,6 +37,7 @@ import {
   useListCatalogsQuery,
 } from '@/client/@tanstack/react-query.gen';
 import type { CatalogSummary } from '@/client/types.gen';
+import { downloadFile } from '@/utils/download';
 
 dayjs.extend(relativeTime);
 
@@ -172,7 +173,16 @@ const CatalogList: React.FC = () => {
           <Button
             size="small"
             icon={<DownloadOutlined />}
-            href={`/api/v1/catalogs/${record.slug}/export`}
+            onClick={async () => {
+              try {
+                await downloadFile(
+                  `/api/v1/catalog/${record.slug}/download`,
+                  `${record.slug}.tar.gz`,
+                );
+              } catch {
+                message.error('Download failed');
+              }
+            }}
             title="Download"
           />
           <Popconfirm

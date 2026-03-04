@@ -256,7 +256,7 @@ async def delete_workflow(
 async def get_workflow_id_by_name(
     name: str = Query(..., description="Workflow name to search for"),
     db: AsyncSession = Depends(get_async_session),
-    user: User = Depends(current_active_user),
+    current_user: User = Depends(current_active_user),
 ) -> uuid.UUID | str:
     workflow_id = await WorkflowService(db).get_workflow_id_by_name(name)
     return workflow_id if workflow_id else ""
