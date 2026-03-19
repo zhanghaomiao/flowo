@@ -27,11 +27,20 @@ import { useWorkflowState } from '@/hooks/useWorkflowState.ts';
 
 export const Route = createFileRoute('/_authenticated/workflow/$workflowId')({
   component: WorkflowDetail,
+  loader: ({ params }) => params,
 });
 
 function WorkflowDetail() {
-  const { workflowId } = Route.useParams();
+  const { workflowId } = Route.useLoaderData();
 
+  if (!workflowId) {
+    return null;
+  }
+
+  return <WorkflowDetailContent workflowId={workflowId} />;
+}
+
+function WorkflowDetailContent({ workflowId }: { workflowId: string }) {
   // Use simplified state management
   const {
     selectedRule,
@@ -47,7 +56,7 @@ function WorkflowDetail() {
 
   const { data: workflow } = useGetDetailQuery({
     path: {
-      workflow_id: workflowId!,
+      workflow_id: workflowId,
     },
   });
 
@@ -69,7 +78,7 @@ function WorkflowDetail() {
   const { data: snakefileContent } = useQuery({
     ...getSnakefileOptions({
       path: {
-        workflow_id: workflowId as string,
+        workflow_id: workflowId,
       },
     }),
     enabled: enableSnakefile && !selectedRule,
@@ -79,7 +88,7 @@ function WorkflowDetail() {
     Object.assign(
       getRulesOptions({
         path: {
-          workflow_id: workflowId as string,
+          workflow_id: workflowId,
         },
       }),
       { enabled: enableSnakefile && !!selectedRule },
