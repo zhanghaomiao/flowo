@@ -135,7 +135,10 @@ class FlowoLogHandler(Handler):
             data = schema_data.model_dump(mode="json")
 
             if event_name == "workflow_started":
-                self.context["configfiles"] = self._get_configfiles()
+                configfiles, config = self._get_configfiles()
+                self.context["configfiles"] = configfiles
+                self.context["flowo_project_name"] = config.get("flowo_project_name")
+                self.context["flowo_tags"] = config.get("flowo_tags", "").split(",")
 
             self._send_to_api(event_name, data)
         except Exception as e:
@@ -194,20 +197,22 @@ class FlowoLogHandler(Handler):
             )
             return
 
-    def _get_configfiles(self) -> list[str]:
+    def _get_configfiles(self) -> tuple[list[str], dict]:
         """Extract configfiles from global snakemake workflow object."""
         try:
             import snakemake.workflow
 
+            config = snakemake.workflow.workflow.config_settings.overwrite_config or {}
             if (
                 hasattr(snakemake.workflow, "workflow")
                 and snakemake.workflow.workflow
                 and hasattr(snakemake.workflow.workflow, "configfiles")
             ):
-                return [str(f) for f in snakemake.workflow.workflow.configfiles]
+                return [str(f) for f in snakemake.workflow.workflow.configfiles], config
         except Exception as e:
             logger.debug(f"Failed to access snakemake workflow configfiles: {e}")
-        return []
+
+        return [], {}
 
     def close(self) -> None:
         self.file_handler.close()
