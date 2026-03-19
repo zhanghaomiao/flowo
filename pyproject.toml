@@ -35,6 +35,7 @@ dependencies = [
   "snakemake-interface-logger-plugins",
   "httpx>=0.28.1",
   "sqlalchemy>=2.0.41",
+  "tqdm>=4.66.0",
 ]
 
 [project.optional-dependencies]

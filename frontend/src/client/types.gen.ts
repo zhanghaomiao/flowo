@@ -49,6 +49,16 @@ export type BodyAuthJwtLoginApiV1AuthJwtLoginPost = {
 };
 
 /**
+ * Body_sync_catalog_zip_api_v1_catalog__slug__sync_post
+ */
+export type BodySyncCatalogZipApiV1CatalogSlugSyncPost = {
+    /**
+     * File
+     */
+    file: Blob | File;
+};
+
+/**
  * Body_upload_catalog_api_v1_catalog_upload_post
  */
 export type BodyUploadCatalogApiV1CatalogUploadPost = {
@@ -123,11 +133,15 @@ export type CatalogDetail = {
     /**
      * File Count
      */
-    file_count: number;
+    file_count?: number;
     /**
      * Has Snakefile
      */
-    has_snakefile: boolean;
+    has_snakefile?: boolean;
+    /**
+     * Git Configured
+     */
+    git_configured?: boolean;
     /**
      * Files
      */
@@ -253,11 +267,15 @@ export type CatalogSummary = {
     /**
      * File Count
      */
-    file_count: number;
+    file_count?: number;
     /**
      * Has Snakefile
      */
-    has_snakefile: boolean;
+    has_snakefile?: boolean;
+    /**
+     * Git Configured
+     */
+    git_configured?: boolean;
 };
 
 /**
@@ -728,32 +746,6 @@ export type StatusSummary = {
      * Error
      */
     error: number;
-};
-
-/**
- * SyncResponse
- */
-export type SyncResponse = {
-    /**
-     * Status
-     */
-    status: string;
-    /**
-     * Timestamp
-     */
-    timestamp: string;
-    /**
-     * Added
-     */
-    added: number;
-    /**
-     * Updated
-     */
-    updated: number;
-    /**
-     * Removed
-     */
-    removed: number;
 };
 
 /**
@@ -2616,10 +2608,8 @@ export type SyncCatalogsResponses = {
     /**
      * Successful Response
      */
-    200: SyncResponse;
+    200: unknown;
 };
-
-export type SyncCatalogsResponse = SyncCatalogsResponses[keyof SyncCatalogsResponses];
 
 export type DeleteCatalogData = {
     body?: never;
@@ -2901,7 +2891,7 @@ export type RenamePathResponses = {
     200: unknown;
 };
 
-export type ExportCatalogData = {
+export type DownloadCatalogData = {
     body?: never;
     path: {
         /**
@@ -2909,20 +2899,25 @@ export type ExportCatalogData = {
          */
         slug: string;
     };
-    query?: never;
-    url: '/api/v1/catalog/{slug}/export';
+    query?: {
+        /**
+         * Format
+         */
+        format?: string;
+    };
+    url: '/api/v1/catalog/{slug}/download';
 };
 
-export type ExportCatalogErrors = {
+export type DownloadCatalogErrors = {
     /**
      * Validation Error
      */
     422: HttpValidationError;
 };
 
-export type ExportCatalogError = ExportCatalogErrors[keyof ExportCatalogErrors];
+export type DownloadCatalogError = DownloadCatalogErrors[keyof DownloadCatalogErrors];
 
-export type ExportCatalogResponses = {
+export type DownloadCatalogResponses = {
     /**
      * Successful Response
      */
@@ -2953,6 +2948,62 @@ export type UploadCatalogResponses = {
 };
 
 export type UploadCatalogResponse = UploadCatalogResponses[keyof UploadCatalogResponses];
+
+export type ExportCatalogData = {
+    body?: never;
+    path: {
+        /**
+         * Slug
+         */
+        slug: string;
+    };
+    query?: never;
+    url: '/api/v1/catalog/{slug}/export';
+};
+
+export type ExportCatalogErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type ExportCatalogError = ExportCatalogErrors[keyof ExportCatalogErrors];
+
+export type ExportCatalogResponses = {
+    /**
+     * Successful Response
+     */
+    200: unknown;
+};
+
+export type SyncCatalogZipData = {
+    body: BodySyncCatalogZipApiV1CatalogSlugSyncPost;
+    path: {
+        /**
+         * Slug
+         */
+        slug: string;
+    };
+    query?: never;
+    url: '/api/v1/catalog/{slug}/sync';
+};
+
+export type SyncCatalogZipErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type SyncCatalogZipError = SyncCatalogZipErrors[keyof SyncCatalogZipErrors];
+
+export type SyncCatalogZipResponses = {
+    /**
+     * Successful Response
+     */
+    200: unknown;
+};
 
 export type GetCatalogDagData = {
     body?: never;
@@ -3037,14 +3088,10 @@ export type ImportFromGitError = ImportFromGitErrors[keyof ImportFromGitErrors];
 
 export type ImportFromGitResponses = {
     /**
-     * Response Import From Git Api V1 Catalog Import Git Post
-     *
      * Successful Response
      */
-    201: Array<CatalogSummary>;
+    201: unknown;
 };
-
-export type ImportFromGitResponse = ImportFromGitResponses[keyof ImportFromGitResponses];
 
 export type GetSettingsData = {
     body?: never;

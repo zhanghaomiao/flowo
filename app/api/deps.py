@@ -3,7 +3,7 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.session import get_async_session
-from app.core.users import UserManager, current_active_user, get_user_manager
+from app.core.users import UserManager, current_optional_user, get_user_manager
 from app.models.user import User
 from app.services.user_token import UserTokenService
 
@@ -12,17 +12,14 @@ security = HTTPBearer(auto_error=False)
 
 async def current_active_user_with_token(
     request: Request,
+    optional_user: User | None = Depends(current_optional_user),
     token: HTTPAuthorizationCredentials | None = Depends(security),
     user_manager: UserManager = Depends(get_user_manager),
     session: AsyncSession = Depends(get_async_session),
 ) -> User:
     # 1. Try standard JWT Auth
-    try:
-        user = await current_active_user(token)
-        if user:
-            return user
-    except Exception:
-        pass
+    if optional_user:
+        return optional_user
 
     # 2. Try API Token
     if token and token.scheme.lower() == "bearer":

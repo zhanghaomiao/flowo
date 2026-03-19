@@ -8,6 +8,9 @@ import {
 } from '@ant-design/icons';
 import { Tag } from 'antd';
 import dayjs from 'dayjs';
+import relativeTime from 'dayjs/plugin/relativeTime';
+
+dayjs.extend(relativeTime);
 
 import type { CatalogDetail } from '@/client/types.gen';
 

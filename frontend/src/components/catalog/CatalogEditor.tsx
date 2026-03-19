@@ -10,6 +10,8 @@ import {
   writeFileMutation,
 } from '@/client/@tanstack/react-query.gen';
 
+import { MarkdownViewer } from '../shared/viewers';
+
 const { Text } = Typography;
 
 // Language detection from filename/extension
@@ -51,6 +53,8 @@ interface Props {
   activeFile?: string;
   onClose: (filePath: string) => void;
   onCloseAll?: () => void;
+  viewMode?: 'preview' | 'source';
+  onViewModeChange?: (mode: 'preview' | 'source') => void;
 }
 
 const CatalogEditor: React.FC<Props> = ({
@@ -59,6 +63,7 @@ const CatalogEditor: React.FC<Props> = ({
   activeFile,
   onClose,
   onCloseAll,
+  viewMode,
 }) => {
   const [tabs, setTabs] = useState<Map<string, FileTab>>(new Map());
   const [activeKey, setActiveKey] = useState<string>('');
@@ -274,6 +279,7 @@ const CatalogEditor: React.FC<Props> = ({
             setTabs={setTabs}
             onContentChange={handleContentChange}
             onEditorMount={handleEditorMount}
+            viewMode={viewMode}
           />
         ) : (
           <div
@@ -308,7 +314,6 @@ const CatalogEditor: React.FC<Props> = ({
   );
 };
 
-// Sub-component that handles loading file content
 interface FileEditorPanelProps {
   slug: string;
   filePath: string;
@@ -316,6 +321,7 @@ interface FileEditorPanelProps {
   setTabs: React.Dispatch<React.SetStateAction<Map<string, FileTab>>>;
   onContentChange: (filePath: string, content: string | undefined) => void;
   onEditorMount: OnMount;
+  viewMode?: 'preview' | 'source';
 }
 
 const FileEditorPanel: React.FC<FileEditorPanelProps> = ({
@@ -325,6 +331,7 @@ const FileEditorPanel: React.FC<FileEditorPanelProps> = ({
   setTabs,
   onContentChange,
   onEditorMount,
+  viewMode,
 }) => {
   const { data, isLoading } = useQuery({
     ...readFile2Options({
@@ -364,6 +371,19 @@ const FileEditorPanel: React.FC<FileEditorPanelProps> = ({
       >
         <Spin />
       </div>
+    );
+  }
+
+  if (
+    viewMode === 'preview' &&
+    (filePath.toLowerCase().endsWith('.md') ||
+      filePath.toLowerCase().endsWith('.markdown'))
+  ) {
+    return (
+      <MarkdownViewer
+        content={tab.content}
+        fileName={filePath.split('/').pop()}
+      />
     );
   }
 

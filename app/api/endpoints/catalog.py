@@ -6,20 +6,20 @@ import os
 import tempfile
 from typing import Any
 
-from fastapi import APIRouter, Depends, File, Query, UploadFile
+from fastapi import APIRouter, BackgroundTasks, Depends, File, Query, UploadFile
 from fastapi.responses import FileResponse, StreamingResponse
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.api.deps import current_active_user_with_token
 from app.core.session import get_async_session
-from app.core.users import current_active_user
 from app.models.user import User
-from app.services.catalog_service import CatalogService
+from app.services.catalog import CatalogService
 
 router = APIRouter()
 
 
-def get_catalog_service(
+def get_catalog_svc(
     session: AsyncSession = Depends(get_async_session),
 ) -> CatalogService:
     return CatalogService(session)
@@ -81,6 +81,7 @@ class CatalogSummary(BaseModel):
     updated_at: str
     file_count: int = 0
     has_snakefile: bool = True
+    git_configured: bool = False
 
 
 class CatalogDetail(CatalogSummary):
@@ -105,8 +106,8 @@ class CatalogFileContent(BaseModel):
 async def list_catalogs(
     search: str | None = Query(None, description="Search by name or description"),
     tags: str | None = Query(None, description="Filter by tags (comma-separated)"),
-    user: User = Depends(current_active_user),
-    svc: CatalogService = Depends(get_catalog_service),
+    user: User = Depends(current_active_user_with_token),
+    svc: CatalogService = Depends(get_catalog_svc),
 ):
     """List all workflow catalogs."""
     return await svc.list_catalogs(search=search, tags=tags, user_id=user.id)
@@ -114,8 +115,8 @@ async def list_catalogs(
 
 @router.post("/sync")
 async def sync_catalogs(
-    user: User = Depends(current_active_user),
-    svc: CatalogService = Depends(get_catalog_service),
+    user: User = Depends(current_active_user_with_token),
+    svc: CatalogService = Depends(get_catalog_svc),
 ):
     """Manual sync of filesystem catalogs with the database."""
     # Note: Potentially restrict this to admins or catalog owners
@@ -125,8 +126,9 @@ async def sync_catalogs(
 @router.post("", status_code=201, response_model=CatalogSummary)
 async def create_catalog(
     request: CatalogCreateRequest,
-    user: User = Depends(current_active_user),
-    svc: CatalogService = Depends(get_catalog_service),
+    background_tasks: BackgroundTasks,
+    user: User = Depends(current_active_user_with_token),
+    svc: CatalogService = Depends(get_catalog_svc),
 ):
     """Create a new workflow catalog with an empty Snakefile."""
     return await svc.create_catalog(
@@ -135,39 +137,41 @@ async def create_catalog(
         tags=request.tags,
         owner=user.email or str(user.id),
         owner_id=user.id,
+        background_tasks=background_tasks,
     )
 
 
 @router.get("/{slug}", response_model=CatalogDetail)
 async def get_catalog(
     slug: str,
-    user: User = Depends(current_active_user),
-    svc: CatalogService = Depends(get_catalog_service),
+    user: User = Depends(current_active_user_with_token),
+    svc: CatalogService = Depends(get_catalog_svc),
 ):
-    """Get catalog detail with file inventory."""
-    return await svc.get_catalog(slug)
+    """Get catalog detail and full file list."""
+    return await svc.get_catalog(slug, user_id=user.id)
 
 
 @router.patch("/{slug}", response_model=CatalogSummary)
 async def update_catalog(
     slug: str,
     request: CatalogUpdateRequest,
-    user: User = Depends(current_active_user),
-    svc: CatalogService = Depends(get_catalog_service),
+    user: User = Depends(current_active_user_with_token),
+    svc: CatalogService = Depends(get_catalog_svc),
 ):
     """Update catalog metadata."""
     data = request.model_dump(exclude_none=True)
-    return await svc.update_metadata(slug, data)
+    return await svc.update_metadata(slug, data, user_id=user.id)
 
 
 @router.delete("/{slug}")
 async def delete_catalog(
     slug: str,
-    user: User = Depends(current_active_user),
-    svc: CatalogService = Depends(get_catalog_service),
+    background_tasks: BackgroundTasks,
+    user: User = Depends(current_active_user_with_token),
+    svc: CatalogService = Depends(get_catalog_svc),
 ):
     """Delete a catalog and all its files."""
-    await svc.delete_catalog(slug)
+    await svc.delete_catalog(slug, user_id=user.id, background_tasks=background_tasks)
     return {"message": f"Catalog '{slug}' deleted"}
 
 
@@ -178,8 +182,8 @@ async def delete_catalog(
 async def read_file(
     slug: str,
     file_path: str,
-    user: User = Depends(current_active_user),
-    svc: CatalogService = Depends(get_catalog_service),
+    user: User = Depends(current_active_user_with_token),
+    svc: CatalogService = Depends(get_catalog_svc),
 ):
     """Read a file from a catalog."""
     return await svc.read_file(slug, file_path)
@@ -190,8 +194,8 @@ async def write_file(
     slug: str,
     file_path: str,
     request: FileWriteRequest,
-    user: User = Depends(current_active_user),
-    svc: CatalogService = Depends(get_catalog_service),
+    user: User = Depends(current_active_user_with_token),
+    svc: CatalogService = Depends(get_catalog_svc),
 ):
     """Create or update a file in a catalog."""
     return await svc.write_file(slug, file_path, request.content)
@@ -201,8 +205,8 @@ async def write_file(
 async def delete_file(
     slug: str,
     file_path: str,
-    user: User = Depends(current_active_user),
-    svc: CatalogService = Depends(get_catalog_service),
+    user: User = Depends(current_active_user_with_token),
+    svc: CatalogService = Depends(get_catalog_svc),
 ):
     """Delete a file from a catalog."""
     await svc.delete_file(slug, file_path)
@@ -213,8 +217,8 @@ async def delete_file(
 async def create_directory(
     slug: str,
     directory_path: str,
-    user: User = Depends(current_active_user),
-    svc: CatalogService = Depends(get_catalog_service),
+    user: User = Depends(current_active_user_with_token),
+    svc: CatalogService = Depends(get_catalog_svc),
 ):
     """Create a new directory in the catalog."""
     return await svc.create_directory(slug, directory_path)
@@ -224,8 +228,8 @@ async def create_directory(
 async def delete_directory(
     slug: str,
     directory_path: str,
-    user: User = Depends(current_active_user),
-    svc: CatalogService = Depends(get_catalog_service),
+    user: User = Depends(current_active_user_with_token),
+    svc: CatalogService = Depends(get_catalog_svc),
 ):
     """Delete a directory and all its contents."""
     await svc.delete_directory(slug, directory_path)
@@ -236,8 +240,8 @@ async def delete_directory(
 async def rename_path(
     slug: str,
     request: RenameRequest,
-    user: User = Depends(current_active_user),
-    svc: CatalogService = Depends(get_catalog_service),
+    user: User = Depends(current_active_user_with_token),
+    svc: CatalogService = Depends(get_catalog_svc),
 ):
     """Rename a file or directory in the catalog."""
     return await svc.rename_path(slug, request.old_path, request.new_path)
@@ -250,8 +254,8 @@ async def rename_path(
 async def download_catalog(
     slug: str,
     format: str = "tar.gz",
-    user: User = Depends(current_active_user),
-    svc: CatalogService = Depends(get_catalog_service),
+    user: User = Depends(current_active_user_with_token),
+    svc: CatalogService = Depends(get_catalog_svc),
 ):
     """Download a catalog as a compressed archive (zip or tar.gz)."""
     if format == "zip":
@@ -261,7 +265,7 @@ async def download_catalog(
         )
     else:
         # Default to tar.gz (export)
-        buffer = svc.export_archive(slug)
+        buffer = await svc.export_archive(slug)
         return StreamingResponse(
             buffer,
             media_type="application/gzip",
@@ -272,18 +276,24 @@ async def download_catalog(
 @router.post("/upload", status_code=201, response_model=CatalogSummary)
 async def upload_catalog(
     file: UploadFile,
-    user: User = Depends(current_active_user),
-    svc: CatalogService = Depends(get_catalog_service),
+    background_tasks: BackgroundTasks,
+    user: User = Depends(current_active_user_with_token),
+    svc: CatalogService = Depends(get_catalog_svc),
 ):
     """Upload a .tar.gz archive as a new catalog."""
-    return await svc.import_archive(file, owner=user.email or str(user.id))
+    return await svc.import_archive(
+        file,
+        owner=user.email or str(user.id),
+        owner_id=user.id,
+        background_tasks=background_tasks,
+    )
 
 
 @router.get("/{slug}/export")
 async def export_catalog(
     slug: str,
-    user: User = Depends(current_active_user),
-    svc: CatalogService = Depends(get_catalog_service),
+    user: User = Depends(current_active_user_with_token),
+    svc: CatalogService = Depends(get_catalog_svc),
 ):
     """Alias for download_catalog with tar.gz format."""
     return await download_catalog(slug, format="tar.gz", user=user, svc=svc)
@@ -292,9 +302,10 @@ async def export_catalog(
 @router.post("/{slug}/sync")
 async def sync_catalog_zip(
     slug: str,
+    background_tasks: BackgroundTasks,
     file: UploadFile = File(...),
-    user: User = Depends(current_active_user),
-    svc: CatalogService = Depends(get_catalog_service),
+    user: User = Depends(current_active_user_with_token),
+    svc: CatalogService = Depends(get_catalog_svc),
 ):
     """Sync a catalog from a .zip archive provided by CLI."""
     # Save uploaded file to a temporary location
@@ -304,7 +315,9 @@ async def sync_catalog_zip(
         tmp_path = tmp.name
 
     try:
-        return await svc.sync_catalog(slug, tmp_path, user)
+        return await svc.sync_catalog(
+            slug, tmp_path, user, background_tasks=background_tasks
+        )
     finally:
         if os.path.exists(tmp_path):
             os.remove(tmp_path)
@@ -316,8 +329,8 @@ async def sync_catalog_zip(
 @router.get("/{slug}/dag")
 async def get_catalog_dag(
     slug: str,
-    user: User = Depends(current_active_user),
-    svc: CatalogService = Depends(get_catalog_service),
+    user: User = Depends(current_active_user_with_token),
+    svc: CatalogService = Depends(get_catalog_svc),
 ):
     """Generate DAG preview from the catalog's Snakefile."""
     return await svc.generate_dag(slug)
@@ -339,9 +352,10 @@ class ImportFromGitRequest(BaseModel):
 @router.post("/git/push")
 async def git_push(
     request: GitPushRequest,
-    user: User = Depends(current_active_user),
+    background_tasks: BackgroundTasks,
+    user: User = Depends(current_active_user_with_token),
     session: AsyncSession = Depends(get_async_session),
-    svc: CatalogService = Depends(get_catalog_service),
+    svc: CatalogService = Depends(get_catalog_svc),
 ):
     """Push all catalogs to a Git remote (monorepo).
 
@@ -354,31 +368,40 @@ async def git_push(
     remote_url = request.remote_url or settings.git_remote_url
     token = request.token or settings.git_token
 
-    return await svc.git_push(remote_url=remote_url, token=token)
+    return await svc.git_push(
+        user_id=user.id,
+        background_tasks=background_tasks,
+        remote_url=remote_url,
+        token=token,
+    )
 
 
 @router.post("/git/pull")
 async def git_pull(
-    user: User = Depends(current_active_user),
+    background_tasks: BackgroundTasks,
+    user: User = Depends(current_active_user_with_token),
     session: AsyncSession = Depends(get_async_session),
-    svc: CatalogService = Depends(get_catalog_service),
+    svc: CatalogService = Depends(get_catalog_svc),
 ):
     """Pull catalogs from the user's configured Git remote."""
     from .settings import get_or_create_user_settings
 
     settings = await get_or_create_user_settings(user, session)
     return await svc.git_pull(
+        user_id=user.id,
+        background_tasks=background_tasks,
         remote_url=settings.git_remote_url,
         token=settings.git_token,
     )
 
 
-@router.post("/import/git", status_code=201, response_model=list[CatalogSummary])
+@router.post("/import/git", status_code=201)
 async def import_from_git(
     request: ImportFromGitRequest,
-    user: User = Depends(current_active_user),
+    background_tasks: BackgroundTasks,
+    user: User = Depends(current_active_user_with_token),
     session: AsyncSession = Depends(get_async_session),
-    svc: CatalogService = Depends(get_catalog_service),
+    svc: CatalogService = Depends(get_catalog_svc),
 ):
     """Clone a Git repository and import all catalogs found inside."""
     from .settings import get_or_create_user_settings
@@ -388,7 +411,8 @@ async def import_from_git(
 
     return await svc.import_from_git(
         git_url=request.git_url,
+        user_id=user.id,
+        background_tasks=background_tasks,
         token=token,
         owner=user.email or str(user.id),
-        owner_id=user.id,
     )

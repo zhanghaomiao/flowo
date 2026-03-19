@@ -6,11 +6,14 @@ import {
   CloudUploadOutlined,
   CopyOutlined,
   DownloadOutlined,
+  EditOutlined,
+  GithubOutlined,
   SyncOutlined,
+  UserOutlined,
 } from '@ant-design/icons';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
-import { Button, Dropdown, message, Tag, Tooltip } from 'antd';
+import { Button, Dropdown, message, Space, Tag, Tooltip } from 'antd';
 
 import {
   getCatalogQueryKey,
@@ -24,9 +27,15 @@ interface Props {
   catalog: CatalogDetail;
   slug: string;
   onShowDag?: () => void;
+  onEditMetadata?: () => void;
 }
 
-const CatalogHeader: React.FC<Props> = ({ catalog, slug, onShowDag }) => {
+const CatalogHeader: React.FC<Props> = ({
+  catalog,
+  slug,
+  onShowDag,
+  onEditMetadata,
+}) => {
   const [messageApi, contextHolder] = message.useMessage();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -71,6 +80,8 @@ const CatalogHeader: React.FC<Props> = ({ catalog, slug, onShowDag }) => {
     }
   };
 
+  const isGitHub = catalog.source_url?.includes('github.com');
+
   return (
     <div className="catalog-detail-toolbar">
       {contextHolder}
@@ -83,12 +94,37 @@ const CatalogHeader: React.FC<Props> = ({ catalog, slug, onShowDag }) => {
           Catalogs
         </span>
         <span className="catalog-toolbar-sep">/</span>
-        <Tooltip
-          title={catalog.description || undefined}
-          placement="bottomLeft"
-        >
-          <span className="catalog-toolbar-name">{catalog.name}</span>
-        </Tooltip>
+        <Space size={4}>
+          <Tooltip title={isGitHub ? 'GitHub Source' : 'Local Source'}>
+            <a
+              href={catalog.source_url || undefined}
+              target="_blank"
+              rel="noreferrer"
+              style={{
+                color: 'inherit',
+                display: 'flex',
+                alignItems: 'center',
+                fontSize: 18,
+                marginRight: 4,
+              }}
+            >
+              {isGitHub ? <GithubOutlined /> : <UserOutlined />}
+            </a>
+          </Tooltip>
+          <Tooltip
+            title={catalog.description || undefined}
+            placement="bottomLeft"
+          >
+            <span className="catalog-toolbar-name">{catalog.name}</span>
+          </Tooltip>
+          <Button
+            size="small"
+            type="text"
+            icon={<EditOutlined />}
+            onClick={onEditMetadata}
+            title="Edit Metadata"
+          />
+        </Space>
         <Tag
           color="blue"
           style={{
@@ -98,6 +134,7 @@ const CatalogHeader: React.FC<Props> = ({ catalog, slug, onShowDag }) => {
             fontWeight: 600,
             lineHeight: '20px',
             margin: 0,
+            marginLeft: 8,
           }}
         >
           v{catalog.version}
@@ -106,7 +143,12 @@ const CatalogHeader: React.FC<Props> = ({ catalog, slug, onShowDag }) => {
           <Tag
             key={tag}
             color="geekblue"
-            style={{ fontSize: 11, margin: 0, lineHeight: '20px' }}
+            style={{
+              fontSize: 11,
+              margin: 0,
+              marginLeft: 4,
+              lineHeight: '20px',
+            }}
           >
             {tag}
           </Tag>
@@ -216,14 +258,23 @@ const CatalogHeader: React.FC<Props> = ({ catalog, slug, onShowDag }) => {
             Download
           </Button>
         </Dropdown>
-        <Button
-          size="small"
-          icon={<CloudUploadOutlined />}
-          loading={gitMutation.isPending}
-          onClick={handlePushToRemote}
+        <Tooltip
+          title={
+            !catalog.git_configured
+              ? 'Git remote not configured. Please set it up in User Settings.'
+              : 'Push catalogs to Git monorepo'
+          }
         >
-          Push to Remote
-        </Button>
+          <Button
+            size="small"
+            icon={<CloudUploadOutlined />}
+            loading={gitMutation.isPending}
+            onClick={handlePushToRemote}
+            disabled={!catalog.git_configured}
+          >
+            Push to Git
+          </Button>
+        </Tooltip>
         <Tooltip title="Sync database from filesystem">
           <Button
             size="small"

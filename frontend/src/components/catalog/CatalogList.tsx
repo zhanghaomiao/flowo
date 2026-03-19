@@ -4,9 +4,11 @@ import {
   CloudDownloadOutlined,
   DeleteOutlined,
   DownloadOutlined,
+  GithubOutlined,
   PlusOutlined,
   SearchOutlined,
   SyncOutlined,
+  UserOutlined,
 } from '@ant-design/icons';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
@@ -18,6 +20,7 @@ import {
   message,
   Modal,
   Popconfirm,
+  Select,
   Space,
   Table,
   Tag,
@@ -73,17 +76,11 @@ const CatalogList: React.FC = () => {
   const handleCreate = async () => {
     try {
       const values = await form.validateFields();
-      const tagsArray = values.tags
-        ? values.tags
-            .split(',')
-            .map((t: string) => t.trim())
-            .filter(Boolean)
-        : [];
       await createMutation.mutateAsync({
         body: {
           name: values.name,
           description: values.description || '',
-          tags: tagsArray,
+          tags: values.tags || [],
         },
       });
       queryClient.invalidateQueries({ queryKey: listCatalogsQueryKey() });
@@ -121,20 +118,39 @@ const CatalogList: React.FC = () => {
       title: 'Name',
       dataIndex: 'name',
       key: 'name',
-      render: (name: string, record: CatalogSummary) => (
-        <Space>
-          <Link
-            to="/catalog/$catalogSlug"
-            params={{ catalogSlug: record.slug }}
-            style={{ fontWeight: 500 }}
-          >
-            {name}
-          </Link>
-          <Tag color="blue" style={{ fontSize: 11 }}>
-            v{record.version}
-          </Tag>
-        </Space>
-      ),
+      render: (name: string, record: CatalogSummary) => {
+        const isGitHub = record.source_url?.includes('github.com');
+        return (
+          <Space>
+            <Tooltip title={isGitHub ? 'GitHub Source' : 'Local Source'}>
+              <a
+                href={record.source_url || undefined}
+                target="_blank"
+                rel="noreferrer"
+                style={{
+                  color: 'inherit',
+                  display: 'flex',
+                  alignItems: 'center',
+                  fontSize: 16,
+                  marginRight: 2,
+                }}
+              >
+                {isGitHub ? <GithubOutlined /> : <UserOutlined />}
+              </a>
+            </Tooltip>
+            <Link
+              to="/catalog/$catalogSlug"
+              params={{ catalogSlug: record.slug }}
+              style={{ fontWeight: 500 }}
+            >
+              {name}
+            </Link>
+            <Tag color="blue" style={{ fontSize: 11 }}>
+              v{record.version}
+            </Tag>
+          </Space>
+        );
+      },
     },
     {
       title: 'Description',
@@ -323,8 +339,13 @@ const CatalogList: React.FC = () => {
               placeholder="Brief description of this workflow"
             />
           </Form.Item>
-          <Form.Item name="tags" label="Tags (comma-separated)">
-            <Input placeholder="e.g. rnaseq, alignment, production" />
+          <Form.Item name="tags" label="Tags">
+            <Select
+              mode="tags"
+              style={{ width: '100%' }}
+              placeholder="Add tags..."
+              tokenSeparators={[',']}
+            />
           </Form.Item>
         </Form>
       </Modal>

@@ -15,7 +15,7 @@ from app.core.session import get_async_session
 from app.core.users import current_active_user
 from app.models.user import User
 from app.models.user_settings import UserSettings
-from app.services.git_service import git_service
+from app.services.third_party.git import git_service
 
 router = APIRouter()
 

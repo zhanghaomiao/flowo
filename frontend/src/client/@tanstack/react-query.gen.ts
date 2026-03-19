@@ -3,8 +3,8 @@
 import { type DefaultError, type InfiniteData, infiniteQueryOptions, queryOptions, type UseMutationOptions, useQuery } from '@tanstack/react-query';
 
 import { client } from '../client.gen';
-import { authJwtLogin, authJwtLogout, closeWorkflow, createCatalog, createDirectory, createToken, deleteCatalog, deleteDirectory, deleteFile, deleteToken, deleteWorkflow, exportCatalog, getActivity, getAllTags, getCatalog, getCatalogDag, getClientConfig, getConfigfiles, getDetail, getJob, getJobOutputs, getJobs, getLogs, getProgress, getRuleDuration, getRuleError, getRuleGraph, getRules, getRuleStatus, getSettings, getSnakefile, getSseTicket, getStatus, getSystemHealth, getSystemResources, getTimelines, getWorkflowIdByName, getWorkflowLog, getWorkflows, gitPull, gitPush, importFromGit, listCatalogs, listFiles, listTokens, type Options, postPruning, readFile, readFile2, registerRegister, renamePath, reportEvent, streamEvents, syncCatalogs, testGitConnection, testSmtpConnection, updateCatalog, updateSettings, uploadCatalog, usersCurrentUser, usersDeleteUser, usersPatchCurrentUser, usersPatchUser, usersUser, writeFile } from '../sdk.gen';
-import type { AuthJwtLoginData, AuthJwtLoginError, AuthJwtLoginResponse, AuthJwtLogoutData, CloseWorkflowData, CloseWorkflowError, CreateCatalogData, CreateCatalogError, CreateCatalogResponse, CreateDirectoryData, CreateDirectoryError, CreateTokenData, CreateTokenError, CreateTokenResponse, DeleteCatalogData, DeleteCatalogError, DeleteDirectoryData, DeleteDirectoryError, DeleteFileData, DeleteFileError, DeleteTokenData, DeleteTokenError, DeleteWorkflowData, DeleteWorkflowError, ExportCatalogData, ExportCatalogError, GetActivityData, GetActivityError, GetActivityResponse, GetAllTagsData, GetAllTagsResponse, GetCatalogDagData, GetCatalogDagError, GetCatalogData, GetCatalogError, GetCatalogResponse, GetClientConfigData, GetClientConfigResponse, GetConfigfilesData, GetConfigfilesError, GetConfigfilesResponse, GetDetailData, GetDetailError, GetDetailResponse, GetJobData, GetJobError, GetJobOutputsData, GetJobOutputsError, GetJobOutputsResponse, GetJobResponse, GetJobsData, GetJobsError, GetJobsResponse, GetLogsData, GetLogsError, GetLogsResponse, GetProgressData, GetProgressError, GetProgressResponse, GetRuleDurationData, GetRuleDurationError, GetRuleDurationResponse, GetRuleErrorData, GetRuleErrorError, GetRuleErrorResponse, GetRuleGraphData, GetRuleGraphError, GetRuleGraphResponse, GetRulesData, GetRulesError, GetRulesResponse, GetRuleStatusData, GetRuleStatusError, GetRuleStatusResponse, GetSettingsData, GetSettingsResponse, GetSnakefileData, GetSnakefileError, GetSnakefileResponse, GetSseTicketData, GetStatusData, GetStatusError, GetStatusResponse, GetSystemHealthData, GetSystemHealthResponse, GetSystemResourcesData, GetSystemResourcesResponse, GetTimelinesData, GetTimelinesError, GetTimelinesResponse, GetWorkflowIdByNameData, GetWorkflowIdByNameError, GetWorkflowIdByNameResponse, GetWorkflowLogData, GetWorkflowLogError, GetWorkflowLogResponse, GetWorkflowsData, GetWorkflowsError, GetWorkflowsResponse, GitPullData, GitPushData, GitPushError, ImportFromGitData, ImportFromGitError, ImportFromGitResponse, ListCatalogsData, ListCatalogsError, ListCatalogsResponse, ListFilesData, ListFilesError, ListFilesResponse, ListTokensData, ListTokensResponse, PostPruningData, PostPruningResponse, ReadFile2Data, ReadFile2Error, ReadFile2Response, ReadFileData, ReadFileError, ReadFileResponse, RegisterRegisterData, RegisterRegisterError, RegisterRegisterResponse, RenamePathData, RenamePathError, ReportEventData, ReportEventError, StreamEventsData, StreamEventsError, SyncCatalogsData, SyncCatalogsResponse, TestGitConnectionData, TestGitConnectionError, TestGitConnectionResponse, TestSmtpConnectionData, TestSmtpConnectionError, TestSmtpConnectionResponse, UpdateCatalogData, UpdateCatalogError, UpdateCatalogResponse, UpdateSettingsData, UpdateSettingsError, UpdateSettingsResponse, UploadCatalogData, UploadCatalogError, UploadCatalogResponse, UsersCurrentUserData, UsersCurrentUserResponse, UsersDeleteUserData, UsersDeleteUserError, UsersDeleteUserResponse, UsersPatchCurrentUserData, UsersPatchCurrentUserError, UsersPatchCurrentUserResponse, UsersPatchUserData, UsersPatchUserError, UsersPatchUserResponse, UsersUserData, UsersUserError, UsersUserResponse, WriteFileData, WriteFileError, WriteFileResponse } from '../types.gen';
+import { authJwtLogin, authJwtLogout, closeWorkflow, createCatalog, createDirectory, createToken, deleteCatalog, deleteDirectory, deleteFile, deleteToken, deleteWorkflow, downloadCatalog, exportCatalog, getActivity, getAllTags, getCatalog, getCatalogDag, getClientConfig, getConfigfiles, getDetail, getJob, getJobOutputs, getJobs, getLogs, getProgress, getRuleDuration, getRuleError, getRuleGraph, getRules, getRuleStatus, getSettings, getSnakefile, getSseTicket, getStatus, getSystemHealth, getSystemResources, getTimelines, getWorkflowIdByName, getWorkflowLog, getWorkflows, gitPull, gitPush, importFromGit, listCatalogs, listFiles, listTokens, type Options, postPruning, readFile, readFile2, registerRegister, renamePath, reportEvent, streamEvents, syncCatalogs, syncCatalogZip, testGitConnection, testSmtpConnection, updateCatalog, updateSettings, uploadCatalog, usersCurrentUser, usersDeleteUser, usersPatchCurrentUser, usersPatchUser, usersUser, writeFile } from '../sdk.gen';
+import type { AuthJwtLoginData, AuthJwtLoginError, AuthJwtLoginResponse, AuthJwtLogoutData, CloseWorkflowData, CloseWorkflowError, CreateCatalogData, CreateCatalogError, CreateCatalogResponse, CreateDirectoryData, CreateDirectoryError, CreateTokenData, CreateTokenError, CreateTokenResponse, DeleteCatalogData, DeleteCatalogError, DeleteDirectoryData, DeleteDirectoryError, DeleteFileData, DeleteFileError, DeleteTokenData, DeleteTokenError, DeleteWorkflowData, DeleteWorkflowError, DownloadCatalogData, DownloadCatalogError, ExportCatalogData, ExportCatalogError, GetActivityData, GetActivityError, GetActivityResponse, GetAllTagsData, GetAllTagsResponse, GetCatalogDagData, GetCatalogDagError, GetCatalogData, GetCatalogError, GetCatalogResponse, GetClientConfigData, GetClientConfigResponse, GetConfigfilesData, GetConfigfilesError, GetConfigfilesResponse, GetDetailData, GetDetailError, GetDetailResponse, GetJobData, GetJobError, GetJobOutputsData, GetJobOutputsError, GetJobOutputsResponse, GetJobResponse, GetJobsData, GetJobsError, GetJobsResponse, GetLogsData, GetLogsError, GetLogsResponse, GetProgressData, GetProgressError, GetProgressResponse, GetRuleDurationData, GetRuleDurationError, GetRuleDurationResponse, GetRuleErrorData, GetRuleErrorError, GetRuleErrorResponse, GetRuleGraphData, GetRuleGraphError, GetRuleGraphResponse, GetRulesData, GetRulesError, GetRulesResponse, GetRuleStatusData, GetRuleStatusError, GetRuleStatusResponse, GetSettingsData, GetSettingsResponse, GetSnakefileData, GetSnakefileError, GetSnakefileResponse, GetSseTicketData, GetStatusData, GetStatusError, GetStatusResponse, GetSystemHealthData, GetSystemHealthResponse, GetSystemResourcesData, GetSystemResourcesResponse, GetTimelinesData, GetTimelinesError, GetTimelinesResponse, GetWorkflowIdByNameData, GetWorkflowIdByNameError, GetWorkflowIdByNameResponse, GetWorkflowLogData, GetWorkflowLogError, GetWorkflowLogResponse, GetWorkflowsData, GetWorkflowsError, GetWorkflowsResponse, GitPullData, GitPushData, GitPushError, ImportFromGitData, ImportFromGitError, ListCatalogsData, ListCatalogsError, ListCatalogsResponse, ListFilesData, ListFilesError, ListFilesResponse, ListTokensData, ListTokensResponse, PostPruningData, PostPruningResponse, ReadFile2Data, ReadFile2Error, ReadFile2Response, ReadFileData, ReadFileError, ReadFileResponse, RegisterRegisterData, RegisterRegisterError, RegisterRegisterResponse, RenamePathData, RenamePathError, ReportEventData, ReportEventError, StreamEventsData, StreamEventsError, SyncCatalogsData, SyncCatalogZipData, SyncCatalogZipError, TestGitConnectionData, TestGitConnectionError, TestGitConnectionResponse, TestSmtpConnectionData, TestSmtpConnectionError, TestSmtpConnectionResponse, UpdateCatalogData, UpdateCatalogError, UpdateCatalogResponse, UpdateSettingsData, UpdateSettingsError, UpdateSettingsResponse, UploadCatalogData, UploadCatalogError, UploadCatalogResponse, UsersCurrentUserData, UsersCurrentUserResponse, UsersDeleteUserData, UsersDeleteUserError, UsersDeleteUserResponse, UsersPatchCurrentUserData, UsersPatchCurrentUserError, UsersPatchCurrentUserResponse, UsersPatchUserData, UsersPatchUserError, UsersPatchUserResponse, UsersUserData, UsersUserError, UsersUserResponse, WriteFileData, WriteFileError, WriteFileResponse } from '../types.gen';
 
 /**
  * Auth:Jwt.Login
@@ -1065,8 +1065,8 @@ export const createCatalogMutation = (options?: Partial<Options<CreateCatalogDat
  *
  * Manual sync of filesystem catalogs with the database.
  */
-export const syncCatalogsMutation = (options?: Partial<Options<SyncCatalogsData>>): UseMutationOptions<SyncCatalogsResponse, DefaultError, Options<SyncCatalogsData>> => {
-    const mutationOptions: UseMutationOptions<SyncCatalogsResponse, DefaultError, Options<SyncCatalogsData>> = {
+export const syncCatalogsMutation = (options?: Partial<Options<SyncCatalogsData>>): UseMutationOptions<unknown, DefaultError, Options<SyncCatalogsData>> => {
+    const mutationOptions: UseMutationOptions<unknown, DefaultError, Options<SyncCatalogsData>> = {
         mutationFn: async (fnOptions) => {
             const { data } = await syncCatalogs({
                 ...options,
@@ -1103,7 +1103,7 @@ export const getCatalogQueryKey = (options: Options<GetCatalogData>) => createQu
 /**
  * Get Catalog
  *
- * Get catalog detail with file inventory.
+ * Get catalog detail and full file list.
  */
 export const getCatalogOptions = (options: Options<GetCatalogData>) => queryOptions<GetCatalogResponse, GetCatalogError, GetCatalogResponse, ReturnType<typeof getCatalogQueryKey>>({
     queryFn: async ({ queryKey, signal }) => {
@@ -1121,7 +1121,7 @@ export const getCatalogOptions = (options: Options<GetCatalogData>) => queryOpti
 /**
  * Get Catalog
  *
- * Get catalog detail with file inventory.
+ * Get catalog detail and full file list.
  */
 export const useGetCatalogQuery = (options: Options<GetCatalogData>) => useQuery(getCatalogOptions(options));
 
@@ -1266,12 +1266,58 @@ export const renamePathMutation = (options?: Partial<Options<RenamePathData>>): 
     return mutationOptions;
 };
 
+export const downloadCatalogQueryKey = (options: Options<DownloadCatalogData>) => createQueryKey('downloadCatalog', options, false, ['catalog']);
+
+/**
+ * Download Catalog
+ *
+ * Download a catalog as a compressed archive (zip or tar.gz).
+ */
+export const downloadCatalogOptions = (options: Options<DownloadCatalogData>) => queryOptions<unknown, DownloadCatalogError, unknown, ReturnType<typeof downloadCatalogQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await downloadCatalog({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: downloadCatalogQueryKey(options)
+});
+
+/**
+ * Download Catalog
+ *
+ * Download a catalog as a compressed archive (zip or tar.gz).
+ */
+export const useDownloadCatalogQuery = (options: Options<DownloadCatalogData>) => useQuery(downloadCatalogOptions(options));
+
+/**
+ * Upload Catalog
+ *
+ * Upload a .tar.gz archive as a new catalog.
+ */
+export const uploadCatalogMutation = (options?: Partial<Options<UploadCatalogData>>): UseMutationOptions<UploadCatalogResponse, UploadCatalogError, Options<UploadCatalogData>> => {
+    const mutationOptions: UseMutationOptions<UploadCatalogResponse, UploadCatalogError, Options<UploadCatalogData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await uploadCatalog({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
 export const exportCatalogQueryKey = (options: Options<ExportCatalogData>) => createQueryKey('exportCatalog', options, false, ['catalog']);
 
 /**
  * Export Catalog
  *
- * Download a catalog as a .tar.gz archive.
+ * Alias for download_catalog with tar.gz format.
  */
 export const exportCatalogOptions = (options: Options<ExportCatalogData>) => queryOptions<unknown, ExportCatalogError, unknown, ReturnType<typeof exportCatalogQueryKey>>({
     queryFn: async ({ queryKey, signal }) => {
@@ -1289,19 +1335,19 @@ export const exportCatalogOptions = (options: Options<ExportCatalogData>) => que
 /**
  * Export Catalog
  *
- * Download a catalog as a .tar.gz archive.
+ * Alias for download_catalog with tar.gz format.
  */
 export const useExportCatalogQuery = (options: Options<ExportCatalogData>) => useQuery(exportCatalogOptions(options));
 
 /**
- * Upload Catalog
+ * Sync Catalog Zip
  *
- * Upload a .tar.gz archive as a new catalog.
+ * Sync a catalog from a .zip archive provided by CLI.
  */
-export const uploadCatalogMutation = (options?: Partial<Options<UploadCatalogData>>): UseMutationOptions<UploadCatalogResponse, UploadCatalogError, Options<UploadCatalogData>> => {
-    const mutationOptions: UseMutationOptions<UploadCatalogResponse, UploadCatalogError, Options<UploadCatalogData>> = {
+export const syncCatalogZipMutation = (options?: Partial<Options<SyncCatalogZipData>>): UseMutationOptions<unknown, SyncCatalogZipError, Options<SyncCatalogZipData>> => {
+    const mutationOptions: UseMutationOptions<unknown, SyncCatalogZipError, Options<SyncCatalogZipData>> = {
         mutationFn: async (fnOptions) => {
-            const { data } = await uploadCatalog({
+            const { data } = await syncCatalogZip({
                 ...options,
                 ...fnOptions,
                 throwOnError: true
@@ -1385,8 +1431,8 @@ export const gitPullMutation = (options?: Partial<Options<GitPullData>>): UseMut
  *
  * Clone a Git repository and import all catalogs found inside.
  */
-export const importFromGitMutation = (options?: Partial<Options<ImportFromGitData>>): UseMutationOptions<ImportFromGitResponse, ImportFromGitError, Options<ImportFromGitData>> => {
-    const mutationOptions: UseMutationOptions<ImportFromGitResponse, ImportFromGitError, Options<ImportFromGitData>> = {
+export const importFromGitMutation = (options?: Partial<Options<ImportFromGitData>>): UseMutationOptions<unknown, ImportFromGitError, Options<ImportFromGitData>> => {
+    const mutationOptions: UseMutationOptions<unknown, ImportFromGitError, Options<ImportFromGitData>> = {
         mutationFn: async (fnOptions) => {
             const { data } = await importFromGit({
                 ...options,

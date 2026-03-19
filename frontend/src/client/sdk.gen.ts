@@ -2,7 +2,7 @@
 
 import { type Client, formDataBodySerializer, type Options as Options2, type TDataShape, urlSearchParamsBodySerializer } from './client';
 import { client } from './client.gen';
-import type { AuthJwtLoginData, AuthJwtLoginErrors, AuthJwtLoginResponses, AuthJwtLogoutData, AuthJwtLogoutErrors, AuthJwtLogoutResponses, CloseWorkflowData, CloseWorkflowErrors, CloseWorkflowResponses, CreateCatalogData, CreateCatalogErrors, CreateCatalogResponses, CreateDirectoryData, CreateDirectoryErrors, CreateDirectoryResponses, CreateTokenData, CreateTokenErrors, CreateTokenResponses, DeleteCatalogData, DeleteCatalogErrors, DeleteCatalogResponses, DeleteDirectoryData, DeleteDirectoryErrors, DeleteDirectoryResponses, DeleteFileData, DeleteFileErrors, DeleteFileResponses, DeleteTokenData, DeleteTokenErrors, DeleteTokenResponses, DeleteWorkflowData, DeleteWorkflowErrors, DeleteWorkflowResponses, ExportCatalogData, ExportCatalogErrors, ExportCatalogResponses, GetActivityData, GetActivityErrors, GetActivityResponses, GetAllTagsData, GetAllTagsResponses, GetCatalogDagData, GetCatalogDagErrors, GetCatalogDagResponses, GetCatalogData, GetCatalogErrors, GetCatalogResponses, GetClientConfigData, GetClientConfigResponses, GetConfigfilesData, GetConfigfilesErrors, GetConfigfilesResponses, GetDetailData, GetDetailErrors, GetDetailResponses, GetJobData, GetJobErrors, GetJobOutputsData, GetJobOutputsErrors, GetJobOutputsResponses, GetJobResponses, GetJobsData, GetJobsErrors, GetJobsResponses, GetLogsData, GetLogsErrors, GetLogsResponses, GetProgressData, GetProgressErrors, GetProgressResponses, GetRuleDurationData, GetRuleDurationErrors, GetRuleDurationResponses, GetRuleErrorData, GetRuleErrorErrors, GetRuleErrorResponses, GetRuleGraphData, GetRuleGraphErrors, GetRuleGraphResponses, GetRulesData, GetRulesErrors, GetRulesResponses, GetRuleStatusData, GetRuleStatusErrors, GetRuleStatusResponses, GetSettingsData, GetSettingsResponses, GetSnakefileData, GetSnakefileErrors, GetSnakefileResponses, GetSseTicketData, GetSseTicketResponses, GetStatusData, GetStatusErrors, GetStatusResponses, GetSystemHealthData, GetSystemHealthResponses, GetSystemResourcesData, GetSystemResourcesResponses, GetTimelinesData, GetTimelinesErrors, GetTimelinesResponses, GetWorkflowIdByNameData, GetWorkflowIdByNameErrors, GetWorkflowIdByNameResponses, GetWorkflowLogData, GetWorkflowLogErrors, GetWorkflowLogResponses, GetWorkflowsData, GetWorkflowsErrors, GetWorkflowsResponses, GitPullData, GitPullResponses, GitPushData, GitPushErrors, GitPushResponses, ImportFromGitData, ImportFromGitErrors, ImportFromGitResponses, ListCatalogsData, ListCatalogsErrors, ListCatalogsResponses, ListFilesData, ListFilesErrors, ListFilesResponses, ListTokensData, ListTokensResponses, PostPruningData, PostPruningResponses, ReadFile2Data, ReadFile2Errors, ReadFile2Responses, ReadFileData, ReadFileErrors, ReadFileResponses, RegisterRegisterData, RegisterRegisterErrors, RegisterRegisterResponses, RenamePathData, RenamePathErrors, RenamePathResponses, ReportEventData, ReportEventErrors, ReportEventResponses, StreamEventsData, StreamEventsErrors, StreamEventsResponses, SyncCatalogsData, SyncCatalogsResponses, TestGitConnectionData, TestGitConnectionErrors, TestGitConnectionResponses, TestSmtpConnectionData, TestSmtpConnectionErrors, TestSmtpConnectionResponses, UpdateCatalogData, UpdateCatalogErrors, UpdateCatalogResponses, UpdateSettingsData, UpdateSettingsErrors, UpdateSettingsResponses, UploadCatalogData, UploadCatalogErrors, UploadCatalogResponses, UsersCurrentUserData, UsersCurrentUserErrors, UsersCurrentUserResponses, UsersDeleteUserData, UsersDeleteUserErrors, UsersDeleteUserResponses, UsersPatchCurrentUserData, UsersPatchCurrentUserErrors, UsersPatchCurrentUserResponses, UsersPatchUserData, UsersPatchUserErrors, UsersPatchUserResponses, UsersUserData, UsersUserErrors, UsersUserResponses, WriteFileData, WriteFileErrors, WriteFileResponses } from './types.gen';
+import type { AuthJwtLoginData, AuthJwtLoginErrors, AuthJwtLoginResponses, AuthJwtLogoutData, AuthJwtLogoutErrors, AuthJwtLogoutResponses, CloseWorkflowData, CloseWorkflowErrors, CloseWorkflowResponses, CreateCatalogData, CreateCatalogErrors, CreateCatalogResponses, CreateDirectoryData, CreateDirectoryErrors, CreateDirectoryResponses, CreateTokenData, CreateTokenErrors, CreateTokenResponses, DeleteCatalogData, DeleteCatalogErrors, DeleteCatalogResponses, DeleteDirectoryData, DeleteDirectoryErrors, DeleteDirectoryResponses, DeleteFileData, DeleteFileErrors, DeleteFileResponses, DeleteTokenData, DeleteTokenErrors, DeleteTokenResponses, DeleteWorkflowData, DeleteWorkflowErrors, DeleteWorkflowResponses, DownloadCatalogData, DownloadCatalogErrors, DownloadCatalogResponses, ExportCatalogData, ExportCatalogErrors, ExportCatalogResponses, GetActivityData, GetActivityErrors, GetActivityResponses, GetAllTagsData, GetAllTagsResponses, GetCatalogDagData, GetCatalogDagErrors, GetCatalogDagResponses, GetCatalogData, GetCatalogErrors, GetCatalogResponses, GetClientConfigData, GetClientConfigResponses, GetConfigfilesData, GetConfigfilesErrors, GetConfigfilesResponses, GetDetailData, GetDetailErrors, GetDetailResponses, GetJobData, GetJobErrors, GetJobOutputsData, GetJobOutputsErrors, GetJobOutputsResponses, GetJobResponses, GetJobsData, GetJobsErrors, GetJobsResponses, GetLogsData, GetLogsErrors, GetLogsResponses, GetProgressData, GetProgressErrors, GetProgressResponses, GetRuleDurationData, GetRuleDurationErrors, GetRuleDurationResponses, GetRuleErrorData, GetRuleErrorErrors, GetRuleErrorResponses, GetRuleGraphData, GetRuleGraphErrors, GetRuleGraphResponses, GetRulesData, GetRulesErrors, GetRulesResponses, GetRuleStatusData, GetRuleStatusErrors, GetRuleStatusResponses, GetSettingsData, GetSettingsResponses, GetSnakefileData, GetSnakefileErrors, GetSnakefileResponses, GetSseTicketData, GetSseTicketResponses, GetStatusData, GetStatusErrors, GetStatusResponses, GetSystemHealthData, GetSystemHealthResponses, GetSystemResourcesData, GetSystemResourcesResponses, GetTimelinesData, GetTimelinesErrors, GetTimelinesResponses, GetWorkflowIdByNameData, GetWorkflowIdByNameErrors, GetWorkflowIdByNameResponses, GetWorkflowLogData, GetWorkflowLogErrors, GetWorkflowLogResponses, GetWorkflowsData, GetWorkflowsErrors, GetWorkflowsResponses, GitPullData, GitPullResponses, GitPushData, GitPushErrors, GitPushResponses, ImportFromGitData, ImportFromGitErrors, ImportFromGitResponses, ListCatalogsData, ListCatalogsErrors, ListCatalogsResponses, ListFilesData, ListFilesErrors, ListFilesResponses, ListTokensData, ListTokensResponses, PostPruningData, PostPruningResponses, ReadFile2Data, ReadFile2Errors, ReadFile2Responses, ReadFileData, ReadFileErrors, ReadFileResponses, RegisterRegisterData, RegisterRegisterErrors, RegisterRegisterResponses, RenamePathData, RenamePathErrors, RenamePathResponses, ReportEventData, ReportEventErrors, ReportEventResponses, StreamEventsData, StreamEventsErrors, StreamEventsResponses, SyncCatalogsData, SyncCatalogsResponses, SyncCatalogZipData, SyncCatalogZipErrors, SyncCatalogZipResponses, TestGitConnectionData, TestGitConnectionErrors, TestGitConnectionResponses, TestSmtpConnectionData, TestSmtpConnectionErrors, TestSmtpConnectionResponses, UpdateCatalogData, UpdateCatalogErrors, UpdateCatalogResponses, UpdateSettingsData, UpdateSettingsErrors, UpdateSettingsResponses, UploadCatalogData, UploadCatalogErrors, UploadCatalogResponses, UsersCurrentUserData, UsersCurrentUserErrors, UsersCurrentUserResponses, UsersDeleteUserData, UsersDeleteUserErrors, UsersDeleteUserResponses, UsersPatchCurrentUserData, UsersPatchCurrentUserErrors, UsersPatchCurrentUserResponses, UsersPatchUserData, UsersPatchUserErrors, UsersPatchUserResponses, UsersUserData, UsersUserErrors, UsersUserResponses, WriteFileData, WriteFileErrors, WriteFileResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean> = Options2<TData, ThrowOnError> & {
     /**
@@ -368,7 +368,7 @@ export const readFile = <ThrowOnError extends boolean = false>(options: Options<
  * Report Event
  */
 export const reportEvent = <ThrowOnError extends boolean = false>(options: Options<ReportEventData, ThrowOnError>) => (options.client ?? client).post<ReportEventResponses, ReportEventErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
+    security: [{ scheme: 'bearer', type: 'http' }, { scheme: 'bearer', type: 'http' }],
     url: '/api/v1/reports/',
     ...options,
     headers: {
@@ -381,7 +381,7 @@ export const reportEvent = <ThrowOnError extends boolean = false>(options: Optio
  * Close Workflow
  */
 export const closeWorkflow = <ThrowOnError extends boolean = false>(options: Options<CloseWorkflowData, ThrowOnError>) => (options.client ?? client).post<CloseWorkflowResponses, CloseWorkflowErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
+    security: [{ scheme: 'bearer', type: 'http' }, { scheme: 'bearer', type: 'http' }],
     url: '/api/v1/reports/close',
     ...options
 });
@@ -423,7 +423,7 @@ export const deleteToken = <ThrowOnError extends boolean = false>(options: Optio
  * List all workflow catalogs.
  */
 export const listCatalogs = <ThrowOnError extends boolean = false>(options?: Options<ListCatalogsData, ThrowOnError>) => (options?.client ?? client).get<ListCatalogsResponses, ListCatalogsErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
+    security: [{ scheme: 'bearer', type: 'http' }, { scheme: 'bearer', type: 'http' }],
     url: '/api/v1/catalog',
     ...options
 });
@@ -434,7 +434,7 @@ export const listCatalogs = <ThrowOnError extends boolean = false>(options?: Opt
  * Create a new workflow catalog with an empty Snakefile.
  */
 export const createCatalog = <ThrowOnError extends boolean = false>(options: Options<CreateCatalogData, ThrowOnError>) => (options.client ?? client).post<CreateCatalogResponses, CreateCatalogErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
+    security: [{ scheme: 'bearer', type: 'http' }, { scheme: 'bearer', type: 'http' }],
     url: '/api/v1/catalog',
     ...options,
     headers: {
@@ -449,7 +449,7 @@ export const createCatalog = <ThrowOnError extends boolean = false>(options: Opt
  * Manual sync of filesystem catalogs with the database.
  */
 export const syncCatalogs = <ThrowOnError extends boolean = false>(options?: Options<SyncCatalogsData, ThrowOnError>) => (options?.client ?? client).post<SyncCatalogsResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
+    security: [{ scheme: 'bearer', type: 'http' }, { scheme: 'bearer', type: 'http' }],
     url: '/api/v1/catalog/sync',
     ...options
 });
@@ -460,7 +460,7 @@ export const syncCatalogs = <ThrowOnError extends boolean = false>(options?: Opt
  * Delete a catalog and all its files.
  */
 export const deleteCatalog = <ThrowOnError extends boolean = false>(options: Options<DeleteCatalogData, ThrowOnError>) => (options.client ?? client).delete<DeleteCatalogResponses, DeleteCatalogErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
+    security: [{ scheme: 'bearer', type: 'http' }, { scheme: 'bearer', type: 'http' }],
     url: '/api/v1/catalog/{slug}',
     ...options
 });
@@ -468,10 +468,10 @@ export const deleteCatalog = <ThrowOnError extends boolean = false>(options: Opt
 /**
  * Get Catalog
  *
- * Get catalog detail with file inventory.
+ * Get catalog detail and full file list.
  */
 export const getCatalog = <ThrowOnError extends boolean = false>(options: Options<GetCatalogData, ThrowOnError>) => (options.client ?? client).get<GetCatalogResponses, GetCatalogErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
+    security: [{ scheme: 'bearer', type: 'http' }, { scheme: 'bearer', type: 'http' }],
     url: '/api/v1/catalog/{slug}',
     ...options
 });
@@ -482,7 +482,7 @@ export const getCatalog = <ThrowOnError extends boolean = false>(options: Option
  * Update catalog metadata.
  */
 export const updateCatalog = <ThrowOnError extends boolean = false>(options: Options<UpdateCatalogData, ThrowOnError>) => (options.client ?? client).patch<UpdateCatalogResponses, UpdateCatalogErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
+    security: [{ scheme: 'bearer', type: 'http' }, { scheme: 'bearer', type: 'http' }],
     url: '/api/v1/catalog/{slug}',
     ...options,
     headers: {
@@ -497,7 +497,7 @@ export const updateCatalog = <ThrowOnError extends boolean = false>(options: Opt
  * Delete a file from a catalog.
  */
 export const deleteFile = <ThrowOnError extends boolean = false>(options: Options<DeleteFileData, ThrowOnError>) => (options.client ?? client).delete<DeleteFileResponses, DeleteFileErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
+    security: [{ scheme: 'bearer', type: 'http' }, { scheme: 'bearer', type: 'http' }],
     url: '/api/v1/catalog/{slug}/files/{file_path}',
     ...options
 });
@@ -508,7 +508,7 @@ export const deleteFile = <ThrowOnError extends boolean = false>(options: Option
  * Read a file from a catalog.
  */
 export const readFile2 = <ThrowOnError extends boolean = false>(options: Options<ReadFile2Data, ThrowOnError>) => (options.client ?? client).get<ReadFile2Responses, ReadFile2Errors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
+    security: [{ scheme: 'bearer', type: 'http' }, { scheme: 'bearer', type: 'http' }],
     url: '/api/v1/catalog/{slug}/files/{file_path}',
     ...options
 });
@@ -519,7 +519,7 @@ export const readFile2 = <ThrowOnError extends boolean = false>(options: Options
  * Create or update a file in a catalog.
  */
 export const writeFile = <ThrowOnError extends boolean = false>(options: Options<WriteFileData, ThrowOnError>) => (options.client ?? client).put<WriteFileResponses, WriteFileErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
+    security: [{ scheme: 'bearer', type: 'http' }, { scheme: 'bearer', type: 'http' }],
     url: '/api/v1/catalog/{slug}/files/{file_path}',
     ...options,
     headers: {
@@ -534,7 +534,7 @@ export const writeFile = <ThrowOnError extends boolean = false>(options: Options
  * Delete a directory and all its contents.
  */
 export const deleteDirectory = <ThrowOnError extends boolean = false>(options: Options<DeleteDirectoryData, ThrowOnError>) => (options.client ?? client).delete<DeleteDirectoryResponses, DeleteDirectoryErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
+    security: [{ scheme: 'bearer', type: 'http' }, { scheme: 'bearer', type: 'http' }],
     url: '/api/v1/catalog/{slug}/dirs/{directory_path}',
     ...options
 });
@@ -545,7 +545,7 @@ export const deleteDirectory = <ThrowOnError extends boolean = false>(options: O
  * Create a new directory in the catalog.
  */
 export const createDirectory = <ThrowOnError extends boolean = false>(options: Options<CreateDirectoryData, ThrowOnError>) => (options.client ?? client).post<CreateDirectoryResponses, CreateDirectoryErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
+    security: [{ scheme: 'bearer', type: 'http' }, { scheme: 'bearer', type: 'http' }],
     url: '/api/v1/catalog/{slug}/dirs/{directory_path}',
     ...options
 });
@@ -556,7 +556,7 @@ export const createDirectory = <ThrowOnError extends boolean = false>(options: O
  * Rename a file or directory in the catalog.
  */
 export const renamePath = <ThrowOnError extends boolean = false>(options: Options<RenamePathData, ThrowOnError>) => (options.client ?? client).post<RenamePathResponses, RenamePathErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
+    security: [{ scheme: 'bearer', type: 'http' }, { scheme: 'bearer', type: 'http' }],
     url: '/api/v1/catalog/{slug}/rename',
     ...options,
     headers: {
@@ -566,13 +566,13 @@ export const renamePath = <ThrowOnError extends boolean = false>(options: Option
 });
 
 /**
- * Export Catalog
+ * Download Catalog
  *
- * Download a catalog as a .tar.gz archive.
+ * Download a catalog as a compressed archive (zip or tar.gz).
  */
-export const exportCatalog = <ThrowOnError extends boolean = false>(options: Options<ExportCatalogData, ThrowOnError>) => (options.client ?? client).get<ExportCatalogResponses, ExportCatalogErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/catalog/{slug}/export',
+export const downloadCatalog = <ThrowOnError extends boolean = false>(options: Options<DownloadCatalogData, ThrowOnError>) => (options.client ?? client).get<DownloadCatalogResponses, DownloadCatalogErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }, { scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/catalog/{slug}/download',
     ...options
 });
 
@@ -583,8 +583,35 @@ export const exportCatalog = <ThrowOnError extends boolean = false>(options: Opt
  */
 export const uploadCatalog = <ThrowOnError extends boolean = false>(options: Options<UploadCatalogData, ThrowOnError>) => (options.client ?? client).post<UploadCatalogResponses, UploadCatalogErrors, ThrowOnError>({
     ...formDataBodySerializer,
-    security: [{ scheme: 'bearer', type: 'http' }],
+    security: [{ scheme: 'bearer', type: 'http' }, { scheme: 'bearer', type: 'http' }],
     url: '/api/v1/catalog/upload',
+    ...options,
+    headers: {
+        'Content-Type': null,
+        ...options.headers
+    }
+});
+
+/**
+ * Export Catalog
+ *
+ * Alias for download_catalog with tar.gz format.
+ */
+export const exportCatalog = <ThrowOnError extends boolean = false>(options: Options<ExportCatalogData, ThrowOnError>) => (options.client ?? client).get<ExportCatalogResponses, ExportCatalogErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }, { scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/catalog/{slug}/export',
+    ...options
+});
+
+/**
+ * Sync Catalog Zip
+ *
+ * Sync a catalog from a .zip archive provided by CLI.
+ */
+export const syncCatalogZip = <ThrowOnError extends boolean = false>(options: Options<SyncCatalogZipData, ThrowOnError>) => (options.client ?? client).post<SyncCatalogZipResponses, SyncCatalogZipErrors, ThrowOnError>({
+    ...formDataBodySerializer,
+    security: [{ scheme: 'bearer', type: 'http' }, { scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/catalog/{slug}/sync',
     ...options,
     headers: {
         'Content-Type': null,
@@ -598,7 +625,7 @@ export const uploadCatalog = <ThrowOnError extends boolean = false>(options: Opt
  * Generate DAG preview from the catalog's Snakefile.
  */
 export const getCatalogDag = <ThrowOnError extends boolean = false>(options: Options<GetCatalogDagData, ThrowOnError>) => (options.client ?? client).get<GetCatalogDagResponses, GetCatalogDagErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
+    security: [{ scheme: 'bearer', type: 'http' }, { scheme: 'bearer', type: 'http' }],
     url: '/api/v1/catalog/{slug}/dag',
     ...options
 });
@@ -612,7 +639,7 @@ export const getCatalogDag = <ThrowOnError extends boolean = false>(options: Opt
  * If not provided, uses the saved settings for the current user.
  */
 export const gitPush = <ThrowOnError extends boolean = false>(options: Options<GitPushData, ThrowOnError>) => (options.client ?? client).post<GitPushResponses, GitPushErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
+    security: [{ scheme: 'bearer', type: 'http' }, { scheme: 'bearer', type: 'http' }],
     url: '/api/v1/catalog/git/push',
     ...options,
     headers: {
@@ -627,7 +654,7 @@ export const gitPush = <ThrowOnError extends boolean = false>(options: Options<G
  * Pull catalogs from the user's configured Git remote.
  */
 export const gitPull = <ThrowOnError extends boolean = false>(options?: Options<GitPullData, ThrowOnError>) => (options?.client ?? client).post<GitPullResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
+    security: [{ scheme: 'bearer', type: 'http' }, { scheme: 'bearer', type: 'http' }],
     url: '/api/v1/catalog/git/pull',
     ...options
 });
@@ -638,7 +665,7 @@ export const gitPull = <ThrowOnError extends boolean = false>(options?: Options<
  * Clone a Git repository and import all catalogs found inside.
  */
 export const importFromGit = <ThrowOnError extends boolean = false>(options: Options<ImportFromGitData, ThrowOnError>) => (options.client ?? client).post<ImportFromGitResponses, ImportFromGitErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
+    security: [{ scheme: 'bearer', type: 'http' }, { scheme: 'bearer', type: 'http' }],
     url: '/api/v1/catalog/import/git',
     ...options,
     headers: {
