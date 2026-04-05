@@ -179,7 +179,7 @@ class JobService:
                 with open(path) as f:
                     results[file.path] = f.read()
             except Exception as e:
-                results[file.path] = f"Failed to oepn file: {str(e)}"
+                results[file.path] = f"Failed to openn file: {str(e)}"
 
         return results
 
