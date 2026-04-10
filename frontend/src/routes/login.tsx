@@ -31,7 +31,20 @@ function LoginComponent() {
   const { redirect } = Route.useSearch();
   const loginMutation = useMutation(authJwtLoginMutation());
   const [isForgotModalVisible, setIsForgotModalVisible] = useState(false);
+  const [allowPublicRegistration, setAllowPublicRegistration] = useState(true);
   const { message } = App.useApp();
+
+  useEffect(() => {
+    // Fetch system info to check if registration is allowed
+    fetch('/api/v1/utils/info')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data && typeof data.allow_public_registration === 'boolean') {
+          setAllowPublicRegistration(data.allow_public_registration);
+        }
+      })
+      .catch((err) => console.error('Failed to fetch system info:', err));
+  }, []);
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -234,14 +247,20 @@ function LoginComponent() {
             </Button>
           </Form.Item>
 
-          <div style={{ textAlign: 'center', marginTop: 32 }}>
-            <Text style={{ color: '#666666' }}>
-              Don&apos;t have an account?
-            </Text>{' '}
-            <Link to="/register" style={{ color: '#00A2FF', fontWeight: 500 }}>
-              Create now
-            </Link>
-          </div>
+          {allowPublicRegistration && (
+            <div style={{ textAlign: 'center', marginTop: 32 }}>
+              <Text style={{ color: '#666666' }}>
+                Don&apos;t have an account?
+              </Text>{' '}
+              <Link
+                to="/register"
+                search={{ email: undefined, token: undefined }}
+                style={{ color: '#00A2FF', fontWeight: 500 }}
+              >
+                Create now
+              </Link>
+            </div>
+          )}
         </Form>
       </Card>
 

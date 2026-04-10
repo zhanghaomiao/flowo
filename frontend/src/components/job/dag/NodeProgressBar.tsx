@@ -48,14 +48,14 @@ const MultiProgressBar = ({
         {success > 0 && (
           <Tooltip title={`Success: ${success}`} {...tooltipProps}>
             <div
-              style={{ width: `${successPercent}%`, background: '#37a460' }}
+              style={{ width: `${successPercent}%`, background: '#0ea5e9' }}
             />
           </Tooltip>
         )}
         {running > 0 && (
           <Tooltip title={`Running: ${running}`} {...tooltipProps}>
             <div
-              style={{ width: `${runningPercent}%`, background: '#85d2ab' }}
+              style={{ width: `${runningPercent}%`, background: '#6366f1' }}
             />
           </Tooltip>
         )}

@@ -19,11 +19,18 @@ interface RegisterFormValues {
 const { Title, Text } = Typography;
 
 export const Route = createFileRoute('/register')({
+  validateSearch: (search: Record<string, unknown>) => {
+    return {
+      email: (search.email as string) || undefined,
+      token: (search.token as string) || undefined,
+    };
+  },
   component: RegisterComponent,
 });
 
 function RegisterComponent() {
   const navigate = useNavigate();
+  const { email: initialEmail, token } = Route.useSearch();
   const registerMutation = useMutation(registerRegisterMutation());
   const { message } = App.useApp();
 
@@ -33,7 +40,8 @@ function RegisterComponent() {
         body: {
           email: values.email,
           password: values.password,
-        },
+          invitation_code: token,
+        } as { email: string; password: string; invitation_code?: string },
       });
       message.success('Registration successful! Please login.');
       navigate({ to: '/login' });
@@ -142,6 +150,7 @@ function RegisterComponent() {
           onFinish={onFinish}
           size="large"
           layout="vertical"
+          initialValues={{ email: initialEmail }}
         >
           <Form.Item
             name="email"

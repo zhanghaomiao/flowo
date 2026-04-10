@@ -1,101 +1,64 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap');
+@import "tailwindcss";
 
-/* Modern font stack for better readability */
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "sans-serif";
+  --font-display: "Outfit", "Inter", "sans-serif";
+
+  --color-brand-50: #f0f9ff;
+  --color-brand-100: #e0f2fe;
+  --color-brand-200: #bae6fd;
+  --color-brand-300: #7dd3fc;
+  --color-brand-400: #38bdf8;
+  --color-brand-500: #0ea5e9;
+  --color-brand-600: #0284c7;
+  --color-brand-700: #0369a1;
+  --color-brand-800: #075985;
+  --color-brand-900: #0c4a6e;
+}
+
 :root {
-  font-family:
-    /* 中文字体 */
-    "PingFang SC",
-    "Hiragino Sans GB",
-    "Heiti SC",
-    "Microsoft YaHei",
-    "WenQuanYi Micro Hei",
-    /* 英文字体 */ -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    Roboto,
-    "Helvetica Neue",
-    Arial,
-    /* 无衬线字体回退 */ "Noto Sans",
-    sans-serif,
-    /* Emoji 字体 */ "Apple Color Emoji",
-    "Segoe UI Emoji",
-    "Segoe UI Symbol",
-    "Noto Color Emoji";
+  --glass-bg: rgba(255, 255, 255, 0.7);
+  --glass-border: rgba(255, 255, 255, 0.5);
+  --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.05);
+  --brand-gradient: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
 
+  /* General Typography Reset */
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
   line-height: 1.5;
   font-weight: 400;
-  font-synthesis: none;
+  color: #1e293b;
+  background-color: #ffffff;
+
+  /* Ant Design Typography Overrides - Excluding Code Editor */
+  :where(.ant-select, .ant-input, .ant-btn, .ant-modal, .ant-select-dropdown, .ant-message, .ant-picker) :not(.monaco-editor, .monaco-editor *, pre, code, kbd, samp) {
+    font-family: 'Inter', 'Outfit', sans-serif !important;
+  }
+
+  /* Explicit Monospace Reset for Code Elements */
+  pre, code, kbd, samp, .monaco-editor * {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace !important;
+  }
+
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Improved text rendering */
 body {
   margin: 0;
-  font-family: inherit;
-  color: #1f2937;
+  font-family: 'Inter', sans-serif;
+  min-height: 100vh;
   background-color: #ffffff;
+  color: #1e293b;
 }
 
-/* Code and monospace text */
-code,
-pre,
-.ant-typography-code {
-  font-family:
-    "SF Mono", "Monaco", "Inconsolata", "Roboto Mono", "Consolas",
-    "Liberation Mono", "Menlo", "Courier New", monospace;
-}
-
-/* Ant Design customizations */
-.ant-typography {
-  font-family: inherit;
-}
-
-/* Enhanced readability for tables */
-.ant-table {
-  font-family: inherit;
-}
-
-.ant-table-tbody > tr > td {
-  font-family: inherit;
-}
-
-/* Better button text */
-.ant-btn {
-  font-family: inherit;
-  font-weight: 500;
-}
-
-/* Improved form inputs */
-.ant-input,
-.ant-select-selection-item {
-  font-family: inherit;
-}
-
-#root {
-  max-width: 100%;
-  min-width: 100%;
-  margin: 0 auto;
-}
-
-/* Snakefile viewer container specific styles */
-
+/* Global Link Reset to prevent blue text in Navigation */
 a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
+  color: inherit;
+  text-decoration: none;
 }
 
 a:hover {
-  color: #535bf2;
+  color: inherit;
 }
-
-h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
-}
-
-

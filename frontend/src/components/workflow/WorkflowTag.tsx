@@ -7,10 +7,16 @@ import { getTagColor } from '@/utils/tagColors';
 interface WorkflowTagProps {
   tag: string;
   style?: React.CSSProperties;
+  className?: string;
   onClick?: (tag: string) => void;
 }
 
-const WorkflowTag: React.FC<WorkflowTagProps> = ({ tag, style, onClick }) => {
+const WorkflowTag: React.FC<WorkflowTagProps> = ({
+  tag,
+  style,
+  className,
+  onClick,
+}) => {
   const handleClick = () => {
     if (onClick) {
       onClick(tag);
@@ -20,6 +26,7 @@ const WorkflowTag: React.FC<WorkflowTagProps> = ({ tag, style, onClick }) => {
   return (
     <Tag
       color={getTagColor(tag)}
+      className={className}
       style={{
         ...style,
         marginInlineEnd: 2,

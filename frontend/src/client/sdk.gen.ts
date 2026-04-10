@@ -2,7 +2,7 @@
 
 import { type Client, formDataBodySerializer, type Options as Options2, type TDataShape, urlSearchParamsBodySerializer } from './client';
 import { client } from './client.gen';
-import type { AuthJwtLoginData, AuthJwtLoginErrors, AuthJwtLoginResponses, AuthJwtLogoutData, AuthJwtLogoutErrors, AuthJwtLogoutResponses, CloseWorkflowData, CloseWorkflowErrors, CloseWorkflowResponses, CreateCatalogData, CreateCatalogErrors, CreateCatalogResponses, CreateDirectoryData, CreateDirectoryErrors, CreateDirectoryResponses, CreateTokenData, CreateTokenErrors, CreateTokenResponses, DeleteCatalogData, DeleteCatalogErrors, DeleteCatalogResponses, DeleteDirectoryData, DeleteDirectoryErrors, DeleteDirectoryResponses, DeleteFileData, DeleteFileErrors, DeleteFileResponses, DeleteTokenData, DeleteTokenErrors, DeleteTokenResponses, DeleteWorkflowData, DeleteWorkflowErrors, DeleteWorkflowResponses, DownloadCatalogData, DownloadCatalogErrors, DownloadCatalogResponses, ExportCatalogData, ExportCatalogErrors, ExportCatalogResponses, GetActivityData, GetActivityErrors, GetActivityResponses, GetAllTagsData, GetAllTagsResponses, GetCatalogDagData, GetCatalogDagErrors, GetCatalogDagResponses, GetCatalogData, GetCatalogErrors, GetCatalogResponses, GetClientConfigData, GetClientConfigResponses, GetConfigfilesData, GetConfigfilesErrors, GetConfigfilesResponses, GetDetailData, GetDetailErrors, GetDetailResponses, GetJobData, GetJobErrors, GetJobOutputsData, GetJobOutputsErrors, GetJobOutputsResponses, GetJobResponses, GetJobsData, GetJobsErrors, GetJobsResponses, GetLogsData, GetLogsErrors, GetLogsResponses, GetProgressData, GetProgressErrors, GetProgressResponses, GetRuleDurationData, GetRuleDurationErrors, GetRuleDurationResponses, GetRuleErrorData, GetRuleErrorErrors, GetRuleErrorResponses, GetRuleGraphData, GetRuleGraphErrors, GetRuleGraphResponses, GetRulesData, GetRulesErrors, GetRulesResponses, GetRuleStatusData, GetRuleStatusErrors, GetRuleStatusResponses, GetSettingsData, GetSettingsResponses, GetSnakefileData, GetSnakefileErrors, GetSnakefileResponses, GetSseTicketData, GetSseTicketResponses, GetStatusData, GetStatusErrors, GetStatusResponses, GetSystemHealthData, GetSystemHealthResponses, GetSystemResourcesData, GetSystemResourcesResponses, GetTimelinesData, GetTimelinesErrors, GetTimelinesResponses, GetWorkflowIdByNameData, GetWorkflowIdByNameErrors, GetWorkflowIdByNameResponses, GetWorkflowLogData, GetWorkflowLogErrors, GetWorkflowLogResponses, GetWorkflowsData, GetWorkflowsErrors, GetWorkflowsResponses, GitPullData, GitPullResponses, GitPushData, GitPushErrors, GitPushResponses, ImportFromGitData, ImportFromGitErrors, ImportFromGitResponses, ListCatalogsData, ListCatalogsErrors, ListCatalogsResponses, ListFilesData, ListFilesErrors, ListFilesResponses, ListTokensData, ListTokensResponses, PostPruningData, PostPruningResponses, ReadFile2Data, ReadFile2Errors, ReadFile2Responses, ReadFileData, ReadFileErrors, ReadFileResponses, RegisterRegisterData, RegisterRegisterErrors, RegisterRegisterResponses, RenamePathData, RenamePathErrors, RenamePathResponses, ReportEventData, ReportEventErrors, ReportEventResponses, StreamEventsData, StreamEventsErrors, StreamEventsResponses, SyncCatalogsData, SyncCatalogsResponses, SyncCatalogZipData, SyncCatalogZipErrors, SyncCatalogZipResponses, TestGitConnectionData, TestGitConnectionErrors, TestGitConnectionResponses, TestSmtpConnectionData, TestSmtpConnectionErrors, TestSmtpConnectionResponses, UpdateCatalogData, UpdateCatalogErrors, UpdateCatalogResponses, UpdateSettingsData, UpdateSettingsErrors, UpdateSettingsResponses, UploadCatalogData, UploadCatalogErrors, UploadCatalogResponses, UsersCurrentUserData, UsersCurrentUserErrors, UsersCurrentUserResponses, UsersDeleteUserData, UsersDeleteUserErrors, UsersDeleteUserResponses, UsersPatchCurrentUserData, UsersPatchCurrentUserErrors, UsersPatchCurrentUserResponses, UsersPatchUserData, UsersPatchUserErrors, UsersPatchUserResponses, UsersUserData, UsersUserErrors, UsersUserResponses, WriteFileData, WriteFileErrors, WriteFileResponses } from './types.gen';
+import type { AuthJwtLoginData, AuthJwtLoginErrors, AuthJwtLoginResponses, AuthJwtLogoutData, AuthJwtLogoutErrors, AuthJwtLogoutResponses, CloseWorkflowData, CloseWorkflowErrors, CloseWorkflowResponses, CreateCatalogData, CreateCatalogErrors, CreateCatalogResponses, CreateDirectoryData, CreateDirectoryErrors, CreateDirectoryResponses, CreateInvitationData, CreateInvitationErrors, CreateInvitationResponses, CreateTokenData, CreateTokenErrors, CreateTokenResponses, DeleteCatalogData, DeleteCatalogErrors, DeleteCatalogResponses, DeleteDirectoryData, DeleteDirectoryErrors, DeleteDirectoryResponses, DeleteFileData, DeleteFileErrors, DeleteFileResponses, DeleteInvitationData, DeleteInvitationErrors, DeleteInvitationResponses, DeleteTokenData, DeleteTokenErrors, DeleteTokenResponses, DeleteWorkflowData, DeleteWorkflowErrors, DeleteWorkflowResponses, DownloadCatalogData, DownloadCatalogErrors, DownloadCatalogResponses, ExportCatalogData, ExportCatalogErrors, ExportCatalogResponses, GetActivityData, GetActivityErrors, GetActivityResponses, GetAllTagsData, GetAllTagsResponses, GetCatalogDagData, GetCatalogDagErrors, GetCatalogDagResponses, GetCatalogData, GetCatalogErrors, GetCatalogResponses, GetClientConfigData, GetClientConfigResponses, GetConfigfilesData, GetConfigfilesErrors, GetConfigfilesResponses, GetDetailData, GetDetailErrors, GetDetailResponses, GetJobData, GetJobErrors, GetJobOutputsData, GetJobOutputsErrors, GetJobOutputsResponses, GetJobResponses, GetJobsData, GetJobsErrors, GetJobsResponses, GetLogsData, GetLogsErrors, GetLogsResponses, GetProgressData, GetProgressErrors, GetProgressResponses, GetRuleDurationData, GetRuleDurationErrors, GetRuleDurationResponses, GetRuleErrorData, GetRuleErrorErrors, GetRuleErrorResponses, GetRuleGraphData, GetRuleGraphErrors, GetRuleGraphResponses, GetRulesData, GetRulesErrors, GetRulesResponses, GetRuleStatusData, GetRuleStatusErrors, GetRuleStatusResponses, GetSettingsData, GetSettingsResponses, GetSnakefileData, GetSnakefileErrors, GetSnakefileResponses, GetSseTicketData, GetSseTicketResponses, GetStatusData, GetStatusErrors, GetStatusResponses, GetSystemHealthData, GetSystemHealthResponses, GetSystemInfoData, GetSystemInfoResponses, GetSystemResourcesData, GetSystemResourcesResponses, GetSystemSettingsData, GetSystemSettingsResponses, GetTimelinesData, GetTimelinesErrors, GetTimelinesResponses, GetWorkflowIdByNameData, GetWorkflowIdByNameErrors, GetWorkflowIdByNameResponses, GetWorkflowLogData, GetWorkflowLogErrors, GetWorkflowLogResponses, GetWorkflowsData, GetWorkflowsErrors, GetWorkflowsResponses, GitPullData, GitPullResponses, GitPushData, GitPushErrors, GitPushResponses, ImportFromGitData, ImportFromGitErrors, ImportFromGitResponses, ListCatalogsData, ListCatalogsErrors, ListCatalogsResponses, ListFilesData, ListFilesErrors, ListFilesResponses, ListInvitationsData, ListInvitationsResponses, ListTokensData, ListTokensResponses, ListUsersData, ListUsersResponses, PostPruningData, PostPruningResponses, ReadFile2Data, ReadFile2Errors, ReadFile2Responses, ReadFileData, ReadFileErrors, ReadFileResponses, RegisterRegisterData, RegisterRegisterErrors, RegisterRegisterResponses, RenamePathData, RenamePathErrors, RenamePathResponses, ReportEventData, ReportEventErrors, ReportEventResponses, StreamEventsData, StreamEventsErrors, StreamEventsResponses, SyncCatalogsData, SyncCatalogsResponses, SyncCatalogZipData, SyncCatalogZipErrors, SyncCatalogZipResponses, TestAdminSmtpConnectionData, TestAdminSmtpConnectionErrors, TestAdminSmtpConnectionResponses, TestGitConnectionData, TestGitConnectionErrors, TestGitConnectionResponses, UpdateCatalogData, UpdateCatalogErrors, UpdateCatalogResponses, UpdateSettingsData, UpdateSettingsErrors, UpdateSettingsResponses, UpdateSystemSettingsData, UpdateSystemSettingsErrors, UpdateSystemSettingsResponses, UploadCatalogData, UploadCatalogErrors, UploadCatalogResponses, UsersCurrentUserData, UsersCurrentUserErrors, UsersCurrentUserResponses, UsersDeleteUserData, UsersDeleteUserErrors, UsersDeleteUserResponses, UsersPatchCurrentUserData, UsersPatchCurrentUserErrors, UsersPatchCurrentUserResponses, UsersPatchUserData, UsersPatchUserErrors, UsersPatchUserResponses, UsersUserData, UsersUserErrors, UsersUserResponses, WriteFileData, WriteFileErrors, WriteFileResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean> = Options2<TData, ThrowOnError> & {
     /**
@@ -313,6 +313,13 @@ export const getJobOutputs = <ThrowOnError extends boolean = false>(options: Opt
     url: '/api/v1/outputs/{workflow_id}/rule_outputs',
     ...options
 });
+
+/**
+ * Get System Info
+ *
+ * Publicly accessible system information.
+ */
+export const getSystemInfo = <ThrowOnError extends boolean = false>(options?: Options<GetSystemInfoData, ThrowOnError>) => (options?.client ?? client).get<GetSystemInfoResponses, unknown, ThrowOnError>({ url: '/api/v1/utils/info', ...options });
 
 /**
  * Get All Tags
@@ -716,13 +723,79 @@ export const testGitConnection = <ThrowOnError extends boolean = false>(options:
 });
 
 /**
- * Test Smtp Connection
+ * List Users
  *
- * Test SMTP connectivity by attempting a connection + optional AUTH.
+ * List all registered users.
  */
-export const testSmtpConnection = <ThrowOnError extends boolean = false>(options: Options<TestSmtpConnectionData, ThrowOnError>) => (options.client ?? client).post<TestSmtpConnectionResponses, TestSmtpConnectionErrors, ThrowOnError>({
+export const listUsers = <ThrowOnError extends boolean = false>(options?: Options<ListUsersData, ThrowOnError>) => (options?.client ?? client).get<ListUsersResponses, unknown, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/settings/test/smtp',
+    url: '/api/v1/admin/users',
+    ...options
+});
+
+/**
+ * Get System Settings
+ */
+export const getSystemSettings = <ThrowOnError extends boolean = false>(options?: Options<GetSystemSettingsData, ThrowOnError>) => (options?.client ?? client).get<GetSystemSettingsResponses, unknown, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/admin/settings',
+    ...options
+});
+
+/**
+ * Update System Settings
+ */
+export const updateSystemSettings = <ThrowOnError extends boolean = false>(options: Options<UpdateSystemSettingsData, ThrowOnError>) => (options.client ?? client).patch<UpdateSystemSettingsResponses, UpdateSystemSettingsErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/admin/settings',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * List Invitations
+ */
+export const listInvitations = <ThrowOnError extends boolean = false>(options?: Options<ListInvitationsData, ThrowOnError>) => (options?.client ?? client).get<ListInvitationsResponses, unknown, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/admin/invitations',
+    ...options
+});
+
+/**
+ * Create Invitation
+ */
+export const createInvitation = <ThrowOnError extends boolean = false>(options: Options<CreateInvitationData, ThrowOnError>) => (options.client ?? client).post<CreateInvitationResponses, CreateInvitationErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/admin/invitations',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Delete Invitation
+ *
+ * Revoke an invitation.
+ */
+export const deleteInvitation = <ThrowOnError extends boolean = false>(options: Options<DeleteInvitationData, ThrowOnError>) => (options.client ?? client).delete<DeleteInvitationResponses, DeleteInvitationErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/admin/invitations/{invitation_id}',
+    ...options
+});
+
+/**
+ * Test Admin Smtp Connection
+ *
+ * Test SMTP connectivity for system settings.
+ */
+export const testAdminSmtpConnection = <ThrowOnError extends boolean = false>(options: Options<TestAdminSmtpConnectionData, ThrowOnError>) => (options.client ?? client).post<TestAdminSmtpConnectionResponses, TestAdminSmtpConnectionErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/admin/settings/test-smtp',
     ...options,
     headers: {
         'Content-Type': 'application/json',

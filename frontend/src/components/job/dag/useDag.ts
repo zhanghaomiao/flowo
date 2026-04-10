@@ -17,11 +17,11 @@ const NODE_WIDTH = 150;
 const NODE_HEIGHT = 60;
 
 const STATUS_COLORS: Record<string, string> = {
-  unscheduled: '#E0E0E0',
-  SUCCESS: '#C8E6C9',
-  RUNNING: '#BBDEFB',
-  ERROR: '#FFCDD2',
-  WAITING: '#FFECB3',
+  unscheduled: '#f8fafc', // Slate 50
+  SUCCESS: '#e0f2fe', // Sky 100
+  RUNNING: '#e0e7ff', // Indigo 100
+  ERROR: '#ffe4e6', // Rose 100
+  WAITING: '#fef3c7', // Amber 100
 };
 
 // 类型定义 (导出以供组件使用)
@@ -149,9 +149,9 @@ export const useWorkflowGraph = ({
         type: MarkerType.ArrowClosed,
         width: 20,
         height: 20,
-        color: '#1890ff',
+        color: '#0ea5e9',
       },
-      style: { stroke: '#1890ff', strokeWidth: 2 },
+      style: { stroke: '#0ea5e9', strokeWidth: 2 },
     }));
 
     // 执行布局算法

@@ -148,7 +148,7 @@ const WorkflowGraphInner: React.FC<WorkflowGraphProps> = ({
       // Fit view after fullscreen change with a small delay
       setTimeout(() => {
         if (reactFlowInstance) {
-          reactFlowInstance.fitView({ duration: 300 });
+          reactFlowInstance.fitView({ duration: 300, padding: 0.2 });
         }
       }, 100);
     };
@@ -174,35 +174,50 @@ const WorkflowGraphInner: React.FC<WorkflowGraphProps> = ({
     }
   }, []);
 
+  // Handle container resizing to keep graph centered
+  useEffect(() => {
+    if (!containerRef.current || !reactFlowInstance) return;
+
+    const resizeObserver = new ResizeObserver(() => {
+      // Use a debounce or delay to avoid jitter during split dragging
+      window.requestAnimationFrame(() => {
+        reactFlowInstance.fitView({ duration: 200, padding: 0.2 });
+      });
+    });
+
+    resizeObserver.observe(containerRef.current);
+    return () => resizeObserver.disconnect();
+  }, [reactFlowInstance]);
+
   // Update nodes and edges when they change
   useEffect(() => {
     if (reactFlowInstance) {
       currentViewport.current = reactFlowInstance.getViewport();
     }
     setNodes(flowNodes);
-    if (!isLayoutChange.current) {
+
+    // If it's the initial load or a layout change, we want to fit view
+    if (isInitialLoad.current || isLayoutChange.current) {
+      setTimeout(() => {
+        if (reactFlowInstance) {
+          reactFlowInstance.fitView({ duration: 400, padding: 0.2 });
+          isInitialLoad.current = false;
+          isLayoutChange.current = false;
+        }
+      }, 100);
+    } else {
+      // Otherwise maintain the user's current viewport
       setTimeout(() => {
         if (reactFlowInstance) {
           reactFlowInstance.setViewport(currentViewport.current);
         }
       }, 10);
-    } else {
-      isLayoutChange.current = false;
     }
   }, [flowNodes, reactFlowInstance, setNodes]);
 
   useEffect(() => {
     setEdges(flowEdges);
   }, [flowEdges, setEdges]);
-
-  useEffect(() => {
-    if (nodes.length > 0 && isInitialLoad.current && reactFlowInstance) {
-      isInitialLoad.current = false;
-      setTimeout(() => {
-        reactFlowInstance.fitView();
-      }, 100);
-    }
-  }, [nodes, reactFlowInstance]);
 
   const stylingContext = useMemo(
     () => ({
@@ -233,13 +248,13 @@ const WorkflowGraphInner: React.FC<WorkflowGraphProps> = ({
       isLayoutChange.current = true;
       setTimeout(() => {
         if (reactFlowInstance) {
-          reactFlowInstance.fitView({ duration: 300 });
+          reactFlowInstance.fitView({ duration: 400, padding: 0.2 });
         }
         // Reset the flags after fit view is complete
         setTimeout(() => {
           isLayoutChange.current = false;
           isFittingView.current = false;
-        }, 350);
+        }, 450);
       }, 150);
     },
     [reactFlowInstance],
@@ -256,28 +271,22 @@ const WorkflowGraphInner: React.FC<WorkflowGraphProps> = ({
     setForceLayoutRecalc((prev) => prev + 1);
     setTimeout(() => {
       if (reactFlowInstance) {
-        reactFlowInstance.fitView({ duration: 300 });
+        reactFlowInstance.fitView({ duration: 400, padding: 0.2 });
       }
       setTimeout(() => {
         isLayoutChange.current = false;
         isFittingView.current = false;
-      }, 350);
+      }, 450);
     }, 150);
   }, [reactFlowInstance]);
 
   if (isLoading) {
     return (
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          background: '#fafafa',
-          border: '1px dashed #d9d9d9',
-          borderRadius: '6px',
-        }}
-      >
-        <div>Loading workflow graph...</div>
+      <div className="flex flex-col items-center justify-center h-full bg-slate-50/50 border border-dashed border-slate-200 rounded-xl font-sans gap-3">
+        <SyncOutlined spin className="text-brand-500 text-xl" />
+        <div className="text-slate-400 font-bold text-xs uppercase tracking-widest">
+          Generating Workflow Graph...
+        </div>
       </div>
     );
   }
@@ -287,61 +296,23 @@ const WorkflowGraphInner: React.FC<WorkflowGraphProps> = ({
       error instanceof Error ? error.message : 'Unknown error';
 
     return (
-      <div
-        style={{
-          height: '100%',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: '24px',
-          background: '#fff2f0',
-          border: '1px solid #ffccc7',
-          borderRadius: '6px',
-        }}
-      >
-        <div
-          style={{
-            maxWidth: '800px',
-            width: '100%',
-          }}
-        >
-          <div
-            style={{
-              color: '#ff4d4f',
-              fontSize: '16px',
-              fontWeight: 600,
-              marginBottom: '12px',
-              display: 'flex',
-              alignItems: 'center',
-            }}
-          >
-            <span style={{ marginRight: '8px' }}>⚠️</span>
-            DAG Generation Failed
+      <div className="h-full flex flex-col items-center justify-center p-8 bg-rose-50/30 border border-rose-100 rounded-xl font-sans overflow-hidden">
+        <div className="max-w-full w-full">
+          <div className="text-rose-600 text-base font-black mb-4 flex items-center gap-2">
+            <span className="p-1 px-2 bg-rose-600 text-white rounded-lg text-xs">
+              !
+            </span>
+            DAG GENERATION FAILED
           </div>
-          <pre
-            style={{
-              background: '#ffffff',
-              padding: '16px',
-              borderRadius: '4px',
-              border: '1px solid #ffccc7',
-              fontSize: '12px',
-              lineHeight: '1.5',
-              maxHeight: '400px',
-              overflow: 'auto',
-              whiteSpace: 'pre-wrap',
-              wordBreak: 'break-word',
-              color: '#555',
-              fontFamily: 'monospace',
-            }}
-          >
+          <pre className="bg-white p-4 rounded-xl border border-rose-100 text-[11px] leading-relaxed max-h-[300px] overflow-auto whitespace-pre-wrap word-break-all text-slate-600 font-mono shadow-sm">
             {errorMessage}
           </pre>
-          <div style={{ marginTop: '16px', textAlign: 'right' }}>
+          <div className="mt-4 text-right">
             <Button
-              size="small"
+              size="middle"
               onClick={() => window.location.reload()}
               icon={<SyncOutlined />}
+              className="rounded-xl font-bold border-rose-200 text-rose-600 hover:text-rose-700 hover:bg-rose-50"
             >
               Retry
             </Button>
@@ -353,18 +324,10 @@ const WorkflowGraphInner: React.FC<WorkflowGraphProps> = ({
 
   if (!flowNodes.length) {
     return (
-      <div
-        style={{
-          height: '400px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          background: '#fafafa',
-          border: '1px dashed #d9d9d9',
-          borderRadius: '6px',
-        }}
-      >
-        <div>No workflow graph data available</div>
+      <div className="flex flex-col items-center justify-center h-full bg-slate-50 border border-dashed border-slate-200 rounded-xl font-sans gap-2">
+        <div className="text-slate-400 font-bold text-xs uppercase tracking-widest">
+          No Graph Data Available
+        </div>
       </div>
     );
   }
@@ -372,20 +335,11 @@ const WorkflowGraphInner: React.FC<WorkflowGraphProps> = ({
   return (
     <div
       ref={containerRef}
-      style={{
-        height: isFullscreen ? '100vh' : '100%',
-        width: isFullscreen ? '100vw' : '100%',
-        position: 'relative',
-        backgroundColor: isFullscreen ? '#fafafa' : 'transparent',
-      }}
+      className={`relative ${isFullscreen ? 'h-screen w-screen bg-white' : 'h-full w-full'}`}
     >
       {!isFullscreen && !catalogSlug && <DraggableLegendPanel />}
       <div
-        style={{
-          height: isFullscreen ? '100%' : '96%',
-          border: isFullscreen ? 'none' : '1px solid #d9d9d9',
-          borderRadius: isFullscreen ? '0' : '6px',
-        }}
+        className={`bg-white transition-all duration-300 ${isFullscreen ? 'h-full border-none' : 'h-[96%] border border-slate-100 rounded-2xl shadow-sm overflow-hidden'}`}
       >
         <StylingContext.Provider value={stylingContext}>
           <ReactFlow
@@ -397,17 +351,20 @@ const WorkflowGraphInner: React.FC<WorkflowGraphProps> = ({
             onNodeClick={handleNodeClick}
             connectionMode={ConnectionMode.Loose}
             fitViewOptions={{
-              padding: 0.1,
+              padding: 0.2,
               includeHiddenNodes: false,
             }}
             nodesDraggable={true}
             nodesConnectable={false}
             elementsSelectable={true}
-            minZoom={0.2}
+            minZoom={0.1}
             maxZoom={2}
           >
-            <Background />
-            <Controls onFitView={handleFitView}>
+            <Background color="#fafafa" gap={20} />
+            <Controls
+              onFitView={handleFitView}
+              className="bg-white border-slate-100 rounded-lg overflow-hidden shadow-md"
+            >
               <Tooltip
                 title={isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen'}
               >
@@ -421,10 +378,7 @@ const WorkflowGraphInner: React.FC<WorkflowGraphProps> = ({
               </Tooltip>
             </Controls>
             <MiniMap
-              style={{
-                height: 80,
-                width: 120,
-              }}
+              className="rounded-xl border border-slate-100 shadow-lg"
               zoomable
               pannable
             />
@@ -441,17 +395,12 @@ const WorkflowGraphInner: React.FC<WorkflowGraphProps> = ({
       </div>
 
       {!isFullscreen && (
-        <div
-          style={{
-            marginTop: '8px',
-            fontSize: '11px',
-            color: '#666',
-            textAlign: 'center',
-          }}
-        >
-          Layout: {getLayoutInfo(layoutDirection).name}{' '}
-          {getLayoutInfo(layoutDirection).icon} • Click nodes to filter jobs •
-          Drag to reposition
+        <div className="mt-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-center flex items-center justify-center gap-2">
+          <span>Layout: {getLayoutInfo(layoutDirection).name}</span>
+          <span className="h-1 w-1 rounded-full bg-slate-300" />
+          <span>Click nodes to filter</span>
+          <span className="h-1 w-1 rounded-full bg-slate-300" />
+          <span>Drag to move</span>
         </div>
       )}
     </div>

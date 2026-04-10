@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import smtplib
 import uuid
 from typing import Any
 
@@ -26,38 +25,18 @@ router = APIRouter()
 class UserSettingsRead(BaseModel):
     git_remote_url: str | None = None
     git_token: str | None = None
-    smtp_host: str | None = None
-    smtp_port: int | None = None
-    smtp_user: str | None = None
-    smtp_password: str | None = None
-    smtp_from: str | None = None
-    smtp_use_tls: bool | None = True
     extra: dict[str, Any] | None = None
 
 
 class UserSettingsUpdate(BaseModel):
     git_remote_url: str | None = None
     git_token: str | None = None
-    smtp_host: str | None = None
-    smtp_port: int | None = None
-    smtp_user: str | None = None
-    smtp_password: str | None = None
-    smtp_from: str | None = None
-    smtp_use_tls: bool | None = True
     extra: dict[str, Any] | None = None
 
 
 class TestGitRequest(BaseModel):
     remote_url: str
     token: str | None = None
-
-
-class TestSmtpRequest(BaseModel):
-    smtp_host: str
-    smtp_port: int = 587
-    smtp_user: str | None = None
-    smtp_password: str | None = None
-    smtp_use_tls: bool = True
 
 
 class ConnectionTestResult(BaseModel):
@@ -102,12 +81,6 @@ async def get_settings(
     return UserSettingsRead(
         git_remote_url=settings.git_remote_url,
         git_token=settings.git_token,
-        smtp_host=settings.smtp_host,
-        smtp_port=settings.smtp_port,
-        smtp_user=settings.smtp_user,
-        smtp_password=settings.smtp_password,
-        smtp_from=settings.smtp_from,
-        smtp_use_tls=settings.smtp_use_tls,
         extra=settings.extra,
     )
 
@@ -130,12 +103,6 @@ async def update_settings(
     return UserSettingsRead(
         git_remote_url=settings.git_remote_url,
         git_token=settings.git_token,
-        smtp_host=settings.smtp_host,
-        smtp_port=settings.smtp_port,
-        smtp_user=settings.smtp_user,
-        smtp_password=settings.smtp_password,
-        smtp_from=settings.smtp_from,
-        smtp_use_tls=settings.smtp_use_tls,
         extra=settings.extra,
     )
 
@@ -148,33 +115,3 @@ async def test_git_connection(
     """Test Git connectivity via GitService."""
     success, message = git_service.test_connection(body.remote_url, body.token)
     return ConnectionTestResult(success=success, message=message)
-
-
-@router.post("/test/smtp", response_model=ConnectionTestResult)
-async def test_smtp_connection(
-    body: TestSmtpRequest,
-    user: User = Depends(current_active_user),
-) -> ConnectionTestResult:
-    """Test SMTP connectivity by attempting a connection + optional AUTH."""
-    try:
-        if body.smtp_use_tls:
-            server = smtplib.SMTP_SSL(body.smtp_host, body.smtp_port, timeout=10)
-        else:
-            server = smtplib.SMTP(body.smtp_host, body.smtp_port, timeout=10)
-            server.starttls()
-
-        if body.smtp_user and body.smtp_password:
-            server.login(body.smtp_user, body.smtp_password)
-
-        server.quit()
-        return ConnectionTestResult(success=True, message="SMTP connection successful.")
-    except smtplib.SMTPAuthenticationError:
-        return ConnectionTestResult(
-            success=False, message="Authentication failed — check username/password."
-        )
-    except smtplib.SMTPConnectError as e:
-        return ConnectionTestResult(success=False, message=f"Cannot connect: {e}")
-    except TimeoutError:
-        return ConnectionTestResult(success=False, message="Connection timed out.")
-    except Exception as e:
-        return ConnectionTestResult(success=False, message=str(e))

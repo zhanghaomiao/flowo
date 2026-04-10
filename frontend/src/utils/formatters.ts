@@ -52,15 +52,15 @@ export const formatDuration = (duration: number) => {
 export const getStatusColor = (status: Status) => {
   switch (status) {
     case 'SUCCESS':
-      return 'green';
+      return '#0ea5e9'; // Theme Sky Blue
     case 'RUNNING':
-      return 'blue';
+      return '#6366f1'; // Indigo for contrast
     case 'ERROR':
-      return 'red';
+      return '#f43f5e'; // Rose
     case 'WAITING':
-      return 'orange';
+      return '#f59e0b'; // Amber
     default:
-      return 'default';
+      return '#94a3b8'; // Slate
   }
 };
 

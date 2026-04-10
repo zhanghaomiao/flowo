@@ -1,17 +1,18 @@
 import React, { useEffect, useState } from 'react';
 
-import { SearchOutlined } from '@ant-design/icons';
 import { useQuery } from '@tanstack/react-query';
 import type { TimeRangePickerProps } from 'antd';
-import { DatePicker, Input, Select, Space } from 'antd';
-import dayjs, { Dayjs } from 'dayjs';
+import { DatePicker, Input, Select } from 'antd';
+import type { Dayjs } from 'dayjs';
+import dayjs from 'dayjs';
+import { Calendar, Search, Tag } from 'lucide-react';
 
 import { getAllTagsOptions } from '@/client/@tanstack/react-query.gen';
 import WorkflowTag from '@/components/workflow/WorkflowTag';
 
 const { RangePicker } = DatePicker;
 
-interface WorkflowSearchProps {
+export interface WorkflowSearchProps {
   onTagsChange: (tags: string | null) => void;
   onNameChange: (name: string | null) => void;
   onDateRangeChange: (startAt: string | null, endAt: string | null) => void;
@@ -19,6 +20,7 @@ interface WorkflowSearchProps {
   name?: string | null;
   startAt?: string | null;
   endAt?: string | null;
+  className?: string;
 }
 
 const WorkflowSearch: React.FC<WorkflowSearchProps> = ({
@@ -27,6 +29,7 @@ const WorkflowSearch: React.FC<WorkflowSearchProps> = ({
   onDateRangeChange,
   name,
   tags,
+  className,
 }) => {
   // Local state for immediate UI updates
   const [localName, setLocalName] = useState(name || '');
@@ -78,41 +81,52 @@ const WorkflowSearch: React.FC<WorkflowSearchProps> = ({
   ];
 
   return (
-    <Space size="middle" style={{ display: 'flex', alignItems: 'center' }}>
-      <Select
-        options={allTags?.map((tag) => ({ label: tag, value: tag }))}
-        placeholder="Search by tags"
-        allowClear
-        onChange={handleTagsChange}
-        value={tags && tags.trim() ? tags.split(',') : []}
-        tagRender={(tag) => <WorkflowTag tag={tag.label as string} />}
-        mode="multiple"
-        style={{ width: 140 }}
-        size="small"
-      />
+    <div
+      className={`flex flex-wrap items-center bg-slate-100/50 border-none rounded-2xl shadow-sm divide-x divide-slate-100/50 overflow-hidden h-12 ${className || ''}`}
+    >
+      <div className="flex-[1.5] min-w-[200px] h-full flex items-center px-4 hover:bg-slate-50/50 transition-colors">
+        <Tag size={16} className="text-slate-400 mr-3 flex-shrink-0" />
+        <Select
+          options={allTags?.map((tag) => ({ label: tag, value: tag }))}
+          placeholder="Filter by tags"
+          allowClear
+          onChange={handleTagsChange}
+          value={tags && tags.trim() ? tags.split(',') : []}
+          tagRender={(tag) => <WorkflowTag tag={tag.label as string} />}
+          mode="multiple"
+          className="w-full font-sans border-none focus:ring-0"
+          variant="borderless"
+          popupClassName="premium-select-popup"
+        />
+      </div>
 
-      <Input
-        placeholder="Search by name"
-        prefix={<SearchOutlined />}
-        allowClear
-        value={localName}
-        onChange={handleNameChange}
-        style={{ width: 160 }}
-        size="small"
-      />
+      <div className="flex-1 min-w-[150px] h-full flex items-center px-4 hover:bg-slate-50/50 transition-colors">
+        <Search size={16} className="text-slate-400 mr-3 flex-shrink-0" />
+        <Input
+          placeholder="Search by name"
+          allowClear
+          value={localName}
+          onChange={handleNameChange}
+          className="w-full font-sans p-0 m-0 border-none shadow-none focus:ring-0"
+          variant="borderless"
+        />
+      </div>
 
-      <RangePicker
-        presets={[...rangePresets]}
-        placeholder={['Start time', 'End time']}
-        allowEmpty={[true, true]}
-        showTime
-        format="YYYY-MM-DD HH:mm"
-        onChange={handleDateRangeChange}
-        style={{ width: 310 }}
-        size="small"
-        allowClear
-      />
-    </Space>
+      <div className="flex-[1.5] min-w-[250px] h-full flex items-center px-4 hover:bg-slate-50/50 transition-colors">
+        <Calendar size={16} className="text-slate-400 mr-3 flex-shrink-0" />
+        <RangePicker
+          presets={[...rangePresets]}
+          placeholder={['Start At', 'End At']}
+          allowEmpty={[true, true]}
+          showTime
+          format="YYYY-MM-DD HH:mm"
+          onChange={handleDateRangeChange}
+          className="w-full font-sans border-none shadow-none p-0 m-0 focus:ring-0"
+          allowClear
+          variant="borderless"
+        />
+      </div>
+    </div>
   );
 };
 

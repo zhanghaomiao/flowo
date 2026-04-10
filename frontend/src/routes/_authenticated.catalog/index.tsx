@@ -8,7 +8,7 @@ export const Route = createFileRoute('/_authenticated/catalog/')({
 
 function CatalogPage() {
   return (
-    <div style={{ width: '96%', margin: '0 auto' }}>
+    <div className="w-full h-full">
       <CatalogList />
     </div>
   );

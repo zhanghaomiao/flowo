@@ -1,8 +1,9 @@
+import uuid
 from datetime import datetime
 from typing import Literal
 
 import psutil
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.session import get_async_session
@@ -44,10 +45,14 @@ async def get_system_resources(
 @router.get("/status", response_model=StatusSummary)
 async def get_status(
     item: Literal["job", "workflow"],
+    target_user_id: uuid.UUID | None = Query(
+        None, description="Filter by user ID (admin only)"
+    ),
     db: AsyncSession = Depends(get_async_session),
     user: User = Depends(current_active_user),
 ):
-    return await SummaryService(db).get_status(item, user_id=user.id)
+    filter_user_id = target_user_id if user.is_superuser else user.id
+    return await SummaryService(db).get_status(item, user_id=filter_user_id)
 
 
 @router.get("/activity", response_model=dict[str, int])
@@ -56,11 +61,19 @@ async def get_activity(
     start_at: datetime | None = None,
     end_at: datetime | None = None,
     limit: int = 20,
+    target_user_id: uuid.UUID | None = Query(
+        None, description="Filter by user ID (admin only)"
+    ),
     db: AsyncSession = Depends(get_async_session),
     user: User = Depends(current_active_user),
 ):
+    filter_user_id = target_user_id if user.is_superuser else user.id
     return await SummaryService(db).get_activity(
-        item=item, start_at=start_at, end_at=end_at, limit=limit, user_id=user.id
+        item=item,
+        start_at=start_at,
+        end_at=end_at,
+        limit=limit,
+        user_id=filter_user_id,
     )
 
 
@@ -69,11 +82,15 @@ async def get_rule_error(
     start_at: datetime | None = None,
     end_at: datetime | None = None,
     limit: int = 20,
+    target_user_id: uuid.UUID | None = Query(
+        None, description="Filter by user ID (admin only)"
+    ),
     db: AsyncSession = Depends(get_async_session),
     user: User = Depends(current_active_user),
 ):
+    filter_user_id = target_user_id if user.is_superuser else user.id
     return await SummaryService(db).get_rule_error(
-        start_at=start_at, end_at=end_at, limit=limit, user_id=user.id
+        start_at=start_at, end_at=end_at, limit=limit, user_id=filter_user_id
     )
 
 
@@ -82,12 +99,16 @@ async def get_rule_duration(
     start_at: datetime | None = None,
     end_at: datetime | None = None,
     limit: int = 20,
+    target_user_id: uuid.UUID | None = Query(
+        None, description="Filter by user ID (admin only)"
+    ),
     db: AsyncSession = Depends(get_async_session),
     user: User = Depends(current_active_user),
 ):
+    filter_user_id = target_user_id if user.is_superuser else user.id
     data = (
         await SummaryService(db).get_rule_duration(
-            start_at=start_at, end_at=end_at, limit=limit, user_id=user.id
+            start_at=start_at, end_at=end_at, limit=limit, user_id=filter_user_id
         )
         or {}
     )
@@ -100,7 +121,8 @@ async def post_pruning(
     db: AsyncSession = Depends(get_async_session),
     user: User = Depends(current_active_user),
 ):
-    return await WorkflowService(db).pruning(user_id=user.id)
+    filter_user_id = user.id if not user.is_superuser else None
+    return await WorkflowService(db).pruning(user_id=filter_user_id)
 
 
 @router.get("/health", response_model=SystemHealthResponse)

@@ -3,8 +3,8 @@
 import { type DefaultError, type InfiniteData, infiniteQueryOptions, queryOptions, type UseMutationOptions, useQuery } from '@tanstack/react-query';
 
 import { client } from '../client.gen';
-import { authJwtLogin, authJwtLogout, closeWorkflow, createCatalog, createDirectory, createToken, deleteCatalog, deleteDirectory, deleteFile, deleteToken, deleteWorkflow, downloadCatalog, exportCatalog, getActivity, getAllTags, getCatalog, getCatalogDag, getClientConfig, getConfigfiles, getDetail, getJob, getJobOutputs, getJobs, getLogs, getProgress, getRuleDuration, getRuleError, getRuleGraph, getRules, getRuleStatus, getSettings, getSnakefile, getSseTicket, getStatus, getSystemHealth, getSystemResources, getTimelines, getWorkflowIdByName, getWorkflowLog, getWorkflows, gitPull, gitPush, importFromGit, listCatalogs, listFiles, listTokens, type Options, postPruning, readFile, readFile2, registerRegister, renamePath, reportEvent, streamEvents, syncCatalogs, syncCatalogZip, testGitConnection, testSmtpConnection, updateCatalog, updateSettings, uploadCatalog, usersCurrentUser, usersDeleteUser, usersPatchCurrentUser, usersPatchUser, usersUser, writeFile } from '../sdk.gen';
-import type { AuthJwtLoginData, AuthJwtLoginError, AuthJwtLoginResponse, AuthJwtLogoutData, CloseWorkflowData, CloseWorkflowError, CreateCatalogData, CreateCatalogError, CreateCatalogResponse, CreateDirectoryData, CreateDirectoryError, CreateTokenData, CreateTokenError, CreateTokenResponse, DeleteCatalogData, DeleteCatalogError, DeleteDirectoryData, DeleteDirectoryError, DeleteFileData, DeleteFileError, DeleteTokenData, DeleteTokenError, DeleteWorkflowData, DeleteWorkflowError, DownloadCatalogData, DownloadCatalogError, ExportCatalogData, ExportCatalogError, GetActivityData, GetActivityError, GetActivityResponse, GetAllTagsData, GetAllTagsResponse, GetCatalogDagData, GetCatalogDagError, GetCatalogData, GetCatalogError, GetCatalogResponse, GetClientConfigData, GetClientConfigResponse, GetConfigfilesData, GetConfigfilesError, GetConfigfilesResponse, GetDetailData, GetDetailError, GetDetailResponse, GetJobData, GetJobError, GetJobOutputsData, GetJobOutputsError, GetJobOutputsResponse, GetJobResponse, GetJobsData, GetJobsError, GetJobsResponse, GetLogsData, GetLogsError, GetLogsResponse, GetProgressData, GetProgressError, GetProgressResponse, GetRuleDurationData, GetRuleDurationError, GetRuleDurationResponse, GetRuleErrorData, GetRuleErrorError, GetRuleErrorResponse, GetRuleGraphData, GetRuleGraphError, GetRuleGraphResponse, GetRulesData, GetRulesError, GetRulesResponse, GetRuleStatusData, GetRuleStatusError, GetRuleStatusResponse, GetSettingsData, GetSettingsResponse, GetSnakefileData, GetSnakefileError, GetSnakefileResponse, GetSseTicketData, GetStatusData, GetStatusError, GetStatusResponse, GetSystemHealthData, GetSystemHealthResponse, GetSystemResourcesData, GetSystemResourcesResponse, GetTimelinesData, GetTimelinesError, GetTimelinesResponse, GetWorkflowIdByNameData, GetWorkflowIdByNameError, GetWorkflowIdByNameResponse, GetWorkflowLogData, GetWorkflowLogError, GetWorkflowLogResponse, GetWorkflowsData, GetWorkflowsError, GetWorkflowsResponse, GitPullData, GitPushData, GitPushError, ImportFromGitData, ImportFromGitError, ListCatalogsData, ListCatalogsError, ListCatalogsResponse, ListFilesData, ListFilesError, ListFilesResponse, ListTokensData, ListTokensResponse, PostPruningData, PostPruningResponse, ReadFile2Data, ReadFile2Error, ReadFile2Response, ReadFileData, ReadFileError, ReadFileResponse, RegisterRegisterData, RegisterRegisterError, RegisterRegisterResponse, RenamePathData, RenamePathError, ReportEventData, ReportEventError, StreamEventsData, StreamEventsError, SyncCatalogsData, SyncCatalogZipData, SyncCatalogZipError, TestGitConnectionData, TestGitConnectionError, TestGitConnectionResponse, TestSmtpConnectionData, TestSmtpConnectionError, TestSmtpConnectionResponse, UpdateCatalogData, UpdateCatalogError, UpdateCatalogResponse, UpdateSettingsData, UpdateSettingsError, UpdateSettingsResponse, UploadCatalogData, UploadCatalogError, UploadCatalogResponse, UsersCurrentUserData, UsersCurrentUserResponse, UsersDeleteUserData, UsersDeleteUserError, UsersDeleteUserResponse, UsersPatchCurrentUserData, UsersPatchCurrentUserError, UsersPatchCurrentUserResponse, UsersPatchUserData, UsersPatchUserError, UsersPatchUserResponse, UsersUserData, UsersUserError, UsersUserResponse, WriteFileData, WriteFileError, WriteFileResponse } from '../types.gen';
+import { authJwtLogin, authJwtLogout, closeWorkflow, createCatalog, createDirectory, createInvitation, createToken, deleteCatalog, deleteDirectory, deleteFile, deleteInvitation, deleteToken, deleteWorkflow, downloadCatalog, exportCatalog, getActivity, getAllTags, getCatalog, getCatalogDag, getClientConfig, getConfigfiles, getDetail, getJob, getJobOutputs, getJobs, getLogs, getProgress, getRuleDuration, getRuleError, getRuleGraph, getRules, getRuleStatus, getSettings, getSnakefile, getSseTicket, getStatus, getSystemHealth, getSystemInfo, getSystemResources, getSystemSettings, getTimelines, getWorkflowIdByName, getWorkflowLog, getWorkflows, gitPull, gitPush, importFromGit, listCatalogs, listFiles, listInvitations, listTokens, listUsers, type Options, postPruning, readFile, readFile2, registerRegister, renamePath, reportEvent, streamEvents, syncCatalogs, syncCatalogZip, testAdminSmtpConnection, testGitConnection, updateCatalog, updateSettings, updateSystemSettings, uploadCatalog, usersCurrentUser, usersDeleteUser, usersPatchCurrentUser, usersPatchUser, usersUser, writeFile } from '../sdk.gen';
+import type { AuthJwtLoginData, AuthJwtLoginError, AuthJwtLoginResponse, AuthJwtLogoutData, CloseWorkflowData, CloseWorkflowError, CreateCatalogData, CreateCatalogError, CreateCatalogResponse, CreateDirectoryData, CreateDirectoryError, CreateInvitationData, CreateInvitationError, CreateTokenData, CreateTokenError, CreateTokenResponse, DeleteCatalogData, DeleteCatalogError, DeleteDirectoryData, DeleteDirectoryError, DeleteFileData, DeleteFileError, DeleteInvitationData, DeleteInvitationError, DeleteTokenData, DeleteTokenError, DeleteWorkflowData, DeleteWorkflowError, DownloadCatalogData, DownloadCatalogError, ExportCatalogData, ExportCatalogError, GetActivityData, GetActivityError, GetActivityResponse, GetAllTagsData, GetAllTagsResponse, GetCatalogDagData, GetCatalogDagError, GetCatalogData, GetCatalogError, GetCatalogResponse, GetClientConfigData, GetClientConfigResponse, GetConfigfilesData, GetConfigfilesError, GetConfigfilesResponse, GetDetailData, GetDetailError, GetDetailResponse, GetJobData, GetJobError, GetJobOutputsData, GetJobOutputsError, GetJobOutputsResponse, GetJobResponse, GetJobsData, GetJobsError, GetJobsResponse, GetLogsData, GetLogsError, GetLogsResponse, GetProgressData, GetProgressError, GetProgressResponse, GetRuleDurationData, GetRuleDurationError, GetRuleDurationResponse, GetRuleErrorData, GetRuleErrorError, GetRuleErrorResponse, GetRuleGraphData, GetRuleGraphError, GetRuleGraphResponse, GetRulesData, GetRulesError, GetRulesResponse, GetRuleStatusData, GetRuleStatusError, GetRuleStatusResponse, GetSettingsData, GetSettingsResponse, GetSnakefileData, GetSnakefileError, GetSnakefileResponse, GetSseTicketData, GetStatusData, GetStatusError, GetStatusResponse, GetSystemHealthData, GetSystemHealthResponse, GetSystemInfoData, GetSystemInfoResponse, GetSystemResourcesData, GetSystemResourcesResponse, GetSystemSettingsData, GetSystemSettingsResponse, GetTimelinesData, GetTimelinesError, GetTimelinesResponse, GetWorkflowIdByNameData, GetWorkflowIdByNameError, GetWorkflowIdByNameResponse, GetWorkflowLogData, GetWorkflowLogError, GetWorkflowLogResponse, GetWorkflowsData, GetWorkflowsError, GetWorkflowsResponse, GitPullData, GitPushData, GitPushError, ImportFromGitData, ImportFromGitError, ListCatalogsData, ListCatalogsError, ListCatalogsResponse, ListFilesData, ListFilesError, ListFilesResponse, ListInvitationsData, ListInvitationsResponse, ListTokensData, ListTokensResponse, ListUsersData, ListUsersResponse, PostPruningData, PostPruningResponse, ReadFile2Data, ReadFile2Error, ReadFile2Response, ReadFileData, ReadFileError, ReadFileResponse, RegisterRegisterData, RegisterRegisterError, RegisterRegisterResponse, RenamePathData, RenamePathError, ReportEventData, ReportEventError, StreamEventsData, StreamEventsError, SyncCatalogsData, SyncCatalogZipData, SyncCatalogZipError, TestAdminSmtpConnectionData, TestAdminSmtpConnectionError, TestAdminSmtpConnectionResponse, TestGitConnectionData, TestGitConnectionError, TestGitConnectionResponse, UpdateCatalogData, UpdateCatalogError, UpdateCatalogResponse, UpdateSettingsData, UpdateSettingsError, UpdateSettingsResponse, UpdateSystemSettingsData, UpdateSystemSettingsError, UpdateSystemSettingsResponse, UploadCatalogData, UploadCatalogError, UploadCatalogResponse, UsersCurrentUserData, UsersCurrentUserResponse, UsersDeleteUserData, UsersDeleteUserError, UsersDeleteUserResponse, UsersPatchCurrentUserData, UsersPatchCurrentUserError, UsersPatchCurrentUserResponse, UsersPatchUserData, UsersPatchUserError, UsersPatchUserResponse, UsersUserData, UsersUserError, UsersUserResponse, WriteFileData, WriteFileError, WriteFileResponse } from '../types.gen';
 
 /**
  * Auth:Jwt.Login
@@ -791,6 +791,33 @@ export const getJobOutputsOptions = (options: Options<GetJobOutputsData>) => que
  */
 export const useGetJobOutputsQuery = (options: Options<GetJobOutputsData>) => useQuery(getJobOutputsOptions(options));
 
+export const getSystemInfoQueryKey = (options?: Options<GetSystemInfoData>) => createQueryKey('getSystemInfo', options, false, ['utils']);
+
+/**
+ * Get System Info
+ *
+ * Publicly accessible system information.
+ */
+export const getSystemInfoOptions = (options?: Options<GetSystemInfoData>) => queryOptions<GetSystemInfoResponse, DefaultError, GetSystemInfoResponse, ReturnType<typeof getSystemInfoQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await getSystemInfo({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: getSystemInfoQueryKey(options)
+});
+
+/**
+ * Get System Info
+ *
+ * Publicly accessible system information.
+ */
+export const useGetSystemInfoQuery = (options?: Options<GetSystemInfoData>) => useQuery(getSystemInfoOptions(options));
+
 export const getAllTagsQueryKey = (options?: Options<GetAllTagsData>) => createQueryKey('getAllTags', options, false, ['utils']);
 
 /**
@@ -1510,15 +1537,141 @@ export const testGitConnectionMutation = (options?: Partial<Options<TestGitConne
     return mutationOptions;
 };
 
+export const listUsersQueryKey = (options?: Options<ListUsersData>) => createQueryKey('listUsers', options, false, ['admin']);
+
 /**
- * Test Smtp Connection
+ * List Users
  *
- * Test SMTP connectivity by attempting a connection + optional AUTH.
+ * List all registered users.
  */
-export const testSmtpConnectionMutation = (options?: Partial<Options<TestSmtpConnectionData>>): UseMutationOptions<TestSmtpConnectionResponse, TestSmtpConnectionError, Options<TestSmtpConnectionData>> => {
-    const mutationOptions: UseMutationOptions<TestSmtpConnectionResponse, TestSmtpConnectionError, Options<TestSmtpConnectionData>> = {
+export const listUsersOptions = (options?: Options<ListUsersData>) => queryOptions<ListUsersResponse, DefaultError, ListUsersResponse, ReturnType<typeof listUsersQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await listUsers({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: listUsersQueryKey(options)
+});
+
+/**
+ * List Users
+ *
+ * List all registered users.
+ */
+export const useListUsersQuery = (options?: Options<ListUsersData>) => useQuery(listUsersOptions(options));
+
+export const getSystemSettingsQueryKey = (options?: Options<GetSystemSettingsData>) => createQueryKey('getSystemSettings', options, false, ['admin']);
+
+/**
+ * Get System Settings
+ */
+export const getSystemSettingsOptions = (options?: Options<GetSystemSettingsData>) => queryOptions<GetSystemSettingsResponse, DefaultError, GetSystemSettingsResponse, ReturnType<typeof getSystemSettingsQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await getSystemSettings({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: getSystemSettingsQueryKey(options)
+});
+
+/**
+ * Get System Settings
+ */
+export const useGetSystemSettingsQuery = (options?: Options<GetSystemSettingsData>) => useQuery(getSystemSettingsOptions(options));
+
+/**
+ * Update System Settings
+ */
+export const updateSystemSettingsMutation = (options?: Partial<Options<UpdateSystemSettingsData>>): UseMutationOptions<UpdateSystemSettingsResponse, UpdateSystemSettingsError, Options<UpdateSystemSettingsData>> => {
+    const mutationOptions: UseMutationOptions<UpdateSystemSettingsResponse, UpdateSystemSettingsError, Options<UpdateSystemSettingsData>> = {
         mutationFn: async (fnOptions) => {
-            const { data } = await testSmtpConnection({
+            const { data } = await updateSystemSettings({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const listInvitationsQueryKey = (options?: Options<ListInvitationsData>) => createQueryKey('listInvitations', options, false, ['admin']);
+
+/**
+ * List Invitations
+ */
+export const listInvitationsOptions = (options?: Options<ListInvitationsData>) => queryOptions<ListInvitationsResponse, DefaultError, ListInvitationsResponse, ReturnType<typeof listInvitationsQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await listInvitations({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: listInvitationsQueryKey(options)
+});
+
+/**
+ * List Invitations
+ */
+export const useListInvitationsQuery = (options?: Options<ListInvitationsData>) => useQuery(listInvitationsOptions(options));
+
+/**
+ * Create Invitation
+ */
+export const createInvitationMutation = (options?: Partial<Options<CreateInvitationData>>): UseMutationOptions<unknown, CreateInvitationError, Options<CreateInvitationData>> => {
+    const mutationOptions: UseMutationOptions<unknown, CreateInvitationError, Options<CreateInvitationData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await createInvitation({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+/**
+ * Delete Invitation
+ *
+ * Revoke an invitation.
+ */
+export const deleteInvitationMutation = (options?: Partial<Options<DeleteInvitationData>>): UseMutationOptions<unknown, DeleteInvitationError, Options<DeleteInvitationData>> => {
+    const mutationOptions: UseMutationOptions<unknown, DeleteInvitationError, Options<DeleteInvitationData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await deleteInvitation({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+/**
+ * Test Admin Smtp Connection
+ *
+ * Test SMTP connectivity for system settings.
+ */
+export const testAdminSmtpConnectionMutation = (options?: Partial<Options<TestAdminSmtpConnectionData>>): UseMutationOptions<TestAdminSmtpConnectionResponse, TestAdminSmtpConnectionError, Options<TestAdminSmtpConnectionData>> => {
+    const mutationOptions: UseMutationOptions<TestAdminSmtpConnectionResponse, TestAdminSmtpConnectionError, Options<TestAdminSmtpConnectionData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await testAdminSmtpConnection({
                 ...options,
                 ...fnOptions,
                 throwOnError: true

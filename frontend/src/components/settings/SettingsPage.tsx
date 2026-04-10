@@ -1,993 +1,909 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 
-import {
-  BranchesOutlined,
-  CheckCircleOutlined,
-  CheckOutlined,
-  CloseCircleOutlined,
-  CopyOutlined,
-  DeleteOutlined,
-  KeyOutlined,
-  LoadingOutlined,
-  MailOutlined,
-  PlusOutlined,
-  SaveOutlined,
-} from '@ant-design/icons';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
-  Alert,
-  Badge,
   Button,
-  Col,
   Form,
   Input,
   InputNumber,
-  Layout,
-  Menu,
   message,
-  Modal,
   Popconfirm,
-  Row,
-  Select,
   Switch,
-  Table,
-  Tabs,
   Tag,
   Tooltip,
-  Typography,
 } from 'antd';
-import dayjs from 'dayjs';
-
 import {
+  Copy,
+  Fingerprint,
+  GitBranch,
+  Globe,
+  Key,
+  Lock,
+  LucideIcon,
+  Mail,
+  Plus,
+  Send,
+  Shield,
+  Trash2,
+  User as UserIcon,
+  Users as UsersIcon,
+  Wifi,
+} from 'lucide-react';
+
+import { useAuth } from '@/auth';
+import {
+  createInvitationMutation,
   createTokenMutation,
+  deleteInvitationMutation,
   deleteTokenMutation,
-  getClientConfigOptions,
+  getSettingsOptions,
+  listInvitationsOptions,
   listTokensOptions,
-  listTokensQueryKey,
+  listUsersOptions,
+  testAdminSmtpConnectionMutation,
+  testGitConnectionMutation,
+  updateSettingsMutation,
+  updateSystemSettingsMutation,
+  useGetSystemSettingsQuery,
+  usersDeleteUserMutation,
+  usersPatchUserMutation,
 } from '@/client/@tanstack/react-query.gen';
-import type { UserTokenResponse } from '@/client/types.gen';
+import type {
+  InvitationRead,
+  SystemSettingsRead,
+  SystemSettingsUpdate,
+  UserRead,
+  UserSettingsUpdate,
+  UserTokenResponse,
+} from '@/client/types.gen';
 
-const { Sider, Content } = Layout;
-const { Title, Text } = Typography;
+// --- Shared Components for Settings ---
 
-// ─── Types ───────────────────────────────────────────────────────────────────
-
-type SectionKey = 'git' | 'smtp' | 'tokens';
-
-export interface UserSettings {
-  git_remote_url?: string | null;
-  git_token?: string | null;
-  smtp_host?: string | null;
-  smtp_port?: number | null;
-  smtp_user?: string | null;
-  smtp_password?: string | null;
-  smtp_from?: string | null;
-  smtp_use_tls?: boolean | null;
-}
-
-interface ConnectionTestResult {
-  success: boolean;
-  message: string;
-}
-
-// ─── API ─────────────────────────────────────────────────────────────────────
-
-const API_BASE = '/api/v1/settings';
-
-export function useSettingsQuery(token: string | null) {
-  return useQuery<UserSettings>({
-    queryKey: ['user-settings'],
-    queryFn: async () => {
-      const res = await fetch(API_BASE, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (!res.ok) throw new Error('Failed to load settings');
-      return res.json() as Promise<UserSettings>;
-    },
-    enabled: !!token,
-  });
-}
-
-function useUpdateSettings(token: string | null) {
-  const qc = useQueryClient();
-  return useMutation<UserSettings, Error, UserSettings>({
-    mutationFn: async (body) => {
-      const res = await fetch(API_BASE, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(body),
-      });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.detail || 'Failed to save settings');
-      }
-      return res.json() as Promise<UserSettings>;
-    },
-    onSuccess: () => void qc.invalidateQueries({ queryKey: ['user-settings'] }),
-  });
-}
-
-function useTestGit(token: string | null) {
-  return useMutation<
-    ConnectionTestResult,
-    Error,
-    { remote_url: string; token?: string | null }
-  >({
-    mutationFn: async (body) => {
-      try {
-        const res = await fetch(`${API_BASE}/test/git`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify(body),
-        });
-        if (!res.ok) {
-          const err = await res.json().catch(() => ({}));
-          return {
-            success: false,
-            message: err.detail || `Server error (${res.status})`,
-          };
-        }
-        return res.json() as Promise<ConnectionTestResult>;
-      } catch (e) {
-        return {
-          success: false,
-          message: e instanceof Error ? e.message : 'Network error',
-        };
-      }
-    },
-  });
-}
-
-function useTestSmtp(token: string | null) {
-  return useMutation<
-    ConnectionTestResult,
-    Error,
-    {
-      smtp_host: string;
-      smtp_port: number;
-      smtp_user?: string | null;
-      smtp_password?: string | null;
-      smtp_use_tls: boolean;
-    }
-  >({
-    mutationFn: async (body) => {
-      try {
-        const res = await fetch(`${API_BASE}/test/smtp`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify(body),
-        });
-        if (!res.ok) {
-          const err = await res.json().catch(() => ({}));
-          return {
-            success: false,
-            message: err.detail || `Server error (${res.status})`,
-          };
-        }
-        return res.json() as Promise<ConnectionTestResult>;
-      } catch (e) {
-        return {
-          success: false,
-          message: e instanceof Error ? e.message : 'Network error',
-        };
-      }
-    },
-  });
-}
-
-// ─── Shared helpers ───────────────────────────────────────────────────────────
-
-function SectionHeader({
+const SectionHeader = ({
+  icon: Icon,
   title,
   subtitle,
 }: {
+  icon: LucideIcon;
   title: string;
-  subtitle?: string;
-}) {
-  return (
-    <div style={{ marginBottom: 20 }}>
-      <Title level={5} style={{ margin: 0, fontWeight: 600 }}>
-        {title}
-      </Title>
-      {subtitle && (
-        <Text type="secondary" style={{ fontSize: 12 }}>
-          {subtitle}
-        </Text>
-      )}
+  subtitle: string;
+}) => (
+  <div className="flex items-center gap-4 mb-8">
+    <div className="p-2.5 bg-slate-900 rounded-xl shadow-lg flex items-center justify-center">
+      <Icon size={18} className="text-sky-400" strokeWidth={2.5} />
     </div>
-  );
-}
+    <div>
+      <h2 className="text-lg font-black text-slate-800 m-0 tracking-tight leading-none">
+        {title}
+      </h2>
+      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1.5 leading-none">
+        {subtitle}
+      </p>
+    </div>
+  </div>
+);
 
-function TestBadge({
-  result,
-  loading,
+const SettingsCard = ({
+  children,
+  className = '',
 }: {
-  result?: ConnectionTestResult | null;
-  loading: boolean;
-}) {
-  if (loading) return <LoadingOutlined style={{ color: '#4f46e5' }} />;
-  if (!result) return null;
-  return result.success ? (
-    <Tag icon={<CheckCircleOutlined />} color="success" style={{ margin: 0 }}>
-      {result.message}
-    </Tag>
-  ) : (
-    <Tag icon={<CloseCircleOutlined />} color="error" style={{ margin: 0 }}>
-      {result.message}
-    </Tag>
-  );
-}
+  children: React.ReactNode;
+  className?: string;
+}) => (
+  <div
+    className={`bg-white rounded-2xl border border-slate-100 shadow-sm p-6 ${className}`}
+  >
+    {children}
+  </div>
+);
 
-// ─── Git Section ─────────────────────────────────────────────────────────────
+// --- Sub-sections ---
 
-function GitSection({
-  initial,
-  token,
-  onSave,
+const ProfileSection = ({
+  user,
 }: {
-  initial: UserSettings;
-  token: string | null;
-  onSave: () => void;
-}) {
-  const [form] = Form.useForm<{ git_remote_url: string; git_token: string }>();
-  const updateMut = useUpdateSettings(token);
-  const testMut = useTestGit(token);
-
-  // seed once
-  const [seeded, setSeeded] = useState(false);
-  if (!seeded && initial.git_remote_url !== undefined) {
-    form.setFieldsValue({
-      git_remote_url: initial.git_remote_url ?? '',
-      git_token: initial.git_token ?? '',
-    });
-    setSeeded(true);
-  }
-
-  const save = async () => {
-    try {
-      const v = await form.validateFields();
-      await updateMut.mutateAsync({
-        ...initial,
-        git_remote_url: v.git_remote_url || null,
-        git_token: v.git_token || null,
-      });
-      message.success('Git settings saved');
-      onSave();
-    } catch (e) {
-      if (
-        typeof e === 'object' &&
-        e !== null &&
-        'name' in e &&
-        e.name === 'ValidationError'
-      )
-        return;
-      message.error(
-        e instanceof Error ? e.message : 'Failed to save Git settings',
-      );
-    }
-  };
-
-  const test = async () => {
-    const v = form.getFieldsValue();
-    if (!v.git_remote_url) {
-      message.warning('Enter a Remote URL first');
-      return;
-    }
-    await testMut.mutateAsync({
-      remote_url: v.git_remote_url,
-      token: v.git_token || null,
-    });
-  };
-
+  user: UserRead | { email: string; id: string; is_superuser?: boolean } | null;
+}) => {
+  if (!user) return null;
   return (
-    <>
+    <div className="space-y-6">
       <SectionHeader
-        title="Git Integration"
-        subtitle="Push and share catalogs via a Git repository."
+        icon={UserIcon}
+        title="Identity"
+        subtitle="Personal Profile"
       />
-      <Form form={form} layout="vertical" style={{ maxWidth: 560 }}>
-        <Form.Item
-          label="Remote Repository URL"
-          name="git_remote_url"
-          style={{ marginBottom: 12 }}
-        >
-          <Input
-            prefix={<BranchesOutlined style={{ color: '#bbb' }} />}
-            placeholder="https://gitlab.com/your-org/flowo-catalogs"
-            allowClear
-          />
-        </Form.Item>
-        <Form.Item
-          label="Access Token"
-          name="git_token"
-          style={{ marginBottom: 16 }}
-          extra={
-            <span style={{ fontSize: 11, color: '#999' }}>
-              PAT for private repositories
-            </span>
-          }
-        >
-          <Input.Password
-            placeholder="your-personal-access-token"
-            autoComplete="off"
-            allowClear
-          />
-        </Form.Item>
-        <Row gutter={8} align="middle" wrap>
-          <Col>
-            <Button
-              type="primary"
-              size="small"
-              icon={<SaveOutlined />}
-              loading={updateMut.isPending}
-              onClick={() => void save()}
-            >
-              Save
-            </Button>
-          </Col>
-          <Col>
-            <Button
-              size="small"
-              icon={<CheckCircleOutlined />}
-              loading={testMut.isPending}
-              onClick={() => void test()}
-            >
-              Test Connection
-            </Button>
-          </Col>
-          <Col>
-            <TestBadge result={testMut.data} loading={testMut.isPending} />
-          </Col>
-        </Row>
-      </Form>
-
-      <Alert
-        style={{ marginTop: 16, maxWidth: 560 }}
-        type="info"
-        showIcon
-        message={
-          <span style={{ fontSize: 12 }}>
-            Use <strong>Push to Git</strong> in any catalog to sync, then share
-            the URL with others via <strong>Import from Git URL</strong>.
-          </span>
-        }
-      />
-    </>
-  );
-}
-
-// ─── SMTP Section ─────────────────────────────────────────────────────────────
-
-function SmtpSection({
-  initial,
-  token,
-  onSave,
-}: {
-  initial: UserSettings;
-  token: string | null;
-  onSave: () => void;
-}) {
-  const [form] = Form.useForm<{
-    smtp_host: string;
-    smtp_port: number;
-    smtp_user: string;
-    smtp_password: string;
-    smtp_from: string;
-    smtp_use_tls: boolean;
-  }>();
-  const updateMut = useUpdateSettings(token);
-  const testMut = useTestSmtp(token);
-
-  const [seeded, setSeeded] = useState(false);
-  if (!seeded && initial.smtp_host !== undefined) {
-    form.setFieldsValue({
-      smtp_host: initial.smtp_host ?? '',
-      smtp_port: initial.smtp_port ?? 587,
-      smtp_user: initial.smtp_user ?? '',
-      smtp_password: initial.smtp_password ?? '',
-      smtp_from: initial.smtp_from ?? '',
-      smtp_use_tls: initial.smtp_use_tls ?? true,
-    });
-    setSeeded(true);
-  }
-
-  const save = async () => {
-    try {
-      const v = await form.validateFields();
-      await updateMut.mutateAsync({
-        ...initial,
-        smtp_host: v.smtp_host || null,
-        smtp_port: v.smtp_port || null,
-        smtp_user: v.smtp_user || null,
-        smtp_password: v.smtp_password || null,
-        smtp_from: v.smtp_from || null,
-        smtp_use_tls: v.smtp_use_tls ?? true,
-      });
-      message.success('SMTP settings saved');
-      onSave();
-    } catch (e) {
-      if (
-        typeof e === 'object' &&
-        e !== null &&
-        'name' in e &&
-        e.name === 'ValidationError'
-      )
-        return;
-      message.error(
-        e instanceof Error ? e.message : 'Failed to save SMTP settings',
-      );
-    }
-  };
-
-  const test = async () => {
-    const v = form.getFieldsValue();
-    if (!v.smtp_host) {
-      message.warning('Enter an SMTP host first');
-      return;
-    }
-    await testMut.mutateAsync({
-      smtp_host: v.smtp_host,
-      smtp_port: v.smtp_port || 587,
-      smtp_user: v.smtp_user || null,
-      smtp_password: v.smtp_password || null,
-      smtp_use_tls: v.smtp_use_tls ?? true,
-    });
-  };
-
-  return (
-    <>
-      <SectionHeader
-        title="SMTP Configuration"
-        subtitle="Email server for workflow notifications."
-      />
-      <Form form={form} layout="vertical" style={{ maxWidth: 560 }}>
-        <Row gutter={12}>
-          <Col flex="1">
-            <Form.Item
-              label="SMTP Host"
-              name="smtp_host"
-              style={{ marginBottom: 12 }}
-            >
-              <Input
-                prefix={<MailOutlined style={{ color: '#bbb' }} />}
-                placeholder="smtp.gmail.com"
-              />
-            </Form.Item>
-          </Col>
-          <Col style={{ width: 120 }}>
-            <Form.Item
-              label="Port"
-              name="smtp_port"
-              style={{ marginBottom: 12 }}
-            >
-              <InputNumber
-                style={{ width: '100%' }}
-                placeholder="587"
-                min={1}
-                max={65535}
-              />
-            </Form.Item>
-          </Col>
-        </Row>
-        <Form.Item
-          label="Username / Email"
-          name="smtp_user"
-          style={{ marginBottom: 12 }}
-        >
-          <Input placeholder="you@example.com" autoComplete="off" />
-        </Form.Item>
-        <Form.Item
-          label="Password"
-          name="smtp_password"
-          style={{ marginBottom: 12 }}
-        >
-          <Input.Password placeholder="••••••••" autoComplete="new-password" />
-        </Form.Item>
-        <Form.Item
-          label="From Address"
-          name="smtp_from"
-          style={{ marginBottom: 12 }}
-        >
-          <Input placeholder="FlowO <noreply@example.com>" />
-        </Form.Item>
-        <Form.Item
-          label="Use TLS / SSL"
-          name="smtp_use_tls"
-          valuePropName="checked"
-          style={{ marginBottom: 16 }}
-        >
-          <Switch checkedChildren="TLS" unCheckedChildren="Off" />
-        </Form.Item>
-        <Row gutter={8} align="middle" wrap>
-          <Col>
-            <Button
-              type="primary"
-              size="small"
-              icon={<SaveOutlined />}
-              loading={updateMut.isPending}
-              onClick={() => void save()}
-            >
-              Save
-            </Button>
-          </Col>
-          <Col>
-            <Button
-              size="small"
-              icon={<CheckCircleOutlined />}
-              loading={testMut.isPending}
-              onClick={() => void test()}
-            >
-              Test Connection
-            </Button>
-          </Col>
-          <Col>
-            <TestBadge result={testMut.data} loading={testMut.isPending} />
-          </Col>
-        </Row>
-      </Form>
-    </>
-  );
-}
-
-// ─── Tokens Section (from profile page) ──────────────────────────────────────
-
-const CodeBlock = ({ text }: { text: string }) => {
-  const [copied, setCopied] = useState(false);
-  return (
-    <div style={{ position: 'relative' }}>
-      <pre
-        style={{
-          margin: 0,
-          padding: '10px 36px 10px 12px',
-          background: '#f5f5f5',
-          borderRadius: 6,
-          fontSize: 12,
-          overflow: 'auto',
-          maxHeight: 200,
-          border: '1px solid #e8e8e8',
-          whiteSpace: 'pre-wrap',
-          wordBreak: 'break-all',
-        }}
-      >
-        {text}
-      </pre>
-      <Tooltip title={copied ? 'Copied!' : 'Copy'}>
-        <Button
-          type="text"
-          size="small"
-          icon={copied ? <CheckOutlined /> : <CopyOutlined />}
-          onClick={() => {
-            void navigator.clipboard.writeText(text);
-            setCopied(true);
-            setTimeout(() => setCopied(false), 2000);
-          }}
-          style={{
-            position: 'absolute',
-            top: 6,
-            right: 6,
-            color: copied ? '#52c41a' : '#aaa',
-          }}
-        />
-      </Tooltip>
+      <SettingsCard>
+        <div className="flex flex-col md:flex-row items-center gap-6">
+          <div className="relative group">
+            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-slate-800 to-slate-900 flex items-center justify-center text-white text-2xl font-black shadow-lg">
+              {user.email ? user.email[0].toUpperCase() : '?'}
+            </div>
+            <div className="absolute -bottom-1 -right-1 bg-white p-1.5 rounded-lg shadow-md border border-slate-100 flex items-center justify-center">
+              <Shield size={14} className="text-sky-500" />
+            </div>
+          </div>
+          <div className="flex-1 text-center md:text-left">
+            <h3 className="text-lg font-bold text-slate-800 mb-0.5">
+              {user.email}
+            </h3>
+            <div className="flex flex-wrap justify-center md:justify-start gap-2 mt-2">
+              <span className="px-2.5 py-0.5 bg-slate-100 rounded-md text-[9px] font-black text-slate-500 uppercase tracking-widest">
+                ID: {user.id}
+              </span>
+              {user.is_superuser && (
+                <span className="px-2.5 py-0.5 bg-sky-500 text-white rounded-md text-[9px] font-black uppercase tracking-widest shadow-sm">
+                  Administrator
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+      </SettingsCard>
     </div>
   );
 };
 
-function TokensSection({ authToken }: { authToken: string | null }) {
-  const qc = useQueryClient();
-  const [createOpen, setCreateOpen] = useState(false);
-  const [tokenName, setTokenName] = useState('');
-  const [tokenTTL, setTokenTTL] = useState<number | undefined>();
-  const [generated, setGenerated] = useState<string | null>(null);
-  const [configModal, setConfigModal] = useState<{
-    open: boolean;
-    token: string;
-    name: string;
-  }>({ open: false, token: '', name: '' });
+const TokensSection = () => {
+  const queryClient = useQueryClient();
+  const { data: tokenData } = useQuery({ ...listTokensOptions({}) });
+  const tokens = tokenData?.tokens || [];
+  const createTokenMutationHook = useMutation(createTokenMutation());
+  const deleteTokenHook = useMutation(deleteTokenMutation());
 
-  const headers = { Authorization: `Bearer ${authToken}` };
-
-  const { data: tokensData, isLoading } = useQuery({
-    ...listTokensOptions({ headers }),
-    enabled: !!authToken,
-  });
-
-  const { data: clientConfig } = useQuery({
-    ...getClientConfigOptions({ headers }),
-    enabled: !!authToken,
-  });
-
-  const createMut = useMutation(createTokenMutation({ headers }));
-  const deleteMut = useMutation(deleteTokenMutation({ headers }));
-
-  const invalidate = () =>
-    void qc.invalidateQueries({ queryKey: listTokensQueryKey({ headers }) });
-
-  const handleCreate = async () => {
-    if (!tokenName) {
-      message.error('Enter a token name');
-      return;
-    }
+  const handleCreateToken = async () => {
     try {
-      const res = await createMut.mutateAsync({
-        body: { name: tokenName, ttl_days: tokenTTL },
+      await createTokenMutationHook.mutateAsync({
+        body: { name: `Token-${Date.now()}` },
       });
-      setGenerated(res.token ?? null);
-      invalidate();
-      setTokenName('');
-      setTokenTTL(undefined);
+      queryClient.invalidateQueries({
+        queryKey: [listTokensOptions({}).queryKey],
+      });
+      message.success('New access token generated');
     } catch {
       message.error('Failed to create token');
     }
   };
 
-  const getEnvContent = (t: string) => {
-    const tokenLine = t ? `FLOWO_USER_TOKEN=${t}` : '# FLOWO_USER_TOKEN=';
-    return `FLOWO_HOST=${window.location.origin}\n${tokenLine}\nFLOWO_WORKING_PATH=${clientConfig?.FLOWO_WORKING_PATH ?? '<YOUR_WORKING_PATH>'}`;
+  const handleDeleteToken = async (id: string) => {
+    try {
+      await deleteTokenHook.mutateAsync({ path: { token_id: id } });
+      queryClient.invalidateQueries({
+        queryKey: [listTokensOptions({}).queryKey],
+      });
+      message.success('Token revoked');
+    } catch {
+      message.error('Failed to revoke token');
+    }
   };
 
-  const getCLICmd = (t: string) =>
-    `flowo --generate-config --token ${t || '<YOUR_TOKEN>'} --host ${window.location.origin} --working-path ${clientConfig?.FLOWO_WORKING_PATH ?? '<YOUR_WORKING_PATH>'}`;
-
   return (
-    <>
-      <SectionHeader
-        title="Access Tokens"
-        subtitle="Tokens used by the Snakemake plugin to authenticate with FlowO."
-      />
+    <div className="space-y-6">
+      <div className="flex justify-between items-end mb-2">
+        <SectionHeader
+          icon={Fingerprint}
+          title="Security Tokens"
+          subtitle="API Access & Authentication"
+        />
+        <Button
+          type="primary"
+          icon={<Plus size={16} />}
+          onClick={handleCreateToken}
+          className="h-11 px-6 rounded-2xl font-bold shadow-sm bg-slate-900 border-none mb-8 flex items-center gap-2"
+        >
+          New Token
+        </Button>
+      </div>
 
-      <Button
-        type="primary"
-        size="small"
-        icon={<PlusOutlined />}
-        style={{ marginBottom: 12 }}
-        onClick={() => {
-          setCreateOpen(true);
-          setGenerated(null);
-        }}
-      >
-        Generate New Token
-      </Button>
-
-      <Table
-        size="small"
-        dataSource={tokensData?.tokens ?? []}
-        loading={isLoading}
-        rowKey="id"
-        pagination={false}
-        style={{ maxWidth: 640 }}
-        columns={[
-          { title: 'Name', dataIndex: 'name', key: 'name' },
-          {
-            title: 'Created',
-            dataIndex: 'created_at',
-            key: 'created_at',
-            render: (d: string) => dayjs(d).format('YYYY-MM-DD HH:mm'),
-          },
-          {
-            title: 'Expires',
-            dataIndex: 'expires_at',
-            key: 'expires_at',
-            render: (d: string | null) =>
-              d ? (
-                <Tag color="orange">{dayjs(d).format('YYYY-MM-DD')}</Tag>
+      <SettingsCard>
+        <div className="overflow-x-auto">
+          <table className="w-full text-left">
+            <thead>
+              <tr className="border-b border-slate-100">
+                <th className="pb-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                  Token ID
+                </th>
+                <th className="pb-3 text-[10px] font-black text-slate-400 uppercase tracking-widest px-4 text-right">
+                  Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-50">
+              {tokens.length === 0 ? (
+                <tr>
+                  <td
+                    colSpan={2}
+                    className="py-10 text-center text-slate-400 text-xs font-medium"
+                  >
+                    No active tokens found
+                  </td>
+                </tr>
               ) : (
-                <Tag color="green">Never</Tag>
-              ),
-          },
-          {
-            title: '',
-            key: 'action',
-            width: 100,
-            render: (_: unknown, r: UserTokenResponse) => (
-              <span style={{ display: 'flex', gap: 4 }}>
-                <Button
-                  size="small"
-                  type="link"
-                  style={{ padding: '0 4px' }}
-                  onClick={() =>
-                    setConfigModal({
-                      open: true,
-                      token: r.token ?? '',
-                      name: r.name,
-                    })
-                  }
-                >
-                  Use
-                </Button>
-                <Popconfirm
-                  title="Delete this token?"
-                  onConfirm={async () => {
-                    await deleteMut.mutateAsync({ path: { token_id: r.id } });
-                    message.success('Deleted');
-                    invalidate();
-                  }}
-                  okText="Delete"
-                  okType="danger"
-                  cancelText="No"
-                >
-                  <Button
-                    size="small"
-                    type="text"
-                    danger
-                    icon={<DeleteOutlined />}
-                  />
-                </Popconfirm>
-              </span>
-            ),
-          },
-        ]}
-      />
-
-      {/* Create Modal */}
-      <Modal
-        title="Generate New Token"
-        open={createOpen}
-        footer={null}
-        width={600}
-        onCancel={() => {
-          setCreateOpen(false);
-          setGenerated(null);
-        }}
-        destroyOnHidden
-      >
-        {!generated ? (
-          <div style={{ marginTop: 8 }}>
-            <Form layout="vertical">
-              <Form.Item label="Name" style={{ marginBottom: 12 }}>
-                <Input
-                  placeholder="e.g. Work Laptop"
-                  value={tokenName}
-                  onChange={(e) => setTokenName(e.target.value)}
-                />
-              </Form.Item>
-              <Form.Item label="Expiration" style={{ marginBottom: 16 }}>
-                <Select
-                  value={tokenTTL}
-                  onChange={setTokenTTL}
-                  placeholder="Never expire"
-                  options={[
-                    { value: undefined, label: 'Never expire' },
-                    { value: 7, label: '7 Days' },
-                    { value: 30, label: '30 Days' },
-                    { value: 90, label: '90 Days' },
-                    { value: 365, label: '1 Year' },
-                  ]}
-                />
-              </Form.Item>
-              <div style={{ textAlign: 'right' }}>
-                <Button
-                  type="primary"
-                  onClick={() => void handleCreate()}
-                  loading={createMut.isPending}
-                >
-                  Generate
-                </Button>
-              </div>
-            </Form>
-          </div>
-        ) : (
-          <div style={{ marginTop: 8 }}>
-            <Alert
-              message="Token generated — copy it now, it won't be shown again."
-              type="success"
-              showIcon
-              style={{ marginBottom: 12 }}
-            />
-            {renderConfigTabs(generated, getEnvContent, getCLICmd)}
-            <div style={{ textAlign: 'right', marginTop: 12 }}>
-              <Button
-                type="primary"
-                onClick={() => {
-                  setCreateOpen(false);
-                  setGenerated(null);
-                }}
-              >
-                Done
-              </Button>
-            </div>
-          </div>
-        )}
-      </Modal>
-
-      {/* Config Modal */}
-      <Modal
-        title={`Use token: ${configModal.name}`}
-        open={configModal.open}
-        footer={
-          <Button
-            onClick={() => setConfigModal((s) => ({ ...s, open: false }))}
-          >
-            Close
-          </Button>
-        }
-        width={600}
-        onCancel={() => setConfigModal((s) => ({ ...s, open: false }))}
-      >
-        {renderConfigTabs(configModal.token, getEnvContent, getCLICmd)}
-      </Modal>
-    </>
+                tokens.map((token: UserTokenResponse) => (
+                  <tr
+                    key={token.id}
+                    className="group hover:bg-slate-50/50 transition-colors"
+                  >
+                    <td className="py-4">
+                      <div className="flex items-center gap-3">
+                        <div className="p-1.5 bg-slate-100 rounded-lg">
+                          <Key size={12} className="text-slate-500" />
+                        </div>
+                        <span className="font-mono text-xs text-slate-600 break-all">
+                          {token.id}
+                        </span>
+                        <Tooltip title="Copy">
+                          <button
+                            onClick={() => {
+                              navigator.clipboard.writeText(token.id);
+                              message.info('Copied');
+                            }}
+                            className="p-1 text-slate-300 hover:text-sky-500"
+                          >
+                            <Copy size={12} />
+                          </button>
+                        </Tooltip>
+                      </div>
+                    </td>
+                    <td className="py-4 text-right px-4">
+                      <Popconfirm
+                        title="Revoke this token?"
+                        onConfirm={() => handleDeleteToken(token.id)}
+                        okText="Revoke"
+                        okButtonProps={{
+                          danger: true,
+                          className: 'rounded-md',
+                        }}
+                      >
+                        <button className="p-1.5 text-rose-300 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-all">
+                          <Trash2 size={14} />
+                        </button>
+                      </Popconfirm>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </SettingsCard>
+    </div>
   );
-}
+};
 
-function renderConfigTabs(
-  t: string,
-  getEnvContent: (t: string) => string,
-  getCLICmd: (t: string) => string,
-) {
-  return (
-    <Tabs
-      defaultActiveKey="cli"
-      size="small"
-      items={[
-        {
-          key: 'cli',
-          label: 'CLI (auto-generate)',
-          children: <CodeBlock text={getCLICmd(t)} />,
-        },
-        {
-          key: 'manual',
-          label: 'Manual (.env file)',
-          children: <CodeBlock text={getEnvContent(t)} />,
-        },
-      ]}
-    />
-  );
-}
+const GitSettingsSection = () => {
+  const queryClient = useQueryClient();
+  const { data: settings } = useQuery({ ...getSettingsOptions() });
+  const updateSettings = useMutation(updateSettingsMutation());
+  const testGit = useMutation(testGitConnectionMutation());
+  const [form] = Form.useForm();
 
-// ─── Main Settings Page ───────────────────────────────────────────────────────
-
-interface SettingsPageProps {
-  token: string | null;
-}
-
-export function SettingsPage({ token }: SettingsPageProps) {
-  const [activeSection, setActiveSection] = useState<SectionKey>('tokens');
-  const { data: settings, isLoading, refetch } = useSettingsQuery(token);
-
-  const isConfigured = (s: SectionKey) => {
-    if (!settings) return false;
-    if (s === 'git') return !!settings.git_remote_url;
-    if (s === 'smtp') return !!settings.smtp_host;
-    return false;
+  const onFinish = async (values: UserSettingsUpdate) => {
+    try {
+      await updateSettings.mutateAsync({ body: values });
+      queryClient.invalidateQueries({
+        queryKey: [getSettingsOptions().queryKey],
+      });
+      message.success('Git settings updated');
+    } catch {
+      message.error('Update failed');
+    }
   };
 
-  const menuGroups = [
-    {
-      type: 'group' as const,
-      label: (
-        <Text
-          type="secondary"
-          style={{
-            fontSize: 11,
-            fontWeight: 600,
-            letterSpacing: 0.8,
-            textTransform: 'uppercase',
-          }}
+  const handleTest = async () => {
+    try {
+      const values = await form.validateFields();
+      const res = await testGit.mutateAsync({ body: values });
+      if (res.success) {
+        message.success(res.message);
+      } else {
+        message.error(res.message || 'Connection failed');
+      }
+    } catch {
+      message.error('Validation failed');
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <SectionHeader
+        icon={GitBranch}
+        title="Git Repository"
+        subtitle="Manage your workflow synchronization"
+      />
+      <SettingsCard>
+        <Form
+          form={form}
+          layout="vertical"
+          initialValues={settings || {}}
+          onFinish={onFinish}
+          className="space-y-4"
         >
-          Personal
-        </Text>
-      ),
-      children: [
-        { key: 'tokens', icon: <KeyOutlined />, label: 'Access Tokens' },
-      ],
-    },
-    {
-      type: 'group' as const,
-      label: (
-        <Text
-          type="secondary"
-          style={{
-            fontSize: 11,
-            fontWeight: 600,
-            letterSpacing: 0.8,
-            textTransform: 'uppercase',
-          }}
-        >
-          Integrations
-        </Text>
-      ),
-      children: [
-        {
-          key: 'git',
-          icon: <BranchesOutlined />,
-          label: (
-            <span
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-              }}
+          <Form.Item
+            name="git_remote_url"
+            label={
+              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                Remote URL
+              </span>
+            }
+          >
+            <Input
+              prefix={<Globe size={14} className="text-slate-400 mr-2" />}
+              placeholder="https://github.com/user/repo.git"
+              className="rounded-xl border-slate-100 h-11"
+            />
+          </Form.Item>
+
+          <Form.Item
+            name="git_token"
+            label={
+              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                Personal Access Token
+              </span>
+            }
+          >
+            <Input.Password
+              prefix={<Lock size={14} className="text-slate-400 mr-2" />}
+              placeholder="ghp_xxxxxxxxxxxx"
+              className="rounded-xl border-slate-100 h-11"
+            />
+          </Form.Item>
+
+          <div className="flex gap-3 pt-4 border-t border-slate-50">
+            <Button
+              type="primary"
+              htmlType="submit"
+              loading={updateSettings.isPending}
+              className="h-11 px-6 rounded-xl font-bold bg-slate-900 border-none shadow-md"
             >
-              Git
-              {isConfigured('git') && <Badge color="green" />}
-            </span>
-          ),
+              Save Repository
+            </Button>
+            <Button
+              icon={<Wifi size={14} />}
+              onClick={handleTest}
+              loading={testGit.isPending}
+              className="h-11 px-6 rounded-xl font-bold border-slate-100 text-slate-600 hover:text-slate-900"
+            >
+              Test Connection
+            </Button>
+          </div>
+        </Form>
+      </SettingsCard>
+    </div>
+  );
+};
+
+const UsersSection = () => {
+  const queryClient = useQueryClient();
+  const { data: users = [] } = useQuery({ ...listUsersOptions({}) });
+  const patchUser = useMutation(usersPatchUserMutation());
+  const deleteUser = useMutation(usersDeleteUserMutation());
+
+  const handleToggleAdmin = async (user: UserRead) => {
+    try {
+      await patchUser.mutateAsync({
+        path: { id: user.id },
+        body: { is_superuser: !user.is_superuser },
+      });
+      queryClient.invalidateQueries();
+      message.success(`Status updated for ${user.email}`);
+    } catch {
+      message.error('Update failed');
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <SectionHeader
+        icon={UsersIcon}
+        title="Member Registry"
+        subtitle="User & Role Management"
+      />
+      <SettingsCard>
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+          {users.map((u: UserRead) => (
+            <div
+              key={u.id}
+              className="p-4 rounded-xl border border-slate-100 bg-slate-50/50 hover:bg-white hover:shadow-lg transition-all duration-300"
+            >
+              <div className="flex justify-between items-start mb-3">
+                <div className="w-10 h-10 rounded-lg bg-white border border-slate-100 flex items-center justify-center shadow-sm">
+                  <UserIcon size={16} />
+                </div>
+                <div className="flex items-center gap-2">
+                  <Tag
+                    color={u.is_superuser ? 'gold' : 'blue'}
+                    className="m-0 border-none rounded-md font-black text-[8px] uppercase px-1.5"
+                  >
+                    {u.is_superuser ? 'ADMIN' : 'USER'}
+                  </Tag>
+                  <Popconfirm
+                    title="Delete user?"
+                    onConfirm={() =>
+                      deleteUser.mutateAsync({ path: { id: u.id } })
+                    }
+                    okText="Delete"
+                    okButtonProps={{ danger: true }}
+                  >
+                    <button className="p-1 text-slate-300 hover:text-rose-500">
+                      <Trash2 size={14} />
+                    </button>
+                  </Popconfirm>
+                </div>
+              </div>
+              <h4 className="font-bold text-sm text-slate-800 truncate mb-0.5">
+                {u.email}
+              </h4>
+              <p className="text-[9px] font-mono text-slate-400 mb-4 truncate">
+                {u.id}
+              </p>
+
+              <div className="flex items-center justify-between pt-3 border-t border-slate-100">
+                <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">
+                  Admin Privileges
+                </span>
+                <Switch
+                  size="small"
+                  checked={u.is_superuser}
+                  onChange={() => handleToggleAdmin(u)}
+                />
+              </div>
+            </div>
+          ))}
+        </div>
+      </SettingsCard>
+    </div>
+  );
+};
+
+const InvitationsSection = () => {
+  const queryClient = useQueryClient();
+  const { data: invitations = [] } = useQuery({
+    ...listInvitationsOptions({}),
+  });
+  const createInvite = useMutation(createInvitationMutation());
+  const deleteInvite = useMutation(deleteInvitationMutation());
+  const [email, setEmail] = useState('');
+
+  const handleCreate = async () => {
+    if (!email) return;
+    try {
+      await createInvite.mutateAsync({ body: { email } });
+      queryClient.invalidateQueries({
+        queryKey: [listInvitationsOptions({}).queryKey],
+      });
+      setEmail('');
+      message.success('Invitation sent');
+    } catch {
+      message.error('Failed to send invitation');
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <SectionHeader
+        icon={Mail}
+        title="Access Invitations"
+        subtitle="Bring new members to your team"
+      />
+      <div className="flex gap-2 mb-6">
+        <Input
+          placeholder="New user email address..."
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          className="rounded-xl h-11 border-slate-100 text-sm"
+        />
+        <Button
+          type="primary"
+          icon={<Plus size={16} />}
+          onClick={handleCreate}
+          loading={createInvite.isPending}
+          className="h-11 px-6 rounded-xl font-bold bg-slate-900 border-none shadow-md flex items-center gap-2"
+        >
+          Invite
+        </Button>
+      </div>
+      <SettingsCard>
+        <div className="overflow-x-auto">
+          <table className="w-full text-left">
+            <thead>
+              <tr className="border-b border-slate-100">
+                <th className="pb-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                  Recipient
+                </th>
+                <th className="pb-3 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">
+                  Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-50">
+              {invitations.length === 0 ? (
+                <tr>
+                  <td
+                    colSpan={2}
+                    className="py-10 text-center text-slate-400 text-xs"
+                  >
+                    No pending invitations
+                  </td>
+                </tr>
+              ) : (
+                invitations.map((inv: InvitationRead) => (
+                  <tr
+                    key={inv.id}
+                    className="group hover:bg-slate-50/50 transition-colors"
+                  >
+                    <td className="py-4">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 bg-sky-50 text-sky-500 rounded-lg">
+                          <Mail size={14} />
+                        </div>
+                        <div>
+                          <div className="font-bold text-sm text-slate-800">
+                            {inv.email || 'Generic Invitation'}
+                          </div>
+                          <div className="text-[10px] text-slate-400 font-mono">
+                            {inv.token}
+                          </div>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="py-4 text-right">
+                      <Popconfirm
+                        title="Revoke this invitation?"
+                        onConfirm={() =>
+                          deleteInvite
+                            .mutateAsync({ path: { invitation_id: inv.id } })
+                            .then(() => queryClient.invalidateQueries())
+                        }
+                        okText="Revoke"
+                        okButtonProps={{ danger: true }}
+                      >
+                        <button className="p-2 text-rose-300 hover:text-rose-500 rounded-lg">
+                          <Trash2 size={16} />
+                        </button>
+                      </Popconfirm>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </SettingsCard>
+    </div>
+  );
+};
+
+const AdministrationSection = () => {
+  const queryClient = useQueryClient();
+  const { data: policy } = useGetSystemSettingsQuery();
+  const updatePolicy = useMutation(updateSystemSettingsMutation());
+
+  const handleTogglePolicy = async (field: keyof SystemSettingsRead) => {
+    if (!policy) return;
+    try {
+      await updatePolicy.mutateAsync({
+        body: { ...policy, [field]: !policy[field] },
+      });
+      queryClient.invalidateQueries();
+      message.success('Policy updated');
+    } catch {
+      message.error('Failed to update policy');
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <SectionHeader
+        icon={Shield}
+        title="System Policies"
+        subtitle="Global Governance & Access"
+      />
+      <SettingsCard>
+        <div className="space-y-4">
+          <div className="flex items-center justify-between p-4 rounded-xl bg-slate-50/50 border border-slate-100">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-amber-500/10 rounded-lg">
+                <Lock size={16} className="text-amber-600" />
+              </div>
+              <div>
+                <h4 className="text-sm font-bold text-slate-800 m-0 leading-tight">
+                  Open Registration
+                </h4>
+                <p className="text-[10px] text-slate-400 font-medium leading-tight">
+                  Allow anyone to create a new account.
+                </p>
+              </div>
+            </div>
+            <Switch
+              size="small"
+              checked={policy?.allow_public_registration}
+              onChange={() => handleTogglePolicy('allow_public_registration')}
+            />
+          </div>
+        </div>
+      </SettingsCard>
+    </div>
+  );
+};
+
+const SMTPSettingsSection = () => {
+  const queryClient = useQueryClient();
+  const { data: config } = useGetSystemSettingsQuery();
+  const updateConfig = useMutation(updateSystemSettingsMutation());
+  const testSmtp = useMutation(testAdminSmtpConnectionMutation());
+  const [form] = Form.useForm();
+
+  const onFinish = async (values: SystemSettingsUpdate) => {
+    try {
+      await updateConfig.mutateAsync({ body: values });
+      queryClient.invalidateQueries();
+      message.success('SMTP settings updated');
+    } catch {
+      message.error('Update failed');
+    }
+  };
+
+  const handleTest = async () => {
+    try {
+      const values = await form.validateFields();
+      const res = await testSmtp.mutateAsync({ body: values });
+      if (res.success) {
+        message.success(res.message);
+      } else {
+        message.error(res.message);
+      }
+    } catch {
+      message.error('Validation failed or test failed');
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <SectionHeader
+        icon={Send}
+        title="SMTP Infrastructure"
+        subtitle="Notification & Email Service Configuration"
+      />
+      <SettingsCard>
+        <Form
+          form={form}
+          layout="vertical"
+          initialValues={config || {}}
+          onFinish={onFinish}
+          className="space-y-4"
+        >
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Form.Item
+              name="smtp_host"
+              label={
+                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                  SMTP Host
+                </span>
+              }
+            >
+              <Input
+                placeholder="smtp.example.com"
+                className="rounded-xl border-slate-100 h-11"
+              />
+            </Form.Item>
+            <Form.Item
+              name="smtp_port"
+              label={
+                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                  SMTP Port
+                </span>
+              }
+            >
+              <InputNumber
+                className="w-full rounded-xl border-slate-100 h-11 pt-1"
+                placeholder="587"
+              />
+            </Form.Item>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Form.Item
+              name="smtp_user"
+              label={
+                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                  SMTP User
+                </span>
+              }
+            >
+              <Input
+                placeholder="user@example.com"
+                className="rounded-xl border-slate-100 h-11"
+              />
+            </Form.Item>
+            <Form.Item
+              name="smtp_from"
+              label={
+                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                  Default From Address
+                </span>
+              }
+            >
+              <Input
+                placeholder="noreply@example.com"
+                className="rounded-xl border-slate-100 h-11"
+              />
+            </Form.Item>
+          </div>
+          <div className="flex items-center justify-between p-4 bg-slate-50/50 border border-slate-100 rounded-xl">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-sky-500/10 rounded-lg flex items-center justify-center">
+                <Shield size={16} className="text-sky-500" />
+              </div>
+              <div>
+                <h4 className="text-sm font-bold text-slate-800 m-0 leading-tight">
+                  Use TLS
+                </h4>
+                <p className="text-[10px] text-slate-400 font-medium leading-tight">
+                  Enable secure transport for email
+                </p>
+              </div>
+            </div>
+            <Form.Item name="smtp_use_tls" valuePropName="checked" noStyle>
+              <Switch size="small" />
+            </Form.Item>
+          </div>
+
+          <div className="flex gap-3 pt-4 border-t border-slate-50">
+            <Button
+              type="primary"
+              htmlType="submit"
+              loading={updateConfig.isPending}
+              className="h-11 px-6 rounded-xl font-bold bg-slate-900 border-none shadow-md"
+            >
+              Save Configuration
+            </Button>
+            <Button
+              icon={<Wifi size={14} />}
+              onClick={handleTest}
+              loading={testSmtp.isPending}
+              className="h-11 px-6 rounded-xl font-bold border-slate-100 text-slate-600 hover:text-slate-900"
+            >
+              Test Connection
+            </Button>
+          </div>
+        </Form>
+      </SettingsCard>
+    </div>
+  );
+};
+
+export const SettingsPage: React.FC = () => {
+  const { user } = useAuth();
+  const isAdmin = user?.is_superuser;
+  type TabId =
+    | 'profile'
+    | 'tokens'
+    | 'git'
+    | 'users'
+    | 'invites'
+    | 'smtp'
+    | 'system';
+
+  const [activeTab, setActiveTab] = useState<TabId>('profile');
+
+  const categories: {
+    title: string;
+    items: { id: TabId; label: string; icon: LucideIcon }[];
+  }[] = [
+    {
+      title: 'Personnel',
+      items: [
+        {
+          id: 'profile' as TabId,
+          label: 'Identity',
+          icon: UserIcon,
         },
         {
-          key: 'smtp',
-          icon: <MailOutlined />,
-          label: (
-            <span
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-              }}
-            >
-              SMTP
-              {isConfigured('smtp') && <Badge color="green" />}
-            </span>
-          ),
+          id: 'tokens' as TabId,
+          label: 'Security Tokens',
+          icon: Fingerprint,
+        },
+        {
+          id: 'git' as TabId,
+          label: 'Git Repository',
+          icon: GitBranch,
         },
       ],
     },
+    ...(isAdmin
+      ? [
+          {
+            title: 'Management',
+            items: [
+              {
+                id: 'users' as TabId,
+                label: 'Member Registry',
+                icon: UsersIcon,
+              },
+              {
+                id: 'invites' as TabId,
+                label: 'Invitations',
+                icon: Mail,
+              },
+              {
+                id: 'smtp' as TabId,
+                label: 'SMTP Infrastructure',
+                icon: Send,
+              },
+              {
+                id: 'system' as TabId,
+                label: 'Global Policies',
+                icon: Shield,
+              },
+            ],
+          },
+        ]
+      : []),
   ];
 
-  return (
-    <Layout style={{ minHeight: '100%', background: 'transparent' }}>
-      <Sider
-        width={200}
-        style={{
-          background: '#fff',
-          borderRight: '1px solid #f0f0f0',
-          minHeight: 'calc(100vh - 64px)',
-        }}
-      >
-        <Menu
-          mode="inline"
-          selectedKeys={[activeSection]}
-          style={{ border: 'none', paddingTop: 8 }}
-          onClick={({ key }) => setActiveSection(key as SectionKey)}
-          items={menuGroups}
-        />
-      </Sider>
+  const renderContent = () => {
+    switch (activeTab) {
+      case 'profile':
+        return <ProfileSection user={user} />;
+      case 'tokens':
+        return <TokensSection />;
+      case 'git':
+        return <GitSettingsSection />;
+      case 'users':
+        return isAdmin ? <UsersSection /> : null;
+      case 'invites':
+        return isAdmin ? <InvitationsSection /> : null;
+      case 'smtp':
+        return isAdmin ? <SMTPSettingsSection /> : null;
+      case 'system':
+        return isAdmin ? <AdministrationSection /> : null;
+      default:
+        return null;
+    }
+  };
 
-      <Content
-        style={{
-          padding: '24px 32px',
-          background: '#fafafa',
-          minHeight: 'calc(100vh - 64px)',
-          overflowY: 'auto',
-        }}
-      >
-        <div style={{ maxWidth: 800, margin: '0 auto' }}>
-          {isLoading ? (
-            <div style={{ textAlign: 'center', paddingTop: 60 }}>
-              <LoadingOutlined style={{ fontSize: 28, color: '#4f46e5' }} />
+  return (
+    <div className="w-full flex h-[calc(100vh-56px)] bg-[#fbfcfd] overflow-hidden">
+      {/* Settings Navigation Sidebar */}
+      <aside className="w-64 border-r border-slate-100 bg-white flex flex-col p-4 space-y-6 overflow-y-auto">
+        {categories.map((category) => (
+          <div key={category.title} className="space-y-1.5">
+            <div className="px-3 mb-3">
+              <h1 className="text-[10px] font-black text-slate-900 uppercase tracking-[0.2em] opacity-30">
+                {category.title}
+              </h1>
             </div>
-          ) : (
-            <>
-              {activeSection === 'git' && settings && (
-                <GitSection
-                  initial={settings}
-                  token={token}
-                  onSave={() => void refetch()}
+            {category.items.map((item) => (
+              <button
+                key={item.id}
+                onClick={() => setActiveTab(item.id)}
+                className={`
+                  w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold transition-all duration-200
+                  ${
+                    activeTab === item.id
+                      ? 'bg-sky-500 text-white shadow-lg shadow-sky-100'
+                      : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'
+                  }
+                `}
+              >
+                <item.icon
+                  size={16}
+                  strokeWidth={activeTab === item.id ? 2.5 : 2}
                 />
-              )}
-              {activeSection === 'smtp' && settings && (
-                <SmtpSection
-                  initial={settings}
-                  token={token}
-                  onSave={() => void refetch()}
-                />
-              )}
-              {activeSection === 'tokens' && (
-                <TokensSection authToken={token} />
-              )}
-            </>
-          )}
+                {item.label}
+              </button>
+            ))}
+          </div>
+        ))}
+      </aside>
+
+      {/* Main Content Area */}
+      <main className="flex-1 overflow-y-auto bg-slate-50/30 p-8 lg:p-12">
+        <div className="max-w-4xl mx-auto animate-in fade-in slide-in-from-bottom-2 duration-500">
+          {renderContent()}
         </div>
-      </Content>
-    </Layout>
+      </main>
+    </div>
   );
-}
+};
+
+export default SettingsPage;

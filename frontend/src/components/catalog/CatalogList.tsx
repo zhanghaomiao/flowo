@@ -1,15 +1,5 @@
 import React, { useState } from 'react';
 
-import {
-  CloudDownloadOutlined,
-  DeleteOutlined,
-  DownloadOutlined,
-  GithubOutlined,
-  PlusOutlined,
-  SearchOutlined,
-  SyncOutlined,
-  UserOutlined,
-} from '@ant-design/icons';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
 import {
@@ -25,10 +15,18 @@ import {
   Table,
   Tag,
   Tooltip,
-  Typography,
 } from 'antd';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
+import {
+  Download,
+  ExternalLink,
+  Plus,
+  RefreshCcw,
+  Search,
+  Trash2,
+  User,
+} from 'lucide-react';
 
 import {
   createCatalogMutation,
@@ -43,8 +41,6 @@ import type { CatalogSummary } from '@/client/types.gen';
 import { downloadFile } from '@/utils/download';
 
 dayjs.extend(relativeTime);
-
-const { Title } = Typography;
 
 const CatalogList: React.FC = () => {
   const queryClient = useQueryClient();
@@ -135,7 +131,7 @@ const CatalogList: React.FC = () => {
                   marginRight: 2,
                 }}
               >
-                {isGitHub ? <GithubOutlined /> : <UserOutlined />}
+                {isGitHub ? <ExternalLink size={16} /> : <User size={16} />}
               </a>
             </Tooltip>
             <Link
@@ -188,7 +184,7 @@ const CatalogList: React.FC = () => {
         <Space>
           <Button
             size="small"
-            icon={<DownloadOutlined />}
+            icon={<Download size={16} />}
             onClick={async () => {
               try {
                 await downloadFile(
@@ -219,7 +215,7 @@ const CatalogList: React.FC = () => {
             <Button
               size="small"
               danger
-              icon={<DeleteOutlined />}
+              icon={<Trash2 size={16} />}
               title="Delete"
             />
           </Popconfirm>
@@ -229,32 +225,39 @@ const CatalogList: React.FC = () => {
   ];
 
   return (
-    <div style={{ padding: '24px 0' }}>
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          marginBottom: 20,
-        }}
-      >
-        <Title level={3} style={{ margin: 0 }}>
-          Catalog
-        </Title>
-        <Space>
+    <div className="w-full h-full">
+      {/* Integrated Header */}
+      <div className="px-8 py-6 border-b border-gray-100 flex justify-between items-center sticky top-0 bg-white/80 backdrop-blur-md z-10">
+        <div className="flex flex-col">
+          <h3 className="m-0 text-xl font-black text-slate-800 tracking-tight">
+            Catalog
+          </h3>
+          <div className="text-[10px] uppercase font-black text-slate-400 mt-1 flex items-center gap-2">
+            <span>{catalogs?.length || 0} templates available</span>
+            <span className="h-1 w-1 rounded-full bg-slate-200" />
+            <span>Ready to deploy</span>
+          </div>
+        </div>
+        <div className="flex items-center gap-4">
           <Input
             placeholder="Search catalogs..."
-            prefix={<SearchOutlined />}
+            prefix={<Search size={18} className="text-slate-400" />}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            style={{ width: 250 }}
+            className="w-72 h-12 rounded-2xl border-none bg-slate-100/50 hover:bg-slate-100 transition-colors shadow-sm"
             allowClear
           />
-          <Tooltip title="Sync with filesystem (detect manual changes)">
+          <Tooltip title="Sync with filesystem">
             <Button
-              icon={<SyncOutlined spin={syncMutation.isPending} />}
+              icon={
+                <RefreshCcw
+                  size={18}
+                  className={syncMutation.isPending ? 'animate-spin' : ''}
+                />
+              }
               onClick={handleSync}
               loading={syncMutation.isPending}
+              className="flex items-center justify-center h-12 w-12 rounded-2xl border-none text-slate-500 hover:text-sky-500 bg-slate-100/50 hover:bg-slate-100 transition-all duration-300 shadow-sm"
             />
           </Tooltip>
           <Dropdown
@@ -263,13 +266,13 @@ const CatalogList: React.FC = () => {
                 {
                   key: 'new',
                   label: 'Create blank catalog',
-                  icon: <PlusOutlined />,
+                  icon: <Plus size={16} />,
                   onClick: () => setCreateOpen(true),
                 },
                 {
                   key: 'sync_git',
                   label: 'Sync from Git (Pull)',
-                  icon: <SyncOutlined />,
+                  icon: <RefreshCcw size={16} />,
                   onClick: async () => {
                     try {
                       await gitPullMut.mutateAsync({});
@@ -285,33 +288,40 @@ const CatalogList: React.FC = () => {
                 {
                   key: 'sync_fs',
                   label: 'Force Sync Filesystem',
-                  icon: <SyncOutlined />,
+                  icon: <RefreshCcw size={16} />,
                   onClick: handleSync,
                 },
                 {
                   key: 'git',
                   label: 'Import from custom Git URL',
-                  icon: <CloudDownloadOutlined />,
+                  icon: <Download size={16} />,
                   onClick: () => setImportGitOpen(true),
                 },
               ],
             }}
           >
-            <Button type="primary" icon={<PlusOutlined />}>
+            <Button
+              type="primary"
+              icon={<Plus size={18} />}
+              className="h-11 px-6 flex items-center shadow-md bg-brand-500 hover:bg-brand-600 border-none rounded-2xl font-bold"
+            >
               New Workflow
             </Button>
           </Dropdown>
-        </Space>
+        </div>
       </div>
 
-      <Table
-        dataSource={catalogs || []}
-        columns={columns}
-        rowKey="slug"
-        loading={isLoading}
-        pagination={{ pageSize: 20, showSizeChanger: true }}
-        locale={{ emptyText: 'No catalogs found. Create your first one!' }}
-      />
+      <div className="px-4 py-6">
+        <Table
+          dataSource={catalogs || []}
+          columns={columns}
+          rowKey="slug"
+          loading={isLoading}
+          pagination={{ pageSize: 20, showSizeChanger: true }}
+          locale={{ emptyText: 'No catalogs found. Create your first one!' }}
+          className="bg-transparent"
+        />
+      </div>
 
       {/* Create Catalog Modal */}
       <Modal
@@ -354,9 +364,7 @@ const CatalogList: React.FC = () => {
       <Modal
         title={
           <span>
-            <CloudDownloadOutlined
-              style={{ marginRight: 8, color: '#4f46e5' }}
-            />
+            <Download size={20} style={{ marginRight: 8, color: '#4f46e5' }} />
             Import Catalogs from Git
           </span>
         }
