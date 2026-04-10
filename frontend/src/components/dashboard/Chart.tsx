@@ -146,10 +146,7 @@ export const StackedBarChart = ({
 export const BoxPlot = ({
   data,
 }: {
-  data: Record<
-    string,
-    { min: number; q1: number; median: number; q3: number; max: number }
-  >;
+  data?: Record<string, Record<string, number>>;
 }) => {
   if (!data || Object.keys(data).length === 0)
     return (
@@ -158,13 +155,16 @@ export const BoxPlot = ({
       </div>
     );
   const categories = Object.keys(data);
-  const boxPlotData = categories.map((cat) => [
-    data[cat].min,
-    data[cat].q1,
-    data[cat].median,
-    data[cat].q3,
-    data[cat].max,
-  ]);
+  const boxPlotData = categories.map((cat) => {
+    const item = data[cat];
+    return [
+      item.min ?? 0,
+      item.q1 ?? 0,
+      item.median ?? 0,
+      item.q3 ?? 0,
+      item.max ?? 0,
+    ];
+  });
 
   const option = {
     grid: { left: '15%', right: '5%', top: '5%', bottom: '15%' },

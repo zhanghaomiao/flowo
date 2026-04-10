@@ -417,7 +417,7 @@ export const DashboardLayout: React.FC = () => {
               <ShieldCheck size={14} className="text-indigo-500" />
               Rule Performance
             </h3>
-            <BarChart data={ruleActivityData as [string, number][]} title="" />
+            <BarChart data={ruleActivityData as [string, number][]} />
           </div>
 
           <div className="lg:col-span-3 bg-white border border-slate-100 rounded-[16px] p-4 shadow-sm flex flex-col min-h-[300px]">
@@ -426,7 +426,7 @@ export const DashboardLayout: React.FC = () => {
               Tag Cloud
             </h3>
             <div className="flex-1 flex items-center justify-center">
-              <WordCloud data={tagActivityData} title="" />
+              <WordCloud data={tagActivityData} />
             </div>
           </div>
 

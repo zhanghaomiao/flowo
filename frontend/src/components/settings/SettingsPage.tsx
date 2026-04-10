@@ -581,8 +581,9 @@ const AdministrationSection = () => {
   const handleTogglePolicy = async (field: keyof SystemSettingsRead) => {
     if (!policy) return;
     try {
+      const { ...updateData } = policy;
       await updatePolicy.mutateAsync({
-        body: { ...policy, [field]: !policy[field] },
+        body: { ...updateData, [field]: !policy[field] },
       });
       queryClient.invalidateQueries();
       message.success('Policy updated');
