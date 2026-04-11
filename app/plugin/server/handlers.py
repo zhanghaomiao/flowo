@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 from ...core.config import settings
 from ...models import Catalog, Error, File, Job, Rule, Workflow
 from ...models.enums import FileType, Status
+from ...services.notification import notify_workflow_failure, notify_workflow_submitted
 from ..schemas import (
     ErrorSchema,
     GroupErrorSchema,
@@ -93,6 +94,12 @@ class WorkflowStartedHandler(BaseEventHandler[WorkflowStartedSchema]):
         session.add_all(rules)
 
         context["current_workflow_id"] = data.workflow_id
+
+        # Send workflow submitted notification
+        user_email = context.get("flowo_user", "")
+        notify_workflow_submitted(
+            session, context.get("flowo_project_name", ""), user_email
+        )
 
 
 class RunInfoHandler(BaseEventHandler[RunInfoSchema]):
@@ -265,6 +272,11 @@ class ErrorHandler(BaseEventHandler[ErrorSchema]):
         if workflow and workflow.status == Status.RUNNING:
             workflow.status = Status.ERROR
             workflow.end_time = datetime.now()
+
+            # Send workflow failure notification
+            user_email = context.get("flowo_user", "")
+            error_msg = data.exception or "Unknown error"
+            notify_workflow_failure(session, workflow.name or "", user_email, error_msg)
 
 
 class GroupInfoHandler(BaseEventHandler[GroupInfoSchema]):

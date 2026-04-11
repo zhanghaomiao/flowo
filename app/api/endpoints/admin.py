@@ -4,7 +4,7 @@ import uuid
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -215,3 +215,30 @@ async def test_admin_smtp_connection(
         return ConnectionTestResult(success=False, message=f"Cannot connect: {e}")
     except Exception as e:
         return ConnectionTestResult(success=False, message=str(e))
+
+
+@router.delete("/users/{user_id}")
+async def delete_user(
+    user_id: uuid.UUID,
+    db: AsyncSession = Depends(get_async_session),
+    admin: User = Depends(current_superuser),
+):
+    """Delete a user. Prevents self-deletion."""
+    if user_id == admin.id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Administrators cannot delete themselves.",
+        )
+
+    result = await db.execute(select(User).where(User.id == user_id))
+    user = result.scalar_one_or_none()
+
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found.",
+        )
+
+    await db.delete(user)
+    await db.commit()
+    return {"message": f"User {user.email} successfully deleted."}

@@ -2,7 +2,7 @@
 
 import { type Client, formDataBodySerializer, type Options as Options2, type TDataShape, urlSearchParamsBodySerializer } from './client';
 import { client } from './client.gen';
-import type { AuthJwtLoginData, AuthJwtLoginErrors, AuthJwtLoginResponses, AuthJwtLogoutData, AuthJwtLogoutErrors, AuthJwtLogoutResponses, CloseWorkflowData, CloseWorkflowErrors, CloseWorkflowResponses, CreateCatalogData, CreateCatalogErrors, CreateCatalogResponses, CreateDirectoryData, CreateDirectoryErrors, CreateDirectoryResponses, CreateInvitationData, CreateInvitationErrors, CreateInvitationResponses, CreateTokenData, CreateTokenErrors, CreateTokenResponses, DeleteCatalogData, DeleteCatalogErrors, DeleteCatalogResponses, DeleteDirectoryData, DeleteDirectoryErrors, DeleteDirectoryResponses, DeleteFileData, DeleteFileErrors, DeleteFileResponses, DeleteInvitationData, DeleteInvitationErrors, DeleteInvitationResponses, DeleteTokenData, DeleteTokenErrors, DeleteTokenResponses, DeleteWorkflowData, DeleteWorkflowErrors, DeleteWorkflowResponses, DownloadCatalogData, DownloadCatalogErrors, DownloadCatalogResponses, ExportCatalogData, ExportCatalogErrors, ExportCatalogResponses, GetActivityData, GetActivityErrors, GetActivityResponses, GetAllTagsData, GetAllTagsResponses, GetCatalogDagData, GetCatalogDagErrors, GetCatalogDagResponses, GetCatalogData, GetCatalogErrors, GetCatalogResponses, GetClientConfigData, GetClientConfigResponses, GetConfigfilesData, GetConfigfilesErrors, GetConfigfilesResponses, GetDetailData, GetDetailErrors, GetDetailResponses, GetJobData, GetJobErrors, GetJobOutputsData, GetJobOutputsErrors, GetJobOutputsResponses, GetJobResponses, GetJobsData, GetJobsErrors, GetJobsResponses, GetLogsData, GetLogsErrors, GetLogsResponses, GetProgressData, GetProgressErrors, GetProgressResponses, GetRuleDurationData, GetRuleDurationErrors, GetRuleDurationResponses, GetRuleErrorData, GetRuleErrorErrors, GetRuleErrorResponses, GetRuleGraphData, GetRuleGraphErrors, GetRuleGraphResponses, GetRulesData, GetRulesErrors, GetRulesResponses, GetRuleStatusData, GetRuleStatusErrors, GetRuleStatusResponses, GetSettingsData, GetSettingsResponses, GetSnakefileData, GetSnakefileErrors, GetSnakefileResponses, GetSseTicketData, GetSseTicketResponses, GetStatusData, GetStatusErrors, GetStatusResponses, GetSystemHealthData, GetSystemHealthResponses, GetSystemInfoData, GetSystemInfoResponses, GetSystemResourcesData, GetSystemResourcesResponses, GetSystemSettingsData, GetSystemSettingsResponses, GetTimelinesData, GetTimelinesErrors, GetTimelinesResponses, GetWorkflowIdByNameData, GetWorkflowIdByNameErrors, GetWorkflowIdByNameResponses, GetWorkflowLogData, GetWorkflowLogErrors, GetWorkflowLogResponses, GetWorkflowsData, GetWorkflowsErrors, GetWorkflowsResponses, GitPullData, GitPullResponses, GitPushData, GitPushErrors, GitPushResponses, ImportFromGitData, ImportFromGitErrors, ImportFromGitResponses, ListCatalogsData, ListCatalogsErrors, ListCatalogsResponses, ListFilesData, ListFilesErrors, ListFilesResponses, ListInvitationsData, ListInvitationsResponses, ListTokensData, ListTokensResponses, ListUsersData, ListUsersResponses, PostPruningData, PostPruningResponses, ReadFile2Data, ReadFile2Errors, ReadFile2Responses, ReadFileData, ReadFileErrors, ReadFileResponses, RegisterRegisterData, RegisterRegisterErrors, RegisterRegisterResponses, RenamePathData, RenamePathErrors, RenamePathResponses, ReportEventData, ReportEventErrors, ReportEventResponses, StreamEventsData, StreamEventsErrors, StreamEventsResponses, SyncCatalogsData, SyncCatalogsResponses, SyncCatalogZipData, SyncCatalogZipErrors, SyncCatalogZipResponses, TestAdminSmtpConnectionData, TestAdminSmtpConnectionErrors, TestAdminSmtpConnectionResponses, TestGitConnectionData, TestGitConnectionErrors, TestGitConnectionResponses, UpdateCatalogData, UpdateCatalogErrors, UpdateCatalogResponses, UpdateSettingsData, UpdateSettingsErrors, UpdateSettingsResponses, UpdateSystemSettingsData, UpdateSystemSettingsErrors, UpdateSystemSettingsResponses, UploadCatalogData, UploadCatalogErrors, UploadCatalogResponses, UsersCurrentUserData, UsersCurrentUserErrors, UsersCurrentUserResponses, UsersDeleteUserData, UsersDeleteUserErrors, UsersDeleteUserResponses, UsersPatchCurrentUserData, UsersPatchCurrentUserErrors, UsersPatchCurrentUserResponses, UsersPatchUserData, UsersPatchUserErrors, UsersPatchUserResponses, UsersUserData, UsersUserErrors, UsersUserResponses, WriteFileData, WriteFileErrors, WriteFileResponses } from './types.gen';
+import type { AuthJwtLoginData, AuthJwtLoginErrors, AuthJwtLoginResponses, AuthJwtLogoutData, AuthJwtLogoutErrors, AuthJwtLogoutResponses, CloseWorkflowData, CloseWorkflowErrors, CloseWorkflowResponses, CreateCatalogData, CreateCatalogErrors, CreateCatalogResponses, CreateDirectoryData, CreateDirectoryErrors, CreateDirectoryResponses, CreateInvitationData, CreateInvitationErrors, CreateInvitationResponses, CreateTokenData, CreateTokenErrors, CreateTokenResponses, DeleteCatalogData, DeleteCatalogErrors, DeleteCatalogResponses, DeleteDirectoryData, DeleteDirectoryErrors, DeleteDirectoryResponses, DeleteFileData, DeleteFileErrors, DeleteFileResponses, DeleteInvitationData, DeleteInvitationErrors, DeleteInvitationResponses, DeleteTokenData, DeleteTokenErrors, DeleteTokenResponses, DeleteUserData, DeleteUserErrors, DeleteUserResponses, DeleteWorkflowData, DeleteWorkflowErrors, DeleteWorkflowResponses, DownloadCatalogData, DownloadCatalogErrors, DownloadCatalogResponses, ExportCatalogData, ExportCatalogErrors, ExportCatalogResponses, GetActivityData, GetActivityErrors, GetActivityResponses, GetAllTagsData, GetAllTagsResponses, GetCatalogDagData, GetCatalogDagErrors, GetCatalogDagResponses, GetCatalogData, GetCatalogErrors, GetCatalogResponses, GetClientConfigData, GetClientConfigResponses, GetConfigfilesData, GetConfigfilesErrors, GetConfigfilesResponses, GetDetailData, GetDetailErrors, GetDetailResponses, GetJobData, GetJobErrors, GetJobOutputsData, GetJobOutputsErrors, GetJobOutputsResponses, GetJobResponses, GetJobsData, GetJobsErrors, GetJobsResponses, GetLogsData, GetLogsErrors, GetLogsResponses, GetProgressData, GetProgressErrors, GetProgressResponses, GetRuleDurationData, GetRuleDurationErrors, GetRuleDurationResponses, GetRuleErrorData, GetRuleErrorErrors, GetRuleErrorResponses, GetRuleGraphData, GetRuleGraphErrors, GetRuleGraphResponses, GetRulesData, GetRulesErrors, GetRulesResponses, GetRuleStatusData, GetRuleStatusErrors, GetRuleStatusResponses, GetSettingsData, GetSettingsResponses, GetSnakefileData, GetSnakefileErrors, GetSnakefileResponses, GetSseTicketData, GetSseTicketResponses, GetStatusData, GetStatusErrors, GetStatusResponses, GetSystemHealthData, GetSystemHealthResponses, GetSystemInfoData, GetSystemInfoResponses, GetSystemResourcesData, GetSystemResourcesResponses, GetSystemSettingsData, GetSystemSettingsResponses, GetTimelinesData, GetTimelinesErrors, GetTimelinesResponses, GetWorkflowIdByNameData, GetWorkflowIdByNameErrors, GetWorkflowIdByNameResponses, GetWorkflowLogData, GetWorkflowLogErrors, GetWorkflowLogResponses, GetWorkflowsData, GetWorkflowsErrors, GetWorkflowsResponses, GitPullData, GitPullResponses, GitPushData, GitPushErrors, GitPushResponses, ImportFromGitData, ImportFromGitErrors, ImportFromGitResponses, ListCatalogsData, ListCatalogsErrors, ListCatalogsResponses, ListFilesData, ListFilesErrors, ListFilesResponses, ListInvitationsData, ListInvitationsResponses, ListTokensData, ListTokensResponses, ListUsersData, ListUsersResponses, PostPruningData, PostPruningResponses, ReadFile2Data, ReadFile2Errors, ReadFile2Responses, ReadFileData, ReadFileErrors, ReadFileResponses, RegisterRegisterData, RegisterRegisterErrors, RegisterRegisterResponses, RenamePathData, RenamePathErrors, RenamePathResponses, ReportEventData, ReportEventErrors, ReportEventResponses, ResetForgotPasswordData, ResetForgotPasswordErrors, ResetForgotPasswordResponses, ResetResetPasswordData, ResetResetPasswordErrors, ResetResetPasswordResponses, StreamEventsData, StreamEventsErrors, StreamEventsResponses, SyncCatalogsData, SyncCatalogsResponses, SyncCatalogZipData, SyncCatalogZipErrors, SyncCatalogZipResponses, TestAdminSmtpConnectionData, TestAdminSmtpConnectionErrors, TestAdminSmtpConnectionResponses, TestGitConnectionData, TestGitConnectionErrors, TestGitConnectionResponses, UpdateCatalogData, UpdateCatalogErrors, UpdateCatalogResponses, UpdateSettingsData, UpdateSettingsErrors, UpdateSettingsResponses, UpdateSystemSettingsData, UpdateSystemSettingsErrors, UpdateSystemSettingsResponses, UploadCatalogData, UploadCatalogErrors, UploadCatalogResponses, UsersCurrentUserData, UsersCurrentUserErrors, UsersCurrentUserResponses, UsersDeleteUserData, UsersDeleteUserErrors, UsersDeleteUserResponses, UsersPatchCurrentUserData, UsersPatchCurrentUserErrors, UsersPatchCurrentUserResponses, UsersPatchUserData, UsersPatchUserErrors, UsersPatchUserResponses, UsersUserData, UsersUserErrors, UsersUserResponses, VerifyRequestTokenData, VerifyRequestTokenErrors, VerifyRequestTokenResponses, VerifyVerifyData, VerifyVerifyErrors, VerifyVerifyResponses, WriteFileData, WriteFileErrors, WriteFileResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean> = Options2<TData, ThrowOnError> & {
     /**
@@ -45,6 +45,54 @@ export const authJwtLogout = <ThrowOnError extends boolean = false>(options?: Op
  */
 export const registerRegister = <ThrowOnError extends boolean = false>(options: Options<RegisterRegisterData, ThrowOnError>) => (options.client ?? client).post<RegisterRegisterResponses, RegisterRegisterErrors, ThrowOnError>({
     url: '/api/v1/auth/register',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Reset:Forgot Password
+ */
+export const resetForgotPassword = <ThrowOnError extends boolean = false>(options: Options<ResetForgotPasswordData, ThrowOnError>) => (options.client ?? client).post<ResetForgotPasswordResponses, ResetForgotPasswordErrors, ThrowOnError>({
+    url: '/api/v1/auth/auth/forgot-password',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Reset:Reset Password
+ */
+export const resetResetPassword = <ThrowOnError extends boolean = false>(options: Options<ResetResetPasswordData, ThrowOnError>) => (options.client ?? client).post<ResetResetPasswordResponses, ResetResetPasswordErrors, ThrowOnError>({
+    url: '/api/v1/auth/auth/reset-password',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Verify:Request-Token
+ */
+export const verifyRequestToken = <ThrowOnError extends boolean = false>(options: Options<VerifyRequestTokenData, ThrowOnError>) => (options.client ?? client).post<VerifyRequestTokenResponses, VerifyRequestTokenErrors, ThrowOnError>({
+    url: '/api/v1/auth/auth/request-verify-token',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Verify:Verify
+ */
+export const verifyVerify = <ThrowOnError extends boolean = false>(options: Options<VerifyVerifyData, ThrowOnError>) => (options.client ?? client).post<VerifyVerifyResponses, VerifyVerifyErrors, ThrowOnError>({
+    url: '/api/v1/auth/auth/verify',
     ...options,
     headers: {
         'Content-Type': 'application/json',
@@ -801,4 +849,15 @@ export const testAdminSmtpConnection = <ThrowOnError extends boolean = false>(op
         'Content-Type': 'application/json',
         ...options.headers
     }
+});
+
+/**
+ * Delete User
+ *
+ * Delete a user. Prevents self-deletion.
+ */
+export const deleteUser = <ThrowOnError extends boolean = false>(options: Options<DeleteUserData, ThrowOnError>) => (options.client ?? client).delete<DeleteUserResponses, DeleteUserErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/admin/users/{user_id}',
+    ...options
 });

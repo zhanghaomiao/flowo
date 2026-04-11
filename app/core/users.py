@@ -16,6 +16,11 @@ from ..models.invitation import Invitation
 from ..models.system_settings import SystemSettings
 from ..models.user import User
 from ..schemas.user import UserCreate
+from ..services.notification import (
+    notify_password_reset,
+    notify_user_registered,
+    notify_verify_email,
+)
 from .config import settings
 from .session import get_async_session
 
@@ -83,21 +88,55 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
         user_dict["hashed_password"] = self.password_helper.hash(password)
 
         created_user = await self.user_db.create(user_dict)
-        await self.on_after_register(created_user, request)
+
+        # Smart Verification Logic
+        should_verify = (
+            system_settings
+            and system_settings.smtp_host
+            and system_settings.require_email_verification
+        )
+
+        if should_verify:
+            # Trigger verification process (sending email)
+            await self.request_verify(created_user, request)
+        else:
+            # Auto-verify if SMTP is missing or verification is disabled
+            created_user.is_verified = True
+            session.add(created_user)
+            await session.commit()
+
+        if not should_verify:
+            await self.on_after_register(created_user, request)
+
         return created_user
 
     async def on_after_register(self, user: User, request: Request | None = None):
         print(f"User {user.id} has registered.")
+        # Send welcome email
+        session = self.user_db.session
+        await notify_user_registered(session, user.email)
 
     async def on_after_forgot_password(
         self, user: User, token: str, request: Request | None = None
     ):
         print(f"User {user.id} has forgot their password. Reset token: {token}")
+        # Send password reset email
+        session = self.user_db.session
+        await notify_password_reset(session, user.email, token)
 
     async def on_after_request_verify(
         self, user: User, token: str, request: Request | None = None
     ):
         print(f"Verification requested for user {user.id}. Verification token: {token}")
+        # Send verification email
+        session = self.user_db.session
+        await notify_verify_email(session, user.email, token)
+
+    async def on_after_verify(self, user: User, request: Request | None = None):
+        print(f"User {user.id} has verified their email.")
+        # Send welcome email now that they are verified
+        session = self.user_db.session
+        await notify_user_registered(session, user.email)
 
 
 async def get_user_db(session: AsyncSession = Depends(get_async_session)):
@@ -123,6 +162,8 @@ auth_backend = AuthenticationBackend(
 
 fastapi_users = FastAPIUsers[User, uuid.UUID](get_user_manager, [auth_backend])
 
-current_active_user = fastapi_users.current_user(active=True)
-current_optional_user = fastapi_users.current_user(active=True, optional=True)
+current_active_user = fastapi_users.current_user(active=True, verified=True)
+current_optional_user = fastapi_users.current_user(
+    active=True, verified=True, optional=True
+)
 current_superuser = fastapi_users.current_user(active=True, superuser=True)

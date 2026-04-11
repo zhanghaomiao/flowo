@@ -1,22 +1,27 @@
-import {
-  ArrowRightOutlined,
-  LockOutlined,
-  MailOutlined,
-  UserAddOutlined,
-} from '@ant-design/icons';
+import { useState } from 'react';
+
 import { useMutation } from '@tanstack/react-query';
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router';
-import { App, Button, Card, Form, Input, Typography } from 'antd';
+import { App, Button, Card, Form, Input } from 'antd';
+import {
+  ArrowRight,
+  CheckCircle2,
+  Lock,
+  Mail,
+  ShieldCheck,
+  UserPlus,
+} from 'lucide-react';
 
-import { registerRegisterMutation } from '@/client/@tanstack/react-query.gen';
+import {
+  registerRegisterMutation,
+  useGetSystemInfoQuery,
+} from '@/client/@tanstack/react-query.gen';
 import { RegisterRegisterError } from '@/client/types.gen';
 
 interface RegisterFormValues {
   email: string;
   password: string;
 }
-
-const { Title, Text } = Typography;
 
 export const Route = createFileRoute('/register')({
   validateSearch: (search: Record<string, unknown>) => {
@@ -32,10 +37,16 @@ function RegisterComponent() {
   const navigate = useNavigate();
   const { email: initialEmail, token } = Route.useSearch();
   const registerMutation = useMutation(registerRegisterMutation());
+  const { data: systemInfo } = useGetSystemInfoQuery();
   const { message } = App.useApp();
+  const [isSuccess, setIsSuccess] = useState(false);
+  const [registrationEmail, setRegistrationEmail] = useState('');
+
+  const needsVerification = !!systemInfo?.require_email_verification;
 
   const onFinish = async (values: RegisterFormValues) => {
     try {
+      setRegistrationEmail(values.email);
       await registerMutation.mutateAsync({
         body: {
           email: values.email,
@@ -43,8 +54,14 @@ function RegisterComponent() {
           invitation_code: token,
         } as { email: string; password: string; invitation_code?: string },
       });
-      message.success('Registration successful! Please login.');
-      navigate({ to: '/login' });
+
+      if (needsVerification) {
+        message.success(
+          'Verification email sent! Please check your inbox to complete registration.',
+          8,
+        );
+      }
+      setIsSuccess(true);
     } catch (err: unknown) {
       const error = err as RegisterRegisterError;
       console.error('Registration error details:', error);
@@ -52,14 +69,6 @@ function RegisterComponent() {
         message.error('Registration failed. Email is already registered.');
       } else if (typeof error?.detail === 'string') {
         message.error(error.detail);
-      } else if (
-        (error as { response?: { data?: { detail?: string } } })?.response?.data
-          ?.detail
-      ) {
-        message.error(
-          (error as { response: { data: { detail: string } } }).response.data
-            .detail,
-        );
       } else {
         message.error('Registration failed. Please try again.');
       }
@@ -67,181 +76,160 @@ function RegisterComponent() {
   };
 
   return (
-    <div
-      style={{
-        height: '100vh',
-        width: '100%',
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
-        overflow: 'hidden',
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        zIndex: 1000,
-      }}
-    >
+    <div className="fixed inset-0 min-h-screen w-full flex items-center justify-center bg-[#f8fafc] overflow-hidden">
       {/* Background decorative elements */}
-      <div
-        style={{
-          position: 'absolute',
-          top: '15%',
-          right: '10%',
-          width: '350px',
-          height: '350px',
-          background: 'rgba(0, 162, 255, 0.1)',
-          borderRadius: '50%',
-          filter: 'blur(90px)',
-        }}
-      />
-      <div
-        style={{
-          position: 'absolute',
-          bottom: '15%',
-          left: '10%',
-          width: '450px',
-          height: '450px',
-          background: 'rgba(123, 31, 162, 0.1)',
-          borderRadius: '50%',
-          filter: 'blur(110px)',
-        }}
-      />
+      <div className="absolute top-[-10%] right-[-5%] w-[400px] h-[400px] bg-sky-100 rounded-full blur-[100px] opacity-60" />
+      <div className="absolute bottom-[-10%] left-[-5%] w-[500px] h-[500px] bg-indigo-50 rounded-full blur-[120px] opacity-60" />
 
       <Card
-        style={{
-          width: 440,
-          borderRadius: 24,
-          border: 'none',
-          background: '#ffffff',
-          boxShadow: '0 20px 40px rgba(0,0,0,0.1)',
-        }}
+        className="w-full max-w-[460px] rounded-3xl border-none shadow-2xl relative z-10 animate-in fade-in zoom-in-95 duration-500"
         bodyStyle={{ padding: '48px 40px' }}
       >
-        <div style={{ textAlign: 'center', marginBottom: 40 }}>
-          <div
-            style={{
-              width: 64,
-              height: 64,
-              background: 'linear-gradient(135deg, #00A2FF 0%, #7B1FA2 100%)',
-              borderRadius: 16,
-              margin: '0 auto 24px',
-              display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'center',
-              boxShadow: '0 8px 16px rgba(0, 162, 255, 0.2)',
-            }}
-          >
-            <UserAddOutlined style={{ color: 'white', fontSize: 32 }} />
-          </div>
-          <Title
-            level={2}
-            style={{ color: '#1a1a1a', marginBottom: 8, marginTop: 0 }}
-          >
-            Create Account
-          </Title>
-          <Text style={{ color: '#666666', fontSize: 16 }}>
-            Join FlowO for better workflow management
-          </Text>
-        </div>
+        {isSuccess ? (
+          <div className="text-center animate-in slide-in-from-bottom-4 duration-500">
+            <div className="w-20 h-20 bg-emerald-50 rounded-2xl mx-auto mb-8 flex items-center justify-center shadow-lg shadow-emerald-200/50">
+              <CheckCircle2 className="text-emerald-500 w-10 h-10" />
+            </div>
+            <h1 className="text-3xl font-extrabold text-[#0f172a] mb-4 tracking-tight">
+              Registration Successful
+            </h1>
+            <div className="mt-4 space-y-4">
+              {needsVerification ? (
+                <>
+                  <p className="text-slate-600 text-lg leading-relaxed">
+                    We&apos;ve sent a verification link to{' '}
+                    <span className="font-bold text-slate-900">
+                      {registrationEmail}
+                    </span>
+                    .
+                  </p>
+                  <p className="text-slate-500 text-sm italic py-2 px-4 bg-slate-50 rounded-xl">
+                    Please check your inbox (and spam folder) to activate your
+                    account.
+                  </p>
+                </>
+              ) : (
+                <p className="text-slate-600 text-lg leading-relaxed">
+                  Your account has been created successfully. You can now log in
+                  to the dashboard.
+                </p>
+              )}
+            </div>
 
-        <Form
-          name="register"
-          onFinish={onFinish}
-          size="large"
-          layout="vertical"
-          initialValues={{ email: initialEmail }}
-        >
-          <Form.Item
-            name="email"
-            rules={[
-              { required: true, message: 'Email is required' },
-              { type: 'email', message: 'Enter a valid email' },
-            ]}
-          >
-            <Input
-              prefix={<MailOutlined style={{ color: '#bfbfbf' }} />}
-              placeholder="Email address"
-              style={{
-                background: '#f5f5f5',
-                border: '1px solid #e8e8e8',
-                color: '#333',
-                borderRadius: 12,
-              }}
-            />
-          </Form.Item>
-          <Form.Item
-            name="password"
-            rules={[
-              { required: true, message: 'Password is required' },
-              { min: 8, message: 'Minimum 8 characters' },
-            ]}
-          >
-            <Input.Password
-              prefix={<LockOutlined style={{ color: '#bfbfbf' }} />}
-              placeholder="Password"
-              style={{
-                background: '#f5f5f5',
-                border: '1px solid #e8e8e8',
-                color: '#333',
-                borderRadius: 12,
-              }}
-            />
-          </Form.Item>
-          <Form.Item
-            name="confirm"
-            dependencies={['password']}
-            rules={[
-              { required: true, message: 'Please confirm your password' },
-              ({ getFieldValue }) => ({
-                validator(_, value) {
-                  if (!value || getFieldValue('password') === value) {
-                    return Promise.resolve();
-                  }
-                  return Promise.reject(new Error('Passwords do not match'));
-                },
-              }),
-            ]}
-          >
-            <Input.Password
-              prefix={<LockOutlined style={{ color: '#bfbfbf' }} />}
-              placeholder="Confirm password"
-              style={{
-                background: '#f5f5f5',
-                border: '1px solid #e8e8e8',
-                color: '#333',
-                borderRadius: 12,
-              }}
-            />
-          </Form.Item>
-
-          <Form.Item style={{ marginTop: 12 }}>
             <Button
               type="primary"
-              htmlType="submit"
-              loading={registerMutation.isPending}
+              size="large"
               block
-              style={{
-                height: 48,
-                borderRadius: 12,
-                fontSize: 16,
-                fontWeight: 600,
-                background: 'linear-gradient(135deg, #00A2FF 0%, #0077FF 100%)',
-                border: 'none',
-                boxShadow: '0 4px 12px rgba(0, 162, 255, 0.3)',
-              }}
+              onClick={() => navigate({ to: '/login' })}
+              className="mt-10 h-14 rounded-xl text-lg font-bold bg-sky-500 hover:bg-sky-600 border-none shadow-lg shadow-sky-500/25 flex items-center justify-center gap-2 group transition-all"
             >
-              Create Account <ArrowRightOutlined />
+              Sign In Now
+              <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
             </Button>
-          </Form.Item>
-
-          <div style={{ textAlign: 'center', marginTop: 32 }}>
-            <Text style={{ color: '#666666' }}>Already have an account?</Text>{' '}
-            <Link to="/login" style={{ color: '#00A2FF', fontWeight: 500 }}>
-              Sign in
-            </Link>
           </div>
-        </Form>
+        ) : (
+          <>
+            <div className="text-center mb-10">
+              <div className="w-16 h-16 bg-gradient-to-br from-sky-500 to-indigo-600 rounded-2xl mx-auto mb-6 flex items-center justify-center shadow-lg shadow-sky-400/20">
+                <UserPlus className="text-white w-8 h-8" />
+              </div>
+              <h1 className="text-3xl font-extrabold text-[#0f172a] mb-2 tracking-tight">
+                Create Account
+              </h1>
+              <p className="text-slate-500 text-lg">
+                Join FlowO for better workflow management
+              </p>
+            </div>
+
+            <Form
+              name="register"
+              onFinish={onFinish}
+              size="large"
+              layout="vertical"
+              initialValues={{ email: initialEmail }}
+              className="space-y-4"
+            >
+              <Form.Item
+                name="email"
+                rules={[
+                  { required: true, message: 'Email is required' },
+                  { type: 'email', message: 'Enter a valid email' },
+                ]}
+              >
+                <Input
+                  prefix={<Mail className="text-slate-400 w-5 h-5 mr-2" />}
+                  placeholder="Email address"
+                  className="h-12 bg-slate-50 border-slate-200 rounded-xl hover:border-sky-300 focus:border-sky-500 transition-all focus:bg-white"
+                />
+              </Form.Item>
+
+              <Form.Item
+                name="password"
+                rules={[
+                  { required: true, message: 'Password is required' },
+                  { min: 8, message: 'Minimum 8 characters' },
+                ]}
+              >
+                <Input.Password
+                  prefix={<Lock className="text-slate-400 w-5 h-5 mr-2" />}
+                  placeholder="Password"
+                  className="h-12 bg-slate-50 border-slate-200 rounded-xl hover:border-sky-300 focus:border-sky-500 transition-all focus:bg-white"
+                />
+              </Form.Item>
+
+              <Form.Item
+                name="confirm"
+                dependencies={['password']}
+                rules={[
+                  { required: true, message: 'Please confirm your password' },
+                  ({ getFieldValue }) => ({
+                    validator(_, value) {
+                      if (!value || getFieldValue('password') === value) {
+                        return Promise.resolve();
+                      }
+                      return Promise.reject(
+                        new Error('Passwords do not match'),
+                      );
+                    },
+                  }),
+                ]}
+              >
+                <Input.Password
+                  prefix={
+                    <ShieldCheck className="text-slate-400 w-5 h-5 mr-2" />
+                  }
+                  placeholder="Confirm password"
+                  className="h-12 bg-slate-50 border-slate-200 rounded-xl hover:border-sky-300 focus:border-sky-500 transition-all focus:bg-white"
+                />
+              </Form.Item>
+
+              <Form.Item className="!mt-8">
+                <Button
+                  type="primary"
+                  htmlType="submit"
+                  loading={registerMutation.isPending}
+                  block
+                  className="h-14 rounded-xl text-lg font-bold bg-sky-500 hover:bg-sky-600 border-none shadow-lg shadow-sky-500/20 flex items-center justify-center gap-2 group"
+                >
+                  Create Account
+                  <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                </Button>
+              </Form.Item>
+
+              <div className="text-center mt-8">
+                <span className="text-slate-500">
+                  Already have an account?{' '}
+                </span>
+                <Link
+                  to="/login"
+                  className="text-sky-500 font-bold hover:text-sky-600 transition-colors"
+                >
+                  Sign in
+                </Link>
+              </div>
+            </Form>
+          </>
+        )}
       </Card>
     </div>
   );

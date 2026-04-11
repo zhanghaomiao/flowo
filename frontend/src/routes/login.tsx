@@ -1,20 +1,18 @@
 import { useEffect, useState } from 'react';
 
-import {
-  ArrowRightOutlined,
-  LockOutlined,
-  MailOutlined,
-} from '@ant-design/icons';
 import { useMutation } from '@tanstack/react-query';
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router';
-import { App, Button, Card, Form, Input, Modal, Typography } from 'antd';
+import { App, Button, Card, Form, Input, Modal } from 'antd';
+import { ArrowRight, Lock, Mail, ShieldCheck } from 'lucide-react';
 
-import { authJwtLoginMutation } from '@/client/@tanstack/react-query.gen';
+import {
+  authJwtLoginMutation,
+  resetForgotPasswordMutation,
+  useGetSystemInfoQuery,
+} from '@/client/@tanstack/react-query.gen';
 import { AuthJwtLoginError } from '@/client/types.gen';
 
 import { useAuth } from '../auth';
-
-const { Title, Text } = Typography;
 
 export const Route = createFileRoute('/login')({
   component: LoginComponent,
@@ -30,21 +28,14 @@ function LoginComponent() {
   const { login, isAuthenticated } = useAuth();
   const { redirect } = Route.useSearch();
   const loginMutation = useMutation(authJwtLoginMutation());
+  const forgotMutation = useMutation(resetForgotPasswordMutation());
   const [isForgotModalVisible, setIsForgotModalVisible] = useState(false);
-  const [allowPublicRegistration, setAllowPublicRegistration] = useState(true);
+  const { data: systemInfo } = useGetSystemInfoQuery();
+  const allowPublicRegistration =
+    systemInfo?.allow_public_registration !== false;
   const { message } = App.useApp();
-
-  useEffect(() => {
-    // Fetch system info to check if registration is allowed
-    fetch('/api/v1/utils/info')
-      .then((res) => res.json())
-      .then((data) => {
-        if (data && typeof data.allow_public_registration === 'boolean') {
-          setAllowPublicRegistration(data.allow_public_registration);
-        }
-      })
-      .catch((err) => console.error('Failed to fetch system info:', err));
-  }, []);
+  const [loginForm] = Form.useForm();
+  const [forgotForm] = Form.useForm();
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -87,7 +78,6 @@ function LoginComponent() {
         (error as { response?: { data?: { detail?: string } } })?.response?.data
           ?.detail
       ) {
-        // Fallback for some client versions
         message.error(
           (error as { response: { data: { detail: string } } }).response.data
             .detail,
@@ -99,85 +89,33 @@ function LoginComponent() {
   };
 
   return (
-    <div
-      style={{
-        height: '100vh',
-        width: '100%',
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
-        overflow: 'hidden',
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        zIndex: 1000,
-      }}
-    >
-      {/* Background decorative elements */}
-      <div
-        style={{
-          position: 'absolute',
-          top: '10%',
-          left: '5%',
-          width: '300px',
-          height: '300px',
-          background: 'rgba(0, 162, 255, 0.1)',
-          borderRadius: '50%',
-          filter: 'blur(80px)',
-        }}
-      />
-      <div
-        style={{
-          position: 'absolute',
-          bottom: '10%',
-          right: '5%',
-          width: '400px',
-          height: '400px',
-          background: 'rgba(123, 31, 162, 0.1)',
-          borderRadius: '50%',
-          filter: 'blur(100px)',
-        }}
-      />
+    <div className="fixed inset-0 min-h-screen w-full flex items-center justify-center bg-[#f8fafc] overflow-hidden">
+      {/* Decorative background elements */}
+      <div className="absolute top-[-10%] right-[-5%] w-[400px] h-[400px] bg-sky-100 rounded-full blur-[100px] opacity-60" />
+      <div className="absolute bottom-[-10%] left-[-5%] w-[500px] h-[500px] bg-indigo-50 rounded-full blur-[120px] opacity-60" />
 
       <Card
-        style={{
-          width: 440,
-          borderRadius: 24,
-          border: 'none',
-          background: '#ffffff',
-          boxShadow: '0 20px 40px rgba(0,0,0,0.1)',
-        }}
+        className="w-full max-w-[460px] rounded-3xl border-none shadow-2xl relative z-10 animate-in fade-in zoom-in-95 duration-500"
         bodyStyle={{ padding: '48px 40px' }}
       >
-        <div style={{ textAlign: 'center', marginBottom: 40 }}>
-          <div
-            style={{
-              width: 64,
-              height: 64,
-              background: 'linear-gradient(135deg, #00A2FF 0%, #7B1FA2 100%)',
-              borderRadius: 16,
-              margin: '0 auto 24px',
-              display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'center',
-              boxShadow: '0 8px 16px rgba(0, 162, 255, 0.2)',
-            }}
-          >
-            <Title style={{ color: 'white', margin: 0, fontSize: 32 }}>F</Title>
+        <div className="text-center mb-10">
+          <div className="w-16 h-16 bg-gradient-to-br from-sky-500 to-indigo-600 rounded-2xl flex items-center justify-center mb-6 mx-auto shadow-lg shadow-sky-500/20">
+            <ShieldCheck className="w-8 h-8 text-white" />
           </div>
-          <Title
-            level={2}
-            style={{ color: '#1a1a1a', marginBottom: 8, marginTop: 0 }}
-          >
+          <h1 className="text-3xl font-extrabold text-[#0f172a] mb-2 tracking-tight">
             Welcome Back
-          </Title>
-          <Text style={{ color: '#666666', fontSize: 16 }}>
-            Sign in to continue to FlowO
-          </Text>
+          </h1>
+          <p className="text-slate-500 text-lg">Sign in to continue to FlowO</p>
         </div>
 
-        <Form name="login" onFinish={onFinish} size="large" layout="vertical">
+        <Form
+          form={loginForm}
+          name="login"
+          onFinish={onFinish}
+          size="large"
+          layout="vertical"
+          className="space-y-4"
+        >
           <Form.Item
             name="email"
             rules={[
@@ -186,45 +124,38 @@ function LoginComponent() {
             ]}
           >
             <Input
-              prefix={<MailOutlined style={{ color: '#bfbfbf' }} />}
+              prefix={<Mail className="w-5 h-5 text-slate-400 mr-2" />}
               placeholder="Email address"
-              style={{
-                background: '#f5f5f5',
-                border: '1px solid #e8e8e8',
-                color: '#333',
-                borderRadius: 12,
-              }}
-            />
-          </Form.Item>
-          <Form.Item
-            name="password"
-            rules={[{ required: true, message: 'Password is required' }]}
-          >
-            <Input.Password
-              prefix={<LockOutlined style={{ color: '#bfbfbf' }} />}
-              placeholder="Password"
-              style={{
-                background: '#f5f5f5',
-                border: '1px solid #e8e8e8',
-                color: '#333',
-                borderRadius: 12,
-              }}
+              className="h-12 rounded-xl border-slate-200 bg-slate-50/50 focus:bg-white transition-all"
             />
           </Form.Item>
 
-          <div style={{ marginBottom: 24, textAlign: 'right' }}>
-            <Button
-              type="link"
-              onClick={() => setIsForgotModalVisible(true)}
-              style={{
-                color: '#00A2FF',
-                fontSize: 14,
-                padding: 0,
-                height: 'auto',
+          <Form.Item
+            name="password"
+            rules={[{ required: true, message: 'Password is required' }]}
+            className="!mb-2"
+          >
+            <Input.Password
+              prefix={<Lock className="w-5 h-5 text-slate-400 mr-2" />}
+              placeholder="Password"
+              className="h-12 rounded-xl border-slate-200 bg-slate-50/50 focus:bg-white transition-all"
+            />
+          </Form.Item>
+
+          <div className="flex justify-end mb-6">
+            <button
+              type="button"
+              onClick={() => {
+                const email = loginForm.getFieldValue('email');
+                if (email) {
+                  forgotForm.setFieldsValue({ email });
+                }
+                setIsForgotModalVisible(true);
               }}
+              className="text-sm font-medium text-sky-600 hover:text-sky-700 transition-colors"
             >
               Forgot password?
-            </Button>
+            </button>
           </div>
 
           <Form.Item>
@@ -233,29 +164,22 @@ function LoginComponent() {
               htmlType="submit"
               loading={loginMutation.isPending}
               block
-              style={{
-                height: 48,
-                borderRadius: 12,
-                fontSize: 16,
-                fontWeight: 600,
-                background: 'linear-gradient(135deg, #00A2FF 0%, #0077FF 100%)',
-                border: 'none',
-                boxShadow: '0 4px 12px rgba(0, 162, 255, 0.3)',
-              }}
+              className="h-14 rounded-xl text-lg font-bold bg-sky-500 hover:bg-sky-600 border-none shadow-lg shadow-sky-500/20 flex items-center justify-center group"
             >
-              Log In <ArrowRightOutlined />
+              Log In
+              <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
             </Button>
           </Form.Item>
 
           {allowPublicRegistration && (
-            <div style={{ textAlign: 'center', marginTop: 32 }}>
-              <Text style={{ color: '#666666' }}>
-                Don&apos;t have an account?
-              </Text>{' '}
+            <div className="text-center mt-8">
+              <span className="text-slate-500">
+                Don&apos;t have an account?{' '}
+              </span>
               <Link
                 to="/register"
                 search={{ email: undefined, token: undefined }}
-                style={{ color: '#00A2FF', fontWeight: 500 }}
+                className="font-bold text-sky-500 hover:text-sky-600 transition-colors"
               >
                 Create now
               </Link>
@@ -265,38 +189,85 @@ function LoginComponent() {
       </Card>
 
       <Modal
-        title="Reset Password"
+        title={
+          <div className="flex items-center gap-2 pt-2">
+            <div className="w-8 h-8 bg-amber-50 rounded-lg flex items-center justify-center">
+              <Lock className="w-4 h-4 text-amber-500" />
+            </div>
+            <span className="text-xl font-bold text-[#0f172a]">
+              Reset Password
+            </span>
+          </div>
+        }
         open={isForgotModalVisible}
-        onOk={() => setIsForgotModalVisible(false)}
         onCancel={() => setIsForgotModalVisible(false)}
-        footer={[
-          <Button
-            key="ok"
-            type="primary"
-            onClick={() => setIsForgotModalVisible(false)}
-          >
-            Got it
-          </Button>,
-        ]}
+        centered
+        footer={null}
+        className="rounded-2xl overflow-hidden"
       >
-        <div style={{ padding: '16px 0' }}>
-          <p>Password reset via email is not currently configured.</p>
-          <p>
-            Please contact your system administrator to reset your password
-            using the server CLI:
+        <div className="py-6">
+          <p className="text-slate-600 text-[15px] leading-relaxed mb-6">
+            Enter your email address and we&apos;ll send you a link to reset
+            your password.
           </p>
-          <Card
-            size="small"
-            style={{
-              background: '#f5f5f5',
-              fontFamily: 'monospace',
-              marginTop: 16,
-              fontSize: '13px',
+          <Form
+            form={forgotForm}
+            name="forgot_password"
+            onFinish={async (values: { email: string }) => {
+              try {
+                await forgotMutation.mutateAsync({
+                  body: { email: values.email },
+                });
+                message.success(
+                  'If an account exists with that email, a reset link has been sent.',
+                  8,
+                );
+                setIsForgotModalVisible(false);
+              } catch {
+                message.error('Failed to request password reset.');
+              }
             }}
+            layout="vertical"
           >
-            docker exec -it flowo-backend python -m app.manage reset-password
-            &lt;email&gt; &lt;new_password&gt;
-          </Card>
+            <Form.Item
+              name="email"
+              rules={[
+                { required: true, message: 'Email is required' },
+                { type: 'email', message: 'Enter a valid email' },
+              ]}
+            >
+              <Input
+                prefix={<Mail className="w-5 h-5 text-slate-400 mr-2" />}
+                placeholder="Email address"
+                className="h-12 rounded-xl"
+              />
+            </Form.Item>
+            <Form.Item className="mb-0">
+              <Button
+                type="primary"
+                htmlType="submit"
+                loading={forgotMutation.isPending}
+                block
+                className="h-12 rounded-xl font-bold bg-slate-900 border-none hover:bg-slate-800"
+              >
+                Send Reset Link
+              </Button>
+            </Form.Item>
+          </Form>
+
+          {!systemInfo?.email_enabled && (
+            <div className="mt-8 pt-6 border-t border-slate-100">
+              <p className="text-slate-400 text-sm mb-4">
+                Admin note: SMTP is not configured. Email will not be sent.
+              </p>
+              <div className="bg-slate-50 rounded-xl p-4 border border-slate-100 italic">
+                <code className="text-slate-500 text-xs break-all">
+                  docker exec -it flowo-backend python -m app.manage tokens
+                  list-resets
+                </code>
+              </div>
+            </div>
+          )}
         </div>
       </Modal>
     </div>

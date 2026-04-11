@@ -10,6 +10,7 @@ from app.api.deps import current_active_user_with_token
 from app.core.session import get_db
 from app.models import Job, Status, User, Workflow
 from app.plugin.server.registry import event_registry
+from app.services.notification import notify_workflow_failure, notify_workflow_success
 
 router = APIRouter()
 
@@ -71,4 +72,20 @@ async def close_workflow(
     )
 
     db.commit()
+
+    # Send notification based on final status
+    duration = ""
+    if workflow.started_at and workflow.end_time:
+        delta = workflow.end_time - workflow.started_at
+        minutes = int(delta.total_seconds() // 60)
+        seconds = int(delta.total_seconds() % 60)
+        duration = f"{minutes}m {seconds}s"
+
+    if workflow.status == Status.SUCCESS:
+        notify_workflow_success(db, workflow.name or "", user.email, duration)
+    elif workflow.status == Status.ERROR:
+        notify_workflow_failure(
+            db, workflow.name or "", user.email, "Workflow completed with errors"
+        )
+
     return {"status": workflow.status}

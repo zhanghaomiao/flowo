@@ -19,3 +19,14 @@ class SystemSettings(Base):
     smtp_password: Mapped[str | None] = mapped_column(String, nullable=True)
     smtp_from: Mapped[str | None] = mapped_column(String, nullable=True)
     smtp_use_tls: Mapped[bool] = mapped_column(Boolean, default=True)
+
+    # Notification Triggers
+    notify_on_submit: Mapped[bool] = mapped_column(Boolean, default=False)
+    notify_on_success: Mapped[bool] = mapped_column(Boolean, default=False)
+    notify_on_failure: Mapped[bool] = mapped_column(Boolean, default=False)
+
+    # SITE URL for email links
+    site_url: Mapped[str | None] = mapped_column(String, nullable=True)
+
+    # Security Policies
+    require_email_verification: Mapped[bool] = mapped_column(Boolean, default=False)
