@@ -12,12 +12,11 @@ import {
   BookOpen,
   ChevronRight,
   Command,
-  LogOut,
   Settings2,
   Workflow,
 } from 'lucide-react';
 
-import { type AuthContextType, useAuth } from '../auth';
+import { type AuthContextType } from '../auth';
 
 export interface MyRouterContext {
   auth: AuthContextType;
@@ -27,7 +26,6 @@ export interface MyRouterContext {
 function RootComponent() {
   const navigate = useNavigate();
   const location = useLocation();
-  const auth = useAuth();
 
   const isPublicRoute =
     location.pathname === '/login' || location.pathname === '/register';
@@ -103,7 +101,7 @@ function RootComponent() {
             })}
           </nav>
 
-          {/* User & Settings Section */}
+          {/* Admin Section */}
           <div className="flex items-center gap-2">
             <button
               onClick={() => navigate({ to: '/settings' })}
@@ -134,18 +132,6 @@ function RootComponent() {
               >
                 <Settings2 size={16} strokeWidth={2.5} />
               </div>
-            </button>
-
-            <button
-              onClick={() => auth.logout()}
-              className="w-10 h-10 flex items-center justify-center rounded-2xl bg-rose-50 text-rose-500 hover:bg-rose-500 hover:text-white transition-all duration-300 border border-rose-100 hover:shadow-lg hover:shadow-rose-100 active:scale-95 group"
-              title="Logout"
-            >
-              <LogOut
-                size={18}
-                strokeWidth={2.5}
-                className="group-hover:translate-x-0.5 transition-transform"
-              />
             </button>
           </div>
         </div>
