@@ -49,7 +49,7 @@ export const SettingsPage: React.FC = () => {
         },
         {
           id: 'tokens' as TabId,
-          label: 'Security Tokens',
+          label: 'API Tokens',
           icon: Fingerprint,
         },
         {

@@ -112,6 +112,23 @@ export const GitSettingsSection: React.FC = () => {
           </div>
         </Form>
       </SettingsCard>
+
+      <div className="p-5 bg-sky-50 border border-sky-100 rounded-2xl flex items-start gap-4">
+        <div className="p-2.5 bg-sky-500 rounded-xl text-white shadow-lg shadow-sky-100">
+          <Globe size={18} />
+        </div>
+        <div>
+          <h4 className="font-bold text-sky-900 text-sm mb-1">
+            Usage Tip: Workflow Sync
+          </h4>
+          <p className="text-sky-700/70 text-xs leading-relaxed max-w-2xl">
+            Once configured, you can use the <strong>Push to Git</strong> action
+            in any catalog to sync your local changes. Other team members can
+            then use <strong>Import from Git URL</strong> in the catalog gallery
+            to pull your workflows.
+          </p>
+        </div>
+      </div>
     </div>
   );
 };
