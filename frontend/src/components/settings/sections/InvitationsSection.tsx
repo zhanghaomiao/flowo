@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Button, Input, message, Popconfirm } from 'antd';
+import { Button, Input, message, notification, Popconfirm } from 'antd';
 import { Mail, Plus, Trash2 } from 'lucide-react';
 
 import {
@@ -26,14 +26,24 @@ export const InvitationsSection: React.FC = () => {
   const handleCreate = async () => {
     if (!email) return;
     try {
-      await createInvite.mutateAsync({ body: { email } });
+      const res = await createInvite.mutateAsync({ body: { email } });
       queryClient.invalidateQueries({
         queryKey: [listInvitationsOptions({}).queryKey],
       });
       setEmail('');
-      message.success('Invitation sent');
+
+      if (res.email_sent) {
+        message.success(`Invitation email sent to ${email}`);
+      } else {
+        notification.warning({
+          message: 'Email Not Sent',
+          description:
+            'The invitation was created, but the email could not be delivered. Please share the invitation token with the user manually.',
+          duration: 0,
+        });
+      }
     } catch {
-      message.error('Failed to send invitation');
+      message.error('Failed to create invitation');
     }
   };
 

@@ -45,13 +45,20 @@ def _wrap_html(content: str, accent_color: str = "#0ea5e9") -> str:
 <body><div class="container">{content}</div></body></html>"""
 
 
+def _get_absolute_url(site_url: str, path: str) -> str:
+    """Safely constructs an absolute URL. Defaults to path if site_url is missing."""
+    if not site_url:
+        return path
+    return f"{site_url.rstrip('/')}/{path.lstrip('/')}"
+
+
 # ─── Workflow Email Templates ──────────────────────────────────────────────────
 
 
 def workflow_submitted_html(
     workflow_name: str, user_email: str, submitted_at: str, site_url: str = ""
 ) -> str:
-    link = f"{site_url}/workflow" if site_url else "/workflow"
+    link = _get_absolute_url(site_url, "/workflow")
     content = f"""
     <div class="header" style="border-bottom: 3px solid #0ea5e9;">
         <div class="sub" style="color: #0ea5e9;">workflow notification</div>
@@ -80,7 +87,7 @@ def workflow_submitted_html(
 def workflow_success_html(
     workflow_name: str, user_email: str, duration: str, site_url: str = ""
 ) -> str:
-    link = f"{site_url}/workflow" if site_url else "/workflow"
+    link = _get_absolute_url(site_url, "/workflow")
     content = f"""
     <div class="header" style="border-bottom: 3px solid #10b981;">
         <div class="sub" style="color: #10b981;">workflow notification</div>
@@ -109,7 +116,7 @@ def workflow_success_html(
 def workflow_failure_html(
     workflow_name: str, user_email: str, error_msg: str, site_url: str = ""
 ) -> str:
-    link = f"{site_url}/workflow" if site_url else "/workflow"
+    link = _get_absolute_url(site_url, "/workflow")
     content = f"""
     <div class="header" style="border-bottom: 3px solid #f43f5e;">
         <div class="sub" style="color: #f43f5e;">workflow notification</div>
@@ -139,7 +146,7 @@ def workflow_failure_html(
 
 
 def welcome_html(user_email: str, site_url: str = "") -> str:
-    link = f"{site_url}/login" if site_url else "/login"
+    link = _get_absolute_url(site_url, "/login")
     content = f"""
     <div class="header" style="border-bottom: 3px solid #0ea5e9;">
         <div class="sub" style="color: #0ea5e9;">welcome to flowo</div>
@@ -162,11 +169,7 @@ def welcome_html(user_email: str, site_url: str = "") -> str:
 
 
 def reset_password_html(user_email: str, token: str, site_url: str = "") -> str:
-    link = (
-        f"{site_url}/reset-password?token={token}"
-        if site_url
-        else f"/reset-password?token={token}"
-    )
+    link = _get_absolute_url(site_url, f"/reset-password?token={token}")
     content = f"""
     <div class="header" style="border-bottom: 3px solid #f59e0b;">
         <div class="sub" style="color: #f59e0b;">security alert</div>
@@ -192,7 +195,7 @@ def reset_password_html(user_email: str, token: str, site_url: str = "") -> str:
 
 
 def verify_email_html(user_email: str, token: str, site_url: str = "") -> str:
-    link = f"{site_url}/verify?token={token}" if site_url else f"/verify?token={token}"
+    link = _get_absolute_url(site_url, f"/verify?token={token}")
     content = f"""
     <div class="header" style="border-bottom: 3px solid #6366f1;">
         <div class="sub" style="color: #6366f1;">account verification</div>

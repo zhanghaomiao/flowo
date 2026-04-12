@@ -13,7 +13,11 @@ from app.core.users import current_superuser
 from app.models.invitation import Invitation
 from app.models.system_settings import SystemSettings
 from app.models.user import User
-from app.schemas.invitation import InvitationCreate, InvitationRead
+from app.schemas.invitation import (
+    InvitationCreate,
+    InvitationCreateResponse,
+    InvitationRead,
+)
 from app.schemas.system_settings import (
     ConnectionTestResult,
     SystemSettingsRead,
@@ -29,13 +33,20 @@ async def send_invitation_email(
     settings: SystemSettings, target_email: str, token: str
 ) -> bool:
     """Sends an invitation email using system SMTP settings."""
-    if not all([settings.smtp_host, settings.smtp_port, settings.smtp_from]):
+    if not all(
+        [
+            settings.smtp_host,
+            settings.smtp_port,
+            settings.smtp_from,
+            settings.site_url,
+        ]
+    ):
         return False
 
     try:
-        # Construct registration link
-        # In a real app, this should come from config, but we'll use a placeholder or inferred URL
-        reg_link = f"/register?token={token}"
+        # Construct absolute registration link
+        base_url = settings.site_url.rstrip("/")
+        reg_link = f"{base_url}/register?token={token}"
 
         msg = MIMEMultipart("alternative")
         msg["Subject"] = "You are invited to join FlowO"
@@ -126,7 +137,7 @@ async def update_system_settings(
     return settings
 
 
-@router.post("/invitations")
+@router.post("/invitations", response_model=InvitationCreateResponse)
 async def create_invitation(
     payload: InvitationCreate,
     db: AsyncSession = Depends(get_async_session),

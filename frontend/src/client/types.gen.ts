@@ -471,6 +471,40 @@ export type InvitationCreate = {
 };
 
 /**
+ * InvitationCreateResponse
+ */
+export type InvitationCreateResponse = {
+    /**
+     * Email
+     */
+    email?: string | null;
+    /**
+     * Expires At
+     */
+    expires_at?: string | null;
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * Token
+     */
+    token: string;
+    /**
+     * Is Used
+     */
+    is_used: boolean;
+    /**
+     * Created At
+     */
+    created_at: string;
+    /**
+     * Email Sent
+     */
+    email_sent: boolean;
+};
+
+/**
  * InvitationRead
  */
 export type InvitationRead = {
@@ -3572,8 +3606,10 @@ export type CreateInvitationResponses = {
     /**
      * Successful Response
      */
-    200: unknown;
+    200: InvitationCreateResponse;
 };
+
+export type CreateInvitationResponse = CreateInvitationResponses[keyof CreateInvitationResponses];
 
 export type DeleteInvitationData = {
     body?: never;

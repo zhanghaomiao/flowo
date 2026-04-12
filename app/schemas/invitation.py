@@ -20,3 +20,7 @@ class InvitationRead(InvitationBase):
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class InvitationCreateResponse(InvitationRead):
+    email_sent: bool

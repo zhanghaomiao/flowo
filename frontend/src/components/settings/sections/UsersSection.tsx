@@ -2,13 +2,7 @@ import React from 'react';
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { message, Popconfirm, Switch, Tag } from 'antd';
-import {
-  AlertCircle,
-  CheckCircle2,
-  Trash2,
-  User as UserIcon,
-  Users as UsersIcon,
-} from 'lucide-react';
+import { Trash2, User as UserIcon, Users as UsersIcon } from 'lucide-react';
 
 import { useAuth } from '@/auth';
 import {
@@ -111,46 +105,9 @@ export const UsersSection: React.FC = () => {
                     {u.id}
                   </p>
                 </div>
-                <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-white border border-slate-100 shadow-sm">
-                  {u.is_verified ? (
-                    <CheckCircle2
-                      size={12}
-                      className="text-emerald-500 fill-emerald-50"
-                    />
-                  ) : (
-                    <AlertCircle size={12} className="text-amber-500" />
-                  )}
-                  <span
-                    className={`text-[8px] font-black uppercase tracking-wider ${u.is_verified ? 'text-emerald-600' : 'text-amber-600'}`}
-                  >
-                    {u.is_verified ? 'Verified' : 'Unverified'}
-                  </span>
-                </div>
               </div>
 
               <div className="space-y-2 pt-3 border-t border-slate-100">
-                <div className="flex items-center justify-between">
-                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">
-                    Email Verified
-                  </span>
-                  <Switch
-                    size="small"
-                    checked={u.is_verified}
-                    loading={patchUser.isPending}
-                    onChange={async () => {
-                      try {
-                        await patchUser.mutateAsync({
-                          path: { id: u.id },
-                          body: { is_verified: !u.is_verified },
-                        });
-                        queryClient.invalidateQueries();
-                        message.success(`Verification status updated`);
-                      } catch {
-                        message.error('Update failed');
-                      }
-                    }}
-                  />
-                </div>
                 <div className="flex items-center justify-between">
                   <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">
                     Admin Privileges

@@ -89,24 +89,11 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
 
         created_user = await self.user_db.create(user_dict)
 
-        # Smart Verification Logic
-        should_verify = (
-            system_settings
-            and system_settings.smtp_host
-            and system_settings.require_email_verification
-        )
-
-        if should_verify:
-            # Trigger verification process (sending email)
-            await self.request_verify(created_user, request)
-        else:
-            # Auto-verify if SMTP is missing or verification is disabled
-            created_user.is_verified = True
-            session.add(created_user)
-            await session.commit()
-
-        if not should_verify:
-            await self.on_after_register(created_user, request)
+        # Force auto-verify for all new registrations (Small team simplification)
+        created_user.is_verified = True
+        session.add(created_user)
+        await session.commit()
+        await self.on_after_register(created_user, request)
 
         return created_user
 
@@ -162,8 +149,6 @@ auth_backend = AuthenticationBackend(
 
 fastapi_users = FastAPIUsers[User, uuid.UUID](get_user_manager, [auth_backend])
 
-current_active_user = fastapi_users.current_user(active=True, verified=True)
-current_optional_user = fastapi_users.current_user(
-    active=True, verified=True, optional=True
-)
+current_active_user = fastapi_users.current_user(active=True)
+current_optional_user = fastapi_users.current_user(active=True, optional=True)
 current_superuser = fastapi_users.current_user(active=True, superuser=True)

@@ -12,10 +12,7 @@ import {
   UserPlus,
 } from 'lucide-react';
 
-import {
-  registerRegisterMutation,
-  useGetSystemInfoQuery,
-} from '@/client/@tanstack/react-query.gen';
+import { registerRegisterMutation } from '@/client/@tanstack/react-query.gen';
 import { RegisterRegisterError } from '@/client/types.gen';
 
 interface RegisterFormValues {
@@ -37,16 +34,10 @@ function RegisterComponent() {
   const navigate = useNavigate();
   const { email: initialEmail, token } = Route.useSearch();
   const registerMutation = useMutation(registerRegisterMutation());
-  const { data: systemInfo } = useGetSystemInfoQuery();
   const { message } = App.useApp();
   const [isSuccess, setIsSuccess] = useState(false);
-  const [registrationEmail, setRegistrationEmail] = useState('');
-
-  const needsVerification = !!systemInfo?.require_email_verification;
-
   const onFinish = async (values: RegisterFormValues) => {
     try {
-      setRegistrationEmail(values.email);
       await registerMutation.mutateAsync({
         body: {
           email: values.email,
@@ -55,12 +46,7 @@ function RegisterComponent() {
         } as { email: string; password: string; invitation_code?: string },
       });
 
-      if (needsVerification) {
-        message.success(
-          'Verification email sent! Please check your inbox to complete registration.',
-          8,
-        );
-      }
+      message.success('Account created successfully!');
       setIsSuccess(true);
     } catch (err: unknown) {
       const error = err as RegisterRegisterError;
@@ -94,26 +80,10 @@ function RegisterComponent() {
               Registration Successful
             </h1>
             <div className="mt-4 space-y-4">
-              {needsVerification ? (
-                <>
-                  <p className="text-slate-600 text-lg leading-relaxed">
-                    We&apos;ve sent a verification link to{' '}
-                    <span className="font-bold text-slate-900">
-                      {registrationEmail}
-                    </span>
-                    .
-                  </p>
-                  <p className="text-slate-500 text-sm italic py-2 px-4 bg-slate-50 rounded-xl">
-                    Please check your inbox (and spam folder) to activate your
-                    account.
-                  </p>
-                </>
-              ) : (
-                <p className="text-slate-600 text-lg leading-relaxed">
-                  Your account has been created successfully. You can now log in
-                  to the dashboard.
-                </p>
-              )}
+              <p className="text-slate-600 text-lg leading-relaxed">
+                Your account has been created successfully. You can now log in
+                to the dashboard.
+              </p>
             </div>
 
             <Button
