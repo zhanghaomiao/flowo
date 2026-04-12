@@ -72,7 +72,7 @@ export const GitSettingsSection: React.FC = () => {
           >
             <Input
               prefix={<Globe size={14} className="text-slate-400 mr-2" />}
-              placeholder="https://github.com/user/repo.git"
+              placeholder="https://git.example.com/user/repo.git"
               className="rounded-xl border-slate-100 h-11"
             />
           </Form.Item>
@@ -87,7 +87,7 @@ export const GitSettingsSection: React.FC = () => {
           >
             <Input.Password
               prefix={<Lock size={14} className="text-slate-400 mr-2" />}
-              placeholder="ghp_xxxxxxxxxxxx"
+              placeholder="Enter your bearer token or PAT"
               className="rounded-xl border-slate-100 h-11"
             />
           </Form.Item>
@@ -119,13 +119,13 @@ export const GitSettingsSection: React.FC = () => {
         </div>
         <div>
           <h4 className="font-bold text-sky-900 text-sm mb-1">
-            Usage Tip: Workflow Sync
+            Usage Tip: Universal Sync
           </h4>
           <p className="text-sky-700/70 text-xs leading-relaxed max-w-2xl">
-            Once configured, you can use the <strong>Push to Git</strong> action
-            in any catalog to sync your local changes. Other team members can
-            then use <strong>Import from Git URL</strong> in the catalog gallery
-            to pull your workflows.
+            FlowO supports any Git provider that allows HTTPS cloning with token
+            auth, including <strong>Gitea</strong>, <strong>GitLab</strong>,{' '}
+            <strong>GitHub</strong>, and self-hosted instances. Once configured,
+            use <strong>Push to Git</strong> to sync catalogs globally.
           </p>
         </div>
       </div>

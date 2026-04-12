@@ -31,13 +31,17 @@ class GitService:
             raise RuntimeError(f"Git command failed: {error_msg}") from e
 
     def _prepare_url(self, url: str, token: str | None = None) -> str:
-        """Inject token into GitHub URL for authentication."""
+        """Inject token into Git URL for authentication.
+        Works across common providers like GitHub, GitLab, and Gitea.
+        """
         effective_token = token or settings.CATALOG_GIT_TOKEN
         if not effective_token:
             return url
 
         # Only inject if it's a https URL and doesn't already have a token
         if url.startswith("https://") and "@" not in url:
+            # For GitLab, oauth2:token is the cleanest way, but token@domain.com
+            # is universally supported by GitHub, Gitea, and GitLab.
             return url.replace("https://", f"https://{effective_token}@")
         return url
 
