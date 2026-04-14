@@ -23,12 +23,16 @@ def _extract_rules() -> list[RuleInfoSchema]:
     """Extract all rules and their source code from the global snakemake workflow object."""
     rules = []
     try:
-        import snakemake.workflow
-        from snakemake import notebook, wrapper
-        from snakemake.io import contains_wildcard
-        from snakemake.script import get_source
+        try:
+            import snakemake.workflow
+            from snakemake import notebook, wrapper
+            from snakemake.io import contains_wildcard
+            from snakemake.script import get_source
 
-        wf = snakemake.workflow.workflow
+            wf = getattr(snakemake.workflow, "workflow", None)
+        except (ImportError, AttributeError):
+            wf = None
+
         if not wf:
             return []
 
@@ -77,6 +81,10 @@ def _extract_rules() -> list[RuleInfoSchema]:
 
     except Exception as e:
         logger.debug(f"Failed to access snakemake workflow rules: {e}")
+    except (ImportError, AttributeError) as e:
+        logger.debug(
+            f"Snakemake internal structure incompatible for rule extraction: {e}"
+        )
 
     return rules
 
@@ -105,7 +113,7 @@ class RecordParser:
                 for name, value in zip(
                     record.resources._names, record.resources, strict=False
                 )
-                if name not in {"_cores", "_nodes"}
+                if name not in {"_cores", "_nodes", "cores", "nodes"}
             }
 
         benchmark = getattr(record, "benchmark", None)
@@ -139,17 +147,17 @@ class RecordParser:
 
     @staticmethod
     def job_finished(record: LogRecord) -> JobFinishedSchema:
-        job_id = getattr(record, "jobid", 0)
-        if job_id == 0:
+        job_id = getattr(record, "jobid", None)
+        if job_id is None or job_id == 0:
             job_id = getattr(record, "job_id", 0)
-        return JobFinishedSchema(job_id=int(job_id))
+        return JobFinishedSchema(job_id=int(job_id or 0))
 
     @staticmethod
     def job_error(record: LogRecord) -> JobErrorSchema:
-        job_id = getattr(record, "jobid", 0)
-        if job_id == 0:
+        job_id = getattr(record, "jobid", None)
+        if job_id is None or job_id == 0:
             job_id = getattr(record, "job_id", 0)
-        return JobErrorSchema(job_id=job_id)
+        return JobErrorSchema(job_id=int(job_id or 0))
 
     @staticmethod
     def rulegraph(record: LogRecord) -> RuleGraphSchema:
