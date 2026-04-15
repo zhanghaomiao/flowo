@@ -1,43 +1,71 @@
+import os
+from pathlib import Path
+
 import nox
 
-# Define the Snakemake versions to test against
-# 7.x (Legacy), 8.x (Current stable), 9.x (Latest/Next)
-SNAKEMAKE_VERSIONS = ["7.32.4", "8.4.12", "9.19.0"]
+nox.options.sessions = ["lint", "tests"]
+nox.options.default_venv_backend = "uv|virtualenv"
+
+SNAKEMAKE_VERSIONS = [
+    "9.0.1",
+    "9.2.0",
+    "9.4.0",
+    "9.5.1",
+    "9.8.2",
+    "9.12.0",
+    "9.15.0",
+    "9.17.0",
+    "9.18.2",
+    "9.19.0",
+]
+TEST_PATHS = [
+    "tests/unit/test_parsers.py",
+    "tests/unit/test_snakemake_service.py",
+    "tests/snakemake_compat/test_extract_rules_real_snakemake.py",
+    "tests/snakemake_compat/test_log_handler_compat.py",
+    "tests/snakemake_compat/test_logger_e2e_real_snakemake.py",
+]
+TEST_DEPENDENCIES = [
+    "fastapi>=0.115.12",
+    "httpx>=0.28.1",
+    "pydantic>=2.11.5",
+    "pydantic-settings>=2.9.1",
+    "pytest>=8.3.0",
+    "pytest-asyncio>=0.24.0",
+    "snakemake-interface-logger-plugins",
+]
 
 
-@nox.session(python=["3.12"])
+def _repo_root() -> str:
+    return str(Path(__file__).resolve().parent)
+
+
+@nox.session(name="tests", python="3.12")
 @nox.parametrize("snakemake", SNAKEMAKE_VERSIONS)
-def tests(session, snakemake):
-    """Run parser tests against different Snakemake versions."""
-    # Use uv for faster installation
-    session.install("uv")
+def tests(session: nox.Session, snakemake: str) -> None:
+    """Run the Snakemake 9.x compatibility suite."""
+    env = {
+        "NO_COLOR": "1",
+        "PYTHONPATH": _repo_root(),
+        **os.environ,
+    }
+    session.install(*TEST_DEPENDENCIES, f"snakemake=={snakemake}")
+    session.install(".")
+    session.run("pytest", "--noconftest", *TEST_PATHS, env=env)
 
-    # Install the current package with all dependencies needed to load app modules
-    # We include [server] to ensure FastAPI and other core deps are present for conftest.py
-    session.run("uv", "pip", "install", ".[server]")
 
-    # Install specific snakemake version and test dependencies
+@nox.session(name="lint", python=False)
+def lint(session: nox.Session) -> None:
+    """Run Ruff against the repository."""
     session.run(
         "uv",
-        "pip",
-        "install",
-        f"snakemake=={snakemake}",
-        "pytest",
-        "pytest-asyncio",
-        "httpx",
-        "sqlalchemy",
-        "asyncpg",
-        "psycopg2-binary",
+        "run",
+        "--no-project",
+        "--python",
+        "3.12",
+        "--with",
+        "ruff",
+        "ruff",
+        "check",
+        ".",
     )
-
-    # Run parser tests
-    # We use -c /dev/null to avoid loading the root pytest.ini if it causes issues,
-    # but here we mainly need to ensure dependencies for conftest.py are met.
-    session.run("pytest", "tests/unit/test_parsers.py", env={"PYTHONPATH": "."})
-
-
-@nox.session(python=["3.12"])
-def lint(session):
-    """Run linting."""
-    session.install("ruff")
-    session.run("ruff", "check", ".")

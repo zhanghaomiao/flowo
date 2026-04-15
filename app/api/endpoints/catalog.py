@@ -70,15 +70,15 @@ class CatalogCategoryInfo(BaseModel):
 
 class CatalogSummary(BaseModel):
     name: str
-    slug: str
+    slug: str | None = None
     description: str = ""
     version: str = "0.1.0"
-    owner: str = ""
+    owner: str | None = None
     tags: list[str] = []
     is_public: bool = False
-    source_url: str = ""
-    created_at: str
-    updated_at: str
+    source_url: str | None = None
+    created_at: str | None = None
+    updated_at: str | None = None
     file_count: int = 0
     has_snakefile: bool = True
     git_configured: bool = False

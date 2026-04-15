@@ -79,12 +79,12 @@ def _extract_rules() -> list[RuleInfoSchema]:
                 logger.debug(f"Failed to extract code for rule {rule.name}: {e}")
                 rules.append(RuleInfoSchema(name=rule.name))
 
-    except Exception as e:
-        logger.debug(f"Failed to access snakemake workflow rules: {e}")
     except (ImportError, AttributeError) as e:
         logger.debug(
             f"Snakemake internal structure incompatible for rule extraction: {e}"
         )
+    except Exception as e:
+        logger.debug(f"Failed to access snakemake workflow rules: {e}")
 
     return rules
 
@@ -124,14 +124,14 @@ class RecordParser:
             job_id=getattr(record, "jobid", 0),
             rule_name=getattr(record, "rule_name", ""),
             threads=getattr(record, "threads", 1),
-            rule_msg=record.rule_msg,
+            rule_msg=getattr(record, "rule_msg", None),
             wildcards=getattr(record, "wildcards", {}),
-            reason=record.reason,
-            shellcmd=record.shellcmd,
-            priority=record.priority,
-            input=record.input,
-            log=record.log,
-            output=record.output,
+            reason=getattr(record, "reason", None),
+            shellcmd=getattr(record, "shellcmd", None),
+            priority=getattr(record, "priority", None),
+            input=getattr(record, "input", None),
+            log=getattr(record, "log", None),
+            output=getattr(record, "output", None),
             benchmark=benchmark,
             resources=resources,
         )

@@ -7,6 +7,11 @@ from sqlalchemy import create_engine
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import sessionmaker
 
+os.environ.setdefault(
+    "SECRET_KEY",
+    "flowo-test-secret-key-with-safe-length-1234567890",
+)
+
 from app.api.deps import get_async_session
 from app.core.config import settings
 from app.core.session import get_db
@@ -132,3 +137,40 @@ async def superuser_token_headers(client: AsyncClient) -> dict[str, str]:
     )
     token = resp.json()["access_token"]
     return {"Authorization": f"Bearer {token}"}
+
+
+@pytest.fixture
+def register_user(client: AsyncClient):
+    async def _register_user(
+        email: str,
+        password: str = "testpassword123",
+        *,
+        is_superuser: bool = False,
+        is_active: bool = True,
+        is_verified: bool = True,
+    ):
+        return await client.post(
+            "/api/v1/auth/register",
+            json={
+                "email": email,
+                "password": password,
+                "is_superuser": is_superuser,
+                "is_active": is_active,
+                "is_verified": is_verified,
+            },
+        )
+
+    return _register_user
+
+
+@pytest.fixture
+def login_user(client: AsyncClient):
+    async def _login_user(email: str, password: str = "testpassword123") -> dict[str, str]:
+        resp = await client.post(
+            "/api/v1/auth/jwt/login",
+            data={"username": email, "password": password},
+        )
+        token = resp.json()["access_token"]
+        return {"Authorization": f"Bearer {token}"}
+
+    return _login_user

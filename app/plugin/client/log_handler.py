@@ -1,3 +1,4 @@
+import inspect
 import logging
 import os
 import uuid
@@ -98,21 +99,43 @@ class FlowoLogHandler(Handler):
         log_file_path.parent.mkdir(parents=True, exist_ok=True)
 
         h = logging.FileHandler(log_file_path, encoding="utf-8")
-        h.setFormatter(
-            DefaultFormatter(
-                self.common_settings.quiet, self.common_settings.show_failed_logs
-            )
-        )
-        h.addFilter(
-            DefaultFilter(
-                self.common_settings.quiet,
-                self.common_settings.debug_dag,
-                self.common_settings.dryrun,
-                self.common_settings.printshellcmds,
-            )
-        )
+        h.setFormatter(self._create_formatter())
+        h.addFilter(self._create_filter())
         h.setLevel(logging.DEBUG if self.common_settings.verbose else logging.INFO)
         return h
+
+    def _create_formatter(self):
+        """Create DefaultFormatter with version-compatible arguments.
+
+        snakemake <=9.2.x: DefaultFormatter(quiet, show_failed_logs, printshellcmds)
+        snakemake >=9.10.0: DefaultFormatter(quiet, show_failed_logs)
+        """
+        sig = inspect.signature(DefaultFormatter.__init__)
+        params = set(sig.parameters.keys()) - {"self"}
+        kwargs = {
+            "quiet": self.common_settings.quiet,
+            "show_failed_logs": self.common_settings.show_failed_logs,
+        }
+        if "printshellcmds" in params:
+            kwargs["printshellcmds"] = self.common_settings.printshellcmds
+        return DefaultFormatter(**kwargs)
+
+    def _create_filter(self):
+        """Create DefaultFilter with version-compatible arguments.
+
+        snakemake <=9.2.x: DefaultFilter(quiet, debug_dag, dryrun)
+        snakemake >=9.10.0: DefaultFilter(quiet, debug_dag, dryrun, printshellcmds)
+        """
+        sig = inspect.signature(DefaultFilter.__init__)
+        params = set(sig.parameters.keys()) - {"self"}
+        kwargs = {
+            "quiet": self.common_settings.quiet,
+            "debug_dag": self.common_settings.debug_dag,
+            "dryrun": self.common_settings.dryrun,
+        }
+        if "printshellcmds" in params:
+            kwargs["printshellcmds"] = self.common_settings.printshellcmds
+        return DefaultFilter(**kwargs)
 
     def emit(self, record: LogRecord) -> None:
         self.file_handler.emit(record)
