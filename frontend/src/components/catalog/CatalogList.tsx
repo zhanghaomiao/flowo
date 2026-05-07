@@ -31,7 +31,6 @@ import {
 import {
   createCatalogMutation,
   deleteCatalogMutation,
-  gitPullMutation,
   importFromGitMutation,
   listCatalogsQueryKey,
   syncCatalogsMutation,
@@ -56,7 +55,6 @@ const CatalogList: React.FC = () => {
   const createMutation = useMutation(createCatalogMutation());
   const deleteMutation = useMutation(deleteCatalogMutation());
   const importGitMutation = useMutation(importFromGitMutation());
-  const gitPullMut = useMutation(gitPullMutation());
   const syncMutation = useMutation(syncCatalogsMutation());
 
   const handleSync = async () => {
@@ -270,30 +268,8 @@ const CatalogList: React.FC = () => {
                   onClick: () => setCreateOpen(true),
                 },
                 {
-                  key: 'sync_git',
-                  label: 'Sync from Git (Pull)',
-                  icon: <RefreshCcw size={16} />,
-                  onClick: async () => {
-                    try {
-                      await gitPullMut.mutateAsync({});
-                      queryClient.invalidateQueries({
-                        queryKey: listCatalogsQueryKey(),
-                      });
-                      message.success('Catalogs synced from Git successfully');
-                    } catch {
-                      // Handled by mutation
-                    }
-                  },
-                },
-                {
-                  key: 'sync_fs',
-                  label: 'Force Sync Filesystem',
-                  icon: <RefreshCcw size={16} />,
-                  onClick: handleSync,
-                },
-                {
                   key: 'git',
-                  label: 'Import from custom Git URL',
+                  label: 'Import from Git',
                   icon: <Download size={16} />,
                   onClick: () => setImportGitOpen(true),
                 },

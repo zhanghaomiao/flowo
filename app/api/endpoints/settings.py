@@ -35,8 +35,8 @@ class UserSettingsUpdate(BaseModel):
 
 
 class TestGitRequest(BaseModel):
-    remote_url: str
-    token: str | None = None
+    git_remote_url: str
+    git_token: str | None = None
 
 
 class ConnectionTestResult(BaseModel):
@@ -94,7 +94,7 @@ async def update_settings(
     """Upsert user settings."""
     settings = await get_or_create_user_settings(user, session)
 
-    for field, value in body.model_dump(exclude_unset=False).items():
+    for field, value in body.model_dump(exclude_unset=True).items():
         setattr(settings, field, value)
 
     await session.commit()
@@ -113,5 +113,5 @@ async def test_git_connection(
     user: User = Depends(current_active_user),
 ) -> ConnectionTestResult:
     """Test Git connectivity via GitService."""
-    success, message = git_service.test_connection(body.remote_url, body.token)
+    success, message = git_service.test_connection(body.git_remote_url, body.git_token)
     return ConnectionTestResult(success=success, message=message)

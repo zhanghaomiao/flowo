@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Button, Form, Input, message } from 'antd';
+import { App, Button, Form, Input } from 'antd';
 import { GitBranch, Globe, Lock, Wifi } from 'lucide-react';
 
 import {
@@ -19,7 +19,15 @@ export const GitSettingsSection: React.FC = () => {
   const { data: settings } = useQuery({ ...getSettingsOptions() });
   const updateSettings = useMutation(updateSettingsMutation());
   const testGit = useMutation(testGitConnectionMutation());
+  const { message } = App.useApp();
   const [form] = Form.useForm();
+
+  // Update form values when settings data is loaded
+  useEffect(() => {
+    if (settings) {
+      form.setFieldsValue(settings);
+    }
+  }, [settings, form]);
 
   const onFinish = async (values: UserSettingsUpdate) => {
     try {
