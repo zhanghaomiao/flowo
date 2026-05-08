@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 
 import {
   ApartmentOutlined,
-  EditOutlined,
+  FileTextOutlined,
   InfoCircleOutlined,
 } from '@ant-design/icons';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -21,7 +21,6 @@ import {
 } from 'antd';
 
 import {
-  deleteFileMutation,
   getCatalogOptions,
   getCatalogQueryKey,
   readFile2Options,
@@ -145,9 +144,7 @@ const EditCatalogModal: React.FC<EditModalProps> = ({
 };
 
 const CatalogDetail: React.FC<Props> = ({ slug }) => {
-  const [messageApi, contextHolder] = message.useMessage();
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
 
   const {
     data: catalog,
@@ -157,8 +154,6 @@ const CatalogDetail: React.FC<Props> = ({ slug }) => {
     ...getCatalogOptions({ path: { slug } }),
     enabled: !!slug && slug !== '{slug}',
   });
-
-  const deleteFileMut = useMutation(deleteFileMutation());
 
   // Editor state
   const [editingFiles, setEditingFiles] = useState<string[]>([]);
@@ -222,54 +217,6 @@ const CatalogDetail: React.FC<Props> = ({ slug }) => {
     setRightPanelMode('editor');
   };
 
-  const handleDeleteFile = async (filePath: string) => {
-    await deleteFileMut.mutateAsync({ path: { file_path: filePath, slug } });
-    queryClient.invalidateQueries({
-      queryKey: getCatalogQueryKey({ path: { slug } }),
-    });
-    messageApi.success('File deleted');
-    setEditingFiles((prev) => {
-      const next = prev.filter((f) => f !== filePath);
-      if (activeFile === filePath) {
-        if (next.length > 0) {
-          setActiveFile(next[next.length - 1]);
-        } else {
-          setActiveFile('');
-          setRightPanelMode('readme');
-        }
-      }
-      return next;
-    });
-  };
-
-  const handleDeleteFolder = (path: string) => {
-    setEditingFiles((prev) => {
-      const next = prev.filter((f) => !f.startsWith(`${path}/`) && f !== path);
-      if (activeFile === path || activeFile.startsWith(`${path}/`)) {
-        if (next.length > 0) {
-          setActiveFile(next[next.length - 1]);
-        } else {
-          setActiveFile('');
-          setRightPanelMode('readme');
-        }
-      }
-      return next;
-    });
-  };
-
-  const handleRenameFiles = (oldPath: string, newPath: string) => {
-    setEditingFiles((prev) =>
-      prev.map((f) =>
-        f === oldPath || f.startsWith(`${oldPath}/`)
-          ? f.replace(oldPath, newPath)
-          : f,
-      ),
-    );
-    if (activeFile === oldPath || activeFile.startsWith(`${oldPath}/`)) {
-      setActiveFile(activeFile.replace(oldPath, newPath));
-    }
-  };
-
   const activeLower = activeFile.toLowerCase();
   const showMarkdownSourceToggle =
     rightPanelMode === 'editor' &&
@@ -280,8 +227,6 @@ const CatalogDetail: React.FC<Props> = ({ slug }) => {
 
   return (
     <div className="catalog-detail-page">
-      {contextHolder}
-
       <div className="catalog-detail-page-header">
         <CatalogHeader
           catalog={catalog}
@@ -306,9 +251,6 @@ const CatalogDetail: React.FC<Props> = ({ slug }) => {
             catalog={catalog}
             slug={slug}
             onOpenFile={openFile}
-            onDeleteFile={handleDeleteFile}
-            onDeleteFolder={handleDeleteFolder}
-            onRenameFiles={handleRenameFiles}
           />
         </div>
 
@@ -339,10 +281,10 @@ const CatalogDetail: React.FC<Props> = ({ slug }) => {
                   <Button
                     type="default"
                     size="small"
-                    icon={<EditOutlined />}
+                    icon={<FileTextOutlined />}
                     onClick={() => openFile(readmePath)}
                   >
-                    Edit README
+                    Open README
                   </Button>
                 ) : null}
                 {showMarkdownSourceToggle && (

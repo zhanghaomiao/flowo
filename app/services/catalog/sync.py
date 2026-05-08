@@ -6,37 +6,13 @@ from pathlib import Path
 from sqlalchemy import select
 
 from ...core.config import settings
-from ...models import Catalog, CatalogFile, UserSettings
+from ...models import UserSettings
 from ..third_party.git import git_service
-from .paths import catalog_data_dir, catalog_owner_workspace_root
+from .utils import (
+    catalog_owner_workspace_root,
+)
 
 logger = logging.getLogger(__name__)
-
-
-async def _export_db_to_catalog_dir(
-    _catalog_dir: Path,
-    session,
-    *,
-    owner_id: uuid.UUID | None = None,
-) -> int:
-    """Export catalog files from DB to ``catalog_data_dir`` trees on disk.
-
-    When ``owner_id`` is set, only that owner's catalogs are exported (for per-user
-    Git backup). Otherwise exports all catalogs. Does not remove unrelated paths.
-    """
-    q = select(CatalogFile, Catalog.owner_id).join(
-        Catalog, Catalog.slug == CatalogFile.catalog_slug
-    )
-    if owner_id is not None:
-        q = q.where(Catalog.owner_id == owner_id)
-    result = await session.execute(q)
-    rows = list(result.all())
-    for f, owner_id in rows:
-        dest = catalog_data_dir(owner_id, f.catalog_slug) / f.path
-        dest.parent.mkdir(parents=True, exist_ok=True)
-        dest.write_text(f.content, encoding="utf-8")
-
-    return len(rows)
 
 
 def _set_git_backup_status(
@@ -72,15 +48,11 @@ async def sync_catalog_with_git(
     """
     Modularized background task for Git synchronization.
     If Git is configured (globally or for the user), performs a push to the monorepo.
+    In filesystem-only mode, it assumes the files are already updated on disk.
     """
     try:
         # Check global config first
         if settings.CATALOG_GIT_REMOTE:
-            async with session_factory() as session:
-                exported_count = await _export_db_to_catalog_dir(catalog_dir, session)
-                logger.info(
-                    f"Exported {exported_count} catalog files from DB before global Git push"
-                )
             git_service.push_to_monorepo(catalog_dir, commit_message=commit_message)
             return
 
@@ -99,17 +71,9 @@ async def sync_catalog_with_git(
                 _set_git_backup_status(user_settings, run_id=rid, status="running")
                 await session.commit()
 
-                # Per-user remote: Git repo root is ``CATALOG_DIR/<user_id>/`` so the
-                # remote shows ``<slug>/…`` at top level, not ``<user_id>/<slug>/``.
+                # Per-user remote: Git repo root is ``CATALOG_DIR/<user_id>/``
                 user_git_root = catalog_owner_workspace_root(user_id)
                 user_git_root.mkdir(parents=True, exist_ok=True)
-
-                exported_count = await _export_db_to_catalog_dir(
-                    catalog_dir, session, owner_id=user_id
-                )
-                logger.info(
-                    f"Exported {exported_count} catalog files from DB before Git push"
-                )
 
                 res = git_service.push_to_monorepo(
                     user_git_root,
@@ -131,6 +95,7 @@ async def sync_catalog_with_git(
                 )
                 if committed is False:
                     msg = f"up-to-date on {branch}" if branch else "up-to-date"
+
                 _set_git_backup_status(
                     user_settings,
                     run_id=rid,

@@ -10,54 +10,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
-from app.models import UserSettings
-
-from .paths import catalog_data_dir
-
-# Snakemake category → relative directory mapping
-CATEGORIES: dict[str, dict[str, Any]] = {
-    "snakefile": {
-        "dir": "workflow",
-        "file": "Snakefile",
-        "required": True,
-        "extensions": [],
-    },
-    "rules": {
-        "dir": "workflow/rules",
-        "required": False,
-        "extensions": [".smk"],
-    },
-    "envs": {
-        "dir": "workflow/envs",
-        "required": False,
-        "extensions": [".yaml", ".yml"],
-    },
-    "scripts": {
-        "dir": "workflow/scripts",
-        "required": False,
-        "extensions": [".py", ".R", ".r", ".sh", ".pl"],
-    },
-    "report": {
-        "dir": "workflow/report",
-        "required": False,
-        "extensions": [".rst"],
-    },
-    "notebooks": {
-        "dir": "workflow/notebooks",
-        "required": False,
-        "extensions": [".ipynb"],
-    },
-    "error": {
-        "dir": "logs",
-        "required": False,
-        "extensions": [".log"],
-    },
-    "config": {
-        "dir": "config",
-        "required": False,
-        "extensions": [".yaml", ".yml", ".tsv", ".json"],
-    },
-}
+from app.models import Catalog, UserSettings
 
 # Language detection from file extension
 LANG_MAP: dict[str, str] = {
@@ -76,13 +29,27 @@ LANG_MAP: dict[str, str] = {
 }
 
 
-def _slugify(name: str) -> str:
-    """Convert a catalog name to a filesystem-safe slug."""
-    slug = name.lower().strip()
-    slug = re.sub(r"[^\w\s-]", "", slug)
-    slug = re.sub(r"[\s_]+", "-", slug)
-    slug = re.sub(r"-+", "-", slug).strip("-")
-    return slug
+# --- Path Helpers ---
+
+
+def catalog_owner_segment(owner_id: uuid.UUID | None) -> str:
+    """Top-level directory under CATALOG_*: full owner UUID, or ``_unowned``."""
+    return str(owner_id) if owner_id is not None else "_unowned"
+
+
+def catalog_owner_workspace_root(owner_id: uuid.UUID) -> Path:
+    """Directory holding one user's catalogs: ``CATALOG_DIR/<owner_id>/``."""
+    return Path(settings.CATALOG_DIR) / str(owner_id)
+
+
+def catalog_data_dir(owner_id: uuid.UUID | None, slug: str) -> Path:
+    """On-disk catalog workspace: CATALOG_DIR/<owner_id>/<slug>."""
+    return Path(settings.CATALOG_DIR) / catalog_owner_segment(owner_id) / slug
+
+
+def catalog_export_dir(owner_id: uuid.UUID | None, slug: str) -> Path:
+    """Read-only export cache for DAG tooling."""
+    return Path(settings.CATALOG_EXPORT_DIR) / catalog_owner_segment(owner_id) / slug
 
 
 def _get_catalog_dir() -> Path:
@@ -90,6 +57,45 @@ def _get_catalog_dir() -> Path:
     catalog_dir = Path(settings.CATALOG_DIR)
     catalog_dir.mkdir(parents=True, exist_ok=True)
     return catalog_dir
+
+
+# --- Access Checks ---
+
+
+def assert_catalog_readable(cat: Catalog, user_id: uuid.UUID | None) -> None:
+    """Allow read when catalog is public, has no owner_id, or is owned by the caller."""
+    if cat.is_public:
+        return
+    if cat.owner_id is None:
+        return
+    if user_id is not None and cat.owner_id == user_id:
+        return
+    raise HTTPException(status_code=403, detail="Not allowed to access this catalog")
+
+
+def assert_catalog_writable(cat: Catalog, user_id: uuid.UUID | None) -> None:
+    """Allow updates for the owner, or for catalogs with no owner_id (shared)."""
+    if user_id is None:
+        raise HTTPException(
+            status_code=401, detail="Authentication required to modify catalogs"
+        )
+    if cat.owner_id is None:
+        return
+    if cat.owner_id == user_id:
+        return
+    raise HTTPException(status_code=403, detail="Not allowed to modify this catalog")
+
+
+# --- Misc Utils ---
+
+
+def _slugify(name: str) -> str:
+    """Convert a catalog name to a filesystem-safe slug."""
+    slug = name.lower().strip()
+    slug = re.sub(r"[^\w\s-]", "", slug)
+    slug = re.sub(r"[\s_]+", "-", slug)
+    slug = re.sub(r"-+", "-", slug).strip("-")
+    return slug
 
 
 def _read_metadata(catalog_path: Path) -> dict[str, Any]:
@@ -111,7 +117,6 @@ def collect_catalog_files_for_batch_import(catalog_path: Path) -> list[dict[str,
     for f in catalog_path.rglob("*"):
         if not f.is_file() or f.name.startswith("."):
             continue
-        # Match DB paths (always POSIX); Windows backslashes would miss updates on sync.
         rel_path = f.relative_to(catalog_path).as_posix()
         try:
             content = f.read_text(encoding="utf-8", errors="replace")
@@ -131,25 +136,12 @@ def collect_catalog_files_for_batch_import(catalog_path: Path) -> list[dict[str,
     return files_data
 
 
-def _write_metadata(catalog_path: Path, metadata: dict[str, Any]) -> None:
-    """Write .flowo.json metadata to a catalog directory."""
-    meta_file = catalog_path / ".flowo.json"
-    metadata["updated_at"] = datetime.now(UTC).isoformat()
-    with open(meta_file, "w") as f:
-        json.dump(metadata, f, indent=2, ensure_ascii=False)
-
-
 def _get_file_inventory(
     catalog_path: Path, *, include_dotfiles: bool = False
 ) -> list[dict[str, Any]]:
-    """Build a recursive inventory of all files in the catalog.
-
-    When ``include_dotfiles`` is True (e.g. Snakemake template tree), only ``.git`` /
-    ``.snakemake`` paths are skipped so ``.github``, ``.gitignore``, etc. appear.
-    """
+    """Build a recursive inventory of all files in the catalog."""
     files: list[dict[str, Any]] = []
 
-    # Walk through all files and directories in the catalog
     for f in sorted(catalog_path.rglob("*")):
         if ".git" in f.parts or ".snakemake" in f.parts:
             continue
@@ -179,8 +171,6 @@ def _get_file_inventory(
 
         stat = f.stat()
         try:
-            # We only read the first few lines to count, or just count \n
-            # Reading the whole file might be expensive for large files, but catalogs are usually small
             content = f.read_text(errors="replace")
             line_count = content.count("\n") + 1
         except Exception:
@@ -223,7 +213,6 @@ def _validate_path(
     """Validate that the path is within the catalog directory (prevent traversal)."""
     catalog_path = catalog_data_dir(owner_id, slug)
 
-    # Handle empty path (root)
     if not file_path or file_path == ".":
         return catalog_path.resolve()
 
@@ -233,11 +222,6 @@ def _validate_path(
         raise HTTPException(status_code=400, detail="Invalid path")
 
     return full_path
-
-
-# --- Global state for sync throttling ---
-_LAST_SYNC_TIME: float = 0
-SYNC_THROTTLE_SECONDS = 30  # Don't sync more than once every 30s
 
 
 async def _is_git_configured(session: AsyncSession, user_id: uuid.UUID | None) -> bool:

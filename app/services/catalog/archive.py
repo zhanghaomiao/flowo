@@ -7,25 +7,22 @@ from pathlib import Path
 from typing import Any
 
 from fastapi import HTTPException
+from sqlalchemy import select
 
 from app.models import Catalog
 
-from .access import assert_catalog_readable, assert_catalog_writable
-from .paths import catalog_data_dir
 from .utils import (
     _read_metadata,
     _slugify,
+    assert_catalog_readable,
+    assert_catalog_writable,
+    catalog_data_dir,
     collect_catalog_files_for_batch_import,
 )
 
 
 def _catalog_root_after_zip_unpack(extract_root: Path) -> Path:
-    """If the archive is one top-level folder (no loose files), scan inside it.
-
-    Matches common zip layouts (``slug/README.md``) so paths align with the DB
-    (``README.md``). Flat archives (files directly under the extract dir) are unchanged.
-    """
-    # Ignore __MACOSX and hidden dot-files/dirs (like .flowo.json or .DS_Store) when detecting root.
+    """If the archive is one top-level folder (no loose files), scan inside it."""
     entries = [
         p
         for p in extract_root.iterdir()
@@ -44,8 +41,6 @@ class CatalogArchiveMixin:
     ) -> BytesIO:
         """Export a catalog as a .tar.gz archive."""
         import json
-
-        from sqlalchemy import select
 
         query = select(Catalog).where(Catalog.slug == slug)
         result = await self.db_session.execute(query)
@@ -103,13 +98,11 @@ class CatalogArchiveMixin:
             )
 
         with tempfile.TemporaryDirectory() as tmp_dir:
-            # Save and extract
             content = await file.read()
             archive_path = Path(tmp_dir) / "upload.tar.gz"
             archive_path.write_bytes(content)
 
             with tarfile.open(str(archive_path), "r:gz") as tar:
-                # Security: check for path traversal
                 for member in tar.getmembers():
                     if member.name.startswith("/") or ".." in member.name:
                         raise HTTPException(
@@ -120,7 +113,6 @@ class CatalogArchiveMixin:
 
             extracted = _catalog_root_after_zip_unpack(Path(tmp_dir))
 
-            # Validate: must contain workflow/Snakefile or root Snakefile
             snakefile = extracted / "workflow" / "Snakefile"
             if not snakefile.exists():
                 snakefile = extracted / "Snakefile"
@@ -131,7 +123,6 @@ class CatalogArchiveMixin:
                     detail="Archive must contain workflow/Snakefile or root Snakefile",
                 )
 
-            # Determine slug
             meta = _read_metadata(extracted)
             slug = meta.get("slug") or _slugify(extracted.name)
 
@@ -143,7 +134,6 @@ class CatalogArchiveMixin:
                     detail=f"Catalog '{slug}' already exists",
                 )
 
-            # Move to catalogs directory
             shutil.move(str(extracted), str(target))
 
             name = meta.get("name") or slug.replace("-", " ").title()
@@ -168,6 +158,7 @@ class CatalogArchiveMixin:
 
             files_data = collect_catalog_files_for_batch_import(target)
             if files_data:
+                # result of batch_import_files is returned via self.get_catalog
                 await self.batch_import_files(
                     slug=slug,
                     mode="replace",
@@ -186,8 +177,6 @@ class CatalogArchiveMixin:
         """Packages the catalog directory into a ZIP and returns the path."""
         import json
 
-        from sqlalchemy import select
-
         query = select(Catalog).where(Catalog.slug == slug)
         result = await self.db_session.execute(query)
         cat = result.scalar_one_or_none()
@@ -204,12 +193,10 @@ class CatalogArchiveMixin:
                 status_code=404, detail="Catalog filesystem directory not found"
             )
 
-        # Create a temporary ZIP file via a temp directory
         temp_dir = tempfile.mkdtemp()
         tmp_cat_path = Path(temp_dir) / slug
         shutil.copytree(catalog_path, tmp_cat_path)
 
-        # Inject .flowo.json dynamically
         meta = {
             "id": str(cat.id),
             "name": cat.name,
@@ -237,13 +224,10 @@ class CatalogArchiveMixin:
         zip_file_path: str,
         user: Any,
     ):
-        """从 ZIP 导入 catalog 到数据库（原子性批量导入）"""
-        import tempfile
-
+        """Import from ZIP upload (CLI)."""
         cat = await self._get_catalog_or_404(slug)
         assert_catalog_writable(cat, user.id)
 
-        # 1. 解压 ZIP 到临时目录
         with tempfile.TemporaryDirectory() as tmp_dir:
             shutil.unpack_archive(zip_file_path, tmp_dir)
             tmp_path = _catalog_root_after_zip_unpack(Path(tmp_dir))
@@ -251,7 +235,6 @@ class CatalogArchiveMixin:
             files_data = collect_catalog_files_for_batch_import(tmp_path)
             author = user.email or str(user.id)
 
-            # 2. 使用批量导入 API（原子性，自动导出到文件系统）
             result = await self.batch_import_files(
                 slug=slug,
                 mode="replace",

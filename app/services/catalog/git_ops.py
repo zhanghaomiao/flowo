@@ -6,9 +6,12 @@ from sqlalchemy import select
 from app.models import Catalog
 
 from ..third_party.git import git_service
-from .paths import catalog_data_dir
 from .sync import sync_catalog_with_git
-from .utils import _get_catalog_dir, collect_catalog_files_for_batch_import
+from .utils import (
+    _get_catalog_dir,
+    catalog_data_dir,
+    collect_catalog_files_for_batch_import,
+)
 
 
 class CatalogGitMixin:

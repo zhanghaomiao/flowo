@@ -216,13 +216,9 @@ const SnakemakeTemplatePage: React.FC = () => {
             </div>
           ) : (
             <CatalogFileTree
-              readOnly
               catalog={syntheticCatalog}
               slug={TREE_SLUG}
               onOpenFile={openFile}
-              onDeleteFile={() => {}}
-              onDeleteFolder={() => {}}
-              onRenameFiles={() => {}}
             />
           )}
         </div>

@@ -12,7 +12,7 @@ import venv
 from pathlib import Path
 
 from app.core.config import settings
-from app.services.catalog.paths import catalog_export_dir
+from app.services.catalog.utils import catalog_export_dir
 
 logger = logging.getLogger(__name__)
 

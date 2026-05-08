@@ -29,7 +29,6 @@ from app.services.catalog.snake_template import (
     read_template_file,
     template_inventory,
     template_status,
-    write_template_file,
 )
 from app.services.catalog.utils import _detect_language
 from app.services.third_party.snakevision import (
@@ -73,12 +72,6 @@ def get_catalog_svc(
 # --- Schemas ---
 
 
-class CatalogCreateRequest(BaseModel):
-    name: str
-    description: str = ""
-    tags: list[str] = []
-
-
 class CatalogUpdateRequest(BaseModel):
     name: str | None = None
     description: str | None = None
@@ -86,15 +79,6 @@ class CatalogUpdateRequest(BaseModel):
     tags: list[str] | None = None
     is_public: bool | None = None
     source_url: str | None = None
-
-
-class FileWriteRequest(BaseModel):
-    content: str
-
-
-class RenameRequest(BaseModel):
-    old_path: str
-    new_path: str
 
 
 class CatalogFileInfo(BaseModel):
@@ -210,23 +194,6 @@ async def read_snake_template_file(
     )
 
 
-@router.put("/snake-template/file", response_model=CatalogFileContent)
-async def write_snake_template_file(
-    request: SnakeTemplateFileWriteRequest,
-    user: User = Depends(current_active_user_with_token),  # noqa: ARG001
-):
-    """Overwrite a file under the template tree."""
-    data = write_template_file(request.path, request.content)
-    return CatalogFileContent(
-        path=data["path"],
-        name=data["name"],
-        content=data["content"],
-        language=_detect_language(data["path"]),
-        lines=data["lines"],
-        size=data["size"],
-    )
-
-
 @router.get("/snake-template/dag/svg")
 async def get_snake_template_dag_svg(
     user: User = Depends(current_active_user_with_token),  # noqa: ARG001
@@ -297,33 +264,6 @@ async def list_catalogs(
     return await svc.list_catalogs(search=search, tags=tags, user_id=user.id)
 
 
-@router.post("/export-all")
-async def export_all_catalogs(
-    user: User = Depends(current_active_user_with_token),
-    svc: CatalogService = Depends(get_catalog_svc),
-):
-    """Export all catalog files from database to filesystem (read-only cache)."""
-    return await svc.export_all_catalogs_to_fs()
-
-
-@router.post("", status_code=201, response_model=CatalogSummary)
-async def create_catalog(
-    request: CatalogCreateRequest,
-    background_tasks: BackgroundTasks,
-    user: User = Depends(current_active_user_with_token),
-    svc: CatalogService = Depends(get_catalog_svc),
-):
-    """Create a new workflow catalog with an empty Snakefile."""
-    return await svc.create_catalog(
-        name=request.name,
-        description=request.description,
-        tags=request.tags,
-        owner=user.email or str(user.id),
-        owner_id=user.id,
-        background_tasks=background_tasks,
-    )
-
-
 @router.get("/{slug}", response_model=CatalogDetail)
 async def get_catalog(
     slug: str,
@@ -372,59 +312,6 @@ async def read_file(
     return await svc.read_file(slug, file_path, user_id=user.id)
 
 
-@router.put("/{slug}/files/{file_path:path}", response_model=CatalogFileContent)
-async def write_file(
-    slug: str,
-    file_path: str,
-    request: FileWriteRequest,
-    user: User = Depends(current_active_user_with_token),
-    svc: CatalogService = Depends(get_catalog_svc),
-):
-    """Create or update a file in a catalog."""
-    return await svc.write_file(
-        slug,
-        file_path,
-        request.content,
-        author=user.email or str(user.id),
-        user_id=user.id,
-    )
-
-
-@router.delete("/{slug}/files/{file_path:path}")
-async def delete_file(
-    slug: str,
-    file_path: str,
-    user: User = Depends(current_active_user_with_token),
-    svc: CatalogService = Depends(get_catalog_svc),
-):
-    """Delete a file from a catalog."""
-    await svc.delete_file(slug, file_path, user_id=user.id)
-    return {"message": f"File '{file_path}' deleted"}
-
-
-@router.post("/{slug}/dirs/{directory_path:path}")
-async def create_directory(
-    slug: str,
-    directory_path: str,
-    user: User = Depends(current_active_user_with_token),
-    svc: CatalogService = Depends(get_catalog_svc),
-):
-    """Create a new directory in the catalog."""
-    return await svc.create_directory(slug, directory_path, user_id=user.id)
-
-
-@router.delete("/{slug}/dirs/{directory_path:path}")
-async def delete_directory(
-    slug: str,
-    directory_path: str,
-    user: User = Depends(current_active_user_with_token),
-    svc: CatalogService = Depends(get_catalog_svc),
-):
-    """Delete a directory and all its contents."""
-    await svc.delete_directory(slug, directory_path, user_id=user.id)
-    return {"message": f"Directory '{directory_path}' deleted"}
-
-
 # 批量导入接口
 class FileImportItem(BaseModel):
     path: str
@@ -458,19 +345,6 @@ async def batch_import_catalog_files(
         delete_paths=request.delete_paths,
         author=user.email or str(user.id),
         user_id=user.id,
-    )
-
-
-@router.post("/{slug}/rename")
-async def rename_path(
-    slug: str,
-    request: RenameRequest,
-    user: User = Depends(current_active_user_with_token),
-    svc: CatalogService = Depends(get_catalog_svc),
-):
-    """Rename a file or directory in the catalog."""
-    return await svc.rename_path(
-        slug, request.old_path, request.new_path, user_id=user.id
     )
 
 
@@ -600,13 +474,10 @@ async def trigger_catalog_dag_svg(
         return Response(status_code=204)
 
     if not root.is_dir():
-        await svc.export_catalog_to_fs(slug, user_id=user.id)
-        owner_id, root = await svc.catalog_export_paths_for_dag(slug, user.id)
-        if not root.is_dir():
-            raise HTTPException(
-                status_code=404,
-                detail="Catalog export directory not found. Sync or open the catalog first.",
-            )
+        raise HTTPException(
+            status_code=404,
+            detail="Catalog directory not found. Sync or open the catalog first.",
+        )
     if not find_snakefile(root):
         raise HTTPException(
             status_code=404,

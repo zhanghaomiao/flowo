@@ -8,7 +8,6 @@ import {
   Input,
   message,
   Modal,
-  Select,
   Table,
   Tag,
   Tooltip,
@@ -24,14 +23,12 @@ import {
   FileText,
   GitBranch,
   Loader2,
-  Plus,
   Search,
   Trash2,
   User,
 } from 'lucide-react';
 
 import {
-  createCatalogMutation,
   deleteCatalogMutation,
   getSettingsOptions,
   gitPushMutation,
@@ -194,7 +191,6 @@ export default function CatalogList() {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const [search, setSearch] = useState('');
-  const [createOpen, setCreateOpen] = useState(false);
   const [importGitOpen, setImportGitOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [deletingCatalog, setDeletingCatalog] = useState<CatalogSummary | null>(
@@ -204,7 +200,6 @@ export default function CatalogList() {
   const [backupResult, setBackupResult] = useState<GitBackupResult | null>(
     null,
   );
-  const [form] = Form.useForm();
   const [gitImportForm] = Form.useForm();
 
   const { data: catalogs, isLoading } = useListCatalogsQuery({
@@ -219,7 +214,6 @@ export default function CatalogList() {
     },
   });
 
-  const createMutation = useMutation(createCatalogMutation());
   const deleteMutation = useMutation(deleteCatalogMutation());
   const importGitMutation = useMutation(importFromGitMutation());
   const gitPushMut = useMutation(gitPushMutation());
@@ -243,29 +237,6 @@ export default function CatalogList() {
     () => browserOpenableGitRemote(settings?.git_remote_url),
     [settings?.git_remote_url],
   );
-
-  const handleCreate = async () => {
-    try {
-      const values = await form.validateFields();
-      await createMutation.mutateAsync({
-        body: {
-          name: values.name,
-          description: values.description || '',
-          tags: values.tags || [],
-        },
-      });
-      await queryClient.invalidateQueries({
-        queryKey: listCatalogsQueryKey({}),
-      });
-      message.success('Catalog created');
-      setCreateOpen(false);
-      form.resetFields();
-    } catch (err: unknown) {
-      const errorMsg =
-        err instanceof Error ? err.message : 'Failed to create catalog';
-      message.error(errorMsg);
-    }
-  };
 
   const handleImportFromGit = async () => {
     try {
@@ -579,11 +550,11 @@ export default function CatalogList() {
             )}
             <Button
               type="primary"
-              icon={<Plus size={18} />}
+              icon={<GitBranch size={18} />}
               className="shrink-0"
-              onClick={() => setCreateOpen(true)}
+              onClick={() => setImportGitOpen(true)}
             >
-              New Workflow
+              Import Workflow
             </Button>
           </div>
         </div>
@@ -597,44 +568,10 @@ export default function CatalogList() {
           rowKey="slug"
           loading={isLoading}
           pagination={{ pageSize: 20, showSizeChanger: true }}
-          locale={{ emptyText: 'No workflows found. Create your first one!' }}
+          locale={{ emptyText: 'No workflows found. Import your first one!' }}
           className="bg-white"
         />
       </div>
-
-      {/* Create Catalog Modal */}
-      <Modal
-        title="Create New Workflow"
-        open={createOpen}
-        onOk={handleCreate}
-        onCancel={() => {
-          setCreateOpen(false);
-          form.resetFields();
-        }}
-        confirmLoading={createMutation.isPending}
-        okText="Create"
-      >
-        <Form form={form} layout="vertical" className="mt-4">
-          <Form.Item
-            name="name"
-            label="Workflow Name"
-            rules={[{ required: true, message: 'Please enter a name' }]}
-          >
-            <Input placeholder="e.g. RNA-Seq Pipeline" />
-          </Form.Item>
-          <Form.Item name="description" label="Description">
-            <Input.TextArea rows={3} placeholder="Brief description" />
-          </Form.Item>
-          <Form.Item name="tags" label="Tags">
-            <Select
-              mode="tags"
-              style={{ width: '100%' }}
-              placeholder="Add tags..."
-              tokenSeparators={[',']}
-            />
-          </Form.Item>
-        </Form>
-      </Modal>
 
       {/* Import from Git Modal */}
       <Modal
