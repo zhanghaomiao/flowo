@@ -32,7 +32,9 @@ def test_default_filter_accepts_expected_args():
 
     # Mandatory params across all 9.x versions
     assert "quiet" in params, f"Missing 'quiet' in DefaultFilter params: {params}"
-    assert "debug_dag" in params, f"Missing 'debug_dag' in DefaultFilter params: {params}"
+    assert "debug_dag" in params, (
+        f"Missing 'debug_dag' in DefaultFilter params: {params}"
+    )
     assert "dryrun" in params, f"Missing 'dryrun' in DefaultFilter params: {params}"
 
     # Construct with all required params for the current version — must not raise
@@ -350,9 +352,9 @@ def test_log_handler_class_has_required_properties():
             f"LogHandler missing required property: {prop}"
         )
         # Verify they're actual properties (not plain methods)
-        assert isinstance(
-            getattr(LogHandler, prop), property
-        ), f"LogHandler.{prop} should be a property"
+        assert isinstance(getattr(LogHandler, prop), property), (
+            f"LogHandler.{prop} should be a property"
+        )
 
 
 def test_flowo_log_handler_close_sends_request_and_closes_client():
@@ -369,9 +371,10 @@ def test_flowo_log_handler_close_sends_request_and_closes_client():
     mock_settings.debug_dag = False
     mock_settings.printshellcmds = False
 
-    with patch("app.plugin.client.log_handler.httpx.Client") as mock_client_cls, \
-         patch("app.plugin.client.log_handler.settings") as mock_app_settings:
-
+    with (
+        patch("app.plugin.client.log_handler.httpx.Client") as mock_client_cls,
+        patch("app.plugin.client.log_handler.settings") as mock_app_settings,
+    ):
         mock_client = MagicMock()
         mock_client.is_closed = False
         mock_client_cls.return_value = mock_client
@@ -387,7 +390,7 @@ def test_flowo_log_handler_close_sends_request_and_closes_client():
         # Should have called close endpoint
         mock_client.post.assert_called_with(
             "http://localhost/api/v1/reports/close",
-            params={"workflow_id": "test-wf-id"}
+            params={"workflow_id": "test-wf-id"},
         )
         # Should have closed the client
         mock_client.close.assert_called_once()
@@ -469,7 +472,9 @@ def test_emit_workflow_started_collects_configfiles_before_reporting():
         }
 
         with (
-            patch.object(handler, "_get_configfiles", return_value=["config.yaml"]) as get_configfiles,
+            patch.object(
+                handler, "_get_configfiles", return_value=["config.yaml"]
+            ) as get_configfiles,
             patch.object(handler, "_send_to_api") as send_to_api,
         ):
             handler.emit(SimpleNamespace(event="workflow_started"))
@@ -514,7 +519,9 @@ def test_log_handler_post_init_initializes_base_handler_and_validates_path():
 
     with (
         patch.object(FlowoLogHandler, "__init__", autospec=True) as base_init,
-        patch.object(FlowoLogHandler, "flowo_path_valid", autospec=True) as validate_path,
+        patch.object(
+            FlowoLogHandler, "flowo_path_valid", autospec=True
+        ) as validate_path,
     ):
         LogHandler.__post_init__(handler)
 
@@ -541,7 +548,11 @@ def test_emit_forwards_group_and_error_events_with_valid_payloads():
 
         captured: list[tuple[str, dict]] = []
 
-        with patch.object(handler, "_send_to_api", side_effect=lambda event, data: captured.append((event, data))):
+        with patch.object(
+            handler,
+            "_send_to_api",
+            side_effect=lambda event, data: captured.append((event, data)),
+        ):
             handler.emit(SimpleNamespace(event="group_info", group_id=3, jobs=[10, 11]))
             handler.emit(
                 SimpleNamespace(

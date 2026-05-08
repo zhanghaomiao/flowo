@@ -237,7 +237,9 @@ rule scripted:
         rule = [r for r in wf.rules if r.name == "scripted"][0]
         result = get_source(rule.script, wf.sourcecache, rule.basedir)
 
-    assert isinstance(result, tuple), f"get_source returned {type(result)}, expected tuple"
+    assert isinstance(result, tuple), (
+        f"get_source returned {type(result)}, expected tuple"
+    )
     assert len(result) == 5, (
         f"get_source returned {len(result)}-tuple, expected 5-tuple"
     )
@@ -275,8 +277,15 @@ rule attr_check:
 
         # Rule attributes used by our code
         rule = list(wf.rules)[0]
-        for attr in ["name", "shellcmd", "script", "wrapper", "notebook",
-                      "is_run", "basedir"]:
+        for attr in [
+            "name",
+            "shellcmd",
+            "script",
+            "wrapper",
+            "notebook",
+            "is_run",
+            "basedir",
+        ]:
             assert hasattr(rule, attr), (
                 f"Rule object missing expected attribute: {attr}"
             )
@@ -285,6 +294,7 @@ rule attr_check:
 # ---------------------------------------------------------------------------
 # Helper: loaded_workflow with workdir (for configfile tests)
 # ---------------------------------------------------------------------------
+
 
 @contextmanager
 def loaded_workflow_with_workdir(snakefile: Path, workdir: Path):

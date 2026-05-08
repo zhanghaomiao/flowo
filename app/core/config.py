@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 
 from pydantic import model_validator
@@ -51,6 +52,19 @@ class Settings(BaseSettings):
 
     # Catalog management
     CATALOG_DIR: str | None = None  # Defaults to CONTAINER_MOUNT_PATH/catalog
+    # Official Snakemake workflow template (git clone target), NOT under per-user catalog trees.
+    SNAKEMAKE_WORKFLOW_TEMPLATE_DIR: str | None = None
+    # Read-only export cache for DAG generation, etc.
+    # Default under CONTAINER_MOUNT_PATH so it can be persisted/mounted in Docker.
+    CATALOG_EXPORT_DIR: str | None = (
+        None  # Defaults to CONTAINER_MOUNT_PATH/.flowo_exported_catalogs
+    )
+    # DAG tooling runtime
+    DAG_VENV_DIR: str | None = None  # Defaults to CONTAINER_MOUNT_PATH/.flowo_dag_venv
+    DAG_AUTO_INSTALL_IMPORTS: bool = False  # Install missing imports into DAG venv
+    DAG_AUTO_TOUCH_MISSING_INPUTS: bool = (
+        True  # Touch missing inputs for rulegraph-only
+    )
 
     @model_validator(mode="after")
     def set_catalog_defaults(self) -> "Settings":
@@ -58,6 +72,26 @@ class Settings(BaseSettings):
             # Use CONTAINER_MOUNT_PATH (container-side) for file storage,
             # FLOWO_WORKING_PATH is the host-side path used for Docker volume mapping
             self.CATALOG_DIR = str(Path(self.CONTAINER_MOUNT_PATH) / "catalog")
+        if self.CATALOG_EXPORT_DIR is None:
+            self.CATALOG_EXPORT_DIR = str(
+                Path(self.CONTAINER_MOUNT_PATH) / ".flowo_exported_catalogs"
+            )
+        if self.DAG_VENV_DIR is None:
+            self.DAG_VENV_DIR = str(Path(self.CONTAINER_MOUNT_PATH) / ".flowo_dag_venv")
+        if self.SNAKEMAKE_WORKFLOW_TEMPLATE_DIR is None:
+            # Prefer container mount when it exists and is writable (Docker). On a bare
+            # host, ``/work_dir`` etc. often does not exist — fall back to FLOWO_WORKING_PATH
+            # so ``flowo catalog template pull`` / ``catalog new`` work without extra env.
+            container_base = Path(self.CONTAINER_MOUNT_PATH)
+            working_base = Path(self.FLOWO_WORKING_PATH)
+            use_container = container_base.exists() and os.access(
+                container_base,
+                os.W_OK,
+            )
+            base = container_base if use_container else working_base
+            self.SNAKEMAKE_WORKFLOW_TEMPLATE_DIR = str(
+                base / "snakemake-workflow-template"
+            )
         return self
 
     # Optional Git sync for catalogs

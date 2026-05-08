@@ -1,9 +1,14 @@
 import uuid
 from typing import Any
 
+from sqlalchemy import select
+
+from app.models import Catalog
+
 from ..third_party.git import git_service
+from .paths import catalog_data_dir
 from .sync import sync_catalog_with_git
-from .utils import _get_catalog_dir
+from .utils import _get_catalog_dir, collect_catalog_files_for_batch_import
 
 
 class CatalogGitMixin:
@@ -18,6 +23,7 @@ class CatalogGitMixin:
         from app.core.session import AsyncSessionLocal
 
         catalog_dir = _get_catalog_dir()
+        run_id = str(uuid.uuid4())
 
         background_tasks.add_task(
             sync_catalog_with_git,
@@ -25,95 +31,119 @@ class CatalogGitMixin:
             user_id=user_id,
             session_factory=AsyncSessionLocal,
             commit_message="Manual Git push trigger",
+            run_id=run_id,
         )
-        return {"status": "backgrounded"}
+        return {"status": "backgrounded", "run_id": run_id}
 
     async def git_pull(
         self,
-        user_id: uuid.UUID,
-        background_tasks: Any,
+        user_id: uuid.UUID,  # noqa: ARG002
         remote_url: str | None = None,
         token: str | None = None,
-    ) -> dict[str, str]:
-        """Pull / update catalogs via background task."""
+    ) -> dict[str, Any]:
+        """Pull from Git to the catalog directory and sync imported files into the database."""
 
-        async def pull_task():
-            from app.core.session import AsyncSessionLocal
+        catalog_dir = _get_catalog_dir()
+        imported_relpaths = git_service.import_catalogs(
+            target_dir=catalog_dir,
+            remote_url=remote_url,
+            token=token,
+            layout_owner_id=user_id,
+        )
 
-            catalog_dir = _get_catalog_dir()
-            try:
-                git_service.import_catalogs(
-                    target_dir=catalog_dir,
-                    remote_url=remote_url,
-                    token=token,
+        results: dict[str, Any] = {"updated": [], "conflicts": {}}
+        for rel in imported_relpaths:
+            candidate = catalog_dir / rel
+            if candidate.exists():
+                catalog_path = candidate
+            else:
+                catalog_path = catalog_data_dir(user_id, rel)
+            if not catalog_path.exists():
+                continue
+
+            slug = git_service._get_slug(catalog_path, rel, "")
+
+            files_data = collect_catalog_files_for_batch_import(catalog_path)
+            if files_data:
+                res = await self.batch_import_files(
+                    slug=slug,
+                    # Safer default: detect conflicts instead of overwriting local edits.
+                    mode="merge",
+                    commit_message="Git pull sync",
+                    files_data=files_data,
+                    delete_paths=[],
+                    author="system",
+                    user_id=user_id,
                 )
-                # Note: We need a session here to sync catalogs
-                async with AsyncSessionLocal() as session:
-                    from .service import CatalogService
+                if res.get("status") == "conflicts_found":
+                    results["conflicts"][slug] = res.get("conflicts", [])
+                else:
+                    results["updated"].append(slug)
 
-                    svc = CatalogService(session)
-                    await svc._sync_from_filesystem(force=True)
-            except Exception as e:
-                import logging
-
-                logging.getLogger(__name__).error(f"Git pull task failed: {e}")
-
-        background_tasks.add_task(pull_task)
-        return {"status": "backgrounded"}
+        if results["conflicts"]:
+            return {"status": "conflicts_found", **results}
+        return {"status": "completed", **results}
 
     async def import_from_git(
         self,
         git_url: str,
         user_id: uuid.UUID,
-        background_tasks: Any,
         token: str | None = None,
         owner: str = "",
-    ) -> dict[str, str]:
-        """Import catalogs from a Git repository via background task."""
+        owner_id: uuid.UUID | None = None,
+        subdirectory: str | None = None,
+    ) -> dict[str, Any]:
+        """Clone a Git repository to disk and import catalogs into the database."""
+        catalog_dir = _get_catalog_dir()
+        owner_for_layout = owner_id or user_id
 
-        async def import_task():
-            from app.core.session import AsyncSessionLocal
+        imported_slugs = git_service.import_catalogs(
+            target_dir=catalog_dir,
+            remote_url=git_url,
+            token=token,
+            owner=owner,
+            subdirectory=subdirectory,
+            layout_owner_id=owner_for_layout,
+        )
 
-            catalog_dir = _get_catalog_dir()
-            try:
-                imported_slugs = git_service.import_catalogs(
-                    target_dir=catalog_dir,
-                    remote_url=git_url,
-                    token=token,
+        for slug in imported_slugs:
+            catalog_path = catalog_data_dir(owner_for_layout, slug)
+            if not catalog_path.exists():
+                continue
+
+            query = select(Catalog).where(Catalog.slug == slug)
+            result = await self.db_session.execute(query)
+            cat = result.scalar_one_or_none()
+
+            if not cat:
+                cat = Catalog(
+                    slug=slug,
+                    name=slug.replace("-", " ").title(),
+                    description=f"Imported from {git_url}",
+                    version="0.1.0",
                     owner=owner,
+                    owner_id=owner_id or user_id,
+                    source_url=git_url,
+                    tags=["git-import"],
                 )
-                async with AsyncSessionLocal() as session:
-                    from .service import CatalogService
+                self.db_session.add(cat)
+                await self.db_session.commit()
+            else:
+                cat.source_url = git_url
+                if owner_id:
+                    cat.owner_id = owner_id
+                await self.db_session.commit()
 
-                    svc = CatalogService(session)
-                    await svc._sync_from_filesystem(force=True)
+            files_data = collect_catalog_files_for_batch_import(catalog_path)
+            if files_data:
+                await self.batch_import_files(
+                    slug=slug,
+                    mode="replace",
+                    commit_message=f"Import from Git: {git_url}",
+                    files_data=files_data,
+                    delete_paths=[],
+                    author=owner,
+                    user_id=user_id,
+                )
 
-                    if imported_slugs:
-                        from sqlalchemy import select
-
-                        from app.models import Catalog
-
-                        from .utils import _read_metadata, _write_metadata
-
-                        query = select(Catalog).where(Catalog.slug.in_(imported_slugs))
-                        result = await session.execute(query)
-                        cats = result.scalars().all()
-
-                        for cat in cats:
-                            cat.source_url = git_url
-
-                            # Also update the filesystem to match the DB
-                            catalog_path = catalog_dir / cat.slug
-                            if catalog_path.exists():
-                                meta = _read_metadata(catalog_path)
-                                meta["source_url"] = git_url
-                                _write_metadata(catalog_path, meta)
-
-                        await session.commit()
-            except Exception as e:
-                import logging
-
-                logging.getLogger(__name__).error(f"Git import task failed: {e}")
-
-        background_tasks.add_task(import_task)
-        return {"status": "backgrounded"}
+        return {"status": "completed", "imported_slugs": list(imported_slugs)}

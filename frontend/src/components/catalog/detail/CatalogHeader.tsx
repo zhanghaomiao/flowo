@@ -3,23 +3,16 @@ import React from 'react';
 import {
   ApartmentOutlined,
   ArrowLeftOutlined,
-  CloudUploadOutlined,
+  BranchesOutlined,
   CopyOutlined,
   DownloadOutlined,
   EditOutlined,
   GithubOutlined,
-  SyncOutlined,
   UserOutlined,
 } from '@ant-design/icons';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
 import { Button, Dropdown, message, Space, Tag, Tooltip } from 'antd';
 
-import {
-  getCatalogQueryKey,
-  gitPushMutation,
-  syncCatalogsMutation,
-} from '@/client/@tanstack/react-query.gen';
 import type { CatalogDetail } from '@/client/types.gen';
 import { downloadFile } from '@/utils/download';
 
@@ -38,49 +31,10 @@ const CatalogHeader: React.FC<Props> = ({
 }) => {
   const [messageApi, contextHolder] = message.useMessage();
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
 
-  const syncMutation = useMutation(syncCatalogsMutation());
-  const gitMutation = useMutation(gitPushMutation());
-
-  const handleReloadFromDisk = async () => {
-    try {
-      await syncMutation.mutateAsync({});
-      queryClient.invalidateQueries({
-        queryKey: getCatalogQueryKey({ path: { slug } }),
-      });
-      messageApi.success('Database synchronized with filesystem');
-    } catch {
-      // Handled by client
-    }
-  };
-
-  const handlePushToRemote = async () => {
-    try {
-      const result = await gitMutation.mutateAsync({
-        body: {},
-      });
-
-      const status = (result as { status?: string })?.status;
-      if (status === 'nothing_to_push') {
-        messageApi.info(
-          'Nothing new to push — catalogs are already up to date.',
-          3,
-        );
-      } else {
-        messageApi.success('Catalogs pushed successfully!', 3);
-      }
-    } catch (err: unknown) {
-      console.error('Git push failed:', err);
-      const errorMsg =
-        err instanceof Error
-          ? err.message
-          : 'Failed to push catalogs. Check your Git settings.';
-      messageApi.error(errorMsg, 5);
-    }
-  };
-
-  const isGitHub = catalog.source_url?.includes('github.com');
+  const sourceUrl = catalog.source_url?.trim();
+  const isGitSource = !!sourceUrl;
+  const isGitHub = sourceUrl?.includes('github.com');
 
   return (
     <div className="catalog-detail-toolbar">
@@ -95,22 +49,38 @@ const CatalogHeader: React.FC<Props> = ({
         </span>
         <span className="catalog-toolbar-sep">/</span>
         <Space size={4}>
-          <Tooltip title={isGitHub ? 'GitHub Source' : 'Local Source'}>
-            <a
-              href={catalog.source_url || undefined}
-              target="_blank"
-              rel="noreferrer"
-              style={{
-                color: 'inherit',
-                display: 'flex',
-                alignItems: 'center',
-                fontSize: 18,
-                marginRight: 4,
-              }}
-            >
-              {isGitHub ? <GithubOutlined /> : <UserOutlined />}
-            </a>
-          </Tooltip>
+          {isGitSource ? (
+            <Tooltip title={isGitHub ? 'GitHub' : 'Git source'}>
+              <a
+                href={sourceUrl}
+                target="_blank"
+                rel="noreferrer"
+                style={{
+                  color: 'inherit',
+                  display: 'flex',
+                  alignItems: 'center',
+                  fontSize: 18,
+                  marginRight: 4,
+                }}
+              >
+                {isGitHub ? <GithubOutlined /> : <BranchesOutlined />}
+              </a>
+            </Tooltip>
+          ) : (
+            <Tooltip title="Local catalog">
+              <span
+                style={{
+                  color: 'inherit',
+                  display: 'flex',
+                  alignItems: 'center',
+                  fontSize: 18,
+                  marginRight: 4,
+                }}
+              >
+                <UserOutlined />
+              </span>
+            </Tooltip>
+          )}
           <Tooltip
             title={catalog.description || undefined}
             placement="bottomLeft"
@@ -258,33 +228,6 @@ const CatalogHeader: React.FC<Props> = ({
             Download
           </Button>
         </Dropdown>
-        <Tooltip
-          title={
-            !catalog.git_configured
-              ? 'Git remote not configured. Please set it up in User Settings.'
-              : 'Push catalogs to Git monorepo'
-          }
-        >
-          <Button
-            size="small"
-            icon={<CloudUploadOutlined />}
-            loading={gitMutation.isPending}
-            onClick={handlePushToRemote}
-            disabled={!catalog.git_configured}
-          >
-            Push to Git
-          </Button>
-        </Tooltip>
-        <Tooltip title="Sync database from filesystem">
-          <Button
-            size="small"
-            icon={<SyncOutlined spin={syncMutation.isPending} />}
-            onClick={handleReloadFromDisk}
-            loading={syncMutation.isPending}
-          >
-            Reload from Disk
-          </Button>
-        </Tooltip>
       </div>
     </div>
   );

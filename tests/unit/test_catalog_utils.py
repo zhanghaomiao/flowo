@@ -24,7 +24,9 @@ def test_slugify():
 
 
 def test_get_catalog_dir(monkeypatch, tmp_path):
-    monkeypatch.setattr("app.services.catalog.utils.settings.CATALOG_DIR", str(tmp_path / "catalog"))
+    monkeypatch.setattr(
+        "app.services.catalog.utils.settings.CATALOG_DIR", str(tmp_path / "catalog")
+    )
     catalog_dir = _get_catalog_dir()
     assert catalog_dir.exists()
     assert catalog_dir.name == "catalog"
@@ -59,11 +61,11 @@ def test_get_file_inventory(tmp_path):
 
     # Files
     (subdir / "script.py").write_text('var = "hello"\nprint(var)\n')
-    (catalog_path / "Snakefile").write_text('rule all:\n  input: []\n')
+    (catalog_path / "Snakefile").write_text("rule all:\n  input: []\n")
 
     inventory = _get_file_inventory(catalog_path)
 
-    assert len(inventory) == 3 # src, src/script.py, Snakefile
+    assert len(inventory) == 3  # src, src/script.py, Snakefile
 
     dirs = [item for item in inventory if item["is_dir"]]
     files = [item for item in inventory if not item["is_dir"]]
@@ -92,29 +94,40 @@ def test_detect_language():
 
 
 def test_validate_path_valid(monkeypatch, tmp_path):
-    monkeypatch.setattr("app.services.catalog.utils._get_catalog_dir", lambda: tmp_path)
-    (tmp_path / "test_slug").mkdir()
+    monkeypatch.setattr(
+        "app.services.catalog.utils.settings.CATALOG_DIR", str(tmp_path)
+    )
+    owner = uuid.uuid4()
+    slug_dir = tmp_path / str(owner) / "test_slug"
+    slug_dir.mkdir(parents=True)
 
-    valid_path = _validate_path("test_slug", "src/script.py")
-    assert valid_path == (tmp_path / "test_slug" / "src" / "script.py").resolve()
+    valid_path = _validate_path(owner, "test_slug", "src/script.py")
+    assert valid_path == (slug_dir / "src" / "script.py").resolve()
 
-    root_path = _validate_path("test_slug", "")
-    assert root_path == (tmp_path / "test_slug").resolve()
+    root_path = _validate_path(owner, "test_slug", "")
+    assert root_path == slug_dir.resolve()
 
 
 def test_validate_path_invalid_traversal(monkeypatch, tmp_path):
-    monkeypatch.setattr("app.services.catalog.utils._get_catalog_dir", lambda: tmp_path)
-    (tmp_path / "test_slug").mkdir()
+    monkeypatch.setattr(
+        "app.services.catalog.utils.settings.CATALOG_DIR", str(tmp_path)
+    )
+    owner = uuid.uuid4()
+    slug_dir = tmp_path / str(owner) / "test_slug"
+    slug_dir.mkdir(parents=True)
 
     with pytest.raises(HTTPException) as excinfo:
-        _validate_path("test_slug", "../other_dir/file.txt")
+        _validate_path(owner, "test_slug", "../other_dir/file.txt")
 
     assert excinfo.value.status_code == 400
 
 
 @pytest.mark.asyncio
 async def test_is_git_configured_global(monkeypatch):
-    monkeypatch.setattr("app.services.catalog.utils.settings.CATALOG_GIT_REMOTE", "git@github.com:test/repo.git")
+    monkeypatch.setattr(
+        "app.services.catalog.utils.settings.CATALOG_GIT_REMOTE",
+        "git@github.com:test/repo.git",
+    )
     assert await _is_git_configured(AsyncMock(), None) is True
 
 

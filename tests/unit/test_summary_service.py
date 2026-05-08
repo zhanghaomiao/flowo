@@ -70,7 +70,9 @@ async def test_get_activity_rule(summary_service, mock_db_session):
 
     start = datetime(2023, 1, 1, tzinfo=UTC)
     end = datetime(2023, 12, 31, tzinfo=UTC)
-    activity = await summary_service.get_activity("rule", start, end, limit=5, user_id=None)
+    activity = await summary_service.get_activity(
+        "rule", start, end, limit=5, user_id=None
+    )
 
     assert activity == {"align": 20, "sort": 15}
     mock_db_session.execute.assert_called_once()
@@ -101,8 +103,8 @@ async def test_get_rule_error(summary_service, mock_db_session):
     mock_execute = MagicMock()
     mock_execute.all.return_value = [
         ("align", 100, 10, 0.1),
-        ("sort", 50, 0, 0.0), # should be filtered since error is 0
-        ("bwa", 20, 5, 0.25)
+        ("sort", 50, 0, 0.0),  # should be filtered since error is 0
+        ("bwa", 20, 5, 0.25),
     ]
     mock_db_session.execute.return_value = mock_execute
 
@@ -171,7 +173,9 @@ async def test_check_sse_health_healthy(summary_service, monkeypatch):
     connection = AsyncMock()
     connection.fetchval.return_value = 1
     monkeypatch.setattr("app.services.summary.pg_listener._connection", connection)
-    monkeypatch.setattr("app.services.summary.pg_listener._listening_channels", {"a", "b"})
+    monkeypatch.setattr(
+        "app.services.summary.pg_listener._listening_channels", {"a", "b"}
+    )
 
     status = await summary_service.check_sse_health()
 
@@ -210,7 +214,10 @@ async def test_check_sse_health_outer_error(summary_service, monkeypatch):
             raise RuntimeError("bad fetch")
 
     monkeypatch.setattr("app.services.summary.pg_listener", None)
-    monkeypatch.setattr("app.services.summary.pg_listener", type("BrokenListener", (), {"_connection": BrokenConnection()})())
+    monkeypatch.setattr(
+        "app.services.summary.pg_listener",
+        type("BrokenListener", (), {"_connection": BrokenConnection()})(),
+    )
 
     status = await summary_service.check_sse_health()
 

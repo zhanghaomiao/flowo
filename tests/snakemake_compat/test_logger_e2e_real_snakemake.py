@@ -323,7 +323,9 @@ rule explode:
     assert "error" in event_names
     assert "job_finished" not in event_names
 
-    error_request = next(req for req in report_requests if req["json"]["event"] == "error")
+    error_request = next(
+        req for req in report_requests if req["json"]["event"] == "error"
+    )
     error_schema = ErrorSchema.model_validate(error_request["json"]["record"])
     assert error_schema.rule == "explode" or error_schema.exception
 
@@ -334,7 +336,9 @@ def test_flowo_logger_real_cli_dryrun_extracts_notebook_rule_in_workflow_started
     workflow_dir = tmp_path / "workflow"
     workflow_dir.mkdir()
     (workflow_dir / "notebooks").mkdir()
-    (workflow_dir / "config.yaml").write_text("sample: notebook-sample\n", encoding="utf-8")
+    (workflow_dir / "config.yaml").write_text(
+        "sample: notebook-sample\n", encoding="utf-8"
+    )
     (workflow_dir / "notebooks" / "analysis.py.ipynb").write_text(
         json.dumps(
             {

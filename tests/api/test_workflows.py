@@ -68,7 +68,9 @@ async def test_delete_workflow(client: AsyncClient, superuser_token_headers: dic
 
 
 @pytest.mark.asyncio
-async def test_workflow_endpoints(client: AsyncClient, superuser_token_headers: dict, db, tmp_path):
+async def test_workflow_endpoints(
+    client: AsyncClient, superuser_token_headers: dict, db, tmp_path
+):
     test_data_dir = tmp_path / "test_data"
     test_data_dir.mkdir()
 
@@ -91,7 +93,7 @@ async def test_workflow_endpoints(client: AsyncClient, superuser_token_headers: 
         snakefile=str(snakefile_path),
         logfile=str(logfile_path),
         configfiles=[str(configfile_path)],
-        flowo_working_path=str(test_data_dir)
+        flowo_working_path=str(test_data_dir),
     )
     db.add(wf)
     await db.commit()
@@ -113,13 +115,22 @@ async def test_workflow_endpoints(client: AsyncClient, superuser_token_headers: 
 
     from app.utils.paths import PathContent
 
-    with patch("app.services.workflow.get_file_content", return_value=PathContent(path="mock", content="mock data", type="file", size=10)), \
-         patch("app.utils.paths.path_resolver.resolve", return_value="mock_path"):
-
+    with (
+        patch(
+            "app.services.workflow.get_file_content",
+            return_value=PathContent(
+                path="mock", content="mock data", type="file", size=10
+            ),
+        ),
+        patch("app.utils.paths.path_resolver.resolve", return_value="mock_path"),
+    ):
         for ep in endpoints:
             resp = await client.get(ep, headers=superuser_token_headers)
             assert resp.status_code == 200, f"{ep} failed with {resp.text}"
 
-        resp_by_name = await client.get("/api/v1/workflows/by_name?name=Endpoints%20Workflow", headers=superuser_token_headers)
+        resp_by_name = await client.get(
+            "/api/v1/workflows/by_name?name=Endpoints%20Workflow",
+            headers=superuser_token_headers,
+        )
         assert resp_by_name.status_code == 200
         assert resp_by_name.json() == str(wf_id)

@@ -9,7 +9,9 @@ from app.models.user import User
 from app.schemas.util import ServiceStatus, StatusSummary, SystemHealthResponse
 
 
-async def create_user_and_headers(register_user, login_user, email: str, *, is_superuser: bool = False):
+async def create_user_and_headers(
+    register_user, login_user, email: str, *, is_superuser: bool = False
+):
     await register_user(email, is_superuser=is_superuser)
     return await login_user(email)
 
@@ -20,7 +22,9 @@ async def test_summary_resources_uses_cpu_fallback(
     superuser_token_headers: dict,
     monkeypatch,
 ):
-    monkeypatch.setattr("app.api.endpoints.summary.psutil.cpu_count", lambda logical=True: 0)
+    monkeypatch.setattr(
+        "app.api.endpoints.summary.psutil.cpu_count", lambda logical=True: 0
+    )
     monkeypatch.setattr(
         "app.api.endpoints.summary.psutil.cpu_times_percent",
         lambda interval=0.1: type("CpuTimes", (), {"idle": 25.0})(),
@@ -62,14 +66,14 @@ async def test_summary_status_uses_current_user_filter_for_non_admin(
         register_user, login_user, "summary-user@example.com"
     )
     user = (
-        await db.execute(
-            select(User).where(User.email == "summary-user@example.com")
-        )
+        await db.execute(select(User).where(User.email == "summary-user@example.com"))
     ).scalar_one()
 
     with patch(
         "app.api.endpoints.summary.SummaryService.get_status",
-        new=AsyncMock(return_value=StatusSummary(total=4, success=2, running=1, error=1)),
+        new=AsyncMock(
+            return_value=StatusSummary(total=4, success=2, running=1, error=1)
+        ),
     ) as mocked:
         response = await client.get(
             f"/api/v1/summary/status?item=workflow&target_user_id={uuid.uuid4()}",
@@ -89,7 +93,9 @@ async def test_summary_status_honors_target_user_for_admin(
     target_user_id = uuid.uuid4()
     with patch(
         "app.api.endpoints.summary.SummaryService.get_status",
-        new=AsyncMock(return_value=StatusSummary(total=2, success=1, running=1, error=0)),
+        new=AsyncMock(
+            return_value=StatusSummary(total=2, success=1, running=1, error=0)
+        ),
     ) as mocked:
         response = await client.get(
             f"/api/v1/summary/status?item=job&target_user_id={target_user_id}",
@@ -111,9 +117,7 @@ async def test_summary_activity_uses_current_user_filter_for_non_admin(
         register_user, login_user, "activity-user@example.com"
     )
     user = (
-        await db.execute(
-            select(User).where(User.email == "activity-user@example.com")
-        )
+        await db.execute(select(User).where(User.email == "activity-user@example.com"))
     ).scalar_one()
 
     with patch(
@@ -174,9 +178,7 @@ async def test_summary_pruning_uses_current_user_for_non_admin(
         register_user, login_user, "pruning-user@example.com"
     )
     user = (
-        await db.execute(
-            select(User).where(User.email == "pruning-user@example.com")
-        )
+        await db.execute(select(User).where(User.email == "pruning-user@example.com"))
     ).scalar_one()
 
     with patch(
@@ -199,7 +201,9 @@ async def test_summary_pruning_uses_none_for_admin(
         "app.api.endpoints.summary.WorkflowService.pruning",
         new=AsyncMock(return_value={"deleted": 7}),
     ) as mocked:
-        response = await client.post("/api/v1/summary/pruning", headers=superuser_token_headers)
+        response = await client.post(
+            "/api/v1/summary/pruning", headers=superuser_token_headers
+        )
 
     assert response.status_code == 200
     mocked.assert_awaited_once_with(user_id=None)
@@ -230,7 +234,9 @@ async def test_summary_health_returns_service_aggregate(
         "app.api.endpoints.summary.SummaryService.get_system_health",
         new=AsyncMock(return_value=payload),
     ):
-        response = await client.get("/api/v1/summary/health", headers=superuser_token_headers)
+        response = await client.get(
+            "/api/v1/summary/health", headers=superuser_token_headers
+        )
 
     assert response.status_code == 200
     assert response.json()["overall_status"] == "unhealthy"

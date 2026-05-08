@@ -37,14 +37,15 @@ services:
       - |
         echo '🚀 Starting backend setup...'
         echo 'Running database migrations...'
-        if alembic upgrade head; then
+        export PATH="/app/.venv/bin:$PATH"
+        if /app/.venv/bin/alembic upgrade head; then
             echo '✅ Database migrations completed successfully!'
         else
             echo '❌ Database migrations failed!'
             exit 1
         fi
         echo 'Starting application...'
-        exec uvicorn app.main:app --host 0.0.0.0 --port 8000
+        exec /app/.venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8000
 
   flowo-frontend:
     build:

@@ -5,6 +5,28 @@ export type ClientOptions = {
 };
 
 /**
+ * BatchImportRequest
+ */
+export type BatchImportRequest = {
+    /**
+     * Mode
+     */
+    mode: string;
+    /**
+     * Commit Message
+     */
+    commit_message?: string;
+    /**
+     * Files
+     */
+    files: Array<FileImportItem>;
+    /**
+     * Delete Paths
+     */
+    delete_paths?: Array<string>;
+};
+
+/**
  * BearerResponse
  */
 export type BearerResponse = {
@@ -141,7 +163,7 @@ export type CatalogDetail = {
     /**
      * Slug
      */
-    slug: string;
+    slug?: string | null;
     /**
      * Description
      */
@@ -153,7 +175,7 @@ export type CatalogDetail = {
     /**
      * Owner
      */
-    owner?: string;
+    owner?: string | null;
     /**
      * Tags
      */
@@ -165,15 +187,15 @@ export type CatalogDetail = {
     /**
      * Source Url
      */
-    source_url?: string;
+    source_url?: string | null;
     /**
      * Created At
      */
-    created_at: string;
+    created_at?: string | null;
     /**
      * Updated At
      */
-    updated_at: string;
+    updated_at?: string | null;
     /**
      * File Count
      */
@@ -275,7 +297,7 @@ export type CatalogSummary = {
     /**
      * Slug
      */
-    slug: string;
+    slug?: string | null;
     /**
      * Description
      */
@@ -287,7 +309,7 @@ export type CatalogSummary = {
     /**
      * Owner
      */
-    owner?: string;
+    owner?: string | null;
     /**
      * Tags
      */
@@ -299,15 +321,15 @@ export type CatalogSummary = {
     /**
      * Source Url
      */
-    source_url?: string;
+    source_url?: string | null;
     /**
      * Created At
      */
-    created_at: string;
+    created_at?: string | null;
     /**
      * Updated At
      */
-    updated_at: string;
+    updated_at?: string | null;
     /**
      * File Count
      */
@@ -376,6 +398,36 @@ export type ErrorModel = {
     detail: string | {
         [key: string]: string;
     };
+};
+
+/**
+ * FileImportItem
+ */
+export type FileImportItem = {
+    /**
+     * Path
+     */
+    path: string;
+    /**
+     * Content
+     */
+    content: string;
+    /**
+     * Sha256
+     */
+    sha256: string;
+    /**
+     * Size
+     */
+    size?: number | null;
+    /**
+     * Lines
+     */
+    lines?: number | null;
+    /**
+     * Language
+     */
+    language?: string | null;
 };
 
 /**
@@ -454,6 +506,10 @@ export type ImportFromGitRequest = {
      * Token
      */
     token?: string | null;
+    /**
+     * Subdirectory
+     */
+    subdirectory?: string | null;
 };
 
 /**
@@ -1017,13 +1073,13 @@ export type SystemSettingsUpdate = {
  */
 export type TestGitRequest = {
     /**
-     * Remote Url
+     * Git Remote Url
      */
-    remote_url: string;
+    git_remote_url: string;
     /**
-     * Token
+     * Git Token
      */
-    token?: string | null;
+    git_token?: string | null;
 };
 
 /**
@@ -2947,14 +3003,14 @@ export type CreateCatalogResponses = {
 
 export type CreateCatalogResponse = CreateCatalogResponses[keyof CreateCatalogResponses];
 
-export type SyncCatalogsData = {
+export type ExportAllCatalogsData = {
     body?: never;
     path?: never;
     query?: never;
-    url: '/api/v1/catalog/sync';
+    url: '/api/v1/catalog/export-all';
 };
 
-export type SyncCatalogsResponses = {
+export type ExportAllCatalogsResponses = {
     /**
      * Successful Response
      */
@@ -3207,6 +3263,34 @@ export type CreateDirectoryErrors = {
 export type CreateDirectoryError = CreateDirectoryErrors[keyof CreateDirectoryErrors];
 
 export type CreateDirectoryResponses = {
+    /**
+     * Successful Response
+     */
+    200: unknown;
+};
+
+export type BatchImportCatalogFilesData = {
+    body: BatchImportRequest;
+    path: {
+        /**
+         * Slug
+         */
+        slug: string;
+    };
+    query?: never;
+    url: '/api/v1/catalog/{slug}/batch-import';
+};
+
+export type BatchImportCatalogFilesErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type BatchImportCatalogFilesError = BatchImportCatalogFilesErrors[keyof BatchImportCatalogFilesErrors];
+
+export type BatchImportCatalogFilesResponses = {
     /**
      * Successful Response
      */

@@ -81,7 +81,14 @@ async def test_get_job_details_with_id_success(job_service, mock_db_session):
     workflow_id = uuid.uuid4()
     mock_rule = Rule(name="sort")
     mock_workflow = Workflow(id=workflow_id)
-    mock_job = Job(id=1, status="SUCCESS", started_at=datetime.now(UTC), rule=mock_rule, workflow_id=workflow_id, workflow=mock_workflow)
+    mock_job = Job(
+        id=1,
+        status="SUCCESS",
+        started_at=datetime.now(UTC),
+        rule=mock_rule,
+        workflow_id=workflow_id,
+        workflow=mock_workflow,
+    )
 
     mock_execute.scalars().one_or_none.return_value = mock_job
     mock_db_session.execute.return_value = mock_execute
@@ -104,14 +111,17 @@ async def test_get_job_details_with_id_success(job_service, mock_db_session):
 @pytest.mark.asyncio
 async def test_get_job_files_with_id(job_service, mock_db_session):
     mock_execute = MagicMock()
+
     # File needs a file_type Enum in real life, simulate object having `.value`
     class MockFileType:
         @property
-        def value(self): return "LOG"
+        def value(self):
+            return "LOG"
 
     class MockFileTypeOutput:
         @property
-        def value(self): return "OUTPUT"
+        def value(self):
+            return "OUTPUT"
 
     mock_file1 = File(path="test.log", file_type=MockFileType())
     mock_file2 = File(path="out.txt", file_type=MockFileTypeOutput())

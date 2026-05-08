@@ -1,6 +1,8 @@
 import argparse
 import json
 import os
+import shutil
+import tarfile
 import zipfile
 from fnmatch import fnmatch
 from pathlib import Path
@@ -154,13 +156,43 @@ def create_catalog_zip(
                 zipf.write(file_path, rel_path)
 
 
+def create_catalog_tar_gz(
+    source_dir: Path,
+    slug: str,
+    tgz_path: Path,
+    extra_excludes: list[str] | None = None,
+) -> None:
+    """Tar.gz for ``POST /api/v1/catalog/upload`` — one top-level directory ``{slug}/`` (server import_archive)."""
+    default_excludes = [
+        ".snakemake",
+        ".git",
+        "__pycache__",
+        "*.pyc",
+        ".DS_Store",
+        ".ipynb_checkpoints",
+        "node_modules",
+    ]
+    all_excludes = default_excludes + (extra_excludes or [])
+    source_dir = source_dir.resolve()
+    with tarfile.open(tgz_path, "w:gz") as tf:
+        for root, dirs, files in os.walk(source_dir):
+            dirs[:] = [d for d in dirs if not any(fnmatch(d, p) for p in all_excludes)]
+            for file in files:
+                if any(fnmatch(file, p) for p in all_excludes):
+                    continue
+                file_path = Path(root) / file
+                rel_path = file_path.relative_to(source_dir)
+                arcname = f"{slug}/{rel_path.as_posix()}"
+                tf.add(file_path, arcname=arcname, recursive=False)
+
+
 def upload_catalog(
     catalog_dir_path: str,
     token: str = None,
     host: str = None,
     exclude: list[str] = None,
 ):
-    """Pack and upload a catalog to the Flowo platform."""
+    """Pack and upload a catalog to the Flowo platform via API."""
     catalog_dir = Path(catalog_dir_path).resolve()
     flowo_json_path = catalog_dir / ".flowo.json"
 
@@ -170,10 +202,7 @@ def upload_catalog(
     if not flowo_json_path.exists():
         logger.error(f"❌ '{flowo_json_path.name}' not found in {catalog_dir}.")
         logger.error(
-            "Please create a '.flowo.json' file to define this catalog. Example:"
-        )
-        logger.error(
-            '{\n  "name": "My Catalog",\n  "slug": "my-catalog-slug",\n  "version": "0.1.0"\n}'
+            'Example: {"name": "My Catalog", "slug": "my-catalog", "version": "0.1.0"}'
         )
         return
 
@@ -188,26 +217,15 @@ def upload_catalog(
         logger.error(f"❌ Failed to parse .flowo.json: {e}")
         return
 
-    # Use arguments or config search
-    token = token or (os.environ.get("FLOWO_USER_TOKEN"))
-    host = host or (os.environ.get("FLOWO_HOST"))
-
-    if not token or not host:
-        # Fallback to config file
-        # Assuming get_config is available from ...core.config or a new .config
-        # For now, using existing settings as per original file structure
-        token = token or settings.FLOWO_USER_TOKEN
-        host = host or settings.FLOWO_HOST
+    # Get credentials from args, env, or config
+    token = token or os.environ.get("FLOWO_USER_TOKEN") or settings.FLOWO_USER_TOKEN
+    host = host or os.environ.get("FLOWO_HOST") or settings.FLOWO_HOST
 
     if not token:
-        logger.error(
-            "❌ Token not found. Use --token or set FLOWO_USER_TOKEN environment variable."
-        )
+        logger.error("❌ Token not found. Set FLOWO_USER_TOKEN env var or use --token.")
         return
     if not host:
-        logger.error(
-            "❌ Host not found. Use --host or set FLOWO_HOST environment variable."
-        )
+        logger.error("❌ Host not found. Set FLOWO_HOST env var or use --host.")
         return
 
     headers = {"Authorization": f"Bearer {token}"}
@@ -218,40 +236,148 @@ def upload_catalog(
             zip_base = Path(tmp_dir) / f"catalog_{slug}_upload.zip"
             create_catalog_zip(catalog_dir, zip_base, exclude)
 
-            # 1. Upload to sync endpoint
-            logger.info(f"📦 Uploading catalog '{slug}' to Flowo platform...")
-            with httpx.Client(timeout=120.0) as client:
+            logger.info(f"📦 Uploading catalog '{slug}'…")
+            with httpx.Client(timeout=300.0) as client:
                 with open(zip_base, "rb") as f:
-                    files = {"file": (zip_base.name, f, "application/zip")}
                     response = client.post(
                         f"{host}/api/v1/catalog/{slug}/sync",
                         headers=headers,
-                        files=files,
+                        files={
+                            "file": (zip_base.name, f, "application/zip"),
+                        },
                     )
 
-            if response.status_code == 200:
-                logger.info(f"✅ Catalog {slug} uploaded successfully.")
-
-                # 2. Trigger Git Push
-                logger.info("🚀 Pushing changes to GitHub...")
-                with httpx.Client(timeout=120.0) as client:
-                    git_response = client.post(
-                        f"{host}/api/v1/catalog/git/push",
-                        headers=headers,
-                        json={},
-                    )
-
-                if git_response.status_code == 200:
-                    logger.info("✅ Changes pushed to GitHub.")
+                if response.status_code == 200:
+                    result = response.json()
+                    if result.get("status") != "completed":
+                        logger.error(
+                            f"❌ Server import did not complete: {result.get('error', result)}"
+                        )
+                    else:
+                        logger.info(f"✅ Catalog '{slug}' synced successfully.")
+                        summary = result.get("summary") or {}
+                        added = int(summary.get("added") or 0)
+                        modified = int(summary.get("modified") or 0)
+                        deleted = int(summary.get("deleted") or 0)
+                        skipped = int(summary.get("skipped") or 0)
+                        logger.info(
+                            f"📝 Import summary: {added} added, {modified} modified, "
+                            f"{deleted} deleted, {skipped} unchanged (same content hash)."
+                        )
+                        if skipped and not (added or modified or deleted):
+                            logger.info(
+                                "ℹ️  Nothing changed on the server — local tree matches DB "
+                                "byte-for-byte. Check you saved files and used the correct "
+                                "`--path` to the catalog root."
+                            )
+                elif response.status_code == 404:
+                    detail = ""
+                    try:
+                        body = response.json()
+                        detail = str(body.get("detail", ""))
+                    except Exception:
+                        detail = response.text or ""
+                    if "not found" in detail.lower():
+                        logger.info(
+                            f"📭 Server has no catalog '{slug}' yet — creating via "
+                            "POST /api/v1/catalog/upload (tar.gz)…"
+                        )
+                        tgz_path = Path(tmp_dir) / f"catalog_{slug}_upload.tar.gz"
+                        create_catalog_tar_gz(catalog_dir, slug, tgz_path, exclude)
+                        with open(tgz_path, "rb") as gf:
+                            up = client.post(
+                                f"{host}/api/v1/catalog/upload",
+                                headers=headers,
+                                files={
+                                    "file": (
+                                        f"{slug}.tar.gz",
+                                        gf,
+                                        "application/gzip",
+                                    ),
+                                },
+                            )
+                        if up.status_code == 201:
+                            logger.info(
+                                f"✅ Catalog '{slug}' created and imported on the server."
+                            )
+                        else:
+                            logger.error(f"❌ Create upload failed: {up.text}")
+                    else:
+                        logger.error(f"❌ Sync failed: {response.text}")
                 else:
-                    logger.warning(
-                        f"⚠️ Files updated on platform, but Git push failed: {git_response.text}"
-                    )
-            else:
-                logger.error(f"❌ Failed to upload catalog: {response.text}")
+                    logger.error(f"❌ Upload failed: {response.text}")
 
     except Exception as e:
         logger.error(f"❌ Error uploading catalog: {str(e)}")
+
+
+def template_pull_cli() -> None:
+    """Clone or pull official snakemake-workflow-template into ``SNAKEMAKE_WORKFLOW_TEMPLATE_DIR``."""
+    from .template_local import git_pull_or_clone_template
+
+    try:
+        result = git_pull_or_clone_template()
+    except RuntimeError as e:
+        logger.error(f"❌ {e}")
+        return
+    logger.info(
+        f"✅ Snakemake template {result.get('action', 'ok')}: {result.get('path', '')}"
+    )
+
+
+def catalog_new_from_template(name: str, output_parent: Path, with_git: bool) -> None:
+    """Copy ``SNAKEMAKE_WORKFLOW_TEMPLATE_DIR`` into ``output_parent / name``."""
+    from .template_local import git_pull_or_clone_template, snakemake_template_root
+
+    root = snakemake_template_root()
+    if not (root / "workflow").is_dir():
+        logger.info("📥 Template missing; running pull first…")
+        try:
+            git_pull_or_clone_template()
+        except RuntimeError as e:
+            logger.error(f"❌ {e}")
+            return
+
+    output_parent = output_parent.resolve()
+    output_parent.mkdir(parents=True, exist_ok=True)
+    dest = (output_parent / name).resolve()
+    if dest.exists():
+        logger.error(f"❌ Destination already exists: {dest}")
+        return
+
+    def _ignore(_src: str, names: list[str]) -> list[str]:
+        if with_git:
+            return []
+        return [n for n in names if n == ".git"]
+
+    try:
+        shutil.copytree(root, dest, ignore=_ignore, dirs_exist_ok=False)
+    except OSError as e:
+        logger.error(f"❌ Copy failed: {e}")
+        return
+
+    # So `flowo catalog upload` can find slug; must match an existing catalog on the server.
+    flowo_meta = {
+        "name": name.replace("-", " ").strip() or name,
+        "slug": name,
+        "version": "0.1.0",
+    }
+    try:
+        (dest / ".flowo.json").write_text(
+            json.dumps(flowo_meta, indent=2, ensure_ascii=False) + "\n",
+            encoding="utf-8",
+        )
+    except OSError as e:
+        logger.warning("⚠️ Could not write .flowo.json: %s", e)
+
+    logger.info(f"✅ Created project at {dest} (from template at {root})")
+    logger.info(
+        "ℹ️  This directory is only on your machine until you upload it. "
+        "In the web UI, create a catalog whose slug is %r (same slug rules as the New catalog name), "
+        "then run: flowo catalog upload --path %s",
+        name,
+        dest,
+    )
 
 
 def main():
@@ -296,6 +422,33 @@ def main():
         "--exclude", "-e", action="append", help="Patterns to exclude (e.g. data/*)"
     )
 
+    cat_tpl = cat_sub.add_parser(
+        "template",
+        help="Official snakemake-workflow-template on disk (SNAKEMAKE_WORKFLOW_TEMPLATE_DIR)",
+    )
+    tpl_sub = cat_tpl.add_subparsers(dest="template_cmd", required=True)
+    tpl_sub.add_parser(
+        "pull",
+        help="git clone --depth 1 or git pull --ff-only into SNAKEMAKE_WORKFLOW_TEMPLATE_DIR",
+    )
+
+    cat_new = cat_sub.add_parser(
+        "new",
+        help="Copy template into a new local directory (excludes .git by default)",
+    )
+    cat_new.add_argument("name", help="New directory name under --output")
+    cat_new.add_argument(
+        "--output",
+        "-o",
+        default=".",
+        help="Parent directory for the new folder (default: current)",
+    )
+    cat_new.add_argument(
+        "--with-git",
+        action="store_true",
+        help="Copy the template's .git directory as well",
+    )
+
     # --- Global Top-level commands ---
     upload_parser = subparsers.add_parser(
         "upload", help="Upload local catalog to platform (alias for catalog upload)"
@@ -317,12 +470,33 @@ def main():
         if args.cat_cmd in ["pull", "download"]:
             pull_catalog(args.slug, path=getattr(args, "path", "."))
         elif args.cat_cmd == "upload":
-            upload_catalog(args.path, exclude=args.exclude)
+            upload_catalog(
+                args.path,
+                token=args.token,
+                host=args.host,
+                exclude=args.exclude,
+            )
+        elif args.cat_cmd == "template":
+            if getattr(args, "template_cmd", None) == "pull":
+                template_pull_cli()
+            else:
+                cat_parser.print_help()
+        elif args.cat_cmd == "new":
+            catalog_new_from_template(
+                args.name,
+                Path(args.output),
+                bool(getattr(args, "with_git", False)),
+            )
         else:
             cat_parser.print_help()
 
     elif args.command == "upload":
-        upload_catalog(args.path, exclude=args.exclude)
+        upload_catalog(
+            args.path,
+            token=args.token,
+            host=args.host,
+            exclude=args.exclude,
+        )
 
     else:
         parser.print_help()

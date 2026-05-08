@@ -1,13 +1,31 @@
 /* CatalogDetail.css - Modern catalog detail page styles */
 
+/* ── Page shell: no outer scroll; only tree + editor body scroll ─── */
+.catalog-detail-page {
+  flex: 1;
+  display: flex;
+  min-height: 0;
+  width: 100%;
+  max-width: 1920px;
+  margin: 0 auto;
+  flex-direction: column;
+  overflow: hidden;
+  box-sizing: border-box;
+  padding: 8px 16px 6px;
+}
+
+.catalog-detail-page-header {
+  flex-shrink: 0;
+}
+
 /* ── Compact toolbar ──────────────────────────────── */
 .catalog-detail-toolbar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 6px 0;
-  margin-bottom: 10px;
-  border-bottom: 1px solid #f0f0f0;
+  padding: 4px 0;
+  margin-bottom: 0;
+  border-bottom: none;
 }
 
 .catalog-toolbar-left {
@@ -62,12 +80,20 @@
 /* ── Main content layout ─────────────────────────── */
 .catalog-detail-content {
   display: flex;
-  gap: 16px;
+  flex: 1;
+  gap: 12px;
+  align-items: stretch;
+  min-height: 0;
+  overflow: hidden;
+  padding-top: 2px;
 }
 
 .catalog-file-panel {
   flex: 0 0 320px;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
 }
 
 /* ── Fold/collapse chevron ───────────────────────── */
@@ -84,6 +110,7 @@
 .catalog-editor-panel {
   flex: 1;
   min-width: 0;
+  min-height: 0;
 }
 
 .catalog-editor-card {
@@ -98,6 +125,7 @@
 
 .catalog-editor-tabs .ant-tabs-nav {
   margin-bottom: 0 !important;
+  padding-left: 8px !important;
 }
 
 .catalog-editor-tabs .ant-tabs-content-holder {
@@ -286,36 +314,14 @@
   color: #dc2626 !important;
 }
 
-/* ── Right Panel: header + body ───────────────────── */
-.catalog-panel-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 8px 12px;
-  background: #fff;
-  border: 1px solid #e5e7eb;
-  border-bottom: none;
-  border-radius: 8px 8px 0 0;
-  height: 40px;
-}
-
-.catalog-panel-title {
-  font-size: 12px;
-  font-weight: 600;
-  color: #6b7280;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
-
-/* Segmented control inside panel header — prominent selected state */
-.catalog-panel-header .ant-segmented {
+/* Markdown Source / Preview toggle (toolbar under catalog detail header) */
+.catalog-panel-segmented-host .ant-segmented {
   background: #f3f4f6;
   font-size: 12px;
   font-weight: 500;
 }
 
-.catalog-panel-header .ant-segmented-item-selected {
+.catalog-panel-segmented-host .ant-segmented-item-selected {
   background: #4f46e5;
   color: #fff !important;
   border-radius: 4px;
@@ -323,17 +329,9 @@
   box-shadow: 0 1px 4px rgba(79, 70, 229, 0.3);
 }
 
-.catalog-panel-header .ant-segmented-item-selected .anticon,
-.catalog-panel-header .ant-segmented-item-selected span {
+.catalog-panel-segmented-host .ant-segmented-item-selected .anticon,
+.catalog-panel-segmented-host .ant-segmented-item-selected span {
   color: #fff !important;
-}
-
-.catalog-panel-body {
-  border: 1px solid #e5e7eb;
-  border-top: none;
-  border-radius: 0 0 8px 8px;
-  overflow: hidden;
-  height: calc(100vh - 210px);
 }
 
 /* ── Layout toggle in toolbar (legacy, now in panel) ─ */
@@ -350,10 +348,10 @@
 .catalog-detail-footer {
   display: flex;
   align-items: center;
-  gap: 24px;
+  gap: 16px;
   flex-wrap: wrap;
-  padding: 16px 0;
-  margin-top: 8px;
+  padding: 8px 0 6px;
+  margin-top: 4px;
   border-top: 1px solid #f0f0f0;
 }
 
@@ -372,150 +370,6 @@
 .catalog-footer-value {
   color: #6b7280;
   font-weight: 500;
-}
-
-/* ── File Tree Styles (VS Code Theme) ───────────────────────────── */
-.catalog-file-tree-container {
-  display: flex;
-  flex-direction: column;
-  background: var(--vscode-editor-background, #ffffff);
-  border: 1px solid #e5e7eb;
-  border-radius: 4px;
-  overflow: hidden;
-  height: calc(100vh - 210px);
-}
-
-.catalog-tree-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 4px 10px;
-  background: var(--vscode-sideBarTitle-background, #f3f4f6);
-  border-bottom: 1px solid #e5e7eb;
-  font-size: 11px;
-  text-transform: uppercase;
-  font-weight: 600;
-  color: var(--vscode-sideBarTitle-foreground, #6b7280);
-  letter-spacing: 0.5px;
-}
-
-.catalog-tree-actions {
-  display: flex;
-  gap: 2px;
-}
-
-.catalog-file-tree {
-  overflow-y: auto;
-  font-size: 13px;
-  background: transparent;
-  font-family:
-    -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu',
-    'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
-  padding-top: 4px;
-}
-
-.catalog-file-tree .ant-tree-list {
-  padding-bottom: 10px;
-}
-
-/* Base Node Reset */
-.catalog-file-tree .ant-tree-treenode {
-  padding: 0 !important;
-  width: 100%;
-}
-
-.catalog-file-tree .ant-tree-node-content-wrapper {
-  border-radius: 0 !important;
-  min-height: 26px;
-  line-height: 26px;
-  display: inline-flex;
-  align-items: center;
-  transition: background-color 0s;
-  padding: 0;
-  width: calc(100% - 24px);
-}
-
-/* Hover State */
-.catalog-file-tree .ant-tree-node-content-wrapper:hover {
-  background-color: var(--vscode-list-hoverBackground, #e8eaed) !important;
-}
-
-/* Selected State */
-.catalog-file-tree .ant-tree-node-selected {
-  background-color: var(
-    --vscode-list-inactiveSelectionBackground,
-    #e4e6f1
-  ) !important;
-  color: var(--vscode-list-activeSelectionForeground, inherit);
-}
-
-/* Tree Render Item */
-.tree-node-render {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  width: 100%;
-  height: 26px;
-}
-
-.tree-node-title {
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.tree-node-actions {
-  display: flex;
-  gap: 2px;
-  opacity: 0;
-  padding-left: 8px;
-}
-
-/* Inactive button styles to match VS Code UI */
-.tree-node-actions .ant-btn {
-  color: #6b7280;
-}
-.tree-node-actions .ant-btn:hover {
-  color: #111827;
-  background: rgba(0, 0, 0, 0.05);
-}
-
-.ant-tree-node-content-wrapper:hover .tree-node-actions {
-  opacity: 1;
-}
-
-.ant-tree-treenode-selected .tree-node-actions {
-  opacity: 1;
-}
-
-/* Custom Switcher indenting */
-.catalog-file-tree .ant-tree-switcher {
-  width: 20px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  color: #6b7280;
-}
-
-/* Indent Guidelines */
-.catalog-file-tree .ant-tree-indent-unit {
-  width: 16px;
-  position: relative;
-}
-.catalog-file-tree .ant-tree-indent-unit::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 8px;
-  border-left: 1px solid #e5e7eb;
-  transition: opacity 0.2s;
-  opacity: 0;
-}
-.catalog-file-tree:hover .ant-tree-indent-unit::before {
-  opacity: 1;
 }
 
 /* Responsive adjustments */

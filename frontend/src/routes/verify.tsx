@@ -41,7 +41,7 @@ function VerifyComponent() {
     } else {
       setStatus('error');
     }
-  }, [token]);
+  }, [token, verifyMutation]);
 
   return (
     <div className="fixed inset-0 min-h-screen w-full flex items-center justify-center bg-[#f8fafc] overflow-hidden">

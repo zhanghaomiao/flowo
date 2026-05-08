@@ -46,7 +46,10 @@ def test_resolve_absolute_path_outside_root(path_resolver, monkeypatch, capsys):
     # It should log warning and return original
     assert str(resolved) == "/other/root/my_folder.txt"
     captured = capsys.readouterr()
-    assert "CRITICAL: Path /other/root/my_folder.txt is outside configured source root" in captured.out
+    assert (
+        "CRITICAL: Path /other/root/my_folder.txt is outside configured source root"
+        in captured.out
+    )
 
 
 def test_resolve_absolute_path_no_source_root(monkeypatch):
@@ -74,7 +77,10 @@ def test_get_file_content_success(tmp_path, monkeypatch):
 
 
 def test_get_file_content_not_found(monkeypatch):
-    monkeypatch.setattr("app.utils.paths.path_resolver.resolve", lambda x: Path("/non_existent_file.txt"))
+    monkeypatch.setattr(
+        "app.utils.paths.path_resolver.resolve",
+        lambda x: Path("/non_existent_file.txt"),
+    )
 
     with pytest.raises(FileNotFoundError, match="File not found: "):
         get_file_content("test.txt")

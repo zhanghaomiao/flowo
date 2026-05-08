@@ -1,4 +1,6 @@
+from .batch_import import BatchImport
 from .catalog import Catalog
+from .catalog_file import CatalogFile, CatalogFileVersion
 from .enums import FileType, Status
 from .error import Error
 from .file import File
@@ -23,6 +25,9 @@ __all__ = [
     "UserSettings",
     "UserToken",
     "Catalog",
+    "CatalogFile",
+    "CatalogFileVersion",
+    "BatchImport",
     "SystemSettings",
     "Invitation",
 ]

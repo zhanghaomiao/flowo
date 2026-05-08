@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 
 import {
   ApartmentOutlined,
-  CodeOutlined,
+  EditOutlined,
   InfoCircleOutlined,
 } from '@ant-design/icons';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -31,14 +31,13 @@ import type { CatalogDetail as CatalogDetailType } from '@/client/types.gen';
 
 import './CatalogDetail.css';
 
-import Dag from '../job/dag/Dag';
-import { type GraphData } from '../job/dag/useDag';
 import { MarkdownViewer } from '../shared/viewers';
 
 import CatalogEditor from './CatalogEditor';
+import CatalogDagSvg from './detail/CatalogDagSvg';
 import CatalogFileTree from './detail/CatalogFileTree';
-import CatalogFooter from './detail/CatalogFooter';
 import CatalogHeader from './detail/CatalogHeader';
+import CatalogMetaBar from './detail/CatalogMetaBar';
 
 interface Props {
   slug: string;
@@ -78,11 +77,11 @@ const EditCatalogModal: React.FC<EditModalProps> = ({
     try {
       const values = await form.validateFields();
       await updateMutation.mutateAsync({
-        path: { slug: catalog.slug },
+        path: { slug: catalog.slug ?? '' },
         body: values,
       });
       queryClient.invalidateQueries({
-        queryKey: getCatalogQueryKey({ path: { slug: catalog.slug } }),
+        queryKey: getCatalogQueryKey({ path: { slug: catalog.slug || '' } }),
       });
       message.success('Catalog metadata updated');
       onSuccess();
@@ -173,7 +172,7 @@ const CatalogDetail: React.FC<Props> = ({ slug }) => {
   // README state
   const [readmePath, setReadmePath] = useState<string | null>(null);
   const [editingViewMode, setEditingViewMode] = useState<'preview' | 'source'>(
-    'preview',
+    'source',
   );
   const [editModalOpen, setEditModalOpen] = useState(false);
 
@@ -214,6 +213,8 @@ const CatalogDetail: React.FC<Props> = ({ slug }) => {
   }
 
   const openFile = (filePath: string) => {
+    // Markdown defaults used to be Preview (read-only); must open Source to edit/save.
+    setEditingViewMode('source');
     setEditingFiles((prev) =>
       prev.includes(filePath) ? prev : [...prev, filePath],
     );
@@ -269,16 +270,28 @@ const CatalogDetail: React.FC<Props> = ({ slug }) => {
     }
   };
 
+  const activeLower = activeFile.toLowerCase();
+  const showMarkdownSourceToggle =
+    rightPanelMode === 'editor' &&
+    editingFiles.length > 0 &&
+    (activeLower.endsWith('.md') || activeLower.endsWith('.markdown'));
+  const showRightPanelTopBar =
+    rightPanelMode !== 'editor' || showMarkdownSourceToggle;
+
   return (
-    <div style={{ margin: '0 auto', padding: '16px 24px' }}>
+    <div className="catalog-detail-page">
       {contextHolder}
 
-      <CatalogHeader
-        catalog={catalog}
-        slug={slug}
-        onShowDag={() => setRightPanelMode('preview')}
-        onEditMetadata={() => setEditModalOpen(true)}
-      />
+      <div className="catalog-detail-page-header">
+        <CatalogHeader
+          catalog={catalog}
+          slug={slug}
+          onShowDag={() => setRightPanelMode('preview')}
+          onEditMetadata={() => setEditModalOpen(true)}
+        />
+
+        <CatalogMetaBar catalog={catalog} />
+      </div>
 
       <EditCatalogModal
         open={editModalOpen}
@@ -297,31 +310,42 @@ const CatalogDetail: React.FC<Props> = ({ slug }) => {
             onDeleteFolder={handleDeleteFolder}
             onRenameFiles={handleRenameFiles}
           />
-          <CatalogFooter catalog={catalog} />
         </div>
 
-        <div className="catalog-editor-panel">
-          <div className="catalog-panel-header">
-            <span className="catalog-panel-title">
-              {rightPanelMode === 'editor' ? (
-                <>
-                  <CodeOutlined /> Editor
-                </>
-              ) : rightPanelMode === 'preview' ? (
-                <>
-                  <ApartmentOutlined /> DAG Preview
-                </>
-              ) : (
-                <>
-                  <InfoCircleOutlined /> Overview
-                </>
-              )}
-            </span>
-            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-              {rightPanelMode === 'editor' &&
-                editingFiles.length > 0 &&
-                (activeFile.toLowerCase().endsWith('.md') ||
-                  activeFile.toLowerCase().endsWith('.markdown')) && (
+        <div className="catalog-editor-panel flex min-h-0 min-w-0 flex-1 flex-col">
+          <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-lg border border-slate-200 bg-white">
+            {showRightPanelTopBar && (
+              <div
+                className={
+                  showMarkdownSourceToggle && rightPanelMode === 'editor'
+                    ? 'catalog-panel-segmented-host flex shrink-0 items-center justify-end border-b border-slate-100 px-3 py-1.5'
+                    : 'flex shrink-0 items-center justify-between gap-2 border-b border-slate-100 px-3 py-1.5'
+                }
+              >
+                {rightPanelMode !== 'editor' && (
+                  <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500">
+                    {rightPanelMode === 'preview' ? (
+                      <>
+                        <ApartmentOutlined /> DAG Preview
+                      </>
+                    ) : (
+                      <>
+                        <InfoCircleOutlined /> Overview
+                      </>
+                    )}
+                  </span>
+                )}
+                {rightPanelMode === 'readme' && readmePath ? (
+                  <Button
+                    type="default"
+                    size="small"
+                    icon={<EditOutlined />}
+                    onClick={() => openFile(readmePath)}
+                  >
+                    Edit README
+                  </Button>
+                ) : null}
+                {showMarkdownSourceToggle && (
                   <Segmented
                     size="small"
                     options={[
@@ -334,69 +358,74 @@ const CatalogDetail: React.FC<Props> = ({ slug }) => {
                     }
                   />
                 )}
-            </div>
-          </div>
-
-          <div className="catalog-panel-body">
-            {rightPanelMode === 'editor' ? (
-              <CatalogEditor
-                slug={slug}
-                openFiles={editingFiles}
-                activeFile={activeFile}
-                viewMode={editingViewMode}
-                onViewModeChange={setEditingViewMode}
-                onCloseAll={() => {
-                  setEditingFiles([]);
-                  setActiveFile('');
-                  setRightPanelMode('readme');
-                }}
-                onClose={(filePath) =>
-                  setEditingFiles((prev) => {
-                    const next = prev.filter((f) => f !== filePath);
-                    if (next.length === 0) {
-                      setActiveFile('');
-                      setRightPanelMode('readme');
-                    }
-                    return next;
-                  })
-                }
-              />
-            ) : rightPanelMode === 'preview' ? (
-              catalog?.has_snakefile ? (
-                <Dag
-                  catalogSlug={slug}
-                  initialData={catalog.rulegraph_data as unknown as GraphData}
-                />
-              ) : (
-                <div
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    height: '100%',
-                    color: '#999',
-                  }}
-                >
-                  No Snakefile found — add one to preview the DAG
-                </div>
-              )
-            ) : readmePath ? (
-              isReadmeLoading ? (
-                <div style={{ textAlign: 'center', padding: 60 }}>
-                  <Spin tip="Loading README..." />
-                </div>
-              ) : (
-                <MarkdownViewer
-                  content={readmeContentData?.content || ''}
-                  fileName="README.md"
-                />
-              )
-            ) : (
-              <Empty
-                description="No README.md found in this catalog"
-                style={{ padding: 60 }}
-              />
+              </div>
             )}
+
+            <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+              {rightPanelMode === 'editor' ? (
+                <CatalogEditor
+                  slug={slug}
+                  openFiles={editingFiles}
+                  activeFile={activeFile}
+                  viewMode={editingViewMode}
+                  onViewModeChange={setEditingViewMode}
+                  onCloseAll={() => {
+                    setEditingFiles([]);
+                    setActiveFile('');
+                    setRightPanelMode('readme');
+                  }}
+                  onClose={(filePath) =>
+                    setEditingFiles((prev) => {
+                      const next = prev.filter((f) => f !== filePath);
+                      if (next.length === 0) {
+                        setActiveFile('');
+                        setRightPanelMode('readme');
+                      } else {
+                        setActiveFile((cur) =>
+                          cur === filePath || !next.includes(cur)
+                            ? next[next.length - 1]!
+                            : cur,
+                        );
+                      }
+                      return next;
+                    })
+                  }
+                  onActiveFileChange={setActiveFile}
+                />
+              ) : rightPanelMode === 'preview' ? (
+                catalog?.has_snakefile ? (
+                  <CatalogDagSvg slug={slug} />
+                ) : (
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      height: '100%',
+                      color: '#999',
+                    }}
+                  >
+                    No Snakefile found — add one to preview the DAG
+                  </div>
+                )
+              ) : readmePath ? (
+                isReadmeLoading ? (
+                  <div style={{ textAlign: 'center', padding: 60 }}>
+                    <Spin tip="Loading README..." />
+                  </div>
+                ) : (
+                  <MarkdownViewer
+                    content={readmeContentData?.content || ''}
+                    fileName="README.md"
+                  />
+                )
+              ) : (
+                <Empty
+                  description="No README.md found in this catalog"
+                  style={{ padding: 60 }}
+                />
+              )}
+            </div>
           </div>
         </div>
       </div>

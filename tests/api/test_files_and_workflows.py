@@ -11,7 +11,9 @@ from app.models.user import User
 from app.utils.paths import PathContent
 
 
-async def create_user_and_headers(register_user, login_user, email: str, *, is_superuser: bool = False):
+async def create_user_and_headers(
+    register_user, login_user, email: str, *, is_superuser: bool = False
+):
     await register_user(email, is_superuser=is_superuser)
     return await login_user(email)
 
@@ -150,7 +152,11 @@ async def test_files_list_maps_permission_error_to_403(
     fake_os = type(
         "FakeOS",
         (),
-        {"scandir": staticmethod(lambda _path: (_ for _ in ()).throw(PermissionError("denied")))},
+        {
+            "scandir": staticmethod(
+                lambda _path: (_ for _ in ()).throw(PermissionError("denied"))
+            )
+        },
     )()
 
     with patch("app.api.endpoints.files.os", fake_os):
@@ -217,7 +223,11 @@ async def test_workflow_progress_returns_total_or_percentage(
     assert total_response.status_code == 200
     assert total_response.json() == {"total": 10}
     assert percentage_response.status_code == 200
-    assert percentage_response.json() == {"completed": 4, "running": 1, "progress": 40.0}
+    assert percentage_response.json() == {
+        "completed": 4,
+        "running": 1,
+        "progress": 40.0,
+    }
 
 
 @pytest.mark.asyncio

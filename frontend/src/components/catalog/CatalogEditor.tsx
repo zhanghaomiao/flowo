@@ -1,14 +1,27 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from 'react';
 
 import { CloseOutlined, SaveOutlined } from '@ant-design/icons';
 import Editor, { type OnMount } from '@monaco-editor/react';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Button, message, Spin, Tabs, Tooltip, Typography } from 'antd';
 
 import {
+  getCatalogQueryKey,
   readFile2Options,
+  readFile2QueryKey,
   writeFileMutation,
 } from '@/client/@tanstack/react-query.gen';
+import {
+  fetchSnakeTemplateFile,
+  putSnakeTemplateFile,
+  snakeTemplateQueryKey,
+} from '@/lib/snakeTemplate';
 
 import { MarkdownViewer } from '../shared/viewers';
 
@@ -49,8 +62,12 @@ interface FileTab {
 
 interface Props {
   slug: string;
+  /** When `snake-template`, read/write use `/catalog/snake-template/file` instead of catalog slug APIs. */
+  fileSource?: 'catalog' | 'snake-template';
   openFiles: string[];
   activeFile?: string;
+  /** Keep in sync with the focused tab (must run when user clicks a tab, not only when opening from tree). */
+  onActiveFileChange: (path: string) => void;
   onClose: (filePath: string) => void;
   onCloseAll?: () => void;
   viewMode?: 'preview' | 'source';
@@ -59,50 +76,87 @@ interface Props {
 
 const CatalogEditor: React.FC<Props> = ({
   slug,
+  fileSource = 'catalog',
   openFiles,
   activeFile,
+  onActiveFileChange,
   onClose,
   onCloseAll,
   viewMode,
 }) => {
   const [tabs, setTabs] = useState<Map<string, FileTab>>(new Map());
-  const [activeKey, setActiveKey] = useState<string>('');
+  const tabsRef = useRef(tabs);
+  tabsRef.current = tabs;
   const editorRef = useRef<Parameters<OnMount>[0] | null>(null);
+  const queryClient = useQueryClient();
 
   const writeFileMut = useMutation(writeFileMutation());
 
-  // Sync active tab when parent changes activeFile
-  useEffect(() => {
-    if (activeFile && openFiles.includes(activeFile)) {
-      setActiveKey(activeFile);
-    }
-  }, [activeFile, openFiles]);
+  /** Single source of truth with parent `activeFile`; avoids local activeKey fighting the tree. */
+  const focusPath =
+    openFiles.length === 0
+      ? ''
+      : activeFile && openFiles.includes(activeFile)
+        ? activeFile
+        : openFiles[openFiles.length - 1]!;
 
-  // Load files when openFiles change
-  useEffect(() => {
-    const newFiles = openFiles.filter((f) => !tabs.has(f));
-    if (newFiles.length > 0 && !activeFile) {
-      setActiveKey(openFiles[openFiles.length - 1]);
+  // Heal stale activeFile (e.g. pointed at a closed tab) so Tabs stay valid.
+  useLayoutEffect(() => {
+    if (!openFiles.length) return;
+    if (!activeFile || !openFiles.includes(activeFile)) {
+      const fallback = openFiles[openFiles.length - 1]!;
+      if (activeFile !== fallback) {
+        onActiveFileChange(fallback);
+      }
     }
-  }, [openFiles, tabs, activeFile]);
+  }, [openFiles, activeFile, onActiveFileChange]);
 
-  const activeTab = tabs.get(activeKey);
+  const activeTab = tabs.get(focusPath);
+
+  const focusPathRef = useRef(focusPath);
+  focusPathRef.current = focusPath;
 
   const handleSave = useCallback(
     async (filePath: string) => {
-      const tab = tabs.get(filePath);
-      if (!tab || !tab.dirty) return;
+      const tab = tabsRef.current.get(filePath);
+      if (!tab) {
+        message.warning('File is still loading; try Save again in a moment.');
+        return;
+      }
+      if (!tab.dirty) {
+        message.info('No changes to save.');
+        return;
+      }
 
       try {
-        await writeFileMut.mutateAsync({
-          body: {
-            content: tab.content,
-          },
-          path: {
-            file_path: filePath,
-            slug,
-          },
-        });
+        if (fileSource === 'snake-template') {
+          await putSnakeTemplateFile(filePath, tab.content);
+          await queryClient.invalidateQueries({
+            queryKey: [...snakeTemplateQueryKey],
+          });
+        } else {
+          const saved = await writeFileMut.mutateAsync({
+            body: {
+              content: tab.content,
+            },
+            path: {
+              file_path: filePath,
+              slug,
+            },
+          });
+          // Global staleTime is 30s; keep read cache aligned (must not block marking saved).
+          try {
+            queryClient.setQueryData(
+              readFile2QueryKey({ path: { slug, file_path: filePath } }),
+              saved,
+            );
+          } catch (e) {
+            console.warn('readFile2 cache update failed', e);
+          }
+          void queryClient.invalidateQueries({
+            queryKey: getCatalogQueryKey({ path: { slug } }),
+          });
+        }
         setTabs((prev) => {
           const next = new Map(prev);
           const t = next.get(filePath);
@@ -116,19 +170,25 @@ const CatalogEditor: React.FC<Props> = ({
           return next;
         });
         message.success(`Saved ${filePath.split('/').pop()}`);
-      } catch {
-        message.error('Failed to save file');
+      } catch (err) {
+        console.error(err);
+        message.error(
+          err instanceof Error ? err.message : 'Failed to save file',
+        );
       }
     },
-    [tabs, writeFileMut, slug],
+    [writeFileMut, slug, fileSource, queryClient],
   );
 
+  const handleSaveRef = useRef(handleSave);
+  handleSaveRef.current = handleSave;
+
   const handleSaveAll = useCallback(async () => {
-    const dirtyTabs = [...tabs.values()].filter((t) => t.dirty);
+    const dirtyTabs = [...tabsRef.current.values()].filter((t) => t.dirty);
     for (const tab of dirtyTabs) {
       await handleSave(tab.key);
     }
-  }, [tabs, handleSave]);
+  }, [handleSave]);
 
   const handleContentChange = useCallback(
     (filePath: string, newContent: string | undefined) => {
@@ -150,7 +210,7 @@ const CatalogEditor: React.FC<Props> = ({
   );
 
   const handleCloseTab = (filePath: string) => {
-    const tab = tabs.get(filePath);
+    const tab = tabsRef.current.get(filePath);
     if (tab?.dirty) {
       message.warning('Unsaved changes will be lost');
     }
@@ -160,36 +220,37 @@ const CatalogEditor: React.FC<Props> = ({
       return next;
     });
     onClose(filePath);
-
-    // Set next active tab
-    const remaining = openFiles.filter((f) => f !== filePath);
-    if (remaining.length > 0) {
-      setActiveKey(remaining[remaining.length - 1]);
-    }
   };
 
   const hasDirty = [...tabs.values()].some((t) => t.dirty);
 
-  const handleEditorMount: OnMount = (editor) => {
+  const markdownPreviewBlocksEdit =
+    viewMode === 'preview' &&
+    !!focusPath &&
+    (focusPath.toLowerCase().endsWith('.md') ||
+      focusPath.toLowerCase().endsWith('.markdown'));
+
+  const handleEditorMount = useCallback<OnMount>((editor) => {
     editorRef.current = editor;
-    // Ctrl+S to save
+    // Ctrl+S — use refs so the command always sees the current tab + save handler.
     editor.addCommand(
       // Monaco KeyMod.CtrlCmd | KeyCode.KeyS = 2097
       2097,
       () => {
-        if (activeKey) handleSave(activeKey);
+        const k = focusPathRef.current;
+        if (k) void handleSaveRef.current(k);
       },
     );
-  };
+  }, []);
 
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
       {/* File Tabs with integrated actions */}
       {openFiles.length > 0 && (
         <Tabs
-          activeKey={activeKey}
-          onChange={setActiveKey}
-          type="card"
+          activeKey={focusPath || undefined}
+          onChange={(key) => onActiveFileChange(key)}
+          type="line"
           size="small"
           className="catalog-editor-tabs"
           style={{ flexShrink: 0, marginBottom: 0 }}
@@ -202,13 +263,19 @@ const CatalogEditor: React.FC<Props> = ({
                 paddingRight: 8,
               }}
             >
-              <Tooltip title="Save (Ctrl+S)">
+              <Tooltip
+                title={
+                  markdownPreviewBlocksEdit
+                    ? 'Switch to Source mode (above) to edit Markdown; Preview is read-only'
+                    : 'Save (Ctrl+S)'
+                }
+              >
                 <Button
                   size="small"
                   type="text"
                   icon={<SaveOutlined />}
-                  disabled={!activeTab?.dirty}
-                  onClick={() => activeKey && handleSave(activeKey)}
+                  disabled={!activeTab?.dirty || markdownPreviewBlocksEdit}
+                  onClick={() => focusPath && handleSave(focusPath)}
                 />
               </Tooltip>
               <Tooltip title="Save All">
@@ -271,10 +338,12 @@ const CatalogEditor: React.FC<Props> = ({
 
       {/* Editor */}
       <div style={{ flex: 1, minHeight: 0 }}>
-        {activeKey ? (
+        {focusPath ? (
           <FileEditorPanel
+            key={focusPath}
             slug={slug}
-            filePath={activeKey}
+            fileSource={fileSource}
+            filePath={focusPath}
             tabs={tabs}
             setTabs={setTabs}
             onContentChange={handleContentChange}
@@ -299,10 +368,10 @@ const CatalogEditor: React.FC<Props> = ({
       {activeTab && (
         <div
           style={{
-            padding: '2px 12px',
+            padding: '2px 10px',
             borderTop: '1px solid #f0f0f0',
             backgroundColor: '#fafafa',
-            fontSize: 12,
+            fontSize: 13,
             color: '#8c8c8c',
             flexShrink: 0,
           }}
@@ -316,6 +385,7 @@ const CatalogEditor: React.FC<Props> = ({
 
 interface FileEditorPanelProps {
   slug: string;
+  fileSource: 'catalog' | 'snake-template';
   filePath: string;
   tabs: Map<string, FileTab>;
   setTabs: React.Dispatch<React.SetStateAction<Map<string, FileTab>>>;
@@ -326,6 +396,7 @@ interface FileEditorPanelProps {
 
 const FileEditorPanel: React.FC<FileEditorPanelProps> = ({
   slug,
+  fileSource,
   filePath,
   tabs,
   setTabs,
@@ -333,31 +404,44 @@ const FileEditorPanel: React.FC<FileEditorPanelProps> = ({
   onEditorMount,
   viewMode,
 }) => {
-  const { data, isLoading } = useQuery({
+  const catalogQuery = useQuery({
     ...readFile2Options({
       path: { slug, file_path: filePath },
     }),
-    enabled: !!slug && !!filePath && slug !== '{slug}',
+    enabled:
+      fileSource === 'catalog' && !!slug && !!filePath && slug !== '{slug}',
   });
+
+  const templateQuery = useQuery({
+    queryKey: [...snakeTemplateQueryKey, 'file', filePath],
+    queryFn: () => fetchSnakeTemplateFile(filePath),
+    enabled: fileSource === 'snake-template' && !!filePath,
+  });
+
+  const isTemplate = fileSource === 'snake-template';
+  const data = isTemplate ? templateQuery.data : catalogQuery.data;
+  const isLoading = isTemplate
+    ? templateQuery.isLoading
+    : catalogQuery.isLoading;
   const tab = tabs.get(filePath);
 
-  // Initialize tab when data loads
+  // Initialize tab when data loads (do not depend on `tabs` — that re-ran every keystroke).
   useEffect(() => {
-    if (data && !tabs.has(filePath)) {
-      setTabs((prev) => {
-        const next = new Map(prev);
-        next.set(filePath, {
-          key: filePath,
-          label: data.name,
-          content: data.content,
-          originalContent: data.content,
-          dirty: false,
-          language: data.language || detectLanguage(filePath),
-        });
-        return next;
+    if (!data) return;
+    setTabs((prev) => {
+      if (prev.has(filePath)) return prev;
+      const next = new Map(prev);
+      next.set(filePath, {
+        key: filePath,
+        label: data.name,
+        content: data.content,
+        originalContent: data.content,
+        dirty: false,
+        language: data.language || detectLanguage(filePath),
       });
-    }
-  }, [data, filePath, tabs, setTabs]);
+      return next;
+    });
+  }, [data, filePath, setTabs]);
 
   if (isLoading || !tab) {
     return (
@@ -396,7 +480,7 @@ const FileEditorPanel: React.FC<FileEditorPanelProps> = ({
       onChange={(value) => onContentChange(filePath, value)}
       onMount={onEditorMount}
       options={{
-        fontSize: 12,
+        fontSize: 15,
         lineNumbers: 'on',
         readOnly: false,
         scrollBeyondLastLine: false,

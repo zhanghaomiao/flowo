@@ -62,6 +62,8 @@ server = [
   "sse-starlette>=3.1.2",
   "fastapi-users[sqlalchemy]>=15.0.3",
   "passlib[bcrypt]>=1.7.4",
+  "snakevision>=1.0.0",
+  "pandas>=2.0.0",
 ]
 
 # [project.scripts]

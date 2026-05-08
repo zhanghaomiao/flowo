@@ -32,9 +32,9 @@ def make_user(
 
 class FakeSession:
     def __init__(self, token_row):
-        self.execute = AsyncMock(return_value=MagicMock(
-            scalar_one_or_none=MagicMock(return_value=token_row)
-        ))
+        self.execute = AsyncMock(
+            return_value=MagicMock(scalar_one_or_none=MagicMock(return_value=token_row))
+        )
 
 
 @pytest.mark.asyncio
@@ -59,14 +59,16 @@ async def test_current_active_user_with_token_accepts_valid_api_token():
     api_user = make_user(email="token@example.com")
     user_manager = AsyncMock()
     user_manager.get.return_value = api_user
-    session = FakeSession(type(
-        "TokenRow",
-        (),
-        {
-            "user_id": api_user.id,
-            "expires_at": None,
-        },
-    )())
+    session = FakeSession(
+        type(
+            "TokenRow",
+            (),
+            {
+                "user_id": api_user.id,
+                "expires_at": None,
+            },
+        )()
+    )
 
     user = await current_active_user_with_token(
         request=make_request(),
@@ -125,14 +127,16 @@ async def test_current_active_user_with_token_rejects_invalid_api_token():
 async def test_current_active_user_with_token_rejects_missing_or_inactive_user():
     user_manager = AsyncMock()
     user_manager.get.side_effect = [None, make_user(is_active=False)]
-    session = FakeSession(type(
-        "TokenRow",
-        (),
-        {
-            "user_id": uuid.uuid4(),
-            "expires_at": None,
-        },
-    )())
+    session = FakeSession(
+        type(
+            "TokenRow",
+            (),
+            {
+                "user_id": uuid.uuid4(),
+                "expires_at": None,
+            },
+        )()
+    )
 
     for _ in range(2):
         with pytest.raises(HTTPException) as excinfo:

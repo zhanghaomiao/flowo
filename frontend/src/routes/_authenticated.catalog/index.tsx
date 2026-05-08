@@ -8,7 +8,7 @@ export const Route = createFileRoute('/_authenticated/catalog/')({
 
 function CatalogPage() {
   return (
-    <div className="w-full h-full">
+    <div className="flex h-full min-h-0 w-full flex-1 flex-col overflow-auto">
       <CatalogList />
     </div>
   );

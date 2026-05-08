@@ -2,10 +2,12 @@ import re
 import shutil
 import subprocess
 import tempfile
+import uuid
 from datetime import UTC, datetime
 from pathlib import Path
 
 from ...core.config import settings
+from ..catalog.paths import catalog_owner_segment
 
 
 class GitService:
@@ -34,6 +36,7 @@ class GitService:
         """Inject token into Git URL for authentication.
         Works across common providers like GitHub, GitLab, and Gitea.
         """
+        url = url.strip()
         effective_token = token or settings.CATALOG_GIT_TOKEN
         if not effective_token:
             return url
@@ -131,6 +134,29 @@ class GitService:
         with open(gitignore_path, "w") as f:
             f.write("\n".join(ignore_content) + "\n")
 
+    def _detect_remote_default_branch(self, local_dir: Path) -> str | None:
+        """Best-effort: detect remote default branch via HEAD symref."""
+        try:
+            out = self._run_git(
+                ["ls-remote", "--symref", "origin", "HEAD"],
+                cwd=local_dir,
+            )
+            # Example:
+            # ref: refs/heads/main    HEAD
+            # <sha>\tHEAD
+            for line in (out.stdout or "").splitlines():
+                line = line.strip()
+                if (
+                    line.startswith("ref:")
+                    and "refs/heads/" in line
+                    and line.endswith("HEAD")
+                ):
+                    ref = line.split()[1]
+                    return ref.split("refs/heads/")[-1]
+        except Exception:
+            return None
+        return None
+
     def push_to_monorepo(
         self,
         local_dir: Path,
@@ -138,16 +164,27 @@ class GitService:
         token: str | None = None,
         branch: str = "main",
         commit_message: str | None = None,
-    ) -> str:
-        """Sync everything in the local directory to the monorepo."""
-        # Only initialize if it's not already a Git repository
-        if not (local_dir / ".git").exists():
-            self.init_repository(local_dir, remote_url, token, branch)
+    ) -> dict[str, str | bool | None]:
+        """Sync everything under ``local_dir`` to the remote (``local_dir`` is the Git root)."""
+        # Always (re)initialize to ensure remote URL/token are up-to-date.
+        self.init_repository(local_dir, remote_url, token, branch)
+
+        # If remote has a default branch, prefer pushing to it to avoid "pushed to main
+        # but repo default branch is master" confusion.
+        effective_branch = self._detect_remote_default_branch(local_dir) or branch
+        try:
+            self._run_git(["checkout", effective_branch], cwd=local_dir)
+        except Exception:
+            try:
+                self._run_git(["checkout", "-b", effective_branch], cwd=local_dir)
+            except Exception:
+                effective_branch = branch
 
         # 1. Add everything, then check if there are changes
         self._run_git(["add", "-A"], cwd=local_dir)
         status = self._run_git(["status", "--porcelain"], cwd=local_dir)
 
+        committed = False
         if status.stdout.strip():
             # 2. Commit with provided message or a default timestamp-based message
             if not commit_message:
@@ -155,11 +192,24 @@ class GitService:
                     f"FlowO sync {datetime.now(UTC).strftime('%Y-%m-%d %H:%M')}"
                 )
             self._run_git(["commit", "-m", commit_message], cwd=local_dir)
+            committed = True
 
         # 3. Always attempt to push (Git will handle if already up-to-date)
-        self._run_git(["push", "origin", branch], cwd=local_dir)
+        self._run_git(["push", "origin", effective_branch], cwd=local_dir)
 
-        return "pushed"
+        commit_sha: str | None = None
+        try:
+            head = self._run_git(["rev-parse", "HEAD"], cwd=local_dir)
+            commit_sha = (head.stdout or "").strip() or None
+        except Exception:
+            commit_sha = None
+
+        return {
+            "status": "pushed",
+            "branch": effective_branch,
+            "committed": committed,
+            "commit_sha": commit_sha,
+        }
 
     def import_catalogs(
         self,
@@ -168,10 +218,14 @@ class GitService:
         token: str | None = None,
         branch: str = "main",
         owner: str = "unknown",
+        subdirectory: str | None = None,
+        layout_owner_id: uuid.UUID | None = None,
     ) -> list[str]:
         """Import or update catalogs.
-        If remote_url is provided, it imports from that source and copies into the local monorepo folder.
-        If remote_url is None, it pulls updates from our monorepo.
+
+        Monorepo sync returns **relative paths** under ``target_dir`` for each catalog tree.
+        External imports copy into ``target_dir/<owner_segment>/<slug>/`` when
+        ``layout_owner_id`` is set (required for non-monorepo imports).
         """
         # Only initialize if it's not already a Git repository
         if not (target_dir / ".git").exists():
@@ -209,15 +263,39 @@ class GitService:
                     ["clone", "--depth", "1", auth_source_url, str(repo_path)]
                 )
 
-            candidates = self._find_catalog_candidates(repo_path)
-            imported_slugs = []
+            # If subdirectory is specified, only scan that specific directory
+            if subdirectory:
+                subdir_path = repo_path / subdirectory
+                if not subdir_path.exists():
+                    raise RuntimeError(
+                        f"Subdirectory '{subdirectory}' not found in repository"
+                    )
+
+                candidates = self._find_catalog_candidates(subdir_path)
+                # Adjust relative paths to be relative to the subdirectory
+                base_offset = len(Path(subdirectory).parts)
+                candidates = [
+                    "." if path == "." else str(Path(*Path(path).parts[base_offset:]))
+                    for path in candidates
+                ]
+            else:
+                candidates = self._find_catalog_candidates(repo_path)
+
+            if layout_owner_id is None:
+                raise RuntimeError(
+                    "layout_owner_id is required when importing catalogs from an external Git repository"
+                )
+
+            imported_slugs: list[str] = []
             for rel_path_str in candidates:
                 src_path = (
                     repo_path if rel_path_str == "." else repo_path / rel_path_str
                 )
                 catalog_slug = self._get_slug(src_path, rel_path_str, remote_url)
 
-                catalog_target = target_dir / catalog_slug
+                catalog_target = (
+                    target_dir / catalog_owner_segment(layout_owner_id) / catalog_slug
+                )
                 if catalog_target.exists():
                     shutil.rmtree(catalog_target)
 
@@ -263,17 +341,14 @@ class GitService:
         return slug
 
     def _scan_catalogs(self, root_dir: Path) -> list[str]:
-        """Scan a directory for catalogs and return their slugs."""
+        """Return relative path strings (from ``root_dir``) for each catalog directory."""
         candidates = self._find_catalog_candidates(root_dir)
-        slugs = []
+        rel_paths: list[str] = []
         for rel_path_str in candidates:
             if rel_path_str == ".":
-                continue  # Skip the root of CATALOG_DIR itself
-
-            catalog_path = root_dir / rel_path_str
-            slug = self._get_slug(catalog_path, rel_path_str, "")
-            slugs.append(slug)
-        return slugs
+                continue
+            rel_paths.append(rel_path_str)
+        return sorted(set(rel_paths))
 
 
 # Global singleton

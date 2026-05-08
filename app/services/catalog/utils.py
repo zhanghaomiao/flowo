@@ -12,6 +12,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.config import settings
 from app.models import UserSettings
 
+from .paths import catalog_data_dir
+
 # Snakemake category → relative directory mapping
 CATEGORIES: dict[str, dict[str, Any]] = {
     "snakefile": {
@@ -99,6 +101,36 @@ def _read_metadata(catalog_path: Path) -> dict[str, Any]:
         return json.load(f)
 
 
+def collect_catalog_files_for_batch_import(catalog_path: Path) -> list[dict[str, Any]]:
+    """Scan a catalog directory and build files_data for batch_import_files."""
+    import hashlib
+    import logging
+
+    log = logging.getLogger(__name__)
+    files_data: list[dict[str, Any]] = []
+    for f in catalog_path.rglob("*"):
+        if not f.is_file() or f.name.startswith("."):
+            continue
+        # Match DB paths (always POSIX); Windows backslashes would miss updates on sync.
+        rel_path = f.relative_to(catalog_path).as_posix()
+        try:
+            content = f.read_text(encoding="utf-8", errors="replace")
+        except UnicodeDecodeError:
+            log.info("Skipping binary file: %s", rel_path)
+            continue
+        content_bytes = content.encode("utf-8")
+        files_data.append(
+            {
+                "path": rel_path,
+                "content": content,
+                "sha256": hashlib.sha256(content_bytes).hexdigest(),
+                "size": len(content_bytes),
+                "lines": content.count("\n") + 1,
+            }
+        )
+    return files_data
+
+
 def _write_metadata(catalog_path: Path, metadata: dict[str, Any]) -> None:
     """Write .flowo.json metadata to a catalog directory."""
     meta_file = catalog_path / ".flowo.json"
@@ -107,13 +139,21 @@ def _write_metadata(catalog_path: Path, metadata: dict[str, Any]) -> None:
         json.dump(metadata, f, indent=2, ensure_ascii=False)
 
 
-def _get_file_inventory(catalog_path: Path) -> list[dict[str, Any]]:
-    """Build a recursive inventory of all files in the catalog."""
+def _get_file_inventory(
+    catalog_path: Path, *, include_dotfiles: bool = False
+) -> list[dict[str, Any]]:
+    """Build a recursive inventory of all files in the catalog.
+
+    When ``include_dotfiles`` is True (e.g. Snakemake template tree), only ``.git`` /
+    ``.snakemake`` paths are skipped so ``.github``, ``.gitignore``, etc. appear.
+    """
     files: list[dict[str, Any]] = []
 
     # Walk through all files and directories in the catalog
     for f in sorted(catalog_path.rglob("*")):
-        if f.name == ".flowo.json" or f.name.startswith("."):
+        if ".git" in f.parts or ".snakemake" in f.parts:
+            continue
+        if not include_dotfiles and (f.name == ".flowo.json" or f.name.startswith(".")):
             continue
 
         rel_path = str(f.relative_to(catalog_path))
@@ -161,6 +201,11 @@ def _get_file_inventory(catalog_path: Path) -> list[dict[str, Any]]:
     return files
 
 
+def workspace_has_snakefile(root: Path) -> bool:
+    """Whether the catalog workspace already has a Snakemake entrypoint on disk."""
+    return (root / "workflow" / "Snakefile").is_file() or (root / "Snakefile").is_file()
+
+
 def _detect_language(file_path: str) -> str:
     """Detect Monaco language from file extension or name."""
     p = Path(file_path)
@@ -170,10 +215,13 @@ def _detect_language(file_path: str) -> str:
     return LANG_MAP.get(ext, "plaintext")
 
 
-def _validate_path(slug: str, file_path: str) -> Path:
+def _validate_path(
+    owner_id: uuid.UUID | None,
+    slug: str,
+    file_path: str,
+) -> Path:
     """Validate that the path is within the catalog directory (prevent traversal)."""
-    catalog_dir = _get_catalog_dir()
-    catalog_path = catalog_dir / slug
+    catalog_path = catalog_data_dir(owner_id, slug)
 
     # Handle empty path (root)
     if not file_path or file_path == ".":

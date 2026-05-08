@@ -13,7 +13,9 @@ from app.models.user_settings import UserSettings
 from app.models.user_token import UserToken
 
 
-async def create_user_and_headers(register_user, login_user, email: str, *, is_superuser: bool = False):
+async def create_user_and_headers(
+    register_user, login_user, email: str, *, is_superuser: bool = False
+):
     await register_user(email, is_superuser=is_superuser)
     return await login_user(email)
 
@@ -96,7 +98,9 @@ async def test_token_api_lifecycle_and_user_isolation(
 
     list_response = await client.get("/api/v1/tokens/", headers=user1_headers)
     assert list_response.status_code == 200
-    assert [token["name"] for token in list_response.json()["tokens"]] == ["user1-token"]
+    assert [token["name"] for token in list_response.json()["tokens"]] == [
+        "user1-token"
+    ]
 
     other_token_id = user2_create.json()["id"]
     delete_other_response = await client.delete(
@@ -159,7 +163,9 @@ async def test_settings_get_creates_default_row_and_update_persists(
 
 
 @pytest.mark.asyncio
-async def test_settings_test_git_connection(client: AsyncClient, register_user, login_user):
+async def test_settings_test_git_connection(
+    client: AsyncClient, register_user, login_user
+):
     headers = await create_user_and_headers(
         register_user, login_user, "git-user@example.com"
     )
@@ -305,7 +311,9 @@ async def test_admin_delete_user_behaviors(
     superuser_token_headers: dict,
     register_user,
 ):
-    superuser = (await db.execute(select(User).where(User.is_superuser.is_(True)))).scalar_one()
+    superuser = (
+        await db.execute(select(User).where(User.is_superuser.is_(True)))
+    ).scalar_one()
 
     self_delete_response = await client.delete(
         f"/api/v1/admin/users/{superuser.id}",
@@ -336,9 +344,13 @@ async def test_admin_delete_user_behaviors(
 
 
 @pytest.mark.asyncio
-async def test_admin_test_smtp_success_for_tls(client: AsyncClient, superuser_token_headers: dict):
+async def test_admin_test_smtp_success_for_tls(
+    client: AsyncClient, superuser_token_headers: dict
+):
     smtp_client = MagicMock()
-    with patch("app.api.endpoints.admin.smtplib.SMTP_SSL", return_value=smtp_client) as mocked_ssl:
+    with patch(
+        "app.api.endpoints.admin.smtplib.SMTP_SSL", return_value=smtp_client
+    ) as mocked_ssl:
         response = await client.post(
             "/api/v1/admin/settings/test-smtp",
             json={
@@ -359,9 +371,13 @@ async def test_admin_test_smtp_success_for_tls(client: AsyncClient, superuser_to
 
 
 @pytest.mark.asyncio
-async def test_admin_test_smtp_success_for_starttls(client: AsyncClient, superuser_token_headers: dict):
+async def test_admin_test_smtp_success_for_starttls(
+    client: AsyncClient, superuser_token_headers: dict
+):
     smtp_client = MagicMock()
-    with patch("app.api.endpoints.admin.smtplib.SMTP", return_value=smtp_client) as mocked_smtp:
+    with patch(
+        "app.api.endpoints.admin.smtplib.SMTP", return_value=smtp_client
+    ) as mocked_smtp:
         response = await client.post(
             "/api/v1/admin/settings/test-smtp",
             json={
@@ -380,7 +396,9 @@ async def test_admin_test_smtp_success_for_starttls(client: AsyncClient, superus
 
 
 @pytest.mark.asyncio
-async def test_admin_test_smtp_error_responses(client: AsyncClient, superuser_token_headers: dict):
+async def test_admin_test_smtp_error_responses(
+    client: AsyncClient, superuser_token_headers: dict
+):
     with patch(
         "app.api.endpoints.admin.smtplib.SMTP_SSL",
         side_effect=smtplib.SMTPAuthenticationError(535, b"bad auth"),

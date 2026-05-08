@@ -165,7 +165,9 @@ def register_user(client: AsyncClient):
 
 @pytest.fixture
 def login_user(client: AsyncClient):
-    async def _login_user(email: str, password: str = "testpassword123") -> dict[str, str]:
+    async def _login_user(
+        email: str, password: str = "testpassword123"
+    ) -> dict[str, str]:
         resp = await client.post(
             "/api/v1/auth/jwt/login",
             data={"username": email, "password": password},

@@ -43,10 +43,11 @@ services:
       - |
         echo '🚀 Starting backend setup...'
         echo 'Running database migrations...'
-        alembic upgrade head
+        export PATH="/app/.venv/bin:$PATH"
+        /app/.venv/bin/alembic upgrade head
         echo '✅ Database migrations completed!'
         echo 'Starting application with reload...'
-        exec uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+        exec /app/.venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 
   flowo-frontend:
     image: node:22-alpine
