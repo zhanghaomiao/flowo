@@ -19,6 +19,8 @@ class WorkflowResponse(BaseModel):
     tags: list[str] | None = None
     progress: float | None = None
     total_jobs: int
+    catalog_id: uuid.UUID | None = None
+    catalog_slug: str | None = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -48,6 +50,8 @@ class WorkflowDetialResponse(BaseModel):
     directory: str | None = None
     configfiles: list[str] | None = None
     flowo_directory: str | None = None
+    catalog_id: uuid.UUID | None = None
+    catalog_slug: str | None = None
 
 
 class RuleStatusResponse(BaseModel):

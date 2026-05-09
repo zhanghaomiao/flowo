@@ -12,7 +12,7 @@ import venv
 from pathlib import Path
 
 from app.core.config import settings
-from app.services.catalog.utils import catalog_export_dir
+from app.services.catalog.utils import catalog_data_dir, catalog_export_dir
 
 logger = logging.getLogger(__name__)
 
@@ -424,19 +424,22 @@ def _parse_missing_inputs(err_text: str) -> list[str]:
 
 def generate_snakevision_svg_for_slug(slug: str, owner_id: uuid.UUID | None) -> None:
     """
-    Synchronous: write dag.svg under export dir, or dag_error.txt on failure.
-    Expects catalog files to already be exported under the owner-scoped export tree.
+    Synchronous: write dag.svg under export ``.flowo/``, or dag_error.txt on failure.
+
+    Reads the Snakefile from the authoritative catalog workspace
+    (``CATALOG_DIR/<owner>/<slug>``), not the optional export cache — export may be
+    empty while the workspace already has files from DB sync / upload.
     """
-    root = catalog_export_root(owner_id, slug)
-    if not root.is_dir():
+    workspace = catalog_data_dir(owner_id, slug)
+    if not workspace.is_dir():
         flowo_meta_dir(owner_id, slug).mkdir(parents=True, exist_ok=True)
         dag_error_path(owner_id, slug).write_text(
-            "Catalog export directory not found. Open the catalog or sync files first.",
+            "Catalog workspace not found. Open the catalog or sync files first.",
             encoding="utf-8",
         )
         return
 
-    snakefile = find_snakefile(root)
+    snakefile = find_snakefile(workspace)
     if not snakefile:
         flowo_meta_dir(owner_id, slug).mkdir(parents=True, exist_ok=True)
         dag_error_path(owner_id, slug).write_text(
@@ -449,4 +452,4 @@ def generate_snakevision_svg_for_slug(slug: str, owner_id: uuid.UUID | None) -> 
     clear_cached_dag_artifacts(owner_id, slug)
     out_svg = dag_svg_path(owner_id, slug)
     err_file = dag_error_path(owner_id, slug)
-    _run_snakevision_rulegraph_to_svg(root, snakefile, out_svg, err_file, slug)
+    _run_snakevision_rulegraph_to_svg(workspace, snakefile, out_svg, err_file, slug)

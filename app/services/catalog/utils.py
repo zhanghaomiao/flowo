@@ -62,13 +62,18 @@ def _get_catalog_dir() -> Path:
 # --- Access Checks ---
 
 
+def catalog_readable_by_user(cat: Catalog, user_id: uuid.UUID | None) -> bool:
+    """True when the caller may read this catalog (same rules as assert_catalog_readable)."""
+    if cat.is_public:
+        return True
+    if cat.owner_id is None:
+        return True
+    return user_id is not None and cat.owner_id == user_id
+
+
 def assert_catalog_readable(cat: Catalog, user_id: uuid.UUID | None) -> None:
     """Allow read when catalog is public, has no owner_id, or is owned by the caller."""
-    if cat.is_public:
-        return
-    if cat.owner_id is None:
-        return
-    if user_id is not None and cat.owner_id == user_id:
+    if catalog_readable_by_user(cat, user_id):
         return
     raise HTTPException(status_code=403, detail="Not allowed to access this catalog")
 

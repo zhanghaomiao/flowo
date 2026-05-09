@@ -23,6 +23,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.api.deps import current_active_user_with_token
 from app.core.session import get_async_session
 from app.models.user import User
+from app.schemas import WorkflowListResponse
 from app.services.catalog import CatalogService
 from app.services.catalog.snake_template import (
     pull_snakemake_workflow_template,
@@ -30,7 +31,7 @@ from app.services.catalog.snake_template import (
     template_inventory,
     template_status,
 )
-from app.services.catalog.utils import _detect_language
+from app.services.catalog.utils import _detect_language, assert_catalog_readable
 from app.services.third_party.snakevision import (
     SNAKE_TEMPLATE_DAG_REGISTRY_KEY,
     clear_cached_dag_artifacts,
@@ -46,6 +47,7 @@ from app.services.third_party.snakevision import (
     snake_template_workflow_root,
     try_begin_generation,
 )
+from app.services.workflow import WorkflowService
 
 router = APIRouter()
 
@@ -263,6 +265,35 @@ async def list_catalogs(
 ):
     """List all workflow catalogs."""
     return await svc.list_catalogs(search=search, tags=tags, user_id=user.id)
+
+
+@router.get("/{slug}/workflows", response_model=WorkflowListResponse)
+async def list_catalog_workflows(
+    slug: str,
+    user: User = Depends(current_active_user_with_token),
+    svc: CatalogService = Depends(get_catalog_svc),
+    session: AsyncSession = Depends(get_async_session),
+    limit: int = Query(50, ge=1, description="Maximum number of workflows to return"),
+    offset: int = Query(0, ge=0, description="Number of workflows to skip"),
+    order_by_started: bool = Query(
+        True, description="Order by start time (True) or ID (False)"
+    ),
+    descending: bool = Query(
+        True, description="Order in descending order (newest first)"
+    ),
+):
+    """List workflow runs linked to this catalog (same user scope as GET /workflows)."""
+    cat = await svc._get_catalog_or_404(slug)
+    assert_catalog_readable(cat, user.id)
+    filter_user_id = user.id if not user.is_superuser else None
+    return await WorkflowService(session).list_all_workflows(
+        limit=limit,
+        offset=offset,
+        order_by_started=order_by_started,
+        descending=descending,
+        user_id=filter_user_id,
+        catalog_id=cat.id,
+    )
 
 
 @router.get("/{slug}", response_model=CatalogDetail)
@@ -505,6 +536,8 @@ class ImportFromGitRequest(BaseModel):
     git_url: str
     token: str | None = None
     subdirectory: str | None = None
+    confirm_overwrite: bool = False
+    target_slug: str | None = None
 
 
 # --- Git sync ---
@@ -607,4 +640,6 @@ async def import_from_git(
         owner=user.email or str(user.id),
         owner_id=user.id,
         subdirectory=subdirectory,
+        confirm_overwrite=request.confirm_overwrite,
+        target_slug=request.target_slug,
     )

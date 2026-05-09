@@ -26,12 +26,12 @@ import {
   FileText,
   GitBranch,
   LayoutGrid,
+  Library,
   List,
   Loader2,
   Pencil,
   Search,
   Trash2,
-  User,
 } from 'lucide-react';
 
 import {
@@ -43,11 +43,20 @@ import {
   useListCatalogsQuery,
 } from '@/client/@tanstack/react-query.gen';
 import { getSettings } from '@/client/sdk.gen';
-import type { CatalogSummary } from '@/client/types.gen';
+import type { CatalogSummary, ImportFromGitRequest } from '@/client/types.gen';
 import CopyIconButton from '@/components/shared/CopyIconButton';
 
 import CatalogCard from './CatalogCard';
 import EditCatalogModal from './EditCatalogModal';
+
+function parseGitImportConflict(err: unknown): Record<string, unknown> | null {
+  if (!err || typeof err !== 'object') return null;
+  const d = (err as { detail?: unknown }).detail;
+  if (!d || typeof d !== 'object') return null;
+  const rec = d as Record<string, unknown>;
+  if (rec.code === 'slug_collision') return rec;
+  return null;
+}
 
 dayjs.extend(relativeTime);
 
@@ -202,6 +211,13 @@ export default function CatalogList() {
   const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
   const [search, setSearch] = useState('');
   const [importGitOpen, setImportGitOpen] = useState(false);
+  const [gitCollisionOpen, setGitCollisionOpen] = useState(false);
+  const [gitCollisionDetail, setGitCollisionDetail] = useState<{
+    slug: string;
+    existing_source_url?: string | null;
+    incoming_git_url?: string | null;
+  } | null>(null);
+  const [gitImportRenameSlug, setGitImportRenameSlug] = useState('');
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [deletingCatalog, setDeletingCatalog] = useState<CatalogSummary | null>(
     null,
@@ -253,26 +269,97 @@ export default function CatalogList() {
     [settings?.git_remote_url],
   );
 
+  const finishGitImportSuccess = async () => {
+    await queryClient.invalidateQueries({
+      queryKey: listCatalogsQueryKey({}),
+    });
+    message.success('Successfully imported from Git');
+    setImportGitOpen(false);
+    setGitCollisionOpen(false);
+    setGitCollisionDetail(null);
+    setGitImportRenameSlug('');
+    gitImportForm.resetFields();
+  };
+
+  const runGitImport = async (body: ImportFromGitRequest) => {
+    await importGitMutation.mutateAsync({ body });
+    await finishGitImportSuccess();
+  };
+
   const handleImportFromGit = async () => {
     try {
       const values = await gitImportForm.validateFields();
-      await importGitMutation.mutateAsync({
-        body: {
-          git_url: values.git_url,
-          token: values.token || null,
-          subdirectory: values.subdirectory || null,
-        },
+      await runGitImport({
+        git_url: values.git_url,
+        token: values.token || null,
+        subdirectory: values.subdirectory || null,
+        confirm_overwrite: false,
+        target_slug: null,
       });
-      await queryClient.invalidateQueries({
-        queryKey: listCatalogsQueryKey({}),
-      });
-      message.success('Successfully imported from Git');
-      setImportGitOpen(false);
-      gitImportForm.resetFields();
     } catch (err: unknown) {
+      const detail = parseGitImportConflict(err);
+      if (detail?.code === 'slug_collision') {
+        setGitCollisionDetail({
+          slug: String(detail.slug ?? ''),
+          existing_source_url: detail.existing_source_url as string | null,
+          incoming_git_url: detail.incoming_git_url as string | null,
+        });
+        setGitImportRenameSlug('');
+        setGitCollisionOpen(true);
+        return;
+      }
       const errorMsg =
         err instanceof Error ? err.message : 'Failed to import from Git';
       message.error(errorMsg);
+    }
+  };
+
+  const handleGitImportOverwrite = async () => {
+    try {
+      const values = await gitImportForm.validateFields();
+      await runGitImport({
+        git_url: values.git_url,
+        token: values.token || null,
+        subdirectory: values.subdirectory || null,
+        confirm_overwrite: true,
+        target_slug: null,
+      });
+    } catch (err: unknown) {
+      message.error(
+        err instanceof Error ? err.message : 'Failed to import from Git',
+      );
+    }
+  };
+
+  const handleGitImportRename = async () => {
+    const s = gitImportRenameSlug.trim();
+    if (!s) {
+      message.warning('Enter a new catalog slug');
+      return;
+    }
+    try {
+      const values = await gitImportForm.validateFields();
+      await runGitImport({
+        git_url: values.git_url,
+        token: values.token || null,
+        subdirectory: values.subdirectory || null,
+        confirm_overwrite: false,
+        target_slug: s,
+      });
+    } catch (err: unknown) {
+      const detail = parseGitImportConflict(err);
+      if (detail?.code === 'slug_collision') {
+        setGitCollisionDetail({
+          slug: String(detail.slug ?? ''),
+          existing_source_url: detail.existing_source_url as string | null,
+          incoming_git_url: detail.incoming_git_url as string | null,
+        });
+        message.error('That slug is also taken — try another name');
+        return;
+      }
+      message.error(
+        err instanceof Error ? err.message : 'Failed to import from Git',
+      );
     }
   };
 
@@ -400,7 +487,7 @@ export default function CatalogList() {
               title={isGitSource ? 'Git-backed catalog' : 'Local catalog'}
             >
               <span className="text-slate-500">
-                {isGitSource ? <GitBranch size={16} /> : <User size={16} />}
+                {isGitSource ? <GitBranch size={16} /> : <Library size={16} />}
               </span>
             </Tooltip>
             <Link
@@ -480,10 +567,10 @@ export default function CatalogList() {
           <CopyIconButton
             text={
               record.slug?.trim()
-                ? `flowo catalog download ${record.slug.trim()}`
+                ? `flowo catalog pull ${record.slug.trim()}`
                 : ''
             }
-            tooltip={`Copy: flowo catalog download ${record.slug ?? ''}`}
+            tooltip={`Copy: flowo catalog pull ${record.slug ?? ''}`}
             disabled={!record.slug?.trim()}
             className="!h-8 !w-8 !p-0"
             iconSize={16}
@@ -684,6 +771,65 @@ export default function CatalogList() {
             <Input.Password placeholder="ghp_..." autoComplete="off" />
           </Form.Item>
         </Form>
+      </Modal>
+
+      <Modal
+        title="Catalog slug already in use"
+        open={gitCollisionOpen}
+        onCancel={() => {
+          setGitCollisionOpen(false);
+          setGitCollisionDetail(null);
+          setGitImportRenameSlug('');
+        }}
+        footer={null}
+        destroyOnClose
+      >
+        {gitCollisionDetail ? (
+          <div className="flex flex-col gap-4 py-1">
+            <Typography.Paragraph className="!mb-0">
+              The derived catalog slug{' '}
+              <Typography.Text code>{gitCollisionDetail.slug}</Typography.Text>{' '}
+              already exists and points to a different Git URL. Choose how to
+              proceed.
+            </Typography.Paragraph>
+            <div className="rounded border border-slate-100 bg-slate-50 px-3 py-2 text-xs text-slate-600">
+              <div>
+                <span className="font-semibold text-slate-700">Existing: </span>
+                {gitCollisionDetail.existing_source_url || '(none)'}
+              </div>
+              <div className="mt-1">
+                <span className="font-semibold text-slate-700">Incoming: </span>
+                {gitCollisionDetail.incoming_git_url || ''}
+              </div>
+            </div>
+            <Button
+              type="primary"
+              danger
+              loading={importGitMutation.isPending}
+              onClick={() => void handleGitImportOverwrite()}
+            >
+              Overwrite existing catalog
+            </Button>
+            <div className="border-t border-slate-100 pt-3">
+              <Typography.Text className="text-sm text-slate-600">
+                Or import under a new slug (creates a new catalog):
+              </Typography.Text>
+              <Input
+                className="mt-2"
+                placeholder="new-catalog-slug"
+                value={gitImportRenameSlug}
+                onChange={(e) => setGitImportRenameSlug(e.target.value)}
+              />
+              <Button
+                className="mt-2"
+                loading={importGitMutation.isPending}
+                onClick={() => void handleGitImportRename()}
+              >
+                Import with this slug
+              </Button>
+            </div>
+          </div>
+        ) : null}
       </Modal>
 
       {/* Delete Confirmation Modal */}

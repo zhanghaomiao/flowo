@@ -1,8 +1,10 @@
 import uuid
 from typing import Any
 
+from fastapi import HTTPException
 from sqlalchemy import select
 
+from app.core.config import settings
 from app.models import Catalog
 
 from ..third_party.git import git_service
@@ -95,10 +97,41 @@ class CatalogGitMixin:
         owner: str = "",
         owner_id: uuid.UUID | None = None,
         subdirectory: str | None = None,
+        confirm_overwrite: bool = False,
+        target_slug: str | None = None,
     ) -> dict[str, Any]:
         """Clone a Git repository to disk and import catalogs into the database."""
         catalog_dir = _get_catalog_dir()
         owner_for_layout = owner_id or user_id
+        incoming = git_url.strip()
+        mono = (settings.CATALOG_GIT_REMOTE or "").strip()
+        slug_override = target_slug.strip() if target_slug else None
+
+        if not mono or incoming != mono:
+            planned = git_service.peek_external_catalog_slugs(
+                incoming,
+                token=token,
+                branch="main",
+                subdirectory=subdirectory,
+                root_slug_override=slug_override,
+            )
+            for s in planned:
+                result = await self.db_session.execute(
+                    select(Catalog).where(Catalog.slug == s)
+                )
+                existing = result.scalar_one_or_none()
+                if existing:
+                    old = (existing.source_url or "").strip()
+                    if old != incoming and not confirm_overwrite:
+                        raise HTTPException(
+                            status_code=409,
+                            detail={
+                                "code": "slug_collision",
+                                "slug": s,
+                                "existing_source_url": existing.source_url,
+                                "incoming_git_url": incoming,
+                            },
+                        )
 
         imported_slugs = git_service.import_catalogs(
             target_dir=catalog_dir,
@@ -107,6 +140,7 @@ class CatalogGitMixin:
             owner=owner,
             subdirectory=subdirectory,
             layout_owner_id=owner_for_layout,
+            root_slug_override=slug_override,
         )
 
         for slug in imported_slugs:

@@ -209,9 +209,9 @@ async def get_progress(
     if return_total_jobs_number:
         return {"total": data.get("total")}
     else:
-        data["progress"] = round(
-            data.get("completed", 0) / data.get("total", 1) * 100, 2
-        )
+        total = int(data.get("total") or 0)
+        completed = int(data.get("completed") or 0)
+        data["progress"] = round(completed / total * 100, 2) if total > 0 else 0.0
         data.pop("total")
         return data
 

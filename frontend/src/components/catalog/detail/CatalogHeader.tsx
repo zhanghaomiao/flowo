@@ -8,10 +8,10 @@ import {
   DownloadOutlined,
   EditOutlined,
   GithubOutlined,
-  UserOutlined,
 } from '@ant-design/icons';
 import { useNavigate } from '@tanstack/react-router';
 import { Button, Dropdown, message, Space, Tag, Tooltip } from 'antd';
+import { Library } from 'lucide-react';
 
 import type { CatalogDetail } from '@/client/types.gen';
 import { copyTextToClipboard } from '@/utils/clipboard';
@@ -71,14 +71,13 @@ const CatalogHeader: React.FC<Props> = ({
             <Tooltip title="Local catalog">
               <span
                 style={{
-                  color: 'inherit',
+                  color: '#64748b',
                   display: 'flex',
                   alignItems: 'center',
-                  fontSize: 18,
-                  marginRight: 4,
+                  marginRight: 6,
                 }}
               >
-                <UserOutlined />
+                <Library size={20} strokeWidth={2.5} />
               </span>
             </Tooltip>
           )}
@@ -170,7 +169,7 @@ const CatalogHeader: React.FC<Props> = ({
                             fontFamily: 'monospace',
                           }}
                         >
-                          flowo catalog download {catalog.slug}
+                          flowo catalog pull {catalog.slug}
                         </code>
                         <Tooltip title="Copy command">
                           <CopyOutlined
@@ -178,7 +177,7 @@ const CatalogHeader: React.FC<Props> = ({
                             onClick={(e) => {
                               e.stopPropagation();
                               void (async () => {
-                                const cmd = `flowo catalog download ${catalog.slug}`;
+                                const cmd = `flowo catalog pull ${catalog.slug}`;
                                 const ok = await copyTextToClipboard(cmd);
                                 if (ok) {
                                   messageApi.success(

@@ -92,7 +92,7 @@ function WorkflowDetail() {
 
   return (
     <div className="w-full px-2 mx-auto font-sans">
-      <div className="my-3">
+      <div className="my-3 flex flex-col gap-2">
         <WorkflowProgress workflowId={workflowId} />
       </div>
 

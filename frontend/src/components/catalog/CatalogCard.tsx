@@ -241,10 +241,10 @@ const CatalogCard: React.FC<Props> = ({ catalog, onDelete, onEdit }) => {
           <CopyIconButton
             text={
               catalog.slug?.trim()
-                ? `flowo catalog download ${catalog.slug.trim()}`
+                ? `flowo catalog pull ${catalog.slug.trim()}`
                 : ''
             }
-            tooltip={`Copy: flowo catalog download ${catalog.slug ?? ''}`}
+            tooltip={`Copy: flowo catalog pull ${catalog.slug ?? ''}`}
             disabled={!catalog.slug?.trim()}
             className="text-slate-400 hover:bg-slate-50 hover:text-slate-700"
             iconSize={14}

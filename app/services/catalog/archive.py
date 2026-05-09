@@ -129,6 +129,12 @@ class CatalogArchiveMixin:
             archive_path = Path(tmp_dir) / "upload.tar.gz"
             archive_path.write_bytes(content)
 
+            # Extract only under ``unpack/`` so ``upload.tar.gz`` is not a sibling of
+            # the catalog folder; otherwise ``_catalog_root_after_zip_unpack`` sees both
+            # a file and one directory and wrongly treats ``tmp_dir`` as the catalog root.
+            unpack_root = Path(tmp_dir) / "unpack"
+            unpack_root.mkdir(parents=True, exist_ok=True)
+
             with tarfile.open(str(archive_path), "r:gz") as tar:
                 for member in tar.getmembers():
                     if member.name.startswith("/") or ".." in member.name:
@@ -136,9 +142,9 @@ class CatalogArchiveMixin:
                             status_code=400,
                             detail="Archive contains unsafe paths",
                         )
-                tar.extractall(tmp_dir)
+                tar.extractall(unpack_root)
 
-            extracted = _catalog_root_after_zip_unpack(Path(tmp_dir))
+            extracted = _catalog_root_after_zip_unpack(unpack_root)
 
             snakefile = extracted / "workflow" / "Snakefile"
             if not snakefile.exists():

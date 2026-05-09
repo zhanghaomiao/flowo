@@ -164,7 +164,7 @@ user_tokens  │                                                      │
 
 - **目录**: 环境变量 `SNAKEMAKE_WORKFLOW_TEMPLATE_DIR`（默认 `{CONTAINER_MOUNT_PATH}/snakemake-workflow-template`），与 `CATALOG_DIR` 下各用户 slug **分开**；由 `git clone` / `git pull` 维护官方 [snakemake-workflow-template](https://github.com/snakemake-workflows/snakemake-workflow-template)。
 - **API**: `GET|POST|PUT /api/v1/catalog/snake-template...`（[`app/api/endpoints/catalog.py`](app/api/endpoints/catalog.py)）；前端「Snakemake template」→ `/catalog/template`。
-- **CLI**（随 `snakemake-logger-plugin-flowo` 安装，无需把整仓加入 `PYTHONPATH`）: `flowo catalog template pull`、`flowo catalog new <name> [--output DIR] [--with-git]`，与后端共用同一 `SNAKEMAKE_WORKFLOW_TEMPLATE_DIR`（可在 `~/.config/flowo/.env` 覆盖）。
+- **CLI**（随 `snakemake-logger-plugin-flowo` 安装，无需把整仓加入 `PYTHONPATH`）: `flowo catalog pull`、`flowo catalog upload`、`flowo catalog new <name> [--output DIR] [--with-git]`（`new` 首次使用时会按需 `git clone` 官方模板到 `SNAKEMAKE_WORKFLOW_TEMPLATE_DIR`）；目录可在 `~/.config/flowo/.env` 覆盖。
 - **依赖**: 运行环境需 `git`。
 
 ### 实时通知机制
@@ -452,7 +452,7 @@ snakemake --logger flowo \
 ### CLI 工具
 ```bash
 # 生成配置
-flowo --generate-config --token YOUR_TOKEN
+flowo generate-config --token YOUR_TOKEN
 
 # 管理模板目录
 flowo catalog pull slug

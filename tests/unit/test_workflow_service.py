@@ -64,6 +64,28 @@ async def test_get_detail_success(workflow_service, mock_db_session):
 
 
 @pytest.mark.asyncio
+async def test_get_progress_percent_zero_before_run_info(
+    workflow_service, mock_db_session
+):
+    """``run_info`` is filled after Snakemake's run_info event; until then list progress must be 0."""
+    mock_exec = MagicMock()
+    mock_exec.scalar.return_value = 0
+    mock_db_session.execute.return_value = mock_exec
+    with patch.object(
+        workflow_service, "get_workflow_run_info", new_callable=AsyncMock
+    ) as m_info:
+        m_info.return_value = {}
+        assert await workflow_service._get_progress(uuid.uuid4()) == 0
+
+    mock_exec.scalar.return_value = 3
+    with patch.object(
+        workflow_service, "get_workflow_run_info", new_callable=AsyncMock
+    ) as m_info:
+        m_info.return_value = {"total": 10}
+        assert await workflow_service._get_progress(uuid.uuid4()) == 30
+
+
+@pytest.mark.asyncio
 async def test_delete_workflow(workflow_service, mock_db_session):
     workflow_id = uuid.uuid4()
 

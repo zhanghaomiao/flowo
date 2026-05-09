@@ -44,7 +44,7 @@ def pull_catalog(slug: str | None = None, path: str = "."):
 
     if not token:
         logger.error(
-            "❌ No API token found. Please run --generate-config --token YOUR_TOKEN first."
+            "❌ No API token found. Run: flowo generate-config --token YOUR_TOKEN"
         )
         return
 
@@ -363,20 +363,6 @@ def upload_catalog(
         logger.error(f"❌ Error uploading catalog: {str(e)}")
 
 
-def template_pull_cli() -> None:
-    """Clone or pull official snakemake-workflow-template into ``SNAKEMAKE_WORKFLOW_TEMPLATE_DIR``."""
-    from .template_local import git_pull_or_clone_template
-
-    try:
-        result = git_pull_or_clone_template()
-    except RuntimeError as e:
-        logger.error(f"❌ {e}")
-        return
-    logger.info(
-        f"✅ Snakemake template {result.get('action', 'ok')}: {result.get('path', '')}"
-    )
-
-
 def catalog_new_from_template(name: str, output_parent: Path, with_git: bool) -> None:
     """Copy ``SNAKEMAKE_WORKFLOW_TEMPLATE_DIR`` into ``output_parent / name``."""
     from .template_local import git_pull_or_clone_template, snakemake_template_root
@@ -438,15 +424,15 @@ def main():
     )
     subparsers = parser.add_subparsers(dest="command", help="Sub-commands")
 
-    # Global options
-    parser.add_argument(
-        "--generate-config",
-        action="store_true",
-        help="Generate default config at ~/.config/flowo/.env",
-    )
+    # Global options (usable with any subcommand, e.g. ``flowo --token X catalog pull``)
     parser.add_argument("--token", type=str, help="Optional API token")
     parser.add_argument("--host", type=str, help="Optional API host")
     parser.add_argument("--working-path", type=str, help="Optional working path")
+
+    subparsers.add_parser(
+        "generate-config",
+        help="Write ~/.config/flowo/.env (FLOWO_HOST, FLOWO_USER_TOKEN, FLOWO_WORKING_PATH)",
+    )
 
     # --- Catalog commands ---
     cat_parser = subparsers.add_parser(
@@ -454,34 +440,21 @@ def main():
     )
     cat_sub = cat_parser.add_subparsers(dest="cat_cmd")
 
-    cat_pull = cat_sub.add_parser("pull", help="Download or sync catalog template")
+    cat_pull = cat_sub.add_parser(
+        "pull",
+        help="Download catalog ZIP from Flowo and unpack (sync in-place inside a catalog dir)",
+    )
     cat_pull.add_argument(
         "slug", nargs="?", help="Catalog Slug (optional if run inside catalog dir)"
     )
-    cat_pull.add_argument("--path", default=".", help="Local path for download or sync")
-
-    cat_download = cat_sub.add_parser(
-        "download", help="Download catalog template (alias for pull)"
+    cat_pull.add_argument(
+        "--path", default=".", help="Local directory for unpack or sync"
     )
-    cat_download.add_argument(
-        "slug", nargs="?", help="Catalog Slug (optional if run inside catalog dir)"
-    )
-    cat_download.add_argument("--path", default=".", help="Local path for download")
 
     cat_upload = cat_sub.add_parser("upload", help="Upload local catalog to platform")
     cat_upload.add_argument("--path", default=".", help="Local path to catalog files")
     cat_upload.add_argument(
         "--exclude", "-e", action="append", help="Patterns to exclude (e.g. data/*)"
-    )
-
-    cat_tpl = cat_sub.add_parser(
-        "template",
-        help="Official snakemake-workflow-template on disk (SNAKEMAKE_WORKFLOW_TEMPLATE_DIR)",
-    )
-    tpl_sub = cat_tpl.add_subparsers(dest="template_cmd", required=True)
-    tpl_sub.add_parser(
-        "pull",
-        help="git clone --depth 1 or git pull --ff-only into SNAKEMAKE_WORKFLOW_TEMPLATE_DIR",
     )
 
     cat_new = cat_sub.add_parser(
@@ -501,25 +474,12 @@ def main():
         help="Copy the template's .git directory as well",
     )
 
-    # --- Global Top-level commands ---
-    upload_parser = subparsers.add_parser(
-        "upload", help="Upload local catalog to platform (alias for catalog upload)"
-    )
-    upload_parser.add_argument(
-        "--path", default=".", help="Local path to catalog files"
-    )
-    upload_parser.add_argument(
-        "--exclude", "-e", action="append", help="Patterns to exclude"
-    )
-
     args = parser.parse_args()
 
-    if args.generate_config:
+    if args.command == "generate-config":
         generate_config(args.token, args.host, args.working_path)
-
-    # Logic routing
-    if args.command == "catalog":
-        if args.cat_cmd in ["pull", "download"]:
+    elif args.command == "catalog":
+        if args.cat_cmd == "pull":
             pull_catalog(args.slug, path=getattr(args, "path", "."))
         elif args.cat_cmd == "upload":
             upload_catalog(
@@ -528,11 +488,6 @@ def main():
                 host=args.host,
                 exclude=args.exclude,
             )
-        elif args.cat_cmd == "template":
-            if getattr(args, "template_cmd", None) == "pull":
-                template_pull_cli()
-            else:
-                cat_parser.print_help()
         elif args.cat_cmd == "new":
             catalog_new_from_template(
                 args.name,
@@ -541,14 +496,6 @@ def main():
             )
         else:
             cat_parser.print_help()
-
-    elif args.command == "upload":
-        upload_catalog(
-            args.path,
-            token=args.token,
-            host=args.host,
-            exclude=args.exclude,
-        )
 
     else:
         parser.print_help()

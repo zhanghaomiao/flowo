@@ -61,11 +61,13 @@ class FlowoLogHandler(Handler):
         common_settings: OutputSettingsLoggerInterface,
         flowo_project_name: str | None = None,
         flowo_tags: str | None = None,
+        flowo_catalog_slug: str | None = None,
     ):
         super().__init__()
         self.common_settings = common_settings
 
         tags = [t.strip() for t in (flowo_tags or "").split(",") if t.strip()]
+        catalog_slug = (flowo_catalog_slug or "").strip() or None
 
         self.context = {
             "current_workflow_id": None,
@@ -74,6 +76,7 @@ class FlowoLogHandler(Handler):
             "logfile": str(Path(f"flowo_logs/log_{uuid.uuid4()}.log").resolve()),
             "flowo_project_name": flowo_project_name,
             "flowo_tags": tags,
+            "flowo_catalog_slug": catalog_slug,
             "workdir": os.getcwd(),
         }
 
@@ -272,6 +275,14 @@ class LogHandlerSettings(LogHandlerSettingsBase):
             "required": False,
         },
     )
+    catalog: str = field(
+        default=None,
+        metadata={
+            "help": "Catalog slug to link this run to (matches Flowo catalog URL slug)",
+            "env_var": False,
+            "required": False,
+        },
+    )
 
 
 class LogHandler(LogHandlerBase, FlowoLogHandler):
@@ -283,6 +294,7 @@ class LogHandler(LogHandlerBase, FlowoLogHandler):
             self.common_settings,
             flowo_project_name=self.settings.name,
             flowo_tags=self.settings.tags,
+            flowo_catalog_slug=self.settings.catalog,
         )
 
         self.flowo_path_valid()

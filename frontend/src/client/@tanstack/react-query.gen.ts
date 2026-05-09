@@ -3,8 +3,8 @@
 import { type DefaultError, type InfiniteData, infiniteQueryOptions, queryOptions, type UseMutationOptions, useQuery } from '@tanstack/react-query';
 
 import { client } from '../client.gen';
-import { authJwtLogin, authJwtLogout, batchImportCatalogFiles, closeWorkflow, createCatalog, createDirectory, createInvitation, createToken, deleteCatalog, deleteDirectory, deleteFile, deleteInvitation, deleteToken, deleteUser, deleteWorkflow, downloadCatalog, exportAllCatalogs, exportCatalog, getActivity, getAllTags, getCatalog, getCatalogDag, getClientConfig, getConfigfiles, getDetail, getJob, getJobOutputs, getJobs, getLogs, getProgress, getRuleDuration, getRuleError, getRuleGraph, getRules, getRuleStatus, getSettings, getSnakefile, getSseTicket, getStatus, getSystemHealth, getSystemInfo, getSystemResources, getSystemSettings, getTimelines, getWorkflowIdByName, getWorkflowLog, getWorkflows, gitPull, gitPush, importFromGit, listCatalogs, listFiles, listInvitations, listTokens, listUsers, type Options, postPruning, readFile, readFile2, registerRegister, renamePath, reportEvent, resetForgotPassword, resetResetPassword, streamEvents, syncCatalogZip, testAdminSmtpConnection, testGitConnection, updateCatalog, updateSettings, updateSystemSettings, uploadCatalog, usersCurrentUser, usersDeleteUser, usersPatchCurrentUser, usersPatchUser, usersUser, verifyRequestToken, verifyVerify, writeFile } from '../sdk.gen';
-import type { AuthJwtLoginData, AuthJwtLoginError, AuthJwtLoginResponse, AuthJwtLogoutData, BatchImportCatalogFilesData, BatchImportCatalogFilesError, CloseWorkflowData, CloseWorkflowError, CreateCatalogData, CreateCatalogError, CreateCatalogResponse, CreateDirectoryData, CreateDirectoryError, CreateInvitationData, CreateInvitationError, CreateInvitationResponse, CreateTokenData, CreateTokenError, CreateTokenResponse, DeleteCatalogData, DeleteCatalogError, DeleteDirectoryData, DeleteDirectoryError, DeleteFileData, DeleteFileError, DeleteInvitationData, DeleteInvitationError, DeleteTokenData, DeleteTokenError, DeleteUserData, DeleteUserError, DeleteWorkflowData, DeleteWorkflowError, DownloadCatalogData, DownloadCatalogError, ExportAllCatalogsData, ExportCatalogData, ExportCatalogError, GetActivityData, GetActivityError, GetActivityResponse, GetAllTagsData, GetAllTagsResponse, GetCatalogDagData, GetCatalogDagError, GetCatalogData, GetCatalogError, GetCatalogResponse, GetClientConfigData, GetClientConfigResponse, GetConfigfilesData, GetConfigfilesError, GetConfigfilesResponse, GetDetailData, GetDetailError, GetDetailResponse, GetJobData, GetJobError, GetJobOutputsData, GetJobOutputsError, GetJobOutputsResponse, GetJobResponse, GetJobsData, GetJobsError, GetJobsResponse, GetLogsData, GetLogsError, GetLogsResponse, GetProgressData, GetProgressError, GetProgressResponse, GetRuleDurationData, GetRuleDurationError, GetRuleDurationResponse, GetRuleErrorData, GetRuleErrorError, GetRuleErrorResponse, GetRuleGraphData, GetRuleGraphError, GetRuleGraphResponse, GetRulesData, GetRulesError, GetRulesResponse, GetRuleStatusData, GetRuleStatusError, GetRuleStatusResponse, GetSettingsData, GetSettingsResponse, GetSnakefileData, GetSnakefileError, GetSnakefileResponse, GetSseTicketData, GetStatusData, GetStatusError, GetStatusResponse, GetSystemHealthData, GetSystemHealthResponse, GetSystemInfoData, GetSystemInfoResponse, GetSystemResourcesData, GetSystemResourcesResponse, GetSystemSettingsData, GetSystemSettingsResponse, GetTimelinesData, GetTimelinesError, GetTimelinesResponse, GetWorkflowIdByNameData, GetWorkflowIdByNameError, GetWorkflowIdByNameResponse, GetWorkflowLogData, GetWorkflowLogError, GetWorkflowLogResponse, GetWorkflowsData, GetWorkflowsError, GetWorkflowsResponse, GitPullData, GitPushData, GitPushError, ImportFromGitData, ImportFromGitError, ListCatalogsData, ListCatalogsError, ListCatalogsResponse, ListFilesData, ListFilesError, ListFilesResponse, ListInvitationsData, ListInvitationsResponse, ListTokensData, ListTokensResponse, ListUsersData, ListUsersResponse, PostPruningData, PostPruningResponse, ReadFile2Data, ReadFile2Error, ReadFile2Response, ReadFileData, ReadFileError, ReadFileResponse, RegisterRegisterData, RegisterRegisterError, RegisterRegisterResponse, RenamePathData, RenamePathError, ReportEventData, ReportEventError, ResetForgotPasswordData, ResetForgotPasswordError, ResetResetPasswordData, ResetResetPasswordError, StreamEventsData, StreamEventsError, SyncCatalogZipData, SyncCatalogZipError, TestAdminSmtpConnectionData, TestAdminSmtpConnectionError, TestAdminSmtpConnectionResponse, TestGitConnectionData, TestGitConnectionError, TestGitConnectionResponse, UpdateCatalogData, UpdateCatalogError, UpdateCatalogResponse, UpdateSettingsData, UpdateSettingsError, UpdateSettingsResponse, UpdateSystemSettingsData, UpdateSystemSettingsError, UpdateSystemSettingsResponse, UploadCatalogData, UploadCatalogError, UploadCatalogResponse, UsersCurrentUserData, UsersCurrentUserResponse, UsersDeleteUserData, UsersDeleteUserError, UsersDeleteUserResponse, UsersPatchCurrentUserData, UsersPatchCurrentUserError, UsersPatchCurrentUserResponse, UsersPatchUserData, UsersPatchUserError, UsersPatchUserResponse, UsersUserData, UsersUserError, UsersUserResponse, VerifyRequestTokenData, VerifyRequestTokenError, VerifyVerifyData, VerifyVerifyError, VerifyVerifyResponse, WriteFileData, WriteFileError, WriteFileResponse } from '../types.gen';
+import { authJwtLogin, authJwtLogout, batchImportCatalogFiles, closeWorkflow, createInvitation, createToken, deleteCatalog, deleteInvitation, deleteToken, deleteUser, deleteWorkflow, downloadCatalog, exportCatalog, getActivity, getAllTags, getCatalog, getCatalogDag, getCatalogDagSvg, getClientConfig, getConfigfiles, getDetail, getJob, getJobOutputs, getJobs, getLogs, getProgress, getRuleDuration, getRuleError, getRuleGraph, getRules, getRuleStatus, getSettings, getSnakefile, getSnakeTemplateDagSvg, getSnakeTemplateOverview, getSseTicket, getStatus, getSystemHealth, getSystemInfo, getSystemResources, getSystemSettings, getTimelines, getWorkflowIdByName, getWorkflowLog, getWorkflows, gitPull, gitPush, importFromGit, listCatalogs, listCatalogWorkflows, listFiles, listInvitations, listTokens, listUsers, type Options, postPruning, pullSnakeTemplate, readFile, readFile2, readSnakeTemplateFile, registerRegister, reportEvent, resetForgotPassword, resetResetPassword, streamEvents, syncCatalogZip, testAdminSmtpConnection, testGitConnection, triggerCatalogDagSvg, triggerSnakeTemplateDagSvg, updateCatalog, updateSettings, updateSystemSettings, uploadCatalog, usersCurrentUser, usersDeleteUser, usersPatchCurrentUser, usersPatchUser, usersUser, verifyRequestToken, verifyVerify } from '../sdk.gen';
+import type { AuthJwtLoginData, AuthJwtLoginError, AuthJwtLoginResponse, AuthJwtLogoutData, BatchImportCatalogFilesData, BatchImportCatalogFilesError, CloseWorkflowData, CloseWorkflowError, CreateInvitationData, CreateInvitationError, CreateInvitationResponse, CreateTokenData, CreateTokenError, CreateTokenResponse, DeleteCatalogData, DeleteCatalogError, DeleteInvitationData, DeleteInvitationError, DeleteTokenData, DeleteTokenError, DeleteUserData, DeleteUserError, DeleteWorkflowData, DeleteWorkflowError, DownloadCatalogData, DownloadCatalogError, ExportCatalogData, ExportCatalogError, GetActivityData, GetActivityError, GetActivityResponse, GetAllTagsData, GetAllTagsResponse, GetCatalogDagData, GetCatalogDagError, GetCatalogDagSvgData, GetCatalogDagSvgError, GetCatalogData, GetCatalogError, GetCatalogResponse, GetClientConfigData, GetClientConfigResponse, GetConfigfilesData, GetConfigfilesError, GetConfigfilesResponse, GetDetailData, GetDetailError, GetDetailResponse, GetJobData, GetJobError, GetJobOutputsData, GetJobOutputsError, GetJobOutputsResponse, GetJobResponse, GetJobsData, GetJobsError, GetJobsResponse, GetLogsData, GetLogsError, GetLogsResponse, GetProgressData, GetProgressError, GetProgressResponse, GetRuleDurationData, GetRuleDurationError, GetRuleDurationResponse, GetRuleErrorData, GetRuleErrorError, GetRuleErrorResponse, GetRuleGraphData, GetRuleGraphError, GetRuleGraphResponse, GetRulesData, GetRulesError, GetRulesResponse, GetRuleStatusData, GetRuleStatusError, GetRuleStatusResponse, GetSettingsData, GetSettingsResponse, GetSnakefileData, GetSnakefileError, GetSnakefileResponse, GetSnakeTemplateDagSvgData, GetSnakeTemplateOverviewData, GetSnakeTemplateOverviewResponse, GetSseTicketData, GetStatusData, GetStatusError, GetStatusResponse, GetSystemHealthData, GetSystemHealthResponse, GetSystemInfoData, GetSystemInfoResponse, GetSystemResourcesData, GetSystemResourcesResponse, GetSystemSettingsData, GetSystemSettingsResponse, GetTimelinesData, GetTimelinesError, GetTimelinesResponse, GetWorkflowIdByNameData, GetWorkflowIdByNameError, GetWorkflowIdByNameResponse, GetWorkflowLogData, GetWorkflowLogError, GetWorkflowLogResponse, GetWorkflowsData, GetWorkflowsError, GetWorkflowsResponse, GitPullData, GitPushData, GitPushError, ImportFromGitData, ImportFromGitError, ListCatalogsData, ListCatalogsError, ListCatalogsResponse, ListCatalogWorkflowsData, ListCatalogWorkflowsError, ListCatalogWorkflowsResponse, ListFilesData, ListFilesError, ListFilesResponse, ListInvitationsData, ListInvitationsResponse, ListTokensData, ListTokensResponse, ListUsersData, ListUsersResponse, PostPruningData, PostPruningResponse, PullSnakeTemplateData, PullSnakeTemplateResponse, ReadFile2Data, ReadFile2Error, ReadFile2Response, ReadFileData, ReadFileError, ReadFileResponse, ReadSnakeTemplateFileData, ReadSnakeTemplateFileError, ReadSnakeTemplateFileResponse, RegisterRegisterData, RegisterRegisterError, RegisterRegisterResponse, ReportEventData, ReportEventError, ResetForgotPasswordData, ResetForgotPasswordError, ResetResetPasswordData, ResetResetPasswordError, StreamEventsData, StreamEventsError, SyncCatalogZipData, SyncCatalogZipError, TestAdminSmtpConnectionData, TestAdminSmtpConnectionError, TestAdminSmtpConnectionResponse, TestGitConnectionData, TestGitConnectionError, TestGitConnectionResponse, TriggerCatalogDagSvgData, TriggerCatalogDagSvgError, TriggerSnakeTemplateDagSvgData, UpdateCatalogData, UpdateCatalogError, UpdateCatalogResponse, UpdateSettingsData, UpdateSettingsError, UpdateSettingsResponse, UpdateSystemSettingsData, UpdateSystemSettingsError, UpdateSystemSettingsResponse, UploadCatalogData, UploadCatalogError, UploadCatalogResponse, UsersCurrentUserData, UsersCurrentUserResponse, UsersDeleteUserData, UsersDeleteUserError, UsersDeleteUserResponse, UsersPatchCurrentUserData, UsersPatchCurrentUserError, UsersPatchCurrentUserResponse, UsersPatchUserData, UsersPatchUserError, UsersPatchUserResponse, UsersUserData, UsersUserError, UsersUserResponse, VerifyRequestTokenData, VerifyRequestTokenError, VerifyVerifyData, VerifyVerifyError, VerifyVerifyResponse } from '../types.gen';
 
 /**
  * Auth:Jwt.Login
@@ -1109,6 +1109,125 @@ export const deleteTokenMutation = (options?: Partial<Options<DeleteTokenData>>)
     return mutationOptions;
 };
 
+export const getSnakeTemplateOverviewQueryKey = (options?: Options<GetSnakeTemplateOverviewData>) => createQueryKey('getSnakeTemplateOverview', options, false, ['catalog']);
+
+/**
+ * Get Snake Template Overview
+ *
+ * Status and file tree for the built-in snakemake-workflow-template checkout.
+ */
+export const getSnakeTemplateOverviewOptions = (options?: Options<GetSnakeTemplateOverviewData>) => queryOptions<GetSnakeTemplateOverviewResponse, DefaultError, GetSnakeTemplateOverviewResponse, ReturnType<typeof getSnakeTemplateOverviewQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await getSnakeTemplateOverview({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: getSnakeTemplateOverviewQueryKey(options)
+});
+
+/**
+ * Get Snake Template Overview
+ *
+ * Status and file tree for the built-in snakemake-workflow-template checkout.
+ */
+export const useGetSnakeTemplateOverviewQuery = (options?: Options<GetSnakeTemplateOverviewData>) => useQuery(getSnakeTemplateOverviewOptions(options));
+
+/**
+ * Pull Snake Template
+ *
+ * Clone or git-pull the official template into ``SNAKEMAKE_WORKFLOW_TEMPLATE_DIR``.
+ */
+export const pullSnakeTemplateMutation = (options?: Partial<Options<PullSnakeTemplateData>>): UseMutationOptions<PullSnakeTemplateResponse, DefaultError, Options<PullSnakeTemplateData>> => {
+    const mutationOptions: UseMutationOptions<PullSnakeTemplateResponse, DefaultError, Options<PullSnakeTemplateData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await pullSnakeTemplate({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const readSnakeTemplateFileQueryKey = (options: Options<ReadSnakeTemplateFileData>) => createQueryKey('readSnakeTemplateFile', options, false, ['catalog']);
+
+/**
+ * Read Snake Template File
+ *
+ * Read a single file from the template tree.
+ */
+export const readSnakeTemplateFileOptions = (options: Options<ReadSnakeTemplateFileData>) => queryOptions<ReadSnakeTemplateFileResponse, ReadSnakeTemplateFileError, ReadSnakeTemplateFileResponse, ReturnType<typeof readSnakeTemplateFileQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await readSnakeTemplateFile({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: readSnakeTemplateFileQueryKey(options)
+});
+
+/**
+ * Read Snake Template File
+ *
+ * Read a single file from the template tree.
+ */
+export const useReadSnakeTemplateFileQuery = (options: Options<ReadSnakeTemplateFileData>) => useQuery(readSnakeTemplateFileOptions(options));
+
+export const getSnakeTemplateDagSvgQueryKey = (options?: Options<GetSnakeTemplateDagSvgData>) => createQueryKey('getSnakeTemplateDagSvg', options, false, ['catalog']);
+
+/**
+ * Get Snake Template Dag Svg
+ *
+ * Return cached Snakevision SVG for the official template rulegraph.
+ */
+export const getSnakeTemplateDagSvgOptions = (options?: Options<GetSnakeTemplateDagSvgData>) => queryOptions<unknown, DefaultError, unknown, ReturnType<typeof getSnakeTemplateDagSvgQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await getSnakeTemplateDagSvg({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: getSnakeTemplateDagSvgQueryKey(options)
+});
+
+/**
+ * Get Snake Template Dag Svg
+ *
+ * Return cached Snakevision SVG for the official template rulegraph.
+ */
+export const useGetSnakeTemplateDagSvgQuery = (options?: Options<GetSnakeTemplateDagSvgData>) => useQuery(getSnakeTemplateDagSvgOptions(options));
+
+/**
+ * Trigger Snake Template Dag Svg
+ *
+ * Queue background Snakevision SVG for the built-in Snakemake workflow template.
+ */
+export const triggerSnakeTemplateDagSvgMutation = (options?: Partial<Options<TriggerSnakeTemplateDagSvgData>>): UseMutationOptions<unknown, DefaultError, Options<TriggerSnakeTemplateDagSvgData>> => {
+    const mutationOptions: UseMutationOptions<unknown, DefaultError, Options<TriggerSnakeTemplateDagSvgData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await triggerSnakeTemplateDagSvg({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
 export const listCatalogsQueryKey = (options?: Options<ListCatalogsData>) => createQueryKey('listCatalogs', options, false, ['catalog']);
 
 /**
@@ -1136,43 +1255,61 @@ export const listCatalogsOptions = (options?: Options<ListCatalogsData>) => quer
  */
 export const useListCatalogsQuery = (options?: Options<ListCatalogsData>) => useQuery(listCatalogsOptions(options));
 
-/**
- * Create Catalog
- *
- * Create a new workflow catalog with an empty Snakefile.
- */
-export const createCatalogMutation = (options?: Partial<Options<CreateCatalogData>>): UseMutationOptions<CreateCatalogResponse, CreateCatalogError, Options<CreateCatalogData>> => {
-    const mutationOptions: UseMutationOptions<CreateCatalogResponse, CreateCatalogError, Options<CreateCatalogData>> = {
-        mutationFn: async (fnOptions) => {
-            const { data } = await createCatalog({
-                ...options,
-                ...fnOptions,
-                throwOnError: true
-            });
-            return data;
-        }
-    };
-    return mutationOptions;
-};
+export const listCatalogWorkflowsQueryKey = (options: Options<ListCatalogWorkflowsData>) => createQueryKey('listCatalogWorkflows', options, false, ['catalog']);
 
 /**
- * Export All Catalogs
+ * List Catalog Workflows
  *
- * Export all catalog files from database to filesystem (read-only cache).
+ * List workflow runs linked to this catalog (same user scope as GET /workflows).
  */
-export const exportAllCatalogsMutation = (options?: Partial<Options<ExportAllCatalogsData>>): UseMutationOptions<unknown, DefaultError, Options<ExportAllCatalogsData>> => {
-    const mutationOptions: UseMutationOptions<unknown, DefaultError, Options<ExportAllCatalogsData>> = {
-        mutationFn: async (fnOptions) => {
-            const { data } = await exportAllCatalogs({
-                ...options,
-                ...fnOptions,
-                throwOnError: true
-            });
-            return data;
-        }
-    };
-    return mutationOptions;
-};
+export const listCatalogWorkflowsOptions = (options: Options<ListCatalogWorkflowsData>) => queryOptions<ListCatalogWorkflowsResponse, ListCatalogWorkflowsError, ListCatalogWorkflowsResponse, ReturnType<typeof listCatalogWorkflowsQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await listCatalogWorkflows({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: listCatalogWorkflowsQueryKey(options)
+});
+
+export const listCatalogWorkflowsInfiniteQueryKey = (options: Options<ListCatalogWorkflowsData>): QueryKey<Options<ListCatalogWorkflowsData>> => createQueryKey('listCatalogWorkflows', options, true);
+
+/**
+ * List Catalog Workflows
+ *
+ * List workflow runs linked to this catalog (same user scope as GET /workflows).
+ */
+export const listCatalogWorkflowsInfiniteOptions = (options: Options<ListCatalogWorkflowsData>) => infiniteQueryOptions<ListCatalogWorkflowsResponse, ListCatalogWorkflowsError, InfiniteData<ListCatalogWorkflowsResponse>, QueryKey<Options<ListCatalogWorkflowsData>>, number | Pick<QueryKey<Options<ListCatalogWorkflowsData>>[0], 'body' | 'headers' | 'path' | 'query'>>(
+// @ts-ignore
+{
+    queryFn: async ({ pageParam, queryKey, signal }) => {
+        // @ts-ignore
+        const page: Pick<QueryKey<Options<ListCatalogWorkflowsData>>[0], 'body' | 'headers' | 'path' | 'query'> = typeof pageParam === 'object' ? pageParam : {
+            query: {
+                offset: pageParam
+            }
+        };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await listCatalogWorkflows({
+            ...options,
+            ...params,
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: listCatalogWorkflowsInfiniteQueryKey(options)
+});
+
+/**
+ * List Catalog Workflows
+ *
+ * List workflow runs linked to this catalog (same user scope as GET /workflows).
+ */
+export const useListCatalogWorkflowsQuery = (options: Options<ListCatalogWorkflowsData>) => useQuery(listCatalogWorkflowsOptions(options));
 
 /**
  * Delete Catalog
@@ -1239,25 +1376,6 @@ export const updateCatalogMutation = (options?: Partial<Options<UpdateCatalogDat
     return mutationOptions;
 };
 
-/**
- * Delete File
- *
- * Delete a file from a catalog.
- */
-export const deleteFileMutation = (options?: Partial<Options<DeleteFileData>>): UseMutationOptions<unknown, DeleteFileError, Options<DeleteFileData>> => {
-    const mutationOptions: UseMutationOptions<unknown, DeleteFileError, Options<DeleteFileData>> = {
-        mutationFn: async (fnOptions) => {
-            const { data } = await deleteFile({
-                ...options,
-                ...fnOptions,
-                throwOnError: true
-            });
-            return data;
-        }
-    };
-    return mutationOptions;
-};
-
 export const readFile2QueryKey = (options: Options<ReadFile2Data>) => createQueryKey('readFile2', options, false, ['catalog']);
 
 /**
@@ -1286,63 +1404,6 @@ export const readFile2Options = (options: Options<ReadFile2Data>) => queryOption
 export const useReadFile2Query = (options: Options<ReadFile2Data>) => useQuery(readFile2Options(options));
 
 /**
- * Write File
- *
- * Create or update a file in a catalog.
- */
-export const writeFileMutation = (options?: Partial<Options<WriteFileData>>): UseMutationOptions<WriteFileResponse, WriteFileError, Options<WriteFileData>> => {
-    const mutationOptions: UseMutationOptions<WriteFileResponse, WriteFileError, Options<WriteFileData>> = {
-        mutationFn: async (fnOptions) => {
-            const { data } = await writeFile({
-                ...options,
-                ...fnOptions,
-                throwOnError: true
-            });
-            return data;
-        }
-    };
-    return mutationOptions;
-};
-
-/**
- * Delete Directory
- *
- * Delete a directory and all its contents.
- */
-export const deleteDirectoryMutation = (options?: Partial<Options<DeleteDirectoryData>>): UseMutationOptions<unknown, DeleteDirectoryError, Options<DeleteDirectoryData>> => {
-    const mutationOptions: UseMutationOptions<unknown, DeleteDirectoryError, Options<DeleteDirectoryData>> = {
-        mutationFn: async (fnOptions) => {
-            const { data } = await deleteDirectory({
-                ...options,
-                ...fnOptions,
-                throwOnError: true
-            });
-            return data;
-        }
-    };
-    return mutationOptions;
-};
-
-/**
- * Create Directory
- *
- * Create a new directory in the catalog.
- */
-export const createDirectoryMutation = (options?: Partial<Options<CreateDirectoryData>>): UseMutationOptions<unknown, CreateDirectoryError, Options<CreateDirectoryData>> => {
-    const mutationOptions: UseMutationOptions<unknown, CreateDirectoryError, Options<CreateDirectoryData>> = {
-        mutationFn: async (fnOptions) => {
-            const { data } = await createDirectory({
-                ...options,
-                ...fnOptions,
-                throwOnError: true
-            });
-            return data;
-        }
-    };
-    return mutationOptions;
-};
-
-/**
  * Batch Import Catalog Files
  *
  * 批量导入文件到 catalog
@@ -1351,25 +1412,6 @@ export const batchImportCatalogFilesMutation = (options?: Partial<Options<BatchI
     const mutationOptions: UseMutationOptions<unknown, BatchImportCatalogFilesError, Options<BatchImportCatalogFilesData>> = {
         mutationFn: async (fnOptions) => {
             const { data } = await batchImportCatalogFiles({
-                ...options,
-                ...fnOptions,
-                throwOnError: true
-            });
-            return data;
-        }
-    };
-    return mutationOptions;
-};
-
-/**
- * Rename Path
- *
- * Rename a file or directory in the catalog.
- */
-export const renamePathMutation = (options?: Partial<Options<RenamePathData>>): UseMutationOptions<unknown, RenamePathError, Options<RenamePathData>> => {
-    const mutationOptions: UseMutationOptions<unknown, RenamePathError, Options<RenamePathData>> = {
-        mutationFn: async (fnOptions) => {
-            const { data } = await renamePath({
                 ...options,
                 ...fnOptions,
                 throwOnError: true
@@ -1498,6 +1540,52 @@ export const getCatalogDagOptions = (options: Options<GetCatalogDagData>) => que
  * Generate DAG preview from the catalog's Snakefile.
  */
 export const useGetCatalogDagQuery = (options: Options<GetCatalogDagData>) => useQuery(getCatalogDagOptions(options));
+
+export const getCatalogDagSvgQueryKey = (options: Options<GetCatalogDagSvgData>) => createQueryKey('getCatalogDagSvg', options, false, ['catalog']);
+
+/**
+ * Get Catalog Dag Svg
+ *
+ * Return cached Snakevision SVG for the catalog rulegraph (on-demand generation via POST).
+ */
+export const getCatalogDagSvgOptions = (options: Options<GetCatalogDagSvgData>) => queryOptions<unknown, GetCatalogDagSvgError, unknown, ReturnType<typeof getCatalogDagSvgQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await getCatalogDagSvg({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: getCatalogDagSvgQueryKey(options)
+});
+
+/**
+ * Get Catalog Dag Svg
+ *
+ * Return cached Snakevision SVG for the catalog rulegraph (on-demand generation via POST).
+ */
+export const useGetCatalogDagSvgQuery = (options: Options<GetCatalogDagSvgData>) => useQuery(getCatalogDagSvgOptions(options));
+
+/**
+ * Trigger Catalog Dag Svg
+ *
+ * Queue background Snakevision SVG generation. Idempotent unless force=True.
+ */
+export const triggerCatalogDagSvgMutation = (options?: Partial<Options<TriggerCatalogDagSvgData>>): UseMutationOptions<unknown, TriggerCatalogDagSvgError, Options<TriggerCatalogDagSvgData>> => {
+    const mutationOptions: UseMutationOptions<unknown, TriggerCatalogDagSvgError, Options<TriggerCatalogDagSvgData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await triggerCatalogDagSvg({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
 
 /**
  * Git Push

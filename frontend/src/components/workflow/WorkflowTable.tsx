@@ -8,6 +8,7 @@ import {
 } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
 import {
+  Badge,
   Button,
   message,
   Popconfirm,
@@ -17,7 +18,14 @@ import {
   Tooltip,
 } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
-import { FileText, Info, RefreshCcw, Settings, Trash2 } from 'lucide-react';
+import {
+  FileText,
+  Info,
+  Library,
+  RefreshCcw,
+  Settings,
+  Trash2,
+} from 'lucide-react';
 
 import SnakemakeIcon from '@/assets/snakemake.svg?react';
 import {
@@ -37,8 +45,10 @@ import WorkflowTag from '@/components/workflow/WorkflowTag';
 import { useWorkflowRealtime } from '@/config/workflowRealtime';
 import {
   formatDateCompact,
-  getStatusColor,
   getWorkflowProgressStatus,
+  normalizeWorkflowStatus,
+  workflowBadgeAntStatus,
+  workflowStatusLabel,
 } from '@/utils/formatters';
 
 import WorkflowSearch from './WorkflowSearch';
@@ -249,8 +259,8 @@ const WorkflowTable = () => {
       title: 'Name',
       dataIndex: 'name',
       key: 'name',
-      width: 250,
-      fixed: 'left',
+      minWidth: 200,
+      ellipsis: true,
       sorter: (a, b) => (a.name || '').localeCompare(b.name || ''),
       render: (name: string | null, record: WorkflowResponse) => {
         const tags = record.tags || [];
@@ -313,33 +323,56 @@ const WorkflowTable = () => {
       },
     },
     {
+      title: 'Catalog',
+      key: 'catalog_slug',
+      width: 130,
+      ellipsis: true,
+      render: (_: unknown, record: WorkflowResponse) =>
+        record.catalog_slug ? (
+          <Tooltip title="View all runs in this catalog">
+            <Link
+              to="/catalog/$catalogSlug"
+              params={{ catalogSlug: record.catalog_slug }}
+              className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-brand-50 text-brand-600 hover:bg-brand-100 hover:text-brand-700 transition-colors text-xs font-bold border border-brand-100"
+            >
+              <Library size={12} className="shrink-0" />
+              <span className="truncate">{record.catalog_slug}</span>
+            </Link>
+          </Tooltip>
+        ) : (
+          <span className="text-slate-300">—</span>
+        ),
+    },
+    {
       title: 'Status',
       dataIndex: 'status',
       key: 'status',
-      width: 100,
-      align: 'right',
-      render: (status: Status) => (
-        <Tag
-          color={getStatusColor(status)}
-          className="uppercase text-[10px] font-bold tracking-wider px-2 border-none rounded-full"
-        >
-          {status}
-        </Tag>
-      ),
+      width: 128,
+      render: (_: unknown, record: WorkflowResponse) => {
+        const s = normalizeWorkflowStatus(record.status);
+        return (
+          <Badge
+            status={workflowBadgeAntStatus(s)}
+            className="workflow-status-badge [&_.ant-badge-status-text]:text-slate-700 [&_.ant-badge-status-text]:text-sm [&_.ant-badge-status-text]:font-medium"
+            text={workflowStatusLabel(s)}
+          />
+        );
+      },
       filters: [
-        { text: 'Success', value: 'SUCCESS' },
+        { text: 'Succeeded', value: 'SUCCESS' },
         { text: 'Running', value: 'RUNNING' },
-        { text: 'Error', value: 'ERROR' },
+        { text: 'Failed', value: 'ERROR' },
         { text: 'Waiting', value: 'WAITING' },
       ],
       filteredValue: status ? [status] : null,
-      onFilter: (value, record) => record.status === value,
+      onFilter: (value, record) =>
+        normalizeWorkflowStatus(record.status) === value,
     },
     {
       title: 'Start Time',
       dataIndex: 'started_at',
       key: 'started_at',
-      width: 140,
+      width: 132,
       align: 'right',
       render: (startedAt: string | null) => (
         <span className="text-slate-500 font-medium tabular-nums text-xs">
@@ -353,7 +386,7 @@ const WorkflowTable = () => {
       },
     },
     {
-      title: 'Duration',
+      title: <span className="whitespace-nowrap">Duration</span>,
       dataIndex: 'duration',
       key: 'duration',
       width: 100,
@@ -365,23 +398,25 @@ const WorkflowTable = () => {
       ),
     },
     {
-      title: 'Progress',
+      title: <span className="whitespace-nowrap">Progress</span>,
       key: 'progress',
-      width: 80,
-      fixed: 'right',
-      align: 'right',
+      width: 100,
+      align: 'center',
       render: (_, record) => {
-        const progressStatus = getWorkflowProgressStatus(
-          record.status as Status,
-        );
+        const s = normalizeWorkflowStatus(record.status);
+        const progressStatus = getWorkflowProgressStatus(s);
+        const percent =
+          s === 'SUCCESS'
+            ? 100
+            : Math.min(100, Math.max(0, record.progress ?? 0));
         return (
-          <div className="flex justify-end pr-2">
+          <div className="flex justify-center py-0.5">
             <Progress
               type="circle"
-              percent={record.progress ?? 0}
+              percent={percent}
               status={progressStatus}
-              size={28}
-              strokeWidth={10}
+              size={26}
+              strokeWidth={8}
             />
           </div>
         );
@@ -390,17 +425,16 @@ const WorkflowTable = () => {
     {
       title: 'Actions',
       key: 'files',
-      fixed: 'right',
-      width: 180,
+      width: 168,
       align: 'right',
       render: (_, record) => (
-        <div className="flex items-center justify-end gap-1">
+        <div className="flex items-center justify-end gap-0.5">
           <Tooltip title="View Snakefile">
             <Button
               type="text"
-              icon={<SnakemakeIcon style={{ fontSize: '20px' }} />}
+              icon={<SnakemakeIcon style={{ fontSize: '18px' }} />}
               size="small"
-              className="hover:bg-slate-100 flex items-center justify-center h-9 w-9"
+              className="hover:bg-slate-100 flex items-center justify-center h-8 w-8 min-w-8"
               onClick={() => handleShowSnakefile(record.id)}
             />
           </Tooltip>
@@ -410,10 +444,10 @@ const WorkflowTable = () => {
           >
             <Button
               type="text"
-              icon={<Settings size={20} />}
+              icon={<Settings size={18} />}
               size="small"
               disabled={!record.configfiles}
-              className={`flex items-center justify-center h-9 w-9 ${record.configfiles ? 'text-sky-500 hover:bg-sky-50 hover:text-sky-600' : 'text-slate-200'}`}
+              className={`flex items-center justify-center h-8 w-8 min-w-8 ${record.configfiles ? 'text-sky-500 hover:bg-sky-50 hover:text-sky-600' : 'text-slate-200'}`}
               onClick={() => handleShowConfig(record.id)}
             />
           </Tooltip>
@@ -422,11 +456,14 @@ const WorkflowTable = () => {
             <Tooltip title="View Workflow Logs">
               <Button
                 type="text"
-                icon={<FileText size={20} />}
+                icon={<FileText size={18} />}
                 size="small"
-                className="text-amber-500 hover:bg-amber-50 hover:text-amber-600 flex items-center justify-center h-9 w-9"
+                className="text-amber-500 hover:bg-amber-50 hover:text-amber-600 flex items-center justify-center h-8 w-8 min-w-8"
                 onClick={() =>
-                  handleShowLogs(record.id, record.status as Status)
+                  handleShowLogs(
+                    record.id,
+                    normalizeWorkflowStatus(record.status),
+                  )
                 }
               />
             </Tooltip>
@@ -435,9 +472,9 @@ const WorkflowTable = () => {
           <Tooltip title="View Details">
             <Button
               type="text"
-              icon={<Info size={20} />}
+              icon={<Info size={18} />}
               size="small"
-              className="text-brand-500 hover:bg-brand-50 hover:text-brand-600 flex items-center justify-center h-9 w-9"
+              className="text-brand-500 hover:bg-brand-50 hover:text-brand-600 flex items-center justify-center h-8 w-8 min-w-8"
               onClick={() =>
                 setWorkflowDetailModal({
                   visible: true,
@@ -458,10 +495,10 @@ const WorkflowTable = () => {
           >
             <Button
               type="text"
-              icon={<Trash2 size={20} />}
+              icon={<Trash2 size={18} />}
               size="small"
               danger
-              className="hover:bg-rose-50 flex items-center justify-center h-9 w-9"
+              className="hover:bg-rose-50 flex items-center justify-center h-8 w-8 min-w-8"
             />
           </Popconfirm>
         </div>
@@ -511,8 +548,8 @@ const WorkflowTable = () => {
         </div>
       </div>
 
-      {/* Main Table Content */}
-      <div className="px-8 py-6">
+      {/* Main Table Content - Borderless & Seamless */}
+      <div className="px-8 py-2">
         <Table
           columns={columns}
           dataSource={workflows}
@@ -535,12 +572,13 @@ const WorkflowTable = () => {
             showSizeChanger: true,
             showQuickJumper: true,
             showTotal: (total: number, range: [number, number]) => (
-              <span className="text-slate-500 font-medium">
-                {range[0]}-{range[1]} of {total}
+              <span className="text-[10px] uppercase font-black text-slate-400 tracking-wider">
+                {range[0]}-{range[1]} of {total} items
               </span>
             ),
             pageSizeOptions: ['10', '20', '50', '100'],
             position: ['bottomCenter'],
+            className: '!m-0 py-8 border-t border-slate-50',
             onChange: (page: number, size: number) => {
               setCurrentPage(page);
               if (size !== pageSize) {
@@ -549,11 +587,11 @@ const WorkflowTable = () => {
               }
             },
           }}
-          scroll={{ x: 1200 }}
+          tableLayout="fixed"
           size="middle"
-          className="workflow-table-unified border border-slate-100 rounded-xl overflow-hidden shadow-sm shadow-slate-200/50"
+          className="workflow-table-unified seamless-table [&_.ant-table]:!bg-transparent [&_.ant-table-thead_th]:!bg-transparent [&_.ant-table-thead_th]:!border-none [&_.ant-table-thead_th]:text-slate-400 [&_.ant-table-thead_th]:text-[9px] [&_.ant-table-thead_th]:font-black [&_.ant-table-thead_th]:uppercase [&_.ant-table-thead_th]:tracking-widest [&_.ant-table-cell]:align-middle [&_.ant-table-cell]:!border-slate-50/50"
           onRow={() => ({
-            className: 'hover:bg-slate-50/50 transition-colors',
+            className: 'hover:bg-slate-50/80 transition-colors group',
           })}
         />
       </div>

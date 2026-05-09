@@ -7,7 +7,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 from ...core.config import settings
-from ..catalog.utils import catalog_owner_segment
+from ..catalog.utils import _slugify, catalog_owner_segment
 
 
 class GitService:
@@ -211,6 +211,65 @@ class GitService:
             "commit_sha": commit_sha,
         }
 
+    def peek_external_catalog_slugs(
+        self,
+        remote_url: str,
+        token: str | None = None,
+        branch: str = "main",
+        subdirectory: str | None = None,
+        root_slug_override: str | None = None,
+    ) -> list[str]:
+        """Return catalog slugs that an external Git import would use (no disk writes)."""
+        auth_source_url = self._prepare_url(remote_url, token)
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            repo_path = Path(tmp_dir) / "source_repo"
+            try:
+                self._run_git(
+                    [
+                        "clone",
+                        "--depth",
+                        "1",
+                        "--branch",
+                        branch,
+                        auth_source_url,
+                        str(repo_path),
+                    ]
+                )
+            except Exception:
+                if repo_path.exists():
+                    shutil.rmtree(repo_path)
+                self._run_git(
+                    ["clone", "--depth", "1", auth_source_url, str(repo_path)]
+                )
+
+            if subdirectory:
+                subdir_path = repo_path / subdirectory
+                if not subdir_path.exists():
+                    raise RuntimeError(
+                        f"Subdirectory '{subdirectory}' not found in repository"
+                    )
+                candidates = self._find_catalog_candidates(subdir_path)
+                base_offset = len(Path(subdirectory).parts)
+                candidates = [
+                    "." if path == "." else str(Path(*Path(path).parts[base_offset:]))
+                    for path in candidates
+                ]
+            else:
+                candidates = self._find_catalog_candidates(repo_path)
+
+            slugs: list[str] = []
+            override = (root_slug_override or "").strip()
+            for rel_path_str in candidates:
+                src_path = (
+                    repo_path if rel_path_str == "." else repo_path / rel_path_str
+                )
+                if rel_path_str == "." and override:
+                    catalog_slug = _slugify(override)
+                else:
+                    catalog_slug = self._get_slug(src_path, rel_path_str, remote_url)
+                slugs.append(catalog_slug)
+            return slugs
+
     def import_catalogs(
         self,
         target_dir: Path,
@@ -220,6 +279,7 @@ class GitService:
         owner: str = "unknown",
         subdirectory: str | None = None,
         layout_owner_id: uuid.UUID | None = None,
+        root_slug_override: str | None = None,
     ) -> list[str]:
         """Import or update catalogs.
 
@@ -287,11 +347,15 @@ class GitService:
                 )
 
             imported_slugs: list[str] = []
+            override = (root_slug_override or "").strip()
             for rel_path_str in candidates:
                 src_path = (
                     repo_path if rel_path_str == "." else repo_path / rel_path_str
                 )
-                catalog_slug = self._get_slug(src_path, rel_path_str, remote_url)
+                if rel_path_str == "." and override:
+                    catalog_slug = _slugify(override)
+                else:
+                    catalog_slug = self._get_slug(src_path, rel_path_str, remote_url)
 
                 catalog_target = (
                     target_dir / catalog_owner_segment(layout_owner_id) / catalog_slug

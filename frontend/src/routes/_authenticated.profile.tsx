@@ -214,7 +214,7 @@ FLOWO_WORKING_PATH=${clientConfig.FLOWO_WORKING_PATH}`;
     const host = window.location.origin;
     const workingPath =
       clientConfig?.FLOWO_WORKING_PATH || '<YOUR_WORKING_PATH>';
-    return `flowo --generate-config --token ${t || '<YOUR_TOKEN>'} --host ${host} --working-path ${workingPath}`;
+    return `flowo generate-config --token ${t || '<YOUR_TOKEN>'} --host ${host} --working-path ${workingPath}`;
   };
 
   const renderConfigTabs = (t: string) => (

@@ -1,8 +1,10 @@
+import uuid
+
 import pytest
 from httpx import AsyncClient
 from sqlalchemy import select
 
-from app.models import Job, Status, Workflow
+from app.models import Catalog, Job, Status, User, Workflow
 
 
 @pytest.mark.asyncio
@@ -38,6 +40,106 @@ async def test_report_workflow_started(
     workflow = result.scalar_one()
     assert workflow.name == "Test Project"
     assert "tag1" in workflow.tags
+
+
+@pytest.mark.asyncio
+async def test_report_workflow_started_fallback_catalog_name_and_tags(
+    client: AsyncClient, superuser_token_headers: dict, db
+):
+    """When catalog is linked and logger name/tags are omitted, use catalog defaults."""
+    res = await db.execute(select(User).where(User.email == "admin@example.com"))
+    user = res.scalar_one()
+
+    slug = "demo2-fallback-test"
+    db.add(
+        Catalog(
+            slug=slug,
+            name="Catalog Default Title",
+            description=None,
+            tags=["rna-seq", "batch1"],
+            owner_id=user.id,
+            is_public=False,
+        )
+    )
+    await db.commit()
+
+    workflow_id = uuid.uuid4()
+    payload = {
+        "event": "workflow_started",
+        "record": {
+            "workflow_id": str(workflow_id),
+            "snakefile": "Snakefile",
+            "rules": [],
+        },
+        "context": {
+            "flowo_catalog_slug": slug,
+            "flowo_tags": [],
+            "workdir": "/tmp",
+        },
+    }
+
+    response = await client.post(
+        "/api/v1/reports/", json=payload, headers=superuser_token_headers
+    )
+    assert response.status_code == 200
+    body = response.json()
+    assert body["context"]["flowo_project_name"] == "Catalog Default Title"
+    assert body["context"]["flowo_tags"] == ["rna-seq", "batch1"]
+
+    result = await db.execute(select(Workflow).where(Workflow.id == workflow_id))
+    wf = result.scalar_one()
+    assert wf.name == "Catalog Default Title"
+    assert wf.tags == ["rna-seq", "batch1"]
+    assert wf.catalog_id is not None
+
+
+@pytest.mark.asyncio
+async def test_report_workflow_started_explicit_name_tags_override_catalog(
+    client: AsyncClient, superuser_token_headers: dict, db
+):
+    res = await db.execute(select(User).where(User.email == "admin@example.com"))
+    user = res.scalar_one()
+
+    slug = "demo2-override-test"
+    db.add(
+        Catalog(
+            slug=slug,
+            name="Catalog Title",
+            description=None,
+            tags=["from-catalog"],
+            owner_id=user.id,
+            is_public=False,
+        )
+    )
+    await db.commit()
+
+    workflow_id = uuid.uuid4()
+    response = await client.post(
+        "/api/v1/reports/",
+        json={
+            "event": "workflow_started",
+            "record": {
+                "workflow_id": str(workflow_id),
+                "snakefile": "Snakefile",
+                "rules": [],
+            },
+            "context": {
+                "flowo_catalog_slug": slug,
+                "flowo_project_name": "From CLI",
+                "flowo_tags": ["cli-only"],
+                "workdir": "/tmp",
+            },
+        },
+        headers=superuser_token_headers,
+    )
+    assert response.status_code == 200
+    assert response.json()["context"]["flowo_project_name"] == "From CLI"
+    assert response.json()["context"]["flowo_tags"] == ["cli-only"]
+
+    result = await db.execute(select(Workflow).where(Workflow.id == workflow_id))
+    wf = result.scalar_one()
+    assert wf.name == "From CLI"
+    assert wf.tags == ["cli-only"]
 
 
 @pytest.mark.asyncio

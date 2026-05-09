@@ -1,7 +1,6 @@
-import json
 import logging
+import uuid
 from datetime import datetime
-from pathlib import Path
 from typing import Any
 
 from sqlalchemy.orm import Session
@@ -9,6 +8,7 @@ from sqlalchemy.orm import Session
 from ...core.config import settings
 from ...models import Catalog, Error, File, Job, Rule, Workflow
 from ...models.enums import FileType, Status
+from ...services.catalog.utils import catalog_readable_by_user
 from ...services.notification import notify_workflow_failure, notify_workflow_submitted
 from ..schemas import (
     ErrorSchema,
@@ -27,40 +27,62 @@ from .base import BaseEventHandler
 logger = logging.getLogger("snakemake.flowo")
 
 
+def _normalize_flowo_project_name(raw: Any) -> str | None:
+    if raw is None:
+        return None
+    s = str(raw).strip()
+    return s or None
+
+
+def _normalize_flowo_tags(raw: Any) -> list[str]:
+    if raw is None:
+        return []
+    if isinstance(raw, str):
+        return [t.strip() for t in raw.split(",") if t.strip()]
+    if isinstance(raw, list | tuple):
+        out: list[str] = []
+        for item in raw:
+            s = str(item).strip()
+            if s:
+                out.append(s)
+        return out
+    return []
+
+
 class WorkflowStartedHandler(BaseEventHandler[WorkflowStartedSchema]):
     def handle(
         self, data: WorkflowStartedSchema, session: Session, context: dict[str, Any]
     ) -> None:
-        # Try to associate with a catalog
+        catalog: Catalog | None = None
         catalog_id = None
-        workdir = context.get("workdir")
-        if workdir:
-            workdir_path = Path(workdir).resolve()
-            catalog_root = Path(settings.CATALOG_DIR).resolve()
+        slug = (context.get("flowo_catalog_slug") or "").strip()
+        user_id = context.get("flowo_user_id")
+        if slug:
+            found = session.query(Catalog).filter_by(slug=slug).first()
+            if found and catalog_readable_by_user(
+                found, user_id if isinstance(user_id, uuid.UUID) else None
+            ):
+                catalog = found
+                catalog_id = found.id
+            elif not found:
+                logger.debug("flowo_catalog_slug %r: no catalog with that slug", slug)
+            elif found and not catalog_readable_by_user(
+                found, user_id if isinstance(user_id, uuid.UUID) else None
+            ):
+                logger.debug(
+                    "flowo_catalog_slug %r: user not allowed to link this catalog", slug
+                )
 
-            if str(workdir_path).startswith(str(catalog_root)):
-                # This workflow is running inside a catalog item
-                slug = workdir_path.relative_to(catalog_root).parts[0]
+        name = _normalize_flowo_project_name(context.get("flowo_project_name"))
+        if not name and catalog is not None:
+            name = catalog.name
 
-                # Fetch catalog from DB
-                catalog = session.query(Catalog).filter_by(slug=slug).first()
-                if catalog:
-                    catalog_id = catalog.id
+        tags = _normalize_flowo_tags(context.get("flowo_tags"))
+        if not tags and catalog is not None and catalog.tags:
+            tags = list(catalog.tags)
 
-                    # Update metadata from .flowo.json if exists
-                    meta_file = workdir_path / ".flowo.json"
-                    if meta_file.exists():
-                        try:
-                            with open(meta_file) as f:
-                                meta = json.load(f)
-                                if "name" in meta:
-                                    catalog.name = meta["name"]
-                                if "tags" in meta:
-                                    catalog.tags = meta["tags"]
-                        except Exception as e:
-                            print(
-                                f"Error updating catalog metadata from .flowo.json: {e}"
-                            )
+        context["flowo_project_name"] = name
+        context["flowo_tags"] = tags
 
         workflow = Workflow(
             id=data.workflow_id,
@@ -68,8 +90,8 @@ class WorkflowStartedHandler(BaseEventHandler[WorkflowStartedSchema]):
             user=context.get("flowo_user", "Anonymous"),
             user_id=context.get("flowo_user_id"),
             flowo_working_path=settings.FLOWO_WORKING_PATH,
-            name=context.get("flowo_project_name"),
-            tags=context.get("flowo_tags"),
+            name=name,
+            tags=tags if tags else None,
             logfile=context.get("logfile"),
             directory=context.get("workdir"),
             config=context.get("config"),
@@ -97,9 +119,7 @@ class WorkflowStartedHandler(BaseEventHandler[WorkflowStartedSchema]):
 
         # Send workflow submitted notification
         user_email = context.get("flowo_user", "")
-        notify_workflow_submitted(
-            session, context.get("flowo_project_name", ""), user_email
-        )
+        notify_workflow_submitted(session, name or "", user_email)
 
 
 class RunInfoHandler(BaseEventHandler[RunInfoSchema]):

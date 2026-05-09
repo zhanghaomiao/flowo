@@ -367,7 +367,11 @@ class CatalogService(CatalogArchiveMixin, CatalogGitMixin):
     async def catalog_export_paths_for_dag(
         self, slug: str, user_id: uuid.UUID
     ) -> tuple[uuid.UUID | None, Path]:
-        """Resolve catalog root for DAG generation."""
+        """Owner id and catalog **workspace** path (``catalog_data_dir``) for DAG / Snakefile checks.
+
+        Despite the historical name, this is not ``catalog_export_dir``; DAG generation
+        must read the authoritative tree under ``CATALOG_DIR``.
+        """
         cat = await self._get_catalog_or_404(slug)
         assert_catalog_readable(cat, user_id)
         return cat.owner_id, catalog_data_dir(cat.owner_id, slug)

@@ -2,7 +2,7 @@
 
 import { type Client, formDataBodySerializer, type Options as Options2, type TDataShape, urlSearchParamsBodySerializer } from './client';
 import { client } from './client.gen';
-import type { AuthJwtLoginData, AuthJwtLoginErrors, AuthJwtLoginResponses, AuthJwtLogoutData, AuthJwtLogoutErrors, AuthJwtLogoutResponses, BatchImportCatalogFilesData, BatchImportCatalogFilesErrors, BatchImportCatalogFilesResponses, CloseWorkflowData, CloseWorkflowErrors, CloseWorkflowResponses, CreateCatalogData, CreateCatalogErrors, CreateCatalogResponses, CreateDirectoryData, CreateDirectoryErrors, CreateDirectoryResponses, CreateInvitationData, CreateInvitationErrors, CreateInvitationResponses, CreateTokenData, CreateTokenErrors, CreateTokenResponses, DeleteCatalogData, DeleteCatalogErrors, DeleteCatalogResponses, DeleteDirectoryData, DeleteDirectoryErrors, DeleteDirectoryResponses, DeleteFileData, DeleteFileErrors, DeleteFileResponses, DeleteInvitationData, DeleteInvitationErrors, DeleteInvitationResponses, DeleteTokenData, DeleteTokenErrors, DeleteTokenResponses, DeleteUserData, DeleteUserErrors, DeleteUserResponses, DeleteWorkflowData, DeleteWorkflowErrors, DeleteWorkflowResponses, DownloadCatalogData, DownloadCatalogErrors, DownloadCatalogResponses, ExportAllCatalogsData, ExportAllCatalogsResponses, ExportCatalogData, ExportCatalogErrors, ExportCatalogResponses, GetActivityData, GetActivityErrors, GetActivityResponses, GetAllTagsData, GetAllTagsResponses, GetCatalogDagData, GetCatalogDagErrors, GetCatalogDagResponses, GetCatalogData, GetCatalogErrors, GetCatalogResponses, GetClientConfigData, GetClientConfigResponses, GetConfigfilesData, GetConfigfilesErrors, GetConfigfilesResponses, GetDetailData, GetDetailErrors, GetDetailResponses, GetJobData, GetJobErrors, GetJobOutputsData, GetJobOutputsErrors, GetJobOutputsResponses, GetJobResponses, GetJobsData, GetJobsErrors, GetJobsResponses, GetLogsData, GetLogsErrors, GetLogsResponses, GetProgressData, GetProgressErrors, GetProgressResponses, GetRuleDurationData, GetRuleDurationErrors, GetRuleDurationResponses, GetRuleErrorData, GetRuleErrorErrors, GetRuleErrorResponses, GetRuleGraphData, GetRuleGraphErrors, GetRuleGraphResponses, GetRulesData, GetRulesErrors, GetRulesResponses, GetRuleStatusData, GetRuleStatusErrors, GetRuleStatusResponses, GetSettingsData, GetSettingsResponses, GetSnakefileData, GetSnakefileErrors, GetSnakefileResponses, GetSseTicketData, GetSseTicketResponses, GetStatusData, GetStatusErrors, GetStatusResponses, GetSystemHealthData, GetSystemHealthResponses, GetSystemInfoData, GetSystemInfoResponses, GetSystemResourcesData, GetSystemResourcesResponses, GetSystemSettingsData, GetSystemSettingsResponses, GetTimelinesData, GetTimelinesErrors, GetTimelinesResponses, GetWorkflowIdByNameData, GetWorkflowIdByNameErrors, GetWorkflowIdByNameResponses, GetWorkflowLogData, GetWorkflowLogErrors, GetWorkflowLogResponses, GetWorkflowsData, GetWorkflowsErrors, GetWorkflowsResponses, GitPullData, GitPullResponses, GitPushData, GitPushErrors, GitPushResponses, ImportFromGitData, ImportFromGitErrors, ImportFromGitResponses, ListCatalogsData, ListCatalogsErrors, ListCatalogsResponses, ListFilesData, ListFilesErrors, ListFilesResponses, ListInvitationsData, ListInvitationsResponses, ListTokensData, ListTokensResponses, ListUsersData, ListUsersResponses, PostPruningData, PostPruningResponses, ReadFile2Data, ReadFile2Errors, ReadFile2Responses, ReadFileData, ReadFileErrors, ReadFileResponses, RegisterRegisterData, RegisterRegisterErrors, RegisterRegisterResponses, RenamePathData, RenamePathErrors, RenamePathResponses, ReportEventData, ReportEventErrors, ReportEventResponses, ResetForgotPasswordData, ResetForgotPasswordErrors, ResetForgotPasswordResponses, ResetResetPasswordData, ResetResetPasswordErrors, ResetResetPasswordResponses, StreamEventsData, StreamEventsErrors, StreamEventsResponses, SyncCatalogZipData, SyncCatalogZipErrors, SyncCatalogZipResponses, TestAdminSmtpConnectionData, TestAdminSmtpConnectionErrors, TestAdminSmtpConnectionResponses, TestGitConnectionData, TestGitConnectionErrors, TestGitConnectionResponses, UpdateCatalogData, UpdateCatalogErrors, UpdateCatalogResponses, UpdateSettingsData, UpdateSettingsErrors, UpdateSettingsResponses, UpdateSystemSettingsData, UpdateSystemSettingsErrors, UpdateSystemSettingsResponses, UploadCatalogData, UploadCatalogErrors, UploadCatalogResponses, UsersCurrentUserData, UsersCurrentUserErrors, UsersCurrentUserResponses, UsersDeleteUserData, UsersDeleteUserErrors, UsersDeleteUserResponses, UsersPatchCurrentUserData, UsersPatchCurrentUserErrors, UsersPatchCurrentUserResponses, UsersPatchUserData, UsersPatchUserErrors, UsersPatchUserResponses, UsersUserData, UsersUserErrors, UsersUserResponses, VerifyRequestTokenData, VerifyRequestTokenErrors, VerifyRequestTokenResponses, VerifyVerifyData, VerifyVerifyErrors, VerifyVerifyResponses, WriteFileData, WriteFileErrors, WriteFileResponses } from './types.gen';
+import type { AuthJwtLoginData, AuthJwtLoginErrors, AuthJwtLoginResponses, AuthJwtLogoutData, AuthJwtLogoutErrors, AuthJwtLogoutResponses, BatchImportCatalogFilesData, BatchImportCatalogFilesErrors, BatchImportCatalogFilesResponses, CloseWorkflowData, CloseWorkflowErrors, CloseWorkflowResponses, CreateInvitationData, CreateInvitationErrors, CreateInvitationResponses, CreateTokenData, CreateTokenErrors, CreateTokenResponses, DeleteCatalogData, DeleteCatalogErrors, DeleteCatalogResponses, DeleteInvitationData, DeleteInvitationErrors, DeleteInvitationResponses, DeleteTokenData, DeleteTokenErrors, DeleteTokenResponses, DeleteUserData, DeleteUserErrors, DeleteUserResponses, DeleteWorkflowData, DeleteWorkflowErrors, DeleteWorkflowResponses, DownloadCatalogData, DownloadCatalogErrors, DownloadCatalogResponses, ExportCatalogData, ExportCatalogErrors, ExportCatalogResponses, GetActivityData, GetActivityErrors, GetActivityResponses, GetAllTagsData, GetAllTagsResponses, GetCatalogDagData, GetCatalogDagErrors, GetCatalogDagResponses, GetCatalogDagSvgData, GetCatalogDagSvgErrors, GetCatalogDagSvgResponses, GetCatalogData, GetCatalogErrors, GetCatalogResponses, GetClientConfigData, GetClientConfigResponses, GetConfigfilesData, GetConfigfilesErrors, GetConfigfilesResponses, GetDetailData, GetDetailErrors, GetDetailResponses, GetJobData, GetJobErrors, GetJobOutputsData, GetJobOutputsErrors, GetJobOutputsResponses, GetJobResponses, GetJobsData, GetJobsErrors, GetJobsResponses, GetLogsData, GetLogsErrors, GetLogsResponses, GetProgressData, GetProgressErrors, GetProgressResponses, GetRuleDurationData, GetRuleDurationErrors, GetRuleDurationResponses, GetRuleErrorData, GetRuleErrorErrors, GetRuleErrorResponses, GetRuleGraphData, GetRuleGraphErrors, GetRuleGraphResponses, GetRulesData, GetRulesErrors, GetRulesResponses, GetRuleStatusData, GetRuleStatusErrors, GetRuleStatusResponses, GetSettingsData, GetSettingsResponses, GetSnakefileData, GetSnakefileErrors, GetSnakefileResponses, GetSnakeTemplateDagSvgData, GetSnakeTemplateDagSvgResponses, GetSnakeTemplateOverviewData, GetSnakeTemplateOverviewResponses, GetSseTicketData, GetSseTicketResponses, GetStatusData, GetStatusErrors, GetStatusResponses, GetSystemHealthData, GetSystemHealthResponses, GetSystemInfoData, GetSystemInfoResponses, GetSystemResourcesData, GetSystemResourcesResponses, GetSystemSettingsData, GetSystemSettingsResponses, GetTimelinesData, GetTimelinesErrors, GetTimelinesResponses, GetWorkflowIdByNameData, GetWorkflowIdByNameErrors, GetWorkflowIdByNameResponses, GetWorkflowLogData, GetWorkflowLogErrors, GetWorkflowLogResponses, GetWorkflowsData, GetWorkflowsErrors, GetWorkflowsResponses, GitPullData, GitPullResponses, GitPushData, GitPushErrors, GitPushResponses, ImportFromGitData, ImportFromGitErrors, ImportFromGitResponses, ListCatalogsData, ListCatalogsErrors, ListCatalogsResponses, ListCatalogWorkflowsData, ListCatalogWorkflowsErrors, ListCatalogWorkflowsResponses, ListFilesData, ListFilesErrors, ListFilesResponses, ListInvitationsData, ListInvitationsResponses, ListTokensData, ListTokensResponses, ListUsersData, ListUsersResponses, PostPruningData, PostPruningResponses, PullSnakeTemplateData, PullSnakeTemplateResponses, ReadFile2Data, ReadFile2Errors, ReadFile2Responses, ReadFileData, ReadFileErrors, ReadFileResponses, ReadSnakeTemplateFileData, ReadSnakeTemplateFileErrors, ReadSnakeTemplateFileResponses, RegisterRegisterData, RegisterRegisterErrors, RegisterRegisterResponses, ReportEventData, ReportEventErrors, ReportEventResponses, ResetForgotPasswordData, ResetForgotPasswordErrors, ResetForgotPasswordResponses, ResetResetPasswordData, ResetResetPasswordErrors, ResetResetPasswordResponses, StreamEventsData, StreamEventsErrors, StreamEventsResponses, SyncCatalogZipData, SyncCatalogZipErrors, SyncCatalogZipResponses, TestAdminSmtpConnectionData, TestAdminSmtpConnectionErrors, TestAdminSmtpConnectionResponses, TestGitConnectionData, TestGitConnectionErrors, TestGitConnectionResponses, TriggerCatalogDagSvgData, TriggerCatalogDagSvgErrors, TriggerCatalogDagSvgResponses, TriggerSnakeTemplateDagSvgData, TriggerSnakeTemplateDagSvgResponses, UpdateCatalogData, UpdateCatalogErrors, UpdateCatalogResponses, UpdateSettingsData, UpdateSettingsErrors, UpdateSettingsResponses, UpdateSystemSettingsData, UpdateSystemSettingsErrors, UpdateSystemSettingsResponses, UploadCatalogData, UploadCatalogErrors, UploadCatalogResponses, UsersCurrentUserData, UsersCurrentUserErrors, UsersCurrentUserResponses, UsersDeleteUserData, UsersDeleteUserErrors, UsersDeleteUserResponses, UsersPatchCurrentUserData, UsersPatchCurrentUserErrors, UsersPatchCurrentUserResponses, UsersPatchUserData, UsersPatchUserErrors, UsersPatchUserResponses, UsersUserData, UsersUserErrors, UsersUserResponses, VerifyRequestTokenData, VerifyRequestTokenErrors, VerifyRequestTokenResponses, VerifyVerifyData, VerifyVerifyErrors, VerifyVerifyResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean> = Options2<TData, ThrowOnError> & {
     /**
@@ -473,6 +473,61 @@ export const deleteToken = <ThrowOnError extends boolean = false>(options: Optio
 });
 
 /**
+ * Get Snake Template Overview
+ *
+ * Status and file tree for the built-in snakemake-workflow-template checkout.
+ */
+export const getSnakeTemplateOverview = <ThrowOnError extends boolean = false>(options?: Options<GetSnakeTemplateOverviewData, ThrowOnError>) => (options?.client ?? client).get<GetSnakeTemplateOverviewResponses, unknown, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }, { scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/catalog/snake-template',
+    ...options
+});
+
+/**
+ * Pull Snake Template
+ *
+ * Clone or git-pull the official template into ``SNAKEMAKE_WORKFLOW_TEMPLATE_DIR``.
+ */
+export const pullSnakeTemplate = <ThrowOnError extends boolean = false>(options?: Options<PullSnakeTemplateData, ThrowOnError>) => (options?.client ?? client).post<PullSnakeTemplateResponses, unknown, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }, { scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/catalog/snake-template/pull',
+    ...options
+});
+
+/**
+ * Read Snake Template File
+ *
+ * Read a single file from the template tree.
+ */
+export const readSnakeTemplateFile = <ThrowOnError extends boolean = false>(options: Options<ReadSnakeTemplateFileData, ThrowOnError>) => (options.client ?? client).get<ReadSnakeTemplateFileResponses, ReadSnakeTemplateFileErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }, { scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/catalog/snake-template/file',
+    ...options
+});
+
+/**
+ * Get Snake Template Dag Svg
+ *
+ * Return cached Snakevision SVG for the official template rulegraph.
+ */
+export const getSnakeTemplateDagSvg = <ThrowOnError extends boolean = false>(options?: Options<GetSnakeTemplateDagSvgData, ThrowOnError>) => (options?.client ?? client).get<GetSnakeTemplateDagSvgResponses, unknown, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }, { scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/catalog/snake-template/dag/svg',
+    ...options
+});
+
+/**
+ * Trigger Snake Template Dag Svg
+ *
+ * Queue background Snakevision SVG for the built-in Snakemake workflow template.
+ */
+export const triggerSnakeTemplateDagSvg = <ThrowOnError extends boolean = false>(options?: Options<TriggerSnakeTemplateDagSvgData, ThrowOnError>) => (options?.client ?? client).post<TriggerSnakeTemplateDagSvgResponses, unknown, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }, { scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/catalog/snake-template/dag/svg',
+    ...options
+});
+
+/**
  * List Catalogs
  *
  * List all workflow catalogs.
@@ -484,28 +539,13 @@ export const listCatalogs = <ThrowOnError extends boolean = false>(options?: Opt
 });
 
 /**
- * Create Catalog
+ * List Catalog Workflows
  *
- * Create a new workflow catalog with an empty Snakefile.
+ * List workflow runs linked to this catalog (same user scope as GET /workflows).
  */
-export const createCatalog = <ThrowOnError extends boolean = false>(options: Options<CreateCatalogData, ThrowOnError>) => (options.client ?? client).post<CreateCatalogResponses, CreateCatalogErrors, ThrowOnError>({
+export const listCatalogWorkflows = <ThrowOnError extends boolean = false>(options: Options<ListCatalogWorkflowsData, ThrowOnError>) => (options.client ?? client).get<ListCatalogWorkflowsResponses, ListCatalogWorkflowsErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }, { scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/catalog',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
- * Export All Catalogs
- *
- * Export all catalog files from database to filesystem (read-only cache).
- */
-export const exportAllCatalogs = <ThrowOnError extends boolean = false>(options?: Options<ExportAllCatalogsData, ThrowOnError>) => (options?.client ?? client).post<ExportAllCatalogsResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }, { scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/catalog/export-all',
+    url: '/api/v1/catalog/{slug}/workflows',
     ...options
 });
 
@@ -547,17 +587,6 @@ export const updateCatalog = <ThrowOnError extends boolean = false>(options: Opt
 });
 
 /**
- * Delete File
- *
- * Delete a file from a catalog.
- */
-export const deleteFile = <ThrowOnError extends boolean = false>(options: Options<DeleteFileData, ThrowOnError>) => (options.client ?? client).delete<DeleteFileResponses, DeleteFileErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }, { scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/catalog/{slug}/files/{file_path}',
-    ...options
-});
-
-/**
  * Read File
  *
  * Read a file from a catalog.
@@ -569,43 +598,6 @@ export const readFile2 = <ThrowOnError extends boolean = false>(options: Options
 });
 
 /**
- * Write File
- *
- * Create or update a file in a catalog.
- */
-export const writeFile = <ThrowOnError extends boolean = false>(options: Options<WriteFileData, ThrowOnError>) => (options.client ?? client).put<WriteFileResponses, WriteFileErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }, { scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/catalog/{slug}/files/{file_path}',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
- * Delete Directory
- *
- * Delete a directory and all its contents.
- */
-export const deleteDirectory = <ThrowOnError extends boolean = false>(options: Options<DeleteDirectoryData, ThrowOnError>) => (options.client ?? client).delete<DeleteDirectoryResponses, DeleteDirectoryErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }, { scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/catalog/{slug}/dirs/{directory_path}',
-    ...options
-});
-
-/**
- * Create Directory
- *
- * Create a new directory in the catalog.
- */
-export const createDirectory = <ThrowOnError extends boolean = false>(options: Options<CreateDirectoryData, ThrowOnError>) => (options.client ?? client).post<CreateDirectoryResponses, CreateDirectoryErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }, { scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/catalog/{slug}/dirs/{directory_path}',
-    ...options
-});
-
-/**
  * Batch Import Catalog Files
  *
  * 批量导入文件到 catalog
@@ -613,21 +605,6 @@ export const createDirectory = <ThrowOnError extends boolean = false>(options: O
 export const batchImportCatalogFiles = <ThrowOnError extends boolean = false>(options: Options<BatchImportCatalogFilesData, ThrowOnError>) => (options.client ?? client).post<BatchImportCatalogFilesResponses, BatchImportCatalogFilesErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }, { scheme: 'bearer', type: 'http' }],
     url: '/api/v1/catalog/{slug}/batch-import',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
- * Rename Path
- *
- * Rename a file or directory in the catalog.
- */
-export const renamePath = <ThrowOnError extends boolean = false>(options: Options<RenamePathData, ThrowOnError>) => (options.client ?? client).post<RenamePathResponses, RenamePathErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }, { scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/catalog/{slug}/rename',
     ...options,
     headers: {
         'Content-Type': 'application/json',
@@ -697,6 +674,28 @@ export const syncCatalogZip = <ThrowOnError extends boolean = false>(options: Op
 export const getCatalogDag = <ThrowOnError extends boolean = false>(options: Options<GetCatalogDagData, ThrowOnError>) => (options.client ?? client).get<GetCatalogDagResponses, GetCatalogDagErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }, { scheme: 'bearer', type: 'http' }],
     url: '/api/v1/catalog/{slug}/dag',
+    ...options
+});
+
+/**
+ * Get Catalog Dag Svg
+ *
+ * Return cached Snakevision SVG for the catalog rulegraph (on-demand generation via POST).
+ */
+export const getCatalogDagSvg = <ThrowOnError extends boolean = false>(options: Options<GetCatalogDagSvgData, ThrowOnError>) => (options.client ?? client).get<GetCatalogDagSvgResponses, GetCatalogDagSvgErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }, { scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/catalog/{slug}/dag/svg',
+    ...options
+});
+
+/**
+ * Trigger Catalog Dag Svg
+ *
+ * Queue background Snakevision SVG generation. Idempotent unless force=True.
+ */
+export const triggerCatalogDagSvg = <ThrowOnError extends boolean = false>(options: Options<TriggerCatalogDagSvgData, ThrowOnError>) => (options.client ?? client).post<TriggerCatalogDagSvgResponses, TriggerCatalogDagSvgErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }, { scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/catalog/{slug}/dag/svg',
     ...options
 });
 

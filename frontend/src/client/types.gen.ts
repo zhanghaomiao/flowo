@@ -135,24 +135,6 @@ export type BodyVerifyVerifyApiV1AuthAuthVerifyPost = {
 };
 
 /**
- * CatalogCreateRequest
- */
-export type CatalogCreateRequest = {
-    /**
-     * Name
-     */
-    name: string;
-    /**
-     * Description
-     */
-    description?: string;
-    /**
-     * Tags
-     */
-    tags?: Array<string>;
-};
-
-/**
  * CatalogDetail
  */
 export type CatalogDetail = {
@@ -461,16 +443,6 @@ export type FileNode = {
 };
 
 /**
- * FileWriteRequest
- */
-export type FileWriteRequest = {
-    /**
-     * Content
-     */
-    content: string;
-};
-
-/**
  * GitPushRequest
  */
 export type GitPushRequest = {
@@ -510,6 +482,14 @@ export type ImportFromGitRequest = {
      * Subdirectory
      */
     subdirectory?: string | null;
+    /**
+     * Confirm Overwrite
+     */
+    confirm_overwrite?: boolean;
+    /**
+     * Target Slug
+     */
+    target_slug?: string | null;
 };
 
 /**
@@ -760,20 +740,6 @@ export type PathContent = {
 };
 
 /**
- * RenameRequest
- */
-export type RenameRequest = {
-    /**
-     * Old Path
-     */
-    old_path: string;
-    /**
-     * New Path
-     */
-    new_path: string;
-};
-
-/**
  * ReportPayload
  */
 export type ReportPayload = {
@@ -897,6 +863,48 @@ export type ServiceStatus = {
     details?: {
         [key: string]: unknown;
     } | null;
+};
+
+/**
+ * SnakeTemplateOverview
+ */
+export type SnakeTemplateOverview = {
+    /**
+     * Ready
+     */
+    ready: boolean;
+    /**
+     * Path
+     */
+    path: string;
+    /**
+     * Upstream
+     */
+    upstream: string;
+    /**
+     * Files
+     */
+    files: Array<{
+        [key: string]: unknown;
+    }>;
+};
+
+/**
+ * SnakeTemplatePullResponse
+ */
+export type SnakeTemplatePullResponse = {
+    /**
+     * Status
+     */
+    status: string;
+    /**
+     * Action
+     */
+    action: string;
+    /**
+     * Path
+     */
+    path: string;
 };
 
 /**
@@ -1356,6 +1364,14 @@ export type WorkflowDetialResponse = {
      * Flowo Directory
      */
     flowo_directory?: string | null;
+    /**
+     * Catalog Id
+     */
+    catalog_id?: string | null;
+    /**
+     * Catalog Slug
+     */
+    catalog_slug?: string | null;
 };
 
 /**
@@ -1436,6 +1452,14 @@ export type WorkflowResponse = {
      * Total Jobs
      */
     total_jobs: number;
+    /**
+     * Catalog Id
+     */
+    catalog_id?: string | null;
+    /**
+     * Catalog Slug
+     */
+    catalog_slug?: string | null;
 };
 
 export type AuthJwtLoginData = {
@@ -2938,6 +2962,98 @@ export type DeleteTokenResponses = {
     200: unknown;
 };
 
+export type GetSnakeTemplateOverviewData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/catalog/snake-template';
+};
+
+export type GetSnakeTemplateOverviewResponses = {
+    /**
+     * Successful Response
+     */
+    200: SnakeTemplateOverview;
+};
+
+export type GetSnakeTemplateOverviewResponse = GetSnakeTemplateOverviewResponses[keyof GetSnakeTemplateOverviewResponses];
+
+export type PullSnakeTemplateData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/catalog/snake-template/pull';
+};
+
+export type PullSnakeTemplateResponses = {
+    /**
+     * Successful Response
+     */
+    200: SnakeTemplatePullResponse;
+};
+
+export type PullSnakeTemplateResponse = PullSnakeTemplateResponses[keyof PullSnakeTemplateResponses];
+
+export type ReadSnakeTemplateFileData = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * Path
+         *
+         * Relative path under template root
+         */
+        path: string;
+    };
+    url: '/api/v1/catalog/snake-template/file';
+};
+
+export type ReadSnakeTemplateFileErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type ReadSnakeTemplateFileError = ReadSnakeTemplateFileErrors[keyof ReadSnakeTemplateFileErrors];
+
+export type ReadSnakeTemplateFileResponses = {
+    /**
+     * Successful Response
+     */
+    200: CatalogFileContent;
+};
+
+export type ReadSnakeTemplateFileResponse = ReadSnakeTemplateFileResponses[keyof ReadSnakeTemplateFileResponses];
+
+export type GetSnakeTemplateDagSvgData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/catalog/snake-template/dag/svg';
+};
+
+export type GetSnakeTemplateDagSvgResponses = {
+    /**
+     * Successful Response
+     */
+    200: unknown;
+};
+
+export type TriggerSnakeTemplateDagSvgData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/catalog/snake-template/dag/svg';
+};
+
+export type TriggerSnakeTemplateDagSvgResponses = {
+    /**
+     * Successful Response
+     */
+    200: unknown;
+};
+
 export type ListCatalogsData = {
     body?: never;
     path?: never;
@@ -2978,44 +3094,60 @@ export type ListCatalogsResponses = {
 
 export type ListCatalogsResponse = ListCatalogsResponses[keyof ListCatalogsResponses];
 
-export type CreateCatalogData = {
-    body: CatalogCreateRequest;
-    path?: never;
-    query?: never;
-    url: '/api/v1/catalog';
+export type ListCatalogWorkflowsData = {
+    body?: never;
+    path: {
+        /**
+         * Slug
+         */
+        slug: string;
+    };
+    query?: {
+        /**
+         * Limit
+         *
+         * Maximum number of workflows to return
+         */
+        limit?: number;
+        /**
+         * Offset
+         *
+         * Number of workflows to skip
+         */
+        offset?: number;
+        /**
+         * Order By Started
+         *
+         * Order by start time (True) or ID (False)
+         */
+        order_by_started?: boolean;
+        /**
+         * Descending
+         *
+         * Order in descending order (newest first)
+         */
+        descending?: boolean;
+    };
+    url: '/api/v1/catalog/{slug}/workflows';
 };
 
-export type CreateCatalogErrors = {
+export type ListCatalogWorkflowsErrors = {
     /**
      * Validation Error
      */
     422: HttpValidationError;
 };
 
-export type CreateCatalogError = CreateCatalogErrors[keyof CreateCatalogErrors];
+export type ListCatalogWorkflowsError = ListCatalogWorkflowsErrors[keyof ListCatalogWorkflowsErrors];
 
-export type CreateCatalogResponses = {
+export type ListCatalogWorkflowsResponses = {
     /**
      * Successful Response
      */
-    201: CatalogSummary;
+    200: WorkflowListResponse;
 };
 
-export type CreateCatalogResponse = CreateCatalogResponses[keyof CreateCatalogResponses];
-
-export type ExportAllCatalogsData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/api/v1/catalog/export-all';
-};
-
-export type ExportAllCatalogsResponses = {
-    /**
-     * Successful Response
-     */
-    200: unknown;
-};
+export type ListCatalogWorkflowsResponse = ListCatalogWorkflowsResponses[keyof ListCatalogWorkflowsResponses];
 
 export type DeleteCatalogData = {
     body?: never;
@@ -3105,38 +3237,6 @@ export type UpdateCatalogResponses = {
 
 export type UpdateCatalogResponse = UpdateCatalogResponses[keyof UpdateCatalogResponses];
 
-export type DeleteFileData = {
-    body?: never;
-    path: {
-        /**
-         * Slug
-         */
-        slug: string;
-        /**
-         * File Path
-         */
-        file_path: string;
-    };
-    query?: never;
-    url: '/api/v1/catalog/{slug}/files/{file_path}';
-};
-
-export type DeleteFileErrors = {
-    /**
-     * Validation Error
-     */
-    422: HttpValidationError;
-};
-
-export type DeleteFileError = DeleteFileErrors[keyof DeleteFileErrors];
-
-export type DeleteFileResponses = {
-    /**
-     * Successful Response
-     */
-    200: unknown;
-};
-
 export type ReadFile2Data = {
     body?: never;
     path: {
@@ -3171,104 +3271,6 @@ export type ReadFile2Responses = {
 
 export type ReadFile2Response = ReadFile2Responses[keyof ReadFile2Responses];
 
-export type WriteFileData = {
-    body: FileWriteRequest;
-    path: {
-        /**
-         * Slug
-         */
-        slug: string;
-        /**
-         * File Path
-         */
-        file_path: string;
-    };
-    query?: never;
-    url: '/api/v1/catalog/{slug}/files/{file_path}';
-};
-
-export type WriteFileErrors = {
-    /**
-     * Validation Error
-     */
-    422: HttpValidationError;
-};
-
-export type WriteFileError = WriteFileErrors[keyof WriteFileErrors];
-
-export type WriteFileResponses = {
-    /**
-     * Successful Response
-     */
-    200: CatalogFileContent;
-};
-
-export type WriteFileResponse = WriteFileResponses[keyof WriteFileResponses];
-
-export type DeleteDirectoryData = {
-    body?: never;
-    path: {
-        /**
-         * Slug
-         */
-        slug: string;
-        /**
-         * Directory Path
-         */
-        directory_path: string;
-    };
-    query?: never;
-    url: '/api/v1/catalog/{slug}/dirs/{directory_path}';
-};
-
-export type DeleteDirectoryErrors = {
-    /**
-     * Validation Error
-     */
-    422: HttpValidationError;
-};
-
-export type DeleteDirectoryError = DeleteDirectoryErrors[keyof DeleteDirectoryErrors];
-
-export type DeleteDirectoryResponses = {
-    /**
-     * Successful Response
-     */
-    200: unknown;
-};
-
-export type CreateDirectoryData = {
-    body?: never;
-    path: {
-        /**
-         * Slug
-         */
-        slug: string;
-        /**
-         * Directory Path
-         */
-        directory_path: string;
-    };
-    query?: never;
-    url: '/api/v1/catalog/{slug}/dirs/{directory_path}';
-};
-
-export type CreateDirectoryErrors = {
-    /**
-     * Validation Error
-     */
-    422: HttpValidationError;
-};
-
-export type CreateDirectoryError = CreateDirectoryErrors[keyof CreateDirectoryErrors];
-
-export type CreateDirectoryResponses = {
-    /**
-     * Successful Response
-     */
-    200: unknown;
-};
-
 export type BatchImportCatalogFilesData = {
     body: BatchImportRequest;
     path: {
@@ -3291,34 +3293,6 @@ export type BatchImportCatalogFilesErrors = {
 export type BatchImportCatalogFilesError = BatchImportCatalogFilesErrors[keyof BatchImportCatalogFilesErrors];
 
 export type BatchImportCatalogFilesResponses = {
-    /**
-     * Successful Response
-     */
-    200: unknown;
-};
-
-export type RenamePathData = {
-    body: RenameRequest;
-    path: {
-        /**
-         * Slug
-         */
-        slug: string;
-    };
-    query?: never;
-    url: '/api/v1/catalog/{slug}/rename';
-};
-
-export type RenamePathErrors = {
-    /**
-     * Validation Error
-     */
-    422: HttpValidationError;
-};
-
-export type RenamePathError = RenamePathErrors[keyof RenamePathErrors];
-
-export type RenamePathResponses = {
     /**
      * Successful Response
      */
@@ -3461,6 +3435,67 @@ export type GetCatalogDagErrors = {
 export type GetCatalogDagError = GetCatalogDagErrors[keyof GetCatalogDagErrors];
 
 export type GetCatalogDagResponses = {
+    /**
+     * Successful Response
+     */
+    200: unknown;
+};
+
+export type GetCatalogDagSvgData = {
+    body?: never;
+    path: {
+        /**
+         * Slug
+         */
+        slug: string;
+    };
+    query?: never;
+    url: '/api/v1/catalog/{slug}/dag/svg';
+};
+
+export type GetCatalogDagSvgErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type GetCatalogDagSvgError = GetCatalogDagSvgErrors[keyof GetCatalogDagSvgErrors];
+
+export type GetCatalogDagSvgResponses = {
+    /**
+     * Successful Response
+     */
+    200: unknown;
+};
+
+export type TriggerCatalogDagSvgData = {
+    body?: never;
+    path: {
+        /**
+         * Slug
+         */
+        slug: string;
+    };
+    query?: {
+        /**
+         * Force
+         */
+        force?: boolean;
+    };
+    url: '/api/v1/catalog/{slug}/dag/svg';
+};
+
+export type TriggerCatalogDagSvgErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type TriggerCatalogDagSvgError = TriggerCatalogDagSvgErrors[keyof TriggerCatalogDagSvgErrors];
+
+export type TriggerCatalogDagSvgResponses = {
     /**
      * Successful Response
      */

@@ -326,7 +326,10 @@ def test_log_handler_settings_dataclass_instantiation():
     assert settings.tags is None
 
     # With values
-    settings_with = LogHandlerSettings(name="test-wf", tags="tag1,tag2")
+    settings_with = LogHandlerSettings(
+        name="test-wf", tags="tag1,tag2", catalog="my-catalog-slug"
+    )
+    assert settings_with.catalog == "my-catalog-slug"
     assert settings_with.name == "test-wf"
     assert settings_with.tags == "tag1,tag2"
 

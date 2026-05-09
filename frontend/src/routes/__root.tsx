@@ -9,9 +9,9 @@ import {
 } from '@tanstack/react-router';
 import {
   BarChart3,
-  BookOpen,
   ChevronRight,
   Command,
+  Library,
   Settings2,
   Workflow,
 } from 'lucide-react';
@@ -40,7 +40,7 @@ function RootComponent() {
 
   const navItems = [
     { label: 'Workflows', to: '/', icon: Workflow },
-    { label: 'Catalog', to: '/catalog', icon: BookOpen },
+    { label: 'Catalog', to: '/catalog', icon: Library },
     {
       label: 'Dashboard',
       to: '/dashboard',

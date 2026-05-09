@@ -81,7 +81,7 @@ class Settings(BaseSettings):
         if self.SNAKEMAKE_WORKFLOW_TEMPLATE_DIR is None:
             # Prefer container mount when it exists and is writable (Docker). On a bare
             # host, ``/work_dir`` etc. often does not exist — fall back to FLOWO_WORKING_PATH
-            # so ``flowo catalog template pull`` / ``catalog new`` work without extra env.
+            # so ``flowo catalog new`` can clone the official template without extra env.
             container_base = Path(self.CONTAINER_MOUNT_PATH)
             working_base = Path(self.FLOWO_WORKING_PATH)
             use_container = container_base.exists() and os.access(

@@ -8,6 +8,7 @@ import {
 } from '@ant-design/icons';
 import { Link } from '@tanstack/react-router';
 import { Button, Card, Col, Progress, Row, Statistic } from 'antd';
+import { Library } from 'lucide-react';
 
 import {
   useGetDetailQuery,
@@ -77,30 +78,45 @@ const WorkflowProgress: React.FC<WorkflowProgressProps> = ({ workflowId }) => {
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
-            alignContent: 'center',
-            fontWeight: 'bold',
-            fontSize: '14px',
+            gap: '4px',
           }}
         >
-          {workflow?.name || workflow?.directory}
+          {workflow?.catalog_slug && (
+            <div className="flex items-center gap-1.5 text-[10px] uppercase font-bold tracking-widest">
+              <Library size={12} strokeWidth={2.5} className="text-slate-300" />
+              <Link
+                to="/catalog"
+                className="text-slate-400 hover:text-brand-500 transition-colors"
+              >
+                Catalog
+              </Link>
+              <span className="text-slate-200">/</span>
+              <Link
+                to="/catalog/$catalogSlug"
+                params={{ catalogSlug: workflow.catalog_slug }}
+                className="text-slate-900 hover:text-brand-500 transition-colors border-b border-transparent hover:border-brand-500/30"
+              >
+                {workflow.catalog_slug}
+              </Link>
+            </div>
+          )}
+
+          <div className="text-base font-black text-slate-900 tracking-tight">
+            {workflow?.name || workflow?.directory}
+          </div>
+
           {workflow?.tags && workflow.tags.length > 0 && (
-            <div
-              style={{
-                display: 'flex',
-                flexWrap: 'wrap',
-                justifyContent: 'center',
-                gap: '2px',
-              }}
-            >
+            <div className="flex flex-wrap justify-center gap-1">
               {workflow.tags.map((tag, index) => (
                 <WorkflowTag
                   key={index}
                   tag={tag}
                   style={{
-                    fontSize: '10px',
-                    marginInlineEnd: 2,
-                    lineHeight: '16px',
-                    height: '18px',
+                    fontSize: '9px',
+                    marginInlineEnd: 0,
+                    lineHeight: '14px',
+                    height: '16px',
+                    borderRadius: '4px',
                   }}
                 />
               ))}

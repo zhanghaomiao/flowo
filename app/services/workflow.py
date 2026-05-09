@@ -6,8 +6,9 @@ from operator import itemgetter
 from typing import Any
 
 from fastapi import HTTPException
-from sqlalchemy import and_, case, func, or_, select
+from sqlalchemy import and_, case, func, inspect, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from ..models import Error, File, Job, Rule, Status, Workflow
 from ..models.enums import FileType
@@ -20,6 +21,13 @@ from ..schemas import (
 from ..utils.paths import PathContent, get_file_content, path_resolver
 
 
+def _workflow_status_api(st: Status | None) -> str:
+    """Serialize workflow status for API (enum .value, not ``str(Enum)``)."""
+    if st is None:
+        return "UNKNOWN"
+    return st.value
+
+
 class WorkflowService:
     """Service class for workflow-related business logic"""
 
@@ -27,7 +35,11 @@ class WorkflowService:
         self.db_session = db_session
 
     async def get_workflow(self, workflow_id: uuid.UUID):
-        query = select(Workflow).where(Workflow.id == workflow_id)
+        query = (
+            select(Workflow)
+            .options(selectinload(Workflow.catalog))
+            .where(Workflow.id == workflow_id)
+        )
         result = await self.db_session.execute(query)
         return result.scalar_one_or_none()
 
@@ -42,13 +54,27 @@ class WorkflowService:
         if not workflow:
             raise HTTPException(status_code=404, detail="Workflow not found")
         progress = await self._get_progress(workflow.id)
+        cols = {
+            c.key: getattr(workflow, c.key)
+            for c in inspect(workflow).mapper.column_attrs
+        }
+        catalog_slug = workflow.catalog.slug if workflow.catalog else None
         return WorkflowDetialResponse(
-            **{
-                **workflow.__dict__,
-                "progress": progress,
-                "workflow_id": workflow.id,
-                "flowo_directory": workflow.directory,
-            }
+            workflow_id=workflow.id,
+            name=cols.get("name"),
+            user=cols.get("user"),
+            tags=cols.get("tags"),
+            started_at=cols.get("started_at"),
+            end_time=cols.get("end_time"),
+            status=_workflow_status_api(cols.get("status")),
+            progress=progress,
+            config=cols.get("config"),
+            snakefile=cols.get("snakefile"),
+            directory=cols.get("directory"),
+            configfiles=cols.get("configfiles"),
+            flowo_directory=cols.get("directory"),
+            catalog_id=cols.get("catalog_id"),
+            catalog_slug=catalog_slug,
         )
 
     async def list_all_workflows(
@@ -64,14 +90,18 @@ class WorkflowService:
         start_at: datetime | None = None,
         end_at: datetime | None = None,
         user_id: uuid.UUID | None = None,
+        catalog_id: uuid.UUID | None = None,
     ) -> WorkflowListResponse:
-        base_query = select(Workflow)
+        base_query = select(Workflow).options(selectinload(Workflow.catalog))
         filters = []
         if user:
             filters.append(Workflow.user == user)
 
         if user_id:
             filters.append(Workflow.user_id == user_id)
+
+        if catalog_id is not None:
+            filters.append(Workflow.catalog_id == catalog_id)
 
         if status:
             filters.append(Workflow.status == status)
@@ -125,15 +155,27 @@ class WorkflowService:
         for workflow in workflows:
             progress = await self._get_progress(workflow.id)
             run_info = await self.get_workflow_run_info(workflow_id=workflow.id)
+            cols = {
+                c.key: getattr(workflow, c.key)
+                for c in inspect(workflow).mapper.column_attrs
+            }
+            catalog_slug = workflow.catalog.slug if workflow.catalog else None
             workflow_responses.append(
                 WorkflowResponse(
-                    **{
-                        **workflow.__dict__,
-                        "progress": progress,
-                        "configfiles": bool(workflow.configfiles),
-                        "snakefile": bool(workflow.snakefile),
-                        "total_jobs": run_info.get("total", 0),
-                    }
+                    id=cols["id"],
+                    directory=cols.get("directory"),
+                    snakefile=bool(cols.get("snakefile")),
+                    started_at=cols.get("started_at"),
+                    end_time=cols.get("end_time"),
+                    status=_workflow_status_api(cols.get("status")),
+                    user=cols.get("user"),
+                    name=cols.get("name"),
+                    configfiles=bool(cols.get("configfiles")),
+                    tags=cols.get("tags"),
+                    progress=progress,
+                    total_jobs=run_info.get("total", 0),
+                    catalog_id=cols.get("catalog_id"),
+                    catalog_slug=catalog_slug,
                 )
             )
 
@@ -214,7 +256,10 @@ class WorkflowService:
         row = result.first()
 
         workflow_run_info = await self.get_workflow_run_info(workflow_id=workflow_id)
-        total_jobs = workflow_run_info.get("total", 1)
+        # Until Snakemake sends ``run_info``, ``workflow.run_info`` is empty — use 0, not 1,
+        # so progress stays 0% instead of looking like one phantom job.
+        raw_total = workflow_run_info.get("total")
+        total_jobs = int(raw_total) if raw_total is not None else 0
 
         if not row:
             completed = 0
@@ -235,14 +280,16 @@ class WorkflowService:
                 Job.workflow_id == workflow_id, Job.status == Status.SUCCESS
             )
         )
-        success = result.scalar()
+        success = result.scalar() or 0
 
         run_info = await self.get_workflow_run_info(workflow_id=workflow_id)
         if not run_info:
-            return 100
-        else:
-            total = run_info.get("total")
-            return round((success / total) * 100) if total else 0
+            # No DAG job counts yet (``run_info`` event not received).
+            return 0
+        total = run_info.get("total")
+        if not total:
+            return 0
+        return round((success / total) * 100)
 
     async def get_workflow_rule_graph_data(
         self, workflow_id: uuid.UUID

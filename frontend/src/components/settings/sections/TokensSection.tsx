@@ -95,7 +95,7 @@ export const TokensSection: React.FC = () => {
   };
 
   const getCLICmd = (t: string) =>
-    `flowo --generate-config --token ${t || '<YOUR_TOKEN>'} --host ${window.location.origin} --working-path ${clientConfig?.FLOWO_WORKING_PATH ?? '<YOUR_WORKING_PATH>'}`;
+    `flowo generate-config --token ${t || '<YOUR_TOKEN>'} --host ${window.location.origin} --working-path ${clientConfig?.FLOWO_WORKING_PATH ?? '<YOUR_WORKING_PATH>'}`;
 
   const CopyableCode = ({ text }: { text: string }) => (
     <div className="relative group">

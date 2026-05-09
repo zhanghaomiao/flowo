@@ -128,8 +128,33 @@
   padding-left: 8px !important;
 }
 
-.catalog-editor-tabs .ant-tabs-content-holder {
+.catalog-detail-tabs .ant-tabs-content-holder {
   display: none;
+}
+
+/* ── Main Tab Layout Fix ────────────────────────── */
+.catalog-detail-main-tabs.ant-tabs {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  margin-top: 4px;
+}
+
+.catalog-detail-main-tabs.ant-tabs > .ant-tabs-content-holder {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.catalog-detail-main-tabs.ant-tabs .ant-tabs-content,
+.catalog-detail-main-tabs.ant-tabs .ant-tabs-tabpane {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
 }
 
 /* ── Category sections ───────────────────────────── */
