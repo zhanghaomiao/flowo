@@ -7,7 +7,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 from ...core.config import settings
-from ..catalog.paths import catalog_owner_segment
+from ..catalog.utils import catalog_owner_segment
 
 
 class GitService:

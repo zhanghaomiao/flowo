@@ -107,6 +107,21 @@ def _read_metadata(catalog_path: Path) -> dict[str, Any]:
         return json.load(f)
 
 
+# Default directories and patterns to ignore during file collection
+DEFAULT_IGNORE_DIRS = {
+    ".snakemake",
+    ".git",
+    "__pycache__",
+    ".pytest_cache",
+    "node_modules",
+    "results",
+    "logs",
+    "benchmarks",
+    "resources",
+    "output",
+}
+
+
 def collect_catalog_files_for_batch_import(catalog_path: Path) -> list[dict[str, Any]]:
     """Scan a catalog directory and build files_data for batch_import_files."""
     import hashlib
@@ -115,8 +130,14 @@ def collect_catalog_files_for_batch_import(catalog_path: Path) -> list[dict[str,
     log = logging.getLogger(__name__)
     files_data: list[dict[str, Any]] = []
     for f in catalog_path.rglob("*"):
-        if not f.is_file() or f.name.startswith("."):
+        # Skip directories and their contents if they are in the ignore list
+        if any(p in f.parts for p in DEFAULT_IGNORE_DIRS):
             continue
+
+        if not f.is_file() or f.name.startswith("."):
+            # We still skip dotfiles by default, but .flowo.json is handled separately by the importer
+            continue
+
         rel_path = f.relative_to(catalog_path).as_posix()
         try:
             content = f.read_text(encoding="utf-8", errors="replace")

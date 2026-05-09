@@ -272,6 +272,7 @@ class CatalogService(CatalogArchiveMixin, CatalogGitMixin):
         added = 0
         modified = 0
         deleted = 0
+        skipped = 0
 
         if mode == "replace":
             incoming_paths = {f["path"] for f in files_data}
@@ -300,12 +301,24 @@ class CatalogService(CatalogArchiveMixin, CatalogGitMixin):
             dest.parent.mkdir(parents=True, exist_ok=True)
 
             is_new = not dest.exists()
-            dest.write_text(content, encoding="utf-8")
+            is_changed = True
+            if not is_new:
+                try:
+                    # Compare content to avoid false 'modified' counts
+                    existing_content = dest.read_text(encoding="utf-8")
+                    if existing_content == content:
+                        is_changed = False
+                except Exception:
+                    pass
 
-            if is_new:
-                added += 1
+            if is_changed:
+                dest.write_text(content, encoding="utf-8")
+                if is_new:
+                    added += 1
+                else:
+                    modified += 1
             else:
-                modified += 1
+                skipped += 1
 
         return {
             "status": "completed",
@@ -313,7 +326,7 @@ class CatalogService(CatalogArchiveMixin, CatalogGitMixin):
                 "added": added,
                 "modified": modified,
                 "deleted": deleted,
-                "skipped": 0,
+                "skipped": skipped,
                 "conflicts": 0,
             },
         }

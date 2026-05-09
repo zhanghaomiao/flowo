@@ -1,13 +1,17 @@
-import React, { useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, useNavigate } from '@tanstack/react-router';
 import {
   Button,
+  Col,
+  Empty,
   Form,
   Input,
   message,
   Modal,
+  Row,
+  Segmented,
   Table,
   Tag,
   Tooltip,
@@ -19,10 +23,12 @@ import {
   AlertCircle,
   CheckCircle,
   CloudUpload,
-  Download,
   FileText,
   GitBranch,
+  LayoutGrid,
+  List,
   Loader2,
+  Pencil,
   Search,
   Trash2,
   User,
@@ -38,7 +44,10 @@ import {
 } from '@/client/@tanstack/react-query.gen';
 import { getSettings } from '@/client/sdk.gen';
 import type { CatalogSummary } from '@/client/types.gen';
-import { downloadFile } from '@/utils/download';
+import CopyIconButton from '@/components/shared/CopyIconButton';
+
+import CatalogCard from './CatalogCard';
+import EditCatalogModal from './EditCatalogModal';
 
 dayjs.extend(relativeTime);
 
@@ -190,6 +199,7 @@ function GitSyncStatusBadge({
 export default function CatalogList() {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
+  const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
   const [search, setSearch] = useState('');
   const [importGitOpen, setImportGitOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
@@ -205,6 +215,11 @@ export default function CatalogList() {
   const { data: catalogs, isLoading } = useListCatalogsQuery({
     query: { search: search || undefined },
   });
+
+  const [editingCatalog, setEditingCatalog] = useState<CatalogSummary | null>(
+    null,
+  );
+  const [editModalOpen, setEditModalOpen] = useState(false);
 
   const { data: settings } = useQuery({
     ...getSettingsOptions(),
@@ -450,24 +465,29 @@ export default function CatalogList() {
       align: 'right' as const,
       render: (_: unknown, record: CatalogSummary) => (
         <div className="flex items-center justify-end gap-1">
-          <Tooltip title="Download">
+          <Tooltip title="Edit Metadata">
             <Button
               type="text"
               size="small"
-              icon={<Download size={16} />}
-              onClick={async () => {
-                try {
-                  await downloadFile(
-                    `/api/v1/catalog/${record.slug}/download`,
-                    `${record.slug}.tar.gz`,
-                  );
-                } catch {
-                  message.error('Download failed');
-                }
+              icon={<Pencil size={16} />}
+              onClick={() => {
+                setEditingCatalog(record);
+                setEditModalOpen(true);
               }}
               className="!h-8 !w-8 !p-0"
             />
           </Tooltip>
+          <CopyIconButton
+            text={
+              record.slug?.trim()
+                ? `flowo catalog download ${record.slug.trim()}`
+                : ''
+            }
+            tooltip={`Copy: flowo catalog download ${record.slug ?? ''}`}
+            disabled={!record.slug?.trim()}
+            className="!h-8 !w-8 !p-0"
+            iconSize={16}
+          />
           <Tooltip title="Delete">
             <Button
               type="text"
@@ -488,27 +508,51 @@ export default function CatalogList() {
 
   return (
     <div className="flex h-full flex-col">
+      <style>{`
+        .ant-segmented .ant-segmented-item-label {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          min-height: 32px;
+        }
+        .ant-segmented .ant-segmented-item-icon {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        .ant-segmented-item-selected {
+          background-color: #6366f1 !important;
+          color: white !important;
+        }
+      `}</style>
       {/* Page Header */}
       <div className="flex shrink-0 flex-col gap-4 border-b border-slate-100 px-6 py-5 lg:flex-row lg:items-center lg:justify-between lg:gap-6">
         <div className="shrink-0">
-          <h1 className="text-xl font-bold text-slate-900">Workflows</h1>
+          <h1 className="text-xl font-bold text-slate-900">Catalog</h1>
           <p className="mt-1 text-sm text-slate-500">
-            {catalogs?.length || 0} catalogs available
+            {catalogs?.length || 0} workflows available
           </p>
         </div>
         <div className="flex min-w-0 w-full flex-col gap-3 sm:flex-row sm:items-center sm:justify-end sm:gap-3 lg:max-w-3xl lg:flex-1">
           <Input
-            placeholder="Search workflows..."
-            prefix={<Search size={16} className="text-slate-400" />}
+            placeholder="Search catalog..."
+            prefix={<Search size={14} className="text-slate-400" />}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="h-9 w-full min-w-0 sm:max-w-xs md:max-w-sm"
+            className="w-full min-w-0 sm:max-w-xs md:max-w-sm"
             allowClear
           />
-          <div className="flex shrink-0 flex-nowrap items-center justify-start gap-2 overflow-x-auto pb-0.5 sm:justify-end">
+          <div className="flex shrink-0 flex-nowrap items-center justify-start gap-2 sm:justify-end">
+            <Segmented
+              options={[
+                { value: 'grid', icon: <LayoutGrid size={16} /> },
+                { value: 'table', icon: <List size={16} /> },
+              ]}
+              value={viewMode}
+              onChange={(v) => setViewMode(v as 'grid' | 'table')}
+            />
             <Button
-              icon={<FileText size={16} />}
-              className="shrink-0"
+              icon={<FileText size={14} />}
               onClick={() => navigate({ to: '/catalog/template' })}
             >
               Template
@@ -521,8 +565,7 @@ export default function CatalogList() {
               }
             >
               <Button
-                icon={<CloudUpload size={16} />}
-                className="shrink-0"
+                icon={<CloudUpload size={14} />}
                 disabled={
                   !hasGitRemote ||
                   backupLoading ||
@@ -550,8 +593,7 @@ export default function CatalogList() {
             )}
             <Button
               type="primary"
-              icon={<GitBranch size={18} />}
-              className="shrink-0"
+              icon={<GitBranch size={14} />}
               onClick={() => setImportGitOpen(true)}
             >
               Import Workflow
@@ -560,17 +602,51 @@ export default function CatalogList() {
         </div>
       </div>
 
-      {/* Table Content */}
+      {/* Content Area */}
       <div className="flex-1 overflow-auto px-6 py-6">
-        <Table
-          dataSource={catalogs || []}
-          columns={columns}
-          rowKey="slug"
-          loading={isLoading}
-          pagination={{ pageSize: 20, showSizeChanger: true }}
-          locale={{ emptyText: 'No workflows found. Import your first one!' }}
-          className="bg-white"
-        />
+        {viewMode === 'table' ? (
+          <Table
+            dataSource={catalogs || []}
+            columns={columns}
+            rowKey="slug"
+            loading={isLoading}
+            pagination={{ pageSize: 20, showSizeChanger: true }}
+            locale={{ emptyText: 'No workflows found. Import your first one!' }}
+            className="bg-white"
+          />
+        ) : (
+          <div className="min-h-0 flex-1">
+            {isLoading ? (
+              <div className="flex h-64 items-center justify-center">
+                <Loader2 className="animate-spin text-slate-300" size={40} />
+              </div>
+            ) : (catalogs || []).length === 0 ? (
+              <Empty
+                description="No workflows found"
+                className="my-20"
+                image={Empty.PRESENTED_IMAGE_SIMPLE}
+              />
+            ) : (
+              <Row gutter={[20, 20]}>
+                {(catalogs || []).map((cat) => (
+                  <Col key={cat.slug} xs={24} sm={12} lg={8} xl={6}>
+                    <CatalogCard
+                      catalog={cat}
+                      onDelete={() => {
+                        setDeletingCatalog(cat);
+                        setDeleteModalOpen(true);
+                      }}
+                      onEdit={() => {
+                        setEditingCatalog(cat);
+                        setEditModalOpen(true);
+                      }}
+                    />
+                  </Col>
+                ))}
+              </Row>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Import from Git Modal */}
@@ -631,6 +707,20 @@ export default function CatalogList() {
           This will permanently delete the workflow and all its files.
         </p>
       </Modal>
+
+      {/* Edit Workflow Metadata Modal */}
+      <EditCatalogModal
+        open={editModalOpen}
+        catalog={editingCatalog}
+        onCancel={() => {
+          setEditModalOpen(false);
+          setEditingCatalog(null);
+        }}
+        onSuccess={() => {
+          setEditModalOpen(false);
+          setEditingCatalog(null);
+        }}
+      />
     </div>
   );
 }

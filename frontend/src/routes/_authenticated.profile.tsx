@@ -39,6 +39,7 @@ import {
   usersCurrentUserOptions,
 } from '@/client/@tanstack/react-query.gen';
 import { UserTokenResponse } from '@/client/types.gen';
+import { copyTextToClipboard } from '@/utils/clipboard';
 
 import { useAuth } from '../auth';
 
@@ -46,10 +47,16 @@ const CodeBlock = ({ text }: { text: string }) => {
   const [copied, setCopied] = useState(false);
 
   const handleCopy = () => {
-    navigator.clipboard.writeText(text);
-    setCopied(true);
-    message.success('Copied to clipboard');
-    setTimeout(() => setCopied(false), 2000);
+    void (async () => {
+      const ok = await copyTextToClipboard(text);
+      if (ok) {
+        setCopied(true);
+        message.success('Copied to clipboard');
+        setTimeout(() => setCopied(false), 2000);
+      } else {
+        message.error('Could not copy to clipboard');
+      }
+    })();
   };
 
   return (

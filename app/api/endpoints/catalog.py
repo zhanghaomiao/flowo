@@ -33,6 +33,7 @@ from app.services.catalog.snake_template import (
 from app.services.catalog.utils import _detect_language
 from app.services.third_party.snakevision import (
     SNAKE_TEMPLATE_DAG_REGISTRY_KEY,
+    clear_cached_dag_artifacts,
     dag_error_path,
     dag_svg_path,
     end_generation,
@@ -462,11 +463,15 @@ async def get_catalog_dag_svg(
 async def trigger_catalog_dag_svg(
     slug: str,
     background_tasks: BackgroundTasks,
+    force: bool = False,
     user: User = Depends(current_active_user_with_token),
     svc: CatalogService = Depends(get_catalog_svc),
 ):
-    """Queue background Snakevision SVG generation. Idempotent when SVG already exists."""
+    """Queue background Snakevision SVG generation. Idempotent unless force=True."""
     owner_id, root = await svc.catalog_export_paths_for_dag(slug, user.id)
+    if force:
+        clear_cached_dag_artifacts(owner_id, slug)
+
     if (
         dag_svg_path(owner_id, slug).is_file()
         and dag_svg_path(owner_id, slug).stat().st_size > 0

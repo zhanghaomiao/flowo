@@ -29,6 +29,7 @@ import {
   listTokensOptions,
 } from '@/client/@tanstack/react-query.gen';
 import type { UserTokenResponse } from '@/client/types.gen';
+import { copyTextToClipboard } from '@/utils/clipboard';
 
 import { SectionHeader } from '../shared/SectionHeader';
 import { SettingsCard } from '../shared/SettingsCard';
@@ -103,9 +104,13 @@ export const TokensSection: React.FC = () => {
       </pre>
       <Tooltip title="Copy to clipboard">
         <button
+          type="button"
           onClick={() => {
-            navigator.clipboard.writeText(text);
-            messageApi.success('Copied');
+            void (async () => {
+              const ok = await copyTextToClipboard(text);
+              if (ok) messageApi.success('Copied');
+              else messageApi.error('Could not copy to clipboard');
+            })();
           }}
           className="absolute top-3 right-3 p-2 bg-white text-slate-400 hover:text-sky-600 rounded-lg border border-slate-200"
         >

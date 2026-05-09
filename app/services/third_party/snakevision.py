@@ -251,6 +251,11 @@ def _run_snakevision_rulegraph_to_svg(
         )
         return
 
+    # Force zero margins and padding in the DOT graph to maximize SVG space utilization
+    dot_content = re.sub(
+        r"(\{\s*)", r"\1graph [margin=0, pad=0];\n    ", dot_content, count=1
+    )
+
     with tempfile.NamedTemporaryFile(
         mode="w",
         suffix=".dot",

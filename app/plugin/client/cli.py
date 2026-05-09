@@ -126,6 +126,35 @@ def pull_catalog(slug: str | None = None, path: str = "."):
         logger.error(f"❌ Error pulling catalog: {str(e)}")
 
 
+def _get_ignore_patterns(source_dir: Path) -> list[str]:
+    """Load ignore patterns from .flowoignore and .gitignore."""
+    patterns = []
+    # 1. Try .flowoignore first
+    flowoignore = source_dir / ".flowoignore"
+    if flowoignore.exists():
+        with open(flowoignore, encoding="utf-8") as f:
+            patterns.extend(
+                [
+                    line.strip()
+                    for line in f
+                    if line.strip() and not line.startswith("#")
+                ]
+            )
+
+    # 2. Also try .gitignore if it exists
+    gitignore = source_dir / ".gitignore"
+    if gitignore.exists():
+        with open(gitignore, encoding="utf-8") as f:
+            patterns.extend(
+                [
+                    line.strip()
+                    for line in f
+                    if line.strip() and not line.startswith("#")
+                ]
+            )
+    return list(set(patterns))
+
+
 def create_catalog_zip(
     source_dir: Path, zip_path: Path, extra_excludes: list[str] = None
 ):
@@ -138,14 +167,25 @@ def create_catalog_zip(
         ".DS_Store",
         ".ipynb_checkpoints",
         "node_modules",
+        "results",
+        "logs",
+        "benchmarks",
+        "resources",
+        "output",
+        ".pytest_cache",
     ]
-    all_excludes = default_excludes + (extra_excludes or [])
+    file_ignores = _get_ignore_patterns(source_dir)
+    all_excludes = default_excludes + file_ignores + (extra_excludes or [])
 
     source_dir = source_dir.resolve()
     with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zipf:
         for root, dirs, files in os.walk(source_dir):
             # Filter directories
-            dirs[:] = [d for d in dirs if not any(fnmatch(d, p) for p in all_excludes)]
+            dirs[:] = [
+                d
+                for d in dirs
+                if not any(fnmatch(d, p.rstrip("/")) for p in all_excludes)
+            ]
 
             for file in files:
                 if any(fnmatch(file, p) for p in all_excludes):
@@ -162,7 +202,7 @@ def create_catalog_tar_gz(
     tgz_path: Path,
     extra_excludes: list[str] | None = None,
 ) -> None:
-    """Tar.gz for ``POST /api/v1/catalog/upload`` — one top-level directory ``{slug}/`` (server import_archive)."""
+    """Tar.gz for ``POST /api/v1/catalog/upload`` — one top-level directory ``{slug}/``."""
     default_excludes = [
         ".snakemake",
         ".git",
@@ -171,12 +211,24 @@ def create_catalog_tar_gz(
         ".DS_Store",
         ".ipynb_checkpoints",
         "node_modules",
+        "results",
+        "logs",
+        "benchmarks",
+        "resources",
+        "output",
+        ".pytest_cache",
     ]
-    all_excludes = default_excludes + (extra_excludes or [])
+    file_ignores = _get_ignore_patterns(source_dir)
+    all_excludes = default_excludes + file_ignores + (extra_excludes or [])
+
     source_dir = source_dir.resolve()
     with tarfile.open(tgz_path, "w:gz") as tf:
         for root, dirs, files in os.walk(source_dir):
-            dirs[:] = [d for d in dirs if not any(fnmatch(d, p) for p in all_excludes)]
+            dirs[:] = [
+                d
+                for d in dirs
+                if not any(fnmatch(d, p.rstrip("/")) for p in all_excludes)
+            ]
             for file in files:
                 if any(fnmatch(file, p) for p in all_excludes):
                     continue

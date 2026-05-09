@@ -5,28 +5,15 @@ import {
   FileTextOutlined,
   InfoCircleOutlined,
 } from '@ant-design/icons';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
-import {
-  Button,
-  Empty,
-  Form,
-  Input,
-  message,
-  Modal,
-  Segmented,
-  Select,
-  Spin,
-  Switch,
-} from 'antd';
+import { Button, Empty, Segmented, Spin } from 'antd';
 
 import {
   getCatalogOptions,
-  getCatalogQueryKey,
   readFile2Options,
-  updateCatalogMutation,
 } from '@/client/@tanstack/react-query.gen';
-import type { CatalogDetail as CatalogDetailType } from '@/client/types.gen';
+import { Route } from '@/routes/_authenticated.catalog/$catalogSlug';
 
 import './CatalogDetail.css';
 
@@ -37,111 +24,11 @@ import CatalogDagSvg from './detail/CatalogDagSvg';
 import CatalogFileTree from './detail/CatalogFileTree';
 import CatalogHeader from './detail/CatalogHeader';
 import CatalogMetaBar from './detail/CatalogMetaBar';
+import EditCatalogModal from './EditCatalogModal';
 
 interface Props {
   slug: string;
 }
-
-interface EditModalProps {
-  open: boolean;
-  catalog: CatalogDetailType;
-  onCancel: () => void;
-  onSuccess: () => void;
-}
-
-const EditCatalogModal: React.FC<EditModalProps> = ({
-  open,
-  catalog,
-  onCancel,
-  onSuccess,
-}) => {
-  const [form] = Form.useForm();
-  const queryClient = useQueryClient();
-  const updateMutation = useMutation(updateCatalogMutation());
-
-  useEffect(() => {
-    if (open) {
-      form.setFieldsValue({
-        name: catalog.name,
-        description: catalog.description,
-        version: catalog.version,
-        tags: catalog.tags,
-        is_public: catalog.is_public,
-        source_url: catalog.source_url,
-      });
-    }
-  }, [open, catalog, form]);
-
-  const handleOk = async () => {
-    try {
-      const values = await form.validateFields();
-      await updateMutation.mutateAsync({
-        path: { slug: catalog.slug ?? '' },
-        body: values,
-      });
-      queryClient.invalidateQueries({
-        queryKey: getCatalogQueryKey({ path: { slug: catalog.slug || '' } }),
-      });
-      message.success('Catalog metadata updated');
-      onSuccess();
-    } catch (err) {
-      console.error('Failed to update catalog:', err);
-    }
-  };
-
-  return (
-    <Modal
-      title="Edit Catalog Metadata"
-      open={open}
-      onOk={handleOk}
-      onCancel={onCancel}
-      confirmLoading={updateMutation.isPending}
-      width={600}
-    >
-      <Form form={form} layout="vertical" style={{ marginTop: 16 }}>
-        <Form.Item
-          name="name"
-          label="Catalog Name"
-          rules={[{ required: true, message: 'Please enter a name' }]}
-        >
-          <Input placeholder="e.g. RNA-Seq Pipeline" />
-        </Form.Item>
-        <div
-          style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}
-        >
-          <Form.Item name="version" label="Version">
-            <Input placeholder="e.g. 1.0.0" />
-          </Form.Item>
-          <Form.Item
-            name="is_public"
-            label="Visibility"
-            valuePropName="checked"
-          >
-            <Switch checkedChildren="Public" unCheckedChildren="Private" />
-          </Form.Item>
-        </div>
-        <Form.Item name="description" label="Description">
-          <Input.TextArea rows={3} placeholder="Brief description" />
-        </Form.Item>
-        <Form.Item name="tags" label="Tags">
-          <Select
-            mode="tags"
-            style={{ width: '100%' }}
-            placeholder="Add tags..."
-            tokenSeparators={[',']}
-          />
-        </Form.Item>
-        <Form.Item
-          name="source_url"
-          label="Source URL"
-          extra="Link to GitHub repository or other source"
-        >
-          <Input placeholder="https://github.com/..." />
-        </Form.Item>
-      </Form>
-    </Modal>
-  );
-};
 
 const CatalogDetail: React.FC<Props> = ({ slug }) => {
   const navigate = useNavigate();
@@ -155,14 +42,27 @@ const CatalogDetail: React.FC<Props> = ({ slug }) => {
     enabled: !!slug && slug !== '{slug}',
   });
 
-  // Editor state
   const [editingFiles, setEditingFiles] = useState<string[]>([]);
   const [activeFile, setActiveFile] = useState<string>('');
+
+  // Get mode from search params (e.g. ?mode=editor)
+  const search = Route.useSearch();
+  const initialMode = search.mode || 'readme';
 
   // Right panel mode: 'readme', 'preview' (DAG), or 'editor'
   const [rightPanelMode, setRightPanelMode] = useState<
     'preview' | 'editor' | 'readme'
-  >('readme');
+  >(initialMode);
+
+  // Sync mode if search param changes
+  useEffect(() => {
+    if (search.mode) {
+      setRightPanelMode(search.mode);
+    }
+    if (search.edit) {
+      setEditModalOpen(true);
+    }
+  }, [search.mode, search.edit]);
 
   // README state
   const [readmePath, setReadmePath] = useState<string | null>(null);

@@ -58,6 +58,26 @@ class CatalogArchiveMixin:
                 status_code=404, detail="Catalog filesystem directory not found"
             )
 
+        # Default .flowoignore content
+        flowoignore_content = "\n".join(
+            [
+                ".snakemake",
+                ".git",
+                "__pycache__",
+                "*.pyc",
+                ".DS_Store",
+                ".ipynb_checkpoints",
+                "node_modules",
+                "results",
+                "logs",
+                "benchmarks",
+                "resources",
+                "output",
+                ".pytest_cache",
+                "flowo_logs",
+            ]
+        )
+
         buffer = BytesIO()
         with tarfile.open(fileobj=buffer, mode="w:gz") as tar:
             tar.add(str(catalog_path), arcname=slug)
@@ -77,9 +97,16 @@ class CatalogArchiveMixin:
                 "updated_at": cat.updated_at.isoformat(),
             }
             meta_json = json.dumps(meta, indent=2, ensure_ascii=False).encode("utf-8")
-            tarinfo = tarfile.TarInfo(name=f"{slug}/.flowo.json")
-            tarinfo.size = len(meta_json)
-            tar.addfile(tarinfo, BytesIO(meta_json))
+            tarinfo_meta = tarfile.TarInfo(name=f"{slug}/.flowo.json")
+            tarinfo_meta.size = len(meta_json)
+            tar.addfile(tarinfo_meta, BytesIO(meta_json))
+
+            # Inject .flowoignore if not exists
+            if not (catalog_path / ".flowoignore").exists():
+                ignore_bytes = flowoignore_content.encode("utf-8")
+                tarinfo_ignore = tarfile.TarInfo(name=f"{slug}/.flowoignore")
+                tarinfo_ignore.size = len(ignore_bytes)
+                tar.addfile(tarinfo_ignore, BytesIO(ignore_bytes))
 
         buffer.seek(0)
         return buffer
@@ -212,6 +239,29 @@ class CatalogArchiveMixin:
         }
         with open(tmp_cat_path / ".flowo.json", "w") as f:
             json.dump(meta, f, indent=2, ensure_ascii=False)
+
+        # Inject .flowoignore if missing
+        flowoignore_path = tmp_cat_path / ".flowoignore"
+        if not flowoignore_path.exists():
+            flowoignore_content = "\n".join(
+                [
+                    ".snakemake",
+                    ".git",
+                    "__pycache__",
+                    "*.pyc",
+                    ".DS_Store",
+                    ".ipynb_checkpoints",
+                    "node_modules",
+                    "results",
+                    "logs",
+                    "benchmarks",
+                    "resources",
+                    "output",
+                    ".pytest_cache",
+                    "flowo_logs",
+                ]
+            )
+            flowoignore_path.write_text(flowoignore_content, encoding="utf-8")
 
         zip_base = Path(temp_dir) / f"catalog_{slug}"
         zip_path = shutil.make_archive(str(zip_base), "zip", tmp_cat_path)

@@ -14,6 +14,7 @@ import { useNavigate } from '@tanstack/react-router';
 import { Button, Dropdown, message, Space, Tag, Tooltip } from 'antd';
 
 import type { CatalogDetail } from '@/client/types.gen';
+import { copyTextToClipboard } from '@/utils/clipboard';
 import { downloadFile } from '@/utils/download';
 
 interface Props {
@@ -176,10 +177,19 @@ const CatalogHeader: React.FC<Props> = ({
                             style={{ color: '#1890ff', cursor: 'pointer' }}
                             onClick={(e) => {
                               e.stopPropagation();
-                              navigator.clipboard.writeText(
-                                `flowo catalog download ${catalog.slug}`,
-                              );
-                              messageApi.success('Command copied to clipboard');
+                              void (async () => {
+                                const cmd = `flowo catalog download ${catalog.slug}`;
+                                const ok = await copyTextToClipboard(cmd);
+                                if (ok) {
+                                  messageApi.success(
+                                    'Command copied to clipboard',
+                                  );
+                                } else {
+                                  messageApi.error(
+                                    'Could not copy to clipboard',
+                                  );
+                                }
+                              })();
                             }}
                           />
                         </Tooltip>

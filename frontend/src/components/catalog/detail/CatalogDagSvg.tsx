@@ -1,6 +1,8 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { TransformComponent, TransformWrapper } from 'react-zoom-pan-pinch';
 
-import { Alert, Button, Spin, Typography } from 'antd';
+import { Alert, Button, Spin, Tooltip, Typography } from 'antd';
+import { Maximize, RotateCcw, Search, ZoomIn, ZoomOut } from 'lucide-react';
 
 const { Text, Link } = Typography;
 
@@ -22,6 +24,7 @@ interface Props {
 
 /**
  * On-demand Snakevision DAG: POST to queue generation, poll GET until SVG is ready.
+ * Includes interactive Zoom & Pan capabilities.
  */
 const CatalogDagSvg: React.FC<Props> = ({ slug, variant = 'catalog' }) => {
   const [phase, setPhase] = useState<'boot' | 'polling' | 'ready' | 'error'>(
@@ -30,16 +33,26 @@ const CatalogDagSvg: React.FC<Props> = ({ slug, variant = 'catalog' }) => {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [imgSrc, setImgSrc] = useState<string | null>(null);
   const [retryNonce, setRetryNonce] = useState(0);
+  const [isForced, setIsForced] = useState(false);
   const pollRef = useRef<number | null>(null);
   const attemptsRef = useRef(0);
   const blobUrlRef = useRef<string | null>(null);
 
-  const dagEndpoint = useCallback(() => {
-    if (variant === 'snake-template') {
-      return `${apiBase}/snake-template/dag/svg`;
-    }
-    return `${apiBase}/${encodeURIComponent(slug ?? '')}/dag/svg`;
-  }, [slug, variant]);
+  const dagEndpoint = useCallback(
+    (isPost = false) => {
+      let base = apiBase;
+      if (variant === 'snake-template') {
+        base = `${apiBase}/snake-template/dag/svg`;
+      } else {
+        base = `${apiBase}/${encodeURIComponent(slug ?? '')}/dag/svg`;
+      }
+      if (isPost && isForced) {
+        return `${base}?force=true`;
+      }
+      return base;
+    },
+    [slug, variant, isForced],
+  );
 
   const releaseBlob = useCallback(() => {
     if (blobUrlRef.current) {
@@ -61,6 +74,7 @@ const CatalogDagSvg: React.FC<Props> = ({ slug, variant = 'catalog' }) => {
       setImgSrc(url);
       setPhase('ready');
       setErrorMessage(null);
+      setIsForced(false);
       return true;
     }
     if (res.status === 500) {
@@ -91,7 +105,7 @@ const CatalogDagSvg: React.FC<Props> = ({ slug, variant = 'catalog' }) => {
       releaseBlob();
       attemptsRef.current = 0;
 
-      const postRes = await fetch(dagEndpoint(), {
+      const postRes = await fetch(dagEndpoint(true), {
         method: 'POST',
         headers: authHeaders(),
       });
@@ -169,21 +183,114 @@ const CatalogDagSvg: React.FC<Props> = ({ slug, variant = 'catalog' }) => {
 
   if (phase === 'ready' && imgSrc) {
     return (
-      <div className="flex h-full min-h-0 flex-1 flex-col overflow-auto bg-slate-50/80 p-3">
+      <div className="relative flex h-full min-h-0 flex-1 flex-col overflow-hidden bg-slate-50/80 p-3">
         <div className="mb-2 flex shrink-0 items-center justify-between gap-2">
-          <Text type="secondary" className="text-xs">
-            Rule graph (Snakevision SVG)
-          </Text>
+          <div className="flex items-center gap-3">
+            <Text type="secondary" className="text-xs">
+              Rule graph (Snakevision SVG)
+            </Text>
+            <Button
+              size="small"
+              type="link"
+              className="p-0 text-[11px] font-medium text-indigo-600 hover:text-indigo-500"
+              onClick={() => {
+                setIsForced(true);
+                setRetryNonce((n) => n + 1);
+              }}
+            >
+              Regenerate
+            </Button>
+          </div>
           <Link href={imgSrc} target="_blank" rel="noreferrer">
             Open in new tab
           </Link>
         </div>
-        <div className="flex min-h-0 flex-1 justify-center overflow-auto rounded border border-slate-200 bg-white p-2">
-          <img
-            src={imgSrc}
-            alt="Snakemake rule graph"
-            className="max-h-full max-w-full object-contain"
-          />
+
+        <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+          <TransformWrapper
+            initialScale={1}
+            centerOnInit={true}
+            minScale={0.1}
+            maxScale={8}
+          >
+            {({ zoomIn, zoomOut, resetTransform }) => (
+              <React.Fragment>
+                {/* Floating controls */}
+                <div className="absolute right-4 top-4 z-20 flex flex-col gap-2 rounded-lg bg-white/90 p-1.5 shadow-md backdrop-blur-sm border border-slate-100">
+                  <Tooltip title="Zoom In" placement="left">
+                    <Button
+                      size="small"
+                      type="text"
+                      icon={<ZoomIn size={16} />}
+                      onClick={() => zoomIn()}
+                      className="flex items-center justify-center text-slate-600 hover:text-indigo-600"
+                    />
+                  </Tooltip>
+                  <Tooltip title="Zoom Out" placement="left">
+                    <Button
+                      size="small"
+                      type="text"
+                      icon={<ZoomOut size={16} />}
+                      onClick={() => zoomOut()}
+                      className="flex items-center justify-center text-slate-600 hover:text-indigo-600"
+                    />
+                  </Tooltip>
+                  <Tooltip title="Reset View" placement="left">
+                    <Button
+                      size="small"
+                      type="text"
+                      icon={<RotateCcw size={16} />}
+                      onClick={() => resetTransform()}
+                      className="flex items-center justify-center text-slate-600 hover:text-indigo-600"
+                    />
+                  </Tooltip>
+                  <div className="h-px bg-slate-100 mx-1 my-0.5" />
+                  <Tooltip title="Fullscreen" placement="left">
+                    <Link href={imgSrc} target="_blank">
+                      <Button
+                        size="small"
+                        type="text"
+                        icon={<Maximize size={16} />}
+                        className="flex items-center justify-center text-slate-600 hover:text-indigo-600"
+                      />
+                    </Link>
+                  </Tooltip>
+                </div>
+
+                {/* Mouse interaction hint */}
+                <div className="absolute bottom-4 left-4 z-20 pointer-events-none hidden md:block">
+                  <div className="flex items-center gap-2 rounded-full bg-slate-900/50 px-3 py-1 text-[10px] text-white backdrop-blur-sm">
+                    <Search size={10} />
+                    <span>Scroll to zoom · Drag to pan</span>
+                  </div>
+                </div>
+
+                <TransformComponent
+                  wrapperStyle={{
+                    width: '100%',
+                    height: '100%',
+                    cursor: 'grab',
+                  }}
+                  contentStyle={{
+                    width: '100%',
+                    height: '100%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <div className="flex h-full w-full items-center justify-center p-4">
+                    <img
+                      src={imgSrc}
+                      alt="Snakemake rule graph"
+                      className="max-h-full max-w-full select-none"
+                      style={{ pointerEvents: 'none' }}
+                    />
+                  </div>
+                </TransformComponent>
+              </React.Fragment>
+            )}
+          </TransformWrapper>
         </div>
       </div>
     );
