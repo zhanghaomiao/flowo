@@ -13,53 +13,10 @@ import {
 } from 'lucide-react';
 
 import type { CatalogSummary } from '@/client/types.gen';
+import AuthBlobImage from '@/components/shared/AuthBlobImage';
 import CopyIconButton from '@/components/shared/CopyIconButton';
 
 const { Title, Paragraph, Text } = Typography;
-
-/**
- * Helper to load images that require Authorization headers.
- */
-const AuthImage: React.FC<{
-  src: string;
-  alt: string;
-  className?: string;
-  onStatus: (status: 'loading' | 'success' | 'error') => void;
-}> = ({ src, alt, className, onStatus }) => {
-  const [objectUrl, setObjectUrl] = useState<string | null>(null);
-
-  useEffect(() => {
-    let active = true;
-    const token = localStorage.getItem('token');
-
-    onStatus('loading');
-    fetch(src, {
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
-    })
-      .then((res) => {
-        if (!res.ok) throw new Error('Failed to load');
-        return res.blob();
-      })
-      .then((blob) => {
-        if (!active) return;
-        const url = URL.createObjectURL(blob);
-        setObjectUrl(url);
-        onStatus('success');
-      })
-      .catch(() => {
-        if (!active) return;
-        onStatus('error');
-      });
-
-    return () => {
-      active = false;
-      if (objectUrl) URL.revokeObjectURL(objectUrl);
-    };
-  }, [src]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  if (!objectUrl) return null;
-  return <img src={objectUrl} alt={alt} className={className} />;
-};
 
 interface Props {
   catalog: CatalogSummary;
@@ -82,7 +39,8 @@ const CatalogCard: React.FC<Props> = ({ catalog, onDelete, onEdit }) => {
   const isGitSource = !!sourceUrl;
   const navigate = useNavigate();
 
-  const dagUrl = `/api/v1/catalog/${encodeURIComponent(catalog.id)}/dag/svg`;
+  const dagPreviewUrl = `/api/v1/catalog/${encodeURIComponent(catalog.id)}/dag/preview`;
+  const dagSvgUrl = `/api/v1/catalog/${encodeURIComponent(catalog.id)}/dag/svg`;
   const tags = catalog.tags || [];
   const hiddenTagCount =
     tags.length > MAX_TAGS_COLLAPSED ? tags.length - MAX_TAGS_COLLAPSED : 0;
@@ -125,8 +83,9 @@ const CatalogCard: React.FC<Props> = ({ catalog, onDelete, onEdit }) => {
           <div className="absolute inset-0 opacity-[0.02] [background-image:linear-gradient(#6366f1_1px,transparent_1px),linear-gradient(90deg,#6366f1_1px,transparent_1px)] [background-size:20px_20px]" />
 
           <div className="z-10 flex h-full w-full items-center justify-center overflow-hidden">
-            <AuthImage
-              src={dagUrl}
+            <AuthBlobImage
+              src={dagPreviewUrl}
+              fallbackSrc={dagSvgUrl}
               alt="DAG Preview"
               className={`max-h-[105%] max-w-[105%] object-contain transition-all duration-700 ${
                 loadStatus === 'success'

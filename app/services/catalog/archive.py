@@ -81,7 +81,8 @@ class CatalogArchiveMixin:
         with tarfile.open(fileobj=buffer, mode="w:gz") as tar:
             tar.add(str(catalog_path), arcname=disk_slug)
 
-            # Inject .flowo.json dynamically
+            # Inject .flowo.json dynamically (whitelist only portable metadata; no
+            # ``rulegraph_data``, ``dag_preview_*``, or other DB-only / large blobs.)
             meta = {
                 "id": str(cat.id),
                 "name": cat.name,
@@ -242,6 +243,7 @@ class CatalogArchiveMixin:
         tmp_cat_path = Path(temp_dir) / disk_slug
         shutil.copytree(catalog_path, tmp_cat_path)
 
+        # Whitelist portable metadata only (no ``dag_preview_*`` / ``rulegraph_data``).
         meta = {
             "id": str(cat.id),
             "name": cat.name,

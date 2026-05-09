@@ -120,6 +120,7 @@ class CatalogSummary(BaseModel):
     file_count: int = 0
     has_snakefile: bool = True
     git_configured: bool = False
+    has_dag_preview: bool = False
 
 
 class CatalogDetail(CatalogSummary):
@@ -464,6 +465,53 @@ async def sync_catalog_zip(
 
 
 # --- DAG preview ---
+
+
+@router.get("/{catalog_ref}/dag/preview")
+async def get_catalog_dag_preview(
+    catalog_ref: str,
+    user: User = Depends(current_active_user_with_token),
+    svc: CatalogService = Depends(get_catalog_svc),
+):
+    """Return DAG visual: user-uploaded image if set, else cached Snakevision SVG."""
+    pair = await svc.read_dag_visual_bytes(catalog_ref, user.id)
+    if pair is None:
+        raise HTTPException(
+            status_code=404,
+            detail="No DAG preview (upload an image, generate SVG, or run the workflow).",
+        )
+    data, mime = pair
+    return Response(content=data, media_type=mime)
+
+
+@router.post("/{catalog_ref}/dag/preview", status_code=204)
+async def upload_catalog_dag_preview(
+    catalog_ref: str,
+    file: UploadFile = File(...),
+    user: User = Depends(current_active_user_with_token),
+    svc: CatalogService = Depends(get_catalog_svc),
+):
+    """Upload a PNG/JPEG/SVG/WebP preview image stored in the database only."""
+    body = await file.read()
+    await svc.set_dag_preview_image(
+        catalog_ref,
+        user.id,
+        body,
+        file.content_type,
+        file.filename,
+    )
+    return Response(status_code=204)
+
+
+@router.delete("/{catalog_ref}/dag/preview", status_code=204)
+async def delete_catalog_dag_preview(
+    catalog_ref: str,
+    user: User = Depends(current_active_user_with_token),
+    svc: CatalogService = Depends(get_catalog_svc),
+):
+    """Remove the user-uploaded DAG preview image."""
+    await svc.clear_dag_preview_image(catalog_ref, user.id)
+    return Response(status_code=204)
 
 
 @router.get("/{catalog_ref}/dag")

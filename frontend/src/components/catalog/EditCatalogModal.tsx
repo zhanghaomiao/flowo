@@ -1,7 +1,22 @@
-import React, { useEffect } from 'react';
+import React, { useCallback, useEffect } from 'react';
 
+import { DeleteOutlined, PictureOutlined } from '@ant-design/icons';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { Form, Input, message, Modal, Select, Switch } from 'antd';
+import {
+  Button,
+  Divider,
+  Form,
+  Input,
+  message,
+  Modal,
+  Select,
+  Space,
+  Switch,
+  Tooltip,
+  Typography,
+  Upload,
+} from 'antd';
+import type { UploadRequestOption } from 'rc-upload/lib/interface';
 
 import {
   getCatalogQueryKey,
@@ -9,6 +24,7 @@ import {
   updateCatalogMutation,
 } from '@/client/@tanstack/react-query.gen';
 import type { CatalogDetail, CatalogSummary } from '@/client/types.gen';
+import AuthBlobImage from '@/components/shared/AuthBlobImage';
 
 interface EditModalProps {
   open: boolean;
@@ -26,6 +42,73 @@ const EditCatalogModal: React.FC<EditModalProps> = ({
   const [form] = Form.useForm();
   const queryClient = useQueryClient();
   const updateMutation = useMutation(updateCatalogMutation());
+
+  const invalidateCatalogQueries = useCallback(() => {
+    if (!catalog?.id) return;
+    void queryClient.invalidateQueries({ queryKey: listCatalogsQueryKey({}) });
+    void queryClient.invalidateQueries({
+      queryKey: getCatalogQueryKey({ path: { catalog_ref: catalog.id } }),
+    });
+  }, [catalog?.id, queryClient]);
+
+  const dagPreviewStatusNoop = useCallback(() => {}, []);
+
+  const dagPreviewUrl = catalog?.id
+    ? `/api/v1/catalog/${encodeURIComponent(catalog.id)}/dag/preview`
+    : '';
+
+  const dagPreviewUploadRequest = async (opts: UploadRequestOption) => {
+    const { file, onError, onSuccess } = opts;
+    if (!dagPreviewUrl) {
+      onError?.(new Error('No catalog'));
+      return;
+    }
+    const token = localStorage.getItem('token');
+    const formData = new FormData();
+    formData.append('file', file as File);
+    try {
+      const res = await fetch(dagPreviewUrl, {
+        method: 'POST',
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        body: formData,
+      });
+      if (!res.ok) {
+        let detail = res.statusText;
+        try {
+          const body = (await res.json()) as { detail?: unknown };
+          if (typeof body.detail === 'string') detail = body.detail;
+        } catch {
+          /* ignore */
+        }
+        throw new Error(detail);
+      }
+      invalidateCatalogQueries();
+      message.success('DAG preview image saved');
+      onSuccess?.({}, new XMLHttpRequest());
+    } catch (e) {
+      message.error(e instanceof Error ? e.message : 'Failed to upload image');
+      onError?.(e as Error);
+    }
+  };
+
+  const clearDagPreview = async () => {
+    if (!dagPreviewUrl) return;
+    const token = localStorage.getItem('token');
+    try {
+      const res = await fetch(dagPreviewUrl, {
+        method: 'DELETE',
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      if (!res.ok) {
+        message.error('Could not remove preview image');
+        return;
+      }
+      invalidateCatalogQueries();
+      message.success('Custom DAG preview removed');
+    } catch {
+      message.error('Could not remove preview image');
+    }
+  };
 
   useEffect(() => {
     if (open && catalog) {
@@ -49,11 +132,7 @@ const EditCatalogModal: React.FC<EditModalProps> = ({
         body: values,
       });
 
-      // Invalidate both list and specific detail queries
-      queryClient.invalidateQueries({ queryKey: listCatalogsQueryKey({}) });
-      queryClient.invalidateQueries({
-        queryKey: getCatalogQueryKey({ path: { catalog_ref: catalog.id } }),
-      });
+      invalidateCatalogQueries();
 
       message.success('Catalog metadata updated');
       onSuccess();
@@ -113,6 +192,58 @@ const EditCatalogModal: React.FC<EditModalProps> = ({
         >
           <Input placeholder="https://github.com/..." />
         </Form.Item>
+
+        {catalog?.id ? (
+          <>
+            <Divider orientation="left" plain>
+              DAG thumbnail
+            </Divider>
+            <Typography.Paragraph type="secondary" style={{ marginBottom: 12 }}>
+              Optional PNG, JPEG, SVG, or WebP stored in Flowo. When cleared,
+              the UI falls back to the generated DAG.
+            </Typography.Paragraph>
+            {catalog.has_dag_preview ? (
+              <div
+                style={{
+                  marginBottom: 12,
+                  maxHeight: 160,
+                  overflow: 'hidden',
+                  borderRadius: 8,
+                  border: '1px solid #f0f0f0',
+                  background: '#fafafa',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <AuthBlobImage
+                  src={`/api/v1/catalog/${encodeURIComponent(catalog.id)}/dag/preview`}
+                  alt="Current DAG preview"
+                  className="max-h-[140px] w-auto object-contain"
+                  onStatus={dagPreviewStatusNoop}
+                />
+              </div>
+            ) : null}
+            <Space wrap>
+              <Tooltip title="Upload PNG, JPEG, SVG, or WebP">
+                <Upload
+                  accept="image/png,image/jpeg,image/svg+xml,image/webp,.png,.jpg,.jpeg,.svg,.webp"
+                  showUploadList={false}
+                  customRequest={dagPreviewUploadRequest}
+                >
+                  <Button icon={<PictureOutlined />}>Upload DAG image</Button>
+                </Upload>
+              </Tooltip>
+              <Button
+                icon={<DeleteOutlined />}
+                disabled={!catalog.has_dag_preview}
+                onClick={() => void clearDagPreview()}
+              >
+                Clear image
+              </Button>
+            </Space>
+          </>
+        ) : null}
       </Form>
     </Modal>
   );

@@ -2,7 +2,15 @@ import uuid
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any
 
-from sqlalchemy import JSON, Boolean, DateTime, ForeignKey, String, UniqueConstraint
+from sqlalchemy import (
+    JSON,
+    Boolean,
+    DateTime,
+    ForeignKey,
+    LargeBinary,
+    String,
+    UniqueConstraint,
+)
 from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -36,6 +44,12 @@ class Catalog(Base):
     source_url: Mapped[str | None] = mapped_column(String, nullable=True)
     tags: Mapped[list[str]] = mapped_column(ARRAY(String), default=list)
     rulegraph_data: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
+    dag_preview_mime: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    dag_preview_bytes: Mapped[bytes | None] = mapped_column(
+        LargeBinary,
+        nullable=True,
+        deferred=True,
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=lambda: datetime.now(UTC)
     )

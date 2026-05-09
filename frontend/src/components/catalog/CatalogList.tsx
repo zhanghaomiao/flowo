@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, useNavigate } from '@tanstack/react-router';
@@ -44,10 +44,32 @@ import {
 } from '@/client/@tanstack/react-query.gen';
 import { getSettings } from '@/client/sdk.gen';
 import type { CatalogSummary, ImportFromGitRequest } from '@/client/types.gen';
+import AuthBlobImage from '@/components/shared/AuthBlobImage';
 import CopyIconButton from '@/components/shared/CopyIconButton';
 
 import CatalogCard from './CatalogCard';
 import EditCatalogModal from './EditCatalogModal';
+
+const CatalogTableDagThumb: React.FC<{ catalogId: string }> = ({
+  catalogId,
+}) => {
+  const [st, setSt] = useState<'loading' | 'success' | 'error'>('loading');
+  const enc = encodeURIComponent(catalogId);
+  return (
+    <div className="relative flex h-10 w-14 items-center justify-center overflow-hidden rounded border border-slate-100 bg-slate-50">
+      <AuthBlobImage
+        src={`/api/v1/catalog/${enc}/dag/preview`}
+        fallbackSrc={`/api/v1/catalog/${enc}/dag/svg`}
+        alt=""
+        className="max-h-full max-w-full object-contain"
+        onStatus={setSt}
+      />
+      {st !== 'success' && (
+        <Library size={14} className="absolute text-slate-300" aria-hidden />
+      )}
+    </div>
+  );
+};
 
 function parseGitImportConflict(err: unknown): Record<string, unknown> | null {
   if (!err || typeof err !== 'object') return null;
@@ -503,6 +525,15 @@ export default function CatalogList() {
           </div>
         );
       },
+    },
+    {
+      title: 'DAG',
+      key: 'dag_thumb',
+      width: 88,
+      align: 'center' as const,
+      render: (_: unknown, record: CatalogSummary) => (
+        <CatalogTableDagThumb catalogId={record.id} />
+      ),
     },
     {
       title: 'Description',

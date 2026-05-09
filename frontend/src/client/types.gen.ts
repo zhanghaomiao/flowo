@@ -199,6 +199,10 @@ export type CatalogDetail = {
      */
     git_configured?: boolean;
     /**
+     * Has Dag Preview
+     */
+    has_dag_preview?: boolean;
+    /**
      * Files
      */
     files: Array<CatalogFileInfo>;
@@ -340,6 +344,10 @@ export type CatalogSummary = {
      * Git Configured
      */
     git_configured?: boolean;
+    /**
+     * Has Dag Preview
+     */
+    has_dag_preview?: boolean;
 };
 
 /**

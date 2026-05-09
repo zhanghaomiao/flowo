@@ -8,6 +8,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models import Catalog
+from app.services.third_party.snakevision import dag_svg_path
 
 from .archive import CatalogArchiveMixin
 from .git_ops import CatalogGitMixin
@@ -23,6 +24,31 @@ from .utils import (
     catalog_readable_by_user,
     workspace_has_snakefile,
 )
+
+DAG_PREVIEW_MAX_BYTES = 5 * 1024 * 1024
+_DAG_PREVIEW_ALLOWED_MIMES = frozenset(
+    {"image/png", "image/jpeg", "image/svg+xml", "image/webp"}
+)
+
+
+def _normalize_dag_preview_mime(
+    content_type: str | None, filename: str | None
+) -> str | None:
+    raw = (content_type or "").split(";", 1)[0].strip().lower()
+    if raw == "image/jpg":
+        raw = "image/jpeg"
+    if raw in _DAG_PREVIEW_ALLOWED_MIMES:
+        return raw
+    name = (filename or "").lower()
+    if name.endswith(".png"):
+        return "image/png"
+    if name.endswith((".jpg", ".jpeg")):
+        return "image/jpeg"
+    if name.endswith(".svg"):
+        return "image/svg+xml"
+    if name.endswith(".webp"):
+        return "image/webp"
+    return None
 
 
 class CatalogService(CatalogArchiveMixin, CatalogGitMixin):
@@ -142,6 +168,7 @@ class CatalogService(CatalogArchiveMixin, CatalogGitMixin):
                 "created_at": c.created_at.isoformat(),
                 "updated_at": c.updated_at.isoformat(),
                 "git_configured": git_configured,
+                "has_dag_preview": bool(c.dag_preview_mime),
             }
             for c in catalogs
         ]
@@ -188,6 +215,7 @@ class CatalogService(CatalogArchiveMixin, CatalogGitMixin):
             "has_snakefile": has_snakefile,
             "categories": {},
             "git_configured": git_configured,
+            "has_dag_preview": bool(cat.dag_preview_mime),
         }
 
     async def update_metadata(
@@ -238,6 +266,7 @@ class CatalogService(CatalogArchiveMixin, CatalogGitMixin):
             "updated_at": cat.updated_at.isoformat(),
             "file_count": file_count,
             "has_snakefile": has_snakefile,
+            "has_dag_preview": bool(cat.dag_preview_mime),
         }
 
     async def delete_catalog(
@@ -425,3 +454,58 @@ class CatalogService(CatalogArchiveMixin, CatalogGitMixin):
         cat = await self._resolve_catalog_ref(catalog_ref, user_id)
         assert_catalog_readable(cat, user_id)
         return cat.owner_id, catalog_data_dir(cat.owner_id, cat.slug)
+
+    async def set_dag_preview_image(
+        self,
+        catalog_ref: str,
+        user_id: uuid.UUID,
+        data: bytes,
+        content_type: str | None,
+        filename: str | None,
+    ) -> None:
+        """Store a user-uploaded DAG preview image (DB only; not exported in archives)."""
+        cat = await self._resolve_catalog_ref(catalog_ref, user_id)
+        assert_catalog_writable(cat, user_id)
+        if len(data) > DAG_PREVIEW_MAX_BYTES:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Image too large (max {DAG_PREVIEW_MAX_BYTES // (1024 * 1024)} MiB)",
+            )
+        mime = _normalize_dag_preview_mime(content_type, filename)
+        if mime is None:
+            raise HTTPException(
+                status_code=400,
+                detail="Unsupported image type; use PNG, JPEG, SVG, or WebP",
+            )
+        cat.dag_preview_mime = mime
+        cat.dag_preview_bytes = data
+        await self.db_session.commit()
+
+    async def clear_dag_preview_image(
+        self, catalog_ref: str, user_id: uuid.UUID
+    ) -> None:
+        """Remove the user-uploaded DAG preview image."""
+        cat = await self._resolve_catalog_ref(catalog_ref, user_id)
+        assert_catalog_writable(cat, user_id)
+        cat.dag_preview_mime = None
+        cat.dag_preview_bytes = None
+        await self.db_session.commit()
+
+    async def read_dag_visual_bytes(
+        self, catalog_ref: str, user_id: uuid.UUID
+    ) -> tuple[bytes, str] | None:
+        """User-uploaded image bytes, else generated ``dag.svg`` bytes, else ``None``."""
+        cat = await self._resolve_catalog_ref(catalog_ref, user_id)
+        assert_catalog_readable(cat, user_id)
+        if cat.dag_preview_mime:
+            blob = (
+                await self.db_session.execute(
+                    select(Catalog.dag_preview_bytes).where(Catalog.id == cat.id)
+                )
+            ).scalar_one_or_none()
+            if blob:
+                return blob, cat.dag_preview_mime
+        svg = dag_svg_path(cat.owner_id, cat.slug)
+        if svg.is_file() and svg.stat().st_size > 0:
+            return svg.read_bytes(), "image/svg+xml"
+        return None

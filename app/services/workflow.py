@@ -217,7 +217,9 @@ class WorkflowService:
         query = select(Workflow.tags)
         result = await self.db_session.execute(query)
         tags = result.scalars().all()
-        flattened = list(chain.from_iterable(tags))
+        flattened = list(
+            chain.from_iterable(t for t in tags if t is not None),
+        )
         return list(set(flattened))
 
     async def get_configfiles(self, workflow_id: uuid.UUID):

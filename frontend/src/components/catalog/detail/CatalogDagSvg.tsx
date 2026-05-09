@@ -65,6 +65,22 @@ const CatalogDagSvg: React.FC<Props> = ({
     setImgSrc(null);
   }, []);
 
+  const tryLoadDagPreview = useCallback(async (): Promise<boolean> => {
+    if (variant !== 'catalog' || !catalogRef) return false;
+    const url = `${apiBase}/${encodeURIComponent(catalogRef)}/dag/preview`;
+    const res = await fetch(url, { headers: authHeaders() });
+    if (!res.ok) return false;
+    const blob = await res.blob();
+    releaseBlob();
+    const u = URL.createObjectURL(blob);
+    blobUrlRef.current = u;
+    setImgSrc(u);
+    setPhase('ready');
+    setErrorMessage(null);
+    setIsForced(false);
+    return true;
+  }, [variant, catalogRef, releaseBlob]);
+
   const tryLoadSvg = useCallback(async (): Promise<boolean> => {
     const res = await fetch(dagEndpoint(), {
       headers: authHeaders(),
@@ -107,6 +123,12 @@ const CatalogDagSvg: React.FC<Props> = ({
       setErrorMessage(null);
       releaseBlob();
       attemptsRef.current = 0;
+
+      if (variant === 'catalog' && catalogRef) {
+        const fromPreview = await tryLoadDagPreview();
+        if (cancelled) return;
+        if (fromPreview) return;
+      }
 
       const postRes = await fetch(dagEndpoint(true), {
         method: 'POST',
@@ -161,7 +183,15 @@ const CatalogDagSvg: React.FC<Props> = ({
       pollRef.current = null;
       releaseBlob();
     };
-  }, [catalogRef, variant, retryNonce, tryLoadSvg, releaseBlob, dagEndpoint]);
+  }, [
+    catalogRef,
+    variant,
+    retryNonce,
+    tryLoadSvg,
+    tryLoadDagPreview,
+    releaseBlob,
+    dagEndpoint,
+  ]);
 
   if (phase === 'error' && errorMessage) {
     return (
