@@ -22,13 +22,13 @@ import {
 } from '@/utils/formatters';
 
 interface Props {
-  slug: string;
+  catalogRef: string;
 }
 
-export default function CatalogRunsTable({ slug }: Props) {
+function CatalogRunsTable({ catalogRef }: Props) {
   const { data, isLoading } = useQuery({
     ...listCatalogWorkflowsOptions({
-      path: { slug },
+      path: { catalog_ref: catalogRef },
       query: {
         limit: 100,
         offset: 0,
@@ -36,7 +36,7 @@ export default function CatalogRunsTable({ slug }: Props) {
         descending: true,
       },
     }),
-    enabled: !!slug && slug !== '{slug}',
+    enabled: !!catalogRef,
   });
 
   const workflows = data?.workflows ?? [];
@@ -360,3 +360,5 @@ export default function CatalogRunsTable({ slug }: Props) {
     </div>
   );
 }
+
+export default CatalogRunsTable;

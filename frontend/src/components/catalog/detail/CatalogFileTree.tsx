@@ -92,11 +92,15 @@ function buildNestedTree(files: CatalogFileInfo[]): CatalogArboristNode[] {
 
 interface Props {
   catalog: CatalogDetail;
-  slug: string;
+  catalogRef: string;
   onOpenFile: (path: string) => void;
 }
 
-const CatalogFileTree: React.FC<Props> = ({ catalog, slug, onOpenFile }) => {
+const CatalogFileTree: React.FC<Props> = ({
+  catalog,
+  catalogRef,
+  onOpenFile,
+}) => {
   const wrapRef = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState({ width: 300, height: 400 });
 
@@ -158,7 +162,7 @@ const CatalogFileTree: React.FC<Props> = ({ catalog, slug, onOpenFile }) => {
       <div className="relative box-border min-h-0 w-full flex-1 px-2 pb-2 pt-0.5">
         <div className="relative h-full min-h-0 w-full" ref={wrapRef}>
           <Tree<CatalogArboristNode>
-            key={`${slug}-ro`}
+            key={`${catalogRef}-ro`}
             className="text-sm font-sans leading-snug"
             data={treeData}
             width={size.width}

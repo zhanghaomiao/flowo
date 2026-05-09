@@ -82,7 +82,7 @@ const CatalogCard: React.FC<Props> = ({ catalog, onDelete, onEdit }) => {
   const isGitSource = !!sourceUrl;
   const navigate = useNavigate();
 
-  const dagUrl = `/api/v1/catalog/${catalog.slug}/dag/svg`;
+  const dagUrl = `/api/v1/catalog/${encodeURIComponent(catalog.id)}/dag/svg`;
   const tags = catalog.tags || [];
   const hiddenTagCount =
     tags.length > MAX_TAGS_COLLAPSED ? tags.length - MAX_TAGS_COLLAPSED : 0;
@@ -90,14 +90,14 @@ const CatalogCard: React.FC<Props> = ({ catalog, onDelete, onEdit }) => {
 
   const handleCardClick = () => {
     void navigate({
-      to: '/catalog/$catalogSlug',
-      params: { catalogSlug: catalog.slug ?? '' },
+      to: '/catalog/$catalogId',
+      params: { catalogId: catalog.id },
     });
   };
 
   useEffect(() => {
     setTagsExpanded(false);
-  }, [catalog.slug]);
+  }, [catalog.id]);
 
   return (
     <Card

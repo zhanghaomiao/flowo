@@ -545,7 +545,7 @@ export const listCatalogs = <ThrowOnError extends boolean = false>(options?: Opt
  */
 export const listCatalogWorkflows = <ThrowOnError extends boolean = false>(options: Options<ListCatalogWorkflowsData, ThrowOnError>) => (options.client ?? client).get<ListCatalogWorkflowsResponses, ListCatalogWorkflowsErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }, { scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/catalog/{slug}/workflows',
+    url: '/api/v1/catalog/{catalog_ref}/workflows',
     ...options
 });
 
@@ -556,7 +556,7 @@ export const listCatalogWorkflows = <ThrowOnError extends boolean = false>(optio
  */
 export const deleteCatalog = <ThrowOnError extends boolean = false>(options: Options<DeleteCatalogData, ThrowOnError>) => (options.client ?? client).delete<DeleteCatalogResponses, DeleteCatalogErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }, { scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/catalog/{slug}',
+    url: '/api/v1/catalog/{catalog_ref}',
     ...options
 });
 
@@ -564,10 +564,13 @@ export const deleteCatalog = <ThrowOnError extends boolean = false>(options: Opt
  * Get Catalog
  *
  * Get catalog detail and full file list.
+ *
+ * ``catalog_ref`` is the catalog UUID (recommended) or a slug scoped to your account
+ * (see also 409 when multiple visible catalogs share a slug).
  */
 export const getCatalog = <ThrowOnError extends boolean = false>(options: Options<GetCatalogData, ThrowOnError>) => (options.client ?? client).get<GetCatalogResponses, GetCatalogErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }, { scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/catalog/{slug}',
+    url: '/api/v1/catalog/{catalog_ref}',
     ...options
 });
 
@@ -578,7 +581,7 @@ export const getCatalog = <ThrowOnError extends boolean = false>(options: Option
  */
 export const updateCatalog = <ThrowOnError extends boolean = false>(options: Options<UpdateCatalogData, ThrowOnError>) => (options.client ?? client).patch<UpdateCatalogResponses, UpdateCatalogErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }, { scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/catalog/{slug}',
+    url: '/api/v1/catalog/{catalog_ref}',
     ...options,
     headers: {
         'Content-Type': 'application/json',
@@ -593,7 +596,7 @@ export const updateCatalog = <ThrowOnError extends boolean = false>(options: Opt
  */
 export const readFile2 = <ThrowOnError extends boolean = false>(options: Options<ReadFile2Data, ThrowOnError>) => (options.client ?? client).get<ReadFile2Responses, ReadFile2Errors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }, { scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/catalog/{slug}/files/{file_path}',
+    url: '/api/v1/catalog/{catalog_ref}/files/{file_path}',
     ...options
 });
 
@@ -604,7 +607,7 @@ export const readFile2 = <ThrowOnError extends boolean = false>(options: Options
  */
 export const batchImportCatalogFiles = <ThrowOnError extends boolean = false>(options: Options<BatchImportCatalogFilesData, ThrowOnError>) => (options.client ?? client).post<BatchImportCatalogFilesResponses, BatchImportCatalogFilesErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }, { scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/catalog/{slug}/batch-import',
+    url: '/api/v1/catalog/{catalog_ref}/batch-import',
     ...options,
     headers: {
         'Content-Type': 'application/json',
@@ -619,7 +622,7 @@ export const batchImportCatalogFiles = <ThrowOnError extends boolean = false>(op
  */
 export const downloadCatalog = <ThrowOnError extends boolean = false>(options: Options<DownloadCatalogData, ThrowOnError>) => (options.client ?? client).get<DownloadCatalogResponses, DownloadCatalogErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }, { scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/catalog/{slug}/download',
+    url: '/api/v1/catalog/{catalog_ref}/download',
     ...options
 });
 
@@ -646,7 +649,7 @@ export const uploadCatalog = <ThrowOnError extends boolean = false>(options: Opt
  */
 export const exportCatalog = <ThrowOnError extends boolean = false>(options: Options<ExportCatalogData, ThrowOnError>) => (options.client ?? client).get<ExportCatalogResponses, ExportCatalogErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }, { scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/catalog/{slug}/export',
+    url: '/api/v1/catalog/{catalog_ref}/export',
     ...options
 });
 
@@ -658,7 +661,7 @@ export const exportCatalog = <ThrowOnError extends boolean = false>(options: Opt
 export const syncCatalogZip = <ThrowOnError extends boolean = false>(options: Options<SyncCatalogZipData, ThrowOnError>) => (options.client ?? client).post<SyncCatalogZipResponses, SyncCatalogZipErrors, ThrowOnError>({
     ...formDataBodySerializer,
     security: [{ scheme: 'bearer', type: 'http' }, { scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/catalog/{slug}/sync',
+    url: '/api/v1/catalog/{catalog_ref}/sync',
     ...options,
     headers: {
         'Content-Type': null,
@@ -673,7 +676,7 @@ export const syncCatalogZip = <ThrowOnError extends boolean = false>(options: Op
  */
 export const getCatalogDag = <ThrowOnError extends boolean = false>(options: Options<GetCatalogDagData, ThrowOnError>) => (options.client ?? client).get<GetCatalogDagResponses, GetCatalogDagErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }, { scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/catalog/{slug}/dag',
+    url: '/api/v1/catalog/{catalog_ref}/dag',
     ...options
 });
 
@@ -684,7 +687,7 @@ export const getCatalogDag = <ThrowOnError extends boolean = false>(options: Opt
  */
 export const getCatalogDagSvg = <ThrowOnError extends boolean = false>(options: Options<GetCatalogDagSvgData, ThrowOnError>) => (options.client ?? client).get<GetCatalogDagSvgResponses, GetCatalogDagSvgErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }, { scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/catalog/{slug}/dag/svg',
+    url: '/api/v1/catalog/{catalog_ref}/dag/svg',
     ...options
 });
 
@@ -695,7 +698,7 @@ export const getCatalogDagSvg = <ThrowOnError extends boolean = false>(options: 
  */
 export const triggerCatalogDagSvg = <ThrowOnError extends boolean = false>(options: Options<TriggerCatalogDagSvgData, ThrowOnError>) => (options.client ?? client).post<TriggerCatalogDagSvgResponses, TriggerCatalogDagSvgErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }, { scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/catalog/{slug}/dag/svg',
+    url: '/api/v1/catalog/{catalog_ref}/dag/svg',
     ...options
 });
 

@@ -87,7 +87,7 @@ const StyledProgressNode: React.FC<NodeProps> = (props) => {
 
 interface WorkflowGraphProps {
   workflowId?: string;
-  catalogSlug?: string;
+  catalogRef?: string;
   onNodeClick?: (ruleName: string) => void;
   selectedRule?: string | null;
   onClearRule?: () => void;
@@ -102,7 +102,7 @@ const nodeTypes = {
 // Inner component that uses useReactFlow
 const WorkflowGraphInner: React.FC<WorkflowGraphProps> = ({
   workflowId,
-  catalogSlug,
+  catalogRef,
   onNodeClick,
   selectedRule,
   onClearRule,
@@ -123,7 +123,7 @@ const WorkflowGraphInner: React.FC<WorkflowGraphProps> = ({
     error,
   } = useWorkflowGraph({
     workflowId,
-    catalogSlug,
+    catalogRef,
     layoutDirection,
     selectedRule,
     highlightedRule,
@@ -337,7 +337,7 @@ const WorkflowGraphInner: React.FC<WorkflowGraphProps> = ({
       ref={containerRef}
       className={`relative ${isFullscreen ? 'h-screen w-screen bg-white' : 'h-full w-full'}`}
     >
-      {!isFullscreen && !catalogSlug && <DraggableLegendPanel />}
+      {!isFullscreen && !catalogRef && <DraggableLegendPanel />}
       <div
         className={`bg-white transition-all duration-300 ${isFullscreen ? 'h-full border-none' : 'h-[96%] border border-slate-100 rounded-2xl shadow-sm overflow-hidden'}`}
       >

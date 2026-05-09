@@ -19,14 +19,15 @@ import { downloadFile } from '@/utils/download';
 
 interface Props {
   catalog: CatalogDetail;
-  slug: string;
+  /** Catalog id or slug for API paths (prefer id). */
+  catalogRef: string;
   onShowDag?: () => void;
   onEditMetadata?: () => void;
 }
 
 const CatalogHeader: React.FC<Props> = ({
   catalog,
-  slug,
+  catalogRef,
   onShowDag,
   onEditMetadata,
 }) => {
@@ -204,9 +205,11 @@ const CatalogHeader: React.FC<Props> = ({
                 label: 'Download as .tar.gz',
                 onClick: async () => {
                   try {
+                    const enc = encodeURIComponent(catalogRef);
+                    const base = catalog.slug ?? 'catalog';
                     await downloadFile(
-                      `/api/v1/catalog/${slug}/download?format=tar.gz`,
-                      `${slug}.tar.gz`,
+                      `/api/v1/catalog/${enc}/download?format=tar.gz`,
+                      `${base}.tar.gz`,
                     );
                   } catch {
                     messageApi.error('Download failed');
@@ -219,9 +222,11 @@ const CatalogHeader: React.FC<Props> = ({
                 label: 'Download as .zip',
                 onClick: async () => {
                   try {
+                    const enc = encodeURIComponent(catalogRef);
+                    const base = catalog.slug ?? 'catalog';
                     await downloadFile(
-                      `/api/v1/catalog/${slug}/download?format=zip`,
-                      `${slug}.zip`,
+                      `/api/v1/catalog/${enc}/download?format=zip`,
+                      `${base}.zip`,
                     );
                   } catch {
                     messageApi.error('Download failed');

@@ -20,6 +20,7 @@ from .utils import (
     assert_catalog_writable,
     catalog_data_dir,
     catalog_export_dir,
+    catalog_readable_by_user,
     workspace_has_snakefile,
 )
 
@@ -30,14 +31,58 @@ class CatalogService(CatalogArchiveMixin, CatalogGitMixin):
     def __init__(self, db_session: AsyncSession):
         self.db_session = db_session
 
-    async def _get_catalog_or_404(self, slug: str) -> Catalog:
-        result = await self.db_session.execute(
-            select(Catalog).where(Catalog.slug == slug)
-        )
-        cat = result.scalar_one_or_none()
-        if not cat:
+    async def _resolve_catalog_ref(
+        self, catalog_ref: str, user_id: uuid.UUID | None
+    ) -> Catalog:
+        """Resolve ``catalog_ref`` as a catalog UUID or a slug (per-user + readable)."""
+        ref = (catalog_ref or "").strip()
+        if not ref:
             raise HTTPException(status_code=404, detail="Catalog not found")
-        return cat
+
+        try:
+            cid = uuid.UUID(ref)
+        except ValueError:
+            cid = None
+
+        if cid is not None:
+            cat = await self.db_session.get(Catalog, cid)
+            if cat is None:
+                raise HTTPException(status_code=404, detail="Catalog not found")
+            assert_catalog_readable(cat, user_id)
+            return cat
+
+        if user_id is None:
+            raise HTTPException(
+                status_code=401,
+                detail="Authentication required to resolve catalog by slug",
+            )
+
+        own = (
+            await self.db_session.execute(
+                select(Catalog).where(
+                    Catalog.slug == ref,
+                    Catalog.owner_id == user_id,
+                )
+            )
+        ).scalar_one_or_none()
+        if own:
+            return own
+
+        res = await self.db_session.execute(select(Catalog).where(Catalog.slug == ref))
+        candidates = [
+            c for c in res.scalars().all() if catalog_readable_by_user(c, user_id)
+        ]
+        if len(candidates) == 1:
+            return candidates[0]
+        if not candidates:
+            raise HTTPException(status_code=404, detail="Catalog not found")
+        raise HTTPException(
+            status_code=409,
+            detail=(
+                "Multiple catalogs share this slug. Open the catalog from the list "
+                "and use its id in the URL (e.g. /catalog/<uuid>)."
+            ),
+        )
 
     # --- Metadata CRUD ---
 
@@ -86,6 +131,7 @@ class CatalogService(CatalogArchiveMixin, CatalogGitMixin):
             {
                 "id": str(c.id),
                 "slug": c.slug,
+                "owner_id": str(c.owner_id) if c.owner_id else None,
                 "name": c.name,
                 "description": c.description,
                 "version": c.version,
@@ -101,13 +147,13 @@ class CatalogService(CatalogArchiveMixin, CatalogGitMixin):
         ]
 
     async def get_catalog(
-        self, slug: str, user_id: uuid.UUID | None = None
+        self, catalog_ref: str, user_id: uuid.UUID | None = None
     ) -> dict[str, Any]:
         """Get catalog detail with file inventory."""
-        cat = await self._get_catalog_or_404(slug)
+        cat = await self._resolve_catalog_ref(catalog_ref, user_id)
         assert_catalog_readable(cat, user_id)
 
-        catalog_path = catalog_data_dir(cat.owner_id, slug)
+        catalog_path = catalog_data_dir(cat.owner_id, cat.slug)
 
         if not catalog_path.exists() or not workspace_has_snakefile(catalog_path):
             raise HTTPException(
@@ -126,7 +172,7 @@ class CatalogService(CatalogArchiveMixin, CatalogGitMixin):
 
         return {
             "id": str(cat.id),
-            "slug": slug,
+            "slug": cat.slug,
             "name": cat.name,
             "description": cat.description,
             "version": cat.version,
@@ -146,12 +192,12 @@ class CatalogService(CatalogArchiveMixin, CatalogGitMixin):
 
     async def update_metadata(
         self,
-        slug: str,
+        catalog_ref: str,
         data: dict[str, Any],
         user_id: uuid.UUID | None = None,
     ) -> dict[str, Any]:
         """Update catalog metadata."""
-        cat = await self._get_catalog_or_404(slug)
+        cat = await self._resolve_catalog_ref(catalog_ref, user_id)
         assert_catalog_writable(cat, user_id)
 
         allowed_keys = {
@@ -170,7 +216,7 @@ class CatalogService(CatalogArchiveMixin, CatalogGitMixin):
         await self.db_session.commit()
         await self.db_session.refresh(cat)
 
-        catalog_path = catalog_data_dir(cat.owner_id, slug)
+        catalog_path = catalog_data_dir(cat.owner_id, cat.slug)
         inventory = _get_file_inventory(catalog_path) if catalog_path.exists() else []
         file_count = len([f for f in inventory if not f.get("is_dir")])
         has_snakefile = any(
@@ -180,7 +226,7 @@ class CatalogService(CatalogArchiveMixin, CatalogGitMixin):
 
         return {
             "id": str(cat.id),
-            "slug": slug,
+            "slug": cat.slug,
             "name": cat.name,
             "description": cat.description,
             "version": cat.version,
@@ -196,19 +242,23 @@ class CatalogService(CatalogArchiveMixin, CatalogGitMixin):
 
     async def delete_catalog(
         self,
-        slug: str,
+        catalog_ref: str,
         user_id: uuid.UUID | None = None,
         background_tasks: Any | None = None,
     ) -> None:
         """Delete a catalog from DB and filesystem."""
-        cat = await self._get_catalog_or_404(slug)
+        cat = await self._resolve_catalog_ref(catalog_ref, user_id)
         assert_catalog_writable(cat, user_id)
         owner_id = cat.owner_id
+        disk_slug = cat.slug
 
         await self.db_session.delete(cat)
         await self.db_session.commit()
 
-        for p in (catalog_data_dir(owner_id, slug), catalog_export_dir(owner_id, slug)):
+        for p in (
+            catalog_data_dir(owner_id, disk_slug),
+            catalog_export_dir(owner_id, disk_slug),
+        ):
             if p.exists():
                 shutil.rmtree(p)
 
@@ -222,19 +272,19 @@ class CatalogService(CatalogArchiveMixin, CatalogGitMixin):
                 catalog_dir=_get_catalog_dir(),
                 user_id=user_id,
                 session_factory=AsyncSessionLocal,
-                commit_message=f"Delete catalog: {slug}",
+                commit_message=f"Delete catalog: {disk_slug}",
             )
 
     # --- File Operations ---
 
     async def read_file(
-        self, slug: str, file_path: str, user_id: uuid.UUID | None
+        self, catalog_ref: str, file_path: str, user_id: uuid.UUID | None
     ) -> dict[str, Any]:
         """Read a file directly from the filesystem."""
-        cat = await self._get_catalog_or_404(slug)
+        cat = await self._resolve_catalog_ref(catalog_ref, user_id)
         assert_catalog_readable(cat, user_id)
 
-        full_path = _validate_path(cat.owner_id, slug, file_path)
+        full_path = _validate_path(cat.owner_id, cat.slug, file_path)
         if full_path.exists() and full_path.is_file():
             content = full_path.read_text(errors="replace")
             from .utils import _detect_language
@@ -251,7 +301,7 @@ class CatalogService(CatalogArchiveMixin, CatalogGitMixin):
 
     async def batch_import_files(
         self,
-        slug: str,
+        catalog_ref: str,
         mode: str,
         files_data: list[dict],
         delete_paths: list[str] | None = None,
@@ -263,10 +313,10 @@ class CatalogService(CatalogArchiveMixin, CatalogGitMixin):
         if delete_paths is None:
             delete_paths = []
 
-        cat = await self._get_catalog_or_404(slug)
+        cat = await self._resolve_catalog_ref(catalog_ref, user_id)
         assert_catalog_writable(cat, user_id)
 
-        root = catalog_data_dir(cat.owner_id, slug)
+        root = catalog_data_dir(cat.owner_id, cat.slug)
         root.mkdir(parents=True, exist_ok=True)
 
         added = 0
@@ -333,15 +383,15 @@ class CatalogService(CatalogArchiveMixin, CatalogGitMixin):
 
     async def create_directory(
         self,
-        slug: str,
+        catalog_ref: str,
         directory_path: str,
         user_id: uuid.UUID | None,
     ) -> dict[str, str]:
         """Create a new directory in the catalog filesystem."""
-        cat = await self._get_catalog_or_404(slug)
+        cat = await self._resolve_catalog_ref(catalog_ref, user_id)
         assert_catalog_writable(cat, user_id)
 
-        full_path = _validate_path(cat.owner_id, slug, directory_path)
+        full_path = _validate_path(cat.owner_id, cat.slug, directory_path)
         full_path.mkdir(parents=True, exist_ok=True)
 
         return {"path": directory_path, "status": "created"}
@@ -349,10 +399,10 @@ class CatalogService(CatalogArchiveMixin, CatalogGitMixin):
     # --- DAG Operations ---
 
     async def generate_dag(
-        self, slug: str, user_id: uuid.UUID | None = None
+        self, catalog_ref: str, user_id: uuid.UUID | None = None
     ) -> dict[str, Any]:
         """Return cached DAG data from DB."""
-        cat = await self._get_catalog_or_404(slug)
+        cat = await self._resolve_catalog_ref(catalog_ref, user_id)
         assert_catalog_readable(cat, user_id)
 
         if not cat.rulegraph_data:
@@ -365,13 +415,13 @@ class CatalogService(CatalogArchiveMixin, CatalogGitMixin):
         return cat.rulegraph_data
 
     async def catalog_export_paths_for_dag(
-        self, slug: str, user_id: uuid.UUID
+        self, catalog_ref: str, user_id: uuid.UUID
     ) -> tuple[uuid.UUID | None, Path]:
         """Owner id and catalog **workspace** path (``catalog_data_dir``) for DAG / Snakefile checks.
 
         Despite the historical name, this is not ``catalog_export_dir``; DAG generation
         must read the authoritative tree under ``CATALOG_DIR``.
         """
-        cat = await self._get_catalog_or_404(slug)
+        cat = await self._resolve_catalog_ref(catalog_ref, user_id)
         assert_catalog_readable(cat, user_id)
-        return cat.owner_id, catalog_data_dir(cat.owner_id, slug)
+        return cat.owner_id, catalog_data_dir(cat.owner_id, cat.slug)

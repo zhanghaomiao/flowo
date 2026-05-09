@@ -16,9 +16,9 @@ function authHeaders(): HeadersInit {
 }
 
 interface Props {
-  /** Catalog slug when ``variant`` is ``catalog`` (default). */
-  slug?: string;
-  /** ``catalog`` uses ``/{slug}/dag/svg``; ``snake-template`` uses ``/snake-template/dag/svg``. */
+  /** Catalog id (preferred) or slug when ``variant`` is ``catalog`` (default). */
+  catalogRef?: string;
+  /** ``catalog`` uses ``/{catalog_ref}/dag/svg``; ``snake-template`` uses ``/snake-template/dag/svg``. */
   variant?: 'catalog' | 'snake-template';
 }
 
@@ -26,7 +26,10 @@ interface Props {
  * On-demand Snakevision DAG: POST to queue generation, poll GET until SVG is ready.
  * Includes interactive Zoom & Pan capabilities.
  */
-const CatalogDagSvg: React.FC<Props> = ({ slug, variant = 'catalog' }) => {
+const CatalogDagSvg: React.FC<Props> = ({
+  catalogRef,
+  variant = 'catalog',
+}) => {
   const [phase, setPhase] = useState<'boot' | 'polling' | 'ready' | 'error'>(
     'boot',
   );
@@ -44,14 +47,14 @@ const CatalogDagSvg: React.FC<Props> = ({ slug, variant = 'catalog' }) => {
       if (variant === 'snake-template') {
         base = `${apiBase}/snake-template/dag/svg`;
       } else {
-        base = `${apiBase}/${encodeURIComponent(slug ?? '')}/dag/svg`;
+        base = `${apiBase}/${encodeURIComponent(catalogRef ?? '')}/dag/svg`;
       }
       if (isPost && isForced) {
         return `${base}?force=true`;
       }
       return base;
     },
-    [slug, variant, isForced],
+    [catalogRef, variant, isForced],
   );
 
   const releaseBlob = useCallback(() => {
@@ -93,7 +96,7 @@ const CatalogDagSvg: React.FC<Props> = ({ slug, variant = 'catalog' }) => {
   }, [dagEndpoint, releaseBlob]);
 
   useEffect(() => {
-    if (variant === 'catalog' && !slug) {
+    if (variant === 'catalog' && !catalogRef) {
       return;
     }
 
@@ -158,7 +161,7 @@ const CatalogDagSvg: React.FC<Props> = ({ slug, variant = 'catalog' }) => {
       pollRef.current = null;
       releaseBlob();
     };
-  }, [slug, variant, retryNonce, tryLoadSvg, releaseBlob, dagEndpoint]);
+  }, [catalogRef, variant, retryNonce, tryLoadSvg, releaseBlob, dagEndpoint]);
 
   if (phase === 'error' && errorMessage) {
     return (

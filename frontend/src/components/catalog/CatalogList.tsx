@@ -367,7 +367,7 @@ export default function CatalogList() {
     if (!deletingCatalog) return;
     try {
       await deleteMutation.mutateAsync({
-        path: { slug: deletingCatalog.slug ?? '' },
+        path: { catalog_ref: deletingCatalog.id },
       });
       await queryClient.invalidateQueries({
         queryKey: listCatalogsQueryKey({}),
@@ -491,8 +491,8 @@ export default function CatalogList() {
               </span>
             </Tooltip>
             <Link
-              to="/catalog/$catalogSlug"
-              params={{ catalogSlug: record.slug ?? '' }}
+              to="/catalog/$catalogId"
+              params={{ catalogId: record.id }}
               className="font-medium text-slate-800 hover:text-indigo-600"
             >
               {name}
@@ -695,7 +695,7 @@ export default function CatalogList() {
           <Table
             dataSource={catalogs || []}
             columns={columns}
-            rowKey="slug"
+            rowKey="id"
             loading={isLoading}
             pagination={{ pageSize: 20, showSizeChanger: true }}
             locale={{ emptyText: 'No workflows found. Import your first one!' }}
@@ -716,7 +716,7 @@ export default function CatalogList() {
             ) : (
               <Row gutter={[20, 20]}>
                 {(catalogs || []).map((cat) => (
-                  <Col key={cat.slug} xs={24} sm={12} lg={8} xl={6}>
+                  <Col key={cat.id} xs={24} sm={12} lg={8} xl={6}>
                     <CatalogCard
                       catalog={cat}
                       onDelete={() => {

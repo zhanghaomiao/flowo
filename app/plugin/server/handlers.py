@@ -8,7 +8,6 @@ from sqlalchemy.orm import Session
 from ...core.config import settings
 from ...models import Catalog, Error, File, Job, Rule, Workflow
 from ...models.enums import FileType, Status
-from ...services.catalog.utils import catalog_readable_by_user
 from ...services.notification import notify_workflow_failure, notify_workflow_submitted
 from ..schemas import (
     ErrorSchema,
@@ -57,21 +56,22 @@ class WorkflowStartedHandler(BaseEventHandler[WorkflowStartedSchema]):
         catalog_id = None
         slug = (context.get("flowo_catalog_slug") or "").strip()
         user_id = context.get("flowo_user_id")
-        if slug:
-            found = session.query(Catalog).filter_by(slug=slug).first()
-            if found and catalog_readable_by_user(
-                found, user_id if isinstance(user_id, uuid.UUID) else None
-            ):
+        uid = user_id if isinstance(user_id, uuid.UUID) else None
+        if slug and uid is not None:
+            found = session.query(Catalog).filter_by(slug=slug, owner_id=uid).first()
+            if found:
                 catalog = found
                 catalog_id = found.id
-            elif not found:
-                logger.debug("flowo_catalog_slug %r: no catalog with that slug", slug)
-            elif found and not catalog_readable_by_user(
-                found, user_id if isinstance(user_id, uuid.UUID) else None
-            ):
+            else:
                 logger.debug(
-                    "flowo_catalog_slug %r: user not allowed to link this catalog", slug
+                    "flowo_catalog_slug %r: no catalog with that slug for this user",
+                    slug,
                 )
+        elif slug and uid is None:
+            logger.debug(
+                "flowo_catalog_slug %r: skipped (no user id on token / context)",
+                slug,
+            )
 
         name = _normalize_flowo_project_name(context.get("flowo_project_name"))
         if not name and catalog is not None:

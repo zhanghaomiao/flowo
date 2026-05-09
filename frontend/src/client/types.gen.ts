@@ -95,9 +95,9 @@ export type BodyResetResetPasswordApiV1AuthAuthResetPasswordPost = {
 };
 
 /**
- * Body_sync_catalog_zip_api_v1_catalog__slug__sync_post
+ * Body_sync_catalog_zip_api_v1_catalog__catalog_ref__sync_post
  */
-export type BodySyncCatalogZipApiV1CatalogSlugSyncPost = {
+export type BodySyncCatalogZipApiV1CatalogCatalogRefSyncPost = {
     /**
      * File
      */
@@ -139,6 +139,10 @@ export type BodyVerifyVerifyApiV1AuthAuthVerifyPost = {
  */
 export type CatalogDetail = {
     /**
+     * Id
+     */
+    id: string;
+    /**
      * Name
      */
     name: string;
@@ -146,6 +150,10 @@ export type CatalogDetail = {
      * Slug
      */
     slug?: string | null;
+    /**
+     * Owner Id
+     */
+    owner_id?: string | null;
     /**
      * Description
      */
@@ -273,6 +281,10 @@ export type CatalogFileInfo = {
  */
 export type CatalogSummary = {
     /**
+     * Id
+     */
+    id: string;
+    /**
      * Name
      */
     name: string;
@@ -280,6 +292,10 @@ export type CatalogSummary = {
      * Slug
      */
     slug?: string | null;
+    /**
+     * Owner Id
+     */
+    owner_id?: string | null;
     /**
      * Description
      */
@@ -3098,9 +3114,9 @@ export type ListCatalogWorkflowsData = {
     body?: never;
     path: {
         /**
-         * Slug
+         * Catalog Ref
          */
-        slug: string;
+        catalog_ref: string;
     };
     query?: {
         /**
@@ -3128,7 +3144,7 @@ export type ListCatalogWorkflowsData = {
          */
         descending?: boolean;
     };
-    url: '/api/v1/catalog/{slug}/workflows';
+    url: '/api/v1/catalog/{catalog_ref}/workflows';
 };
 
 export type ListCatalogWorkflowsErrors = {
@@ -3153,12 +3169,12 @@ export type DeleteCatalogData = {
     body?: never;
     path: {
         /**
-         * Slug
+         * Catalog Ref
          */
-        slug: string;
+        catalog_ref: string;
     };
     query?: never;
-    url: '/api/v1/catalog/{slug}';
+    url: '/api/v1/catalog/{catalog_ref}';
 };
 
 export type DeleteCatalogErrors = {
@@ -3181,12 +3197,12 @@ export type GetCatalogData = {
     body?: never;
     path: {
         /**
-         * Slug
+         * Catalog Ref
          */
-        slug: string;
+        catalog_ref: string;
     };
     query?: never;
-    url: '/api/v1/catalog/{slug}';
+    url: '/api/v1/catalog/{catalog_ref}';
 };
 
 export type GetCatalogErrors = {
@@ -3211,12 +3227,12 @@ export type UpdateCatalogData = {
     body: CatalogUpdateRequest;
     path: {
         /**
-         * Slug
+         * Catalog Ref
          */
-        slug: string;
+        catalog_ref: string;
     };
     query?: never;
-    url: '/api/v1/catalog/{slug}';
+    url: '/api/v1/catalog/{catalog_ref}';
 };
 
 export type UpdateCatalogErrors = {
@@ -3241,16 +3257,16 @@ export type ReadFile2Data = {
     body?: never;
     path: {
         /**
-         * Slug
+         * Catalog Ref
          */
-        slug: string;
+        catalog_ref: string;
         /**
          * File Path
          */
         file_path: string;
     };
     query?: never;
-    url: '/api/v1/catalog/{slug}/files/{file_path}';
+    url: '/api/v1/catalog/{catalog_ref}/files/{file_path}';
 };
 
 export type ReadFile2Errors = {
@@ -3275,12 +3291,12 @@ export type BatchImportCatalogFilesData = {
     body: BatchImportRequest;
     path: {
         /**
-         * Slug
+         * Catalog Ref
          */
-        slug: string;
+        catalog_ref: string;
     };
     query?: never;
-    url: '/api/v1/catalog/{slug}/batch-import';
+    url: '/api/v1/catalog/{catalog_ref}/batch-import';
 };
 
 export type BatchImportCatalogFilesErrors = {
@@ -3303,9 +3319,9 @@ export type DownloadCatalogData = {
     body?: never;
     path: {
         /**
-         * Slug
+         * Catalog Ref
          */
-        slug: string;
+        catalog_ref: string;
     };
     query?: {
         /**
@@ -3313,7 +3329,7 @@ export type DownloadCatalogData = {
          */
         format?: string;
     };
-    url: '/api/v1/catalog/{slug}/download';
+    url: '/api/v1/catalog/{catalog_ref}/download';
 };
 
 export type DownloadCatalogErrors = {
@@ -3361,12 +3377,12 @@ export type ExportCatalogData = {
     body?: never;
     path: {
         /**
-         * Slug
+         * Catalog Ref
          */
-        slug: string;
+        catalog_ref: string;
     };
     query?: never;
-    url: '/api/v1/catalog/{slug}/export';
+    url: '/api/v1/catalog/{catalog_ref}/export';
 };
 
 export type ExportCatalogErrors = {
@@ -3386,15 +3402,15 @@ export type ExportCatalogResponses = {
 };
 
 export type SyncCatalogZipData = {
-    body: BodySyncCatalogZipApiV1CatalogSlugSyncPost;
+    body: BodySyncCatalogZipApiV1CatalogCatalogRefSyncPost;
     path: {
         /**
-         * Slug
+         * Catalog Ref
          */
-        slug: string;
+        catalog_ref: string;
     };
     query?: never;
-    url: '/api/v1/catalog/{slug}/sync';
+    url: '/api/v1/catalog/{catalog_ref}/sync';
 };
 
 export type SyncCatalogZipErrors = {
@@ -3417,12 +3433,12 @@ export type GetCatalogDagData = {
     body?: never;
     path: {
         /**
-         * Slug
+         * Catalog Ref
          */
-        slug: string;
+        catalog_ref: string;
     };
     query?: never;
-    url: '/api/v1/catalog/{slug}/dag';
+    url: '/api/v1/catalog/{catalog_ref}/dag';
 };
 
 export type GetCatalogDagErrors = {
@@ -3445,12 +3461,12 @@ export type GetCatalogDagSvgData = {
     body?: never;
     path: {
         /**
-         * Slug
+         * Catalog Ref
          */
-        slug: string;
+        catalog_ref: string;
     };
     query?: never;
-    url: '/api/v1/catalog/{slug}/dag/svg';
+    url: '/api/v1/catalog/{catalog_ref}/dag/svg';
 };
 
 export type GetCatalogDagSvgErrors = {
@@ -3473,9 +3489,9 @@ export type TriggerCatalogDagSvgData = {
     body?: never;
     path: {
         /**
-         * Slug
+         * Catalog Ref
          */
-        slug: string;
+        catalog_ref: string;
     };
     query?: {
         /**
@@ -3483,7 +3499,7 @@ export type TriggerCatalogDagSvgData = {
          */
         force?: boolean;
     };
-    url: '/api/v1/catalog/{slug}/dag/svg';
+    url: '/api/v1/catalog/{catalog_ref}/dag/svg';
 };
 
 export type TriggerCatalogDagSvgErrors = {

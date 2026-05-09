@@ -47,7 +47,8 @@ interface FileTab {
 }
 
 interface Props {
-  slug: string;
+  /** Catalog id (preferred) or slug for read/write API paths. */
+  catalogRef: string;
   /** When `snake-template`, read use `/catalog/snake-template/file` instead of catalog slug APIs. */
   fileSource?: 'catalog' | 'snake-template';
   openFiles: string[];
@@ -61,7 +62,7 @@ interface Props {
 }
 
 const CatalogEditor: React.FC<Props> = ({
-  slug,
+  catalogRef,
   fileSource = 'catalog',
   openFiles,
   activeFile,
@@ -168,7 +169,7 @@ const CatalogEditor: React.FC<Props> = ({
         {focusPath ? (
           <FileEditorPanel
             key={focusPath}
-            slug={slug}
+            catalogRef={catalogRef}
             fileSource={fileSource}
             filePath={focusPath}
             tabs={tabs}
@@ -209,7 +210,7 @@ const CatalogEditor: React.FC<Props> = ({
 };
 
 interface FileEditorPanelProps {
-  slug: string;
+  catalogRef: string;
   fileSource: 'catalog' | 'snake-template';
   filePath: string;
   tabs: Map<string, FileTab>;
@@ -218,7 +219,7 @@ interface FileEditorPanelProps {
 }
 
 const FileEditorPanel: React.FC<FileEditorPanelProps> = ({
-  slug,
+  catalogRef,
   fileSource,
   filePath,
   tabs,
@@ -227,10 +228,9 @@ const FileEditorPanel: React.FC<FileEditorPanelProps> = ({
 }) => {
   const catalogQuery = useQuery({
     ...readFile2Options({
-      path: { slug, file_path: filePath },
+      path: { catalog_ref: catalogRef, file_path: filePath },
     }),
-    enabled:
-      fileSource === 'catalog' && !!slug && !!filePath && slug !== '{slug}',
+    enabled: fileSource === 'catalog' && !!catalogRef && !!filePath,
   });
 
   const templateQuery = useQuery({

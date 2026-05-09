@@ -49,7 +49,8 @@ export interface GraphData {
 
 interface UseWorkflowGraphProps {
   workflowId?: string;
-  catalogSlug?: string;
+  /** Catalog id (preferred) or slug for ``getCatalogDag`` when not using a workflow. */
+  catalogRef?: string;
   layoutDirection: LayoutDirection;
   selectedRule?: string | null;
   highlightedRule?: string | null;
@@ -59,7 +60,7 @@ interface UseWorkflowGraphProps {
 
 export const useWorkflowGraph = ({
   workflowId,
-  catalogSlug,
+  catalogRef,
   layoutDirection,
   selectedRule,
   highlightedRule,
@@ -83,8 +84,8 @@ export const useWorkflowGraph = ({
     isLoading: isCatalogGraphLoading,
     error: catalogGraphError,
   } = useQuery({
-    ...getCatalogDagOptions({ path: { slug: catalogSlug ?? '' } }),
-    enabled: !isWorkflow,
+    ...getCatalogDagOptions({ path: { catalog_ref: catalogRef ?? '' } }),
+    enabled: !isWorkflow && !!catalogRef,
     placeholderData: initialData,
   });
 

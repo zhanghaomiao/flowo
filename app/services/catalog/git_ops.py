@@ -117,7 +117,10 @@ class CatalogGitMixin:
             )
             for s in planned:
                 result = await self.db_session.execute(
-                    select(Catalog).where(Catalog.slug == s)
+                    select(Catalog).where(
+                        Catalog.slug == s,
+                        Catalog.owner_id == owner_for_layout,
+                    )
                 )
                 existing = result.scalar_one_or_none()
                 if existing:
@@ -148,7 +151,10 @@ class CatalogGitMixin:
             if not catalog_path.exists():
                 continue
 
-            query = select(Catalog).where(Catalog.slug == slug)
+            query = select(Catalog).where(
+                Catalog.slug == slug,
+                Catalog.owner_id == owner_for_layout,
+            )
             result = await self.db_session.execute(query)
             cat = result.scalar_one_or_none()
 
@@ -165,16 +171,18 @@ class CatalogGitMixin:
                 )
                 self.db_session.add(cat)
                 await self.db_session.commit()
+                await self.db_session.refresh(cat)
             else:
                 cat.source_url = git_url
                 if owner_id:
                     cat.owner_id = owner_id
                 await self.db_session.commit()
+                await self.db_session.refresh(cat)
 
             files_data = collect_catalog_files_for_batch_import(catalog_path)
             if files_data:
                 await self.batch_import_files(
-                    slug=slug,
+                    catalog_ref=str(cat.id),
                     mode="replace",
                     commit_message=f"Import from Git: {git_url}",
                     files_data=files_data,

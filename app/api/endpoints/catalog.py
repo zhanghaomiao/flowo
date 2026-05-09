@@ -31,7 +31,11 @@ from app.services.catalog.snake_template import (
     template_inventory,
     template_status,
 )
-from app.services.catalog.utils import _detect_language, assert_catalog_readable
+from app.services.catalog.utils import (
+    _detect_language,
+    assert_catalog_readable,
+    catalog_data_dir,
+)
 from app.services.third_party.snakevision import (
     SNAKE_TEMPLATE_DAG_REGISTRY_KEY,
     clear_cached_dag_artifacts,
@@ -52,11 +56,11 @@ from app.services.workflow import WorkflowService
 router = APIRouter()
 
 
-def _run_dag_svg_job(slug: str, owner_id: uuid.UUID | None) -> None:
+def _run_dag_svg_job(job_key: str, owner_id: uuid.UUID | None, disk_slug: str) -> None:
     try:
-        generate_snakevision_svg_for_slug(slug, owner_id)
+        generate_snakevision_svg_for_slug(disk_slug, owner_id)
     finally:
-        end_generation(slug)
+        end_generation(job_key)
 
 
 def _run_dag_svg_job_snake_template() -> None:
@@ -101,8 +105,10 @@ class CatalogCategoryInfo(BaseModel):
 
 
 class CatalogSummary(BaseModel):
+    id: str
     name: str
     slug: str | None = None
+    owner_id: str | None = None
     description: str = ""
     version: str = "0.1.0"
     owner: str | None = None
@@ -149,7 +155,7 @@ class SnakeTemplatePullResponse(BaseModel):
     path: str
 
 
-# --- Snakemake official workflow template (not a catalog slug; must stay above /{slug}) ---
+# --- Snakemake official workflow template (not a catalog ref; must stay above /{catalog_ref}) ---
 
 
 @router.get("/snake-template", response_model=SnakeTemplateOverview)
@@ -267,9 +273,9 @@ async def list_catalogs(
     return await svc.list_catalogs(search=search, tags=tags, user_id=user.id)
 
 
-@router.get("/{slug}/workflows", response_model=WorkflowListResponse)
+@router.get("/{catalog_ref}/workflows", response_model=WorkflowListResponse)
 async def list_catalog_workflows(
-    slug: str,
+    catalog_ref: str,
     user: User = Depends(current_active_user_with_token),
     svc: CatalogService = Depends(get_catalog_svc),
     session: AsyncSession = Depends(get_async_session),
@@ -283,7 +289,7 @@ async def list_catalog_workflows(
     ),
 ):
     """List workflow runs linked to this catalog (same user scope as GET /workflows)."""
-    cat = await svc._get_catalog_or_404(slug)
+    cat = await svc._resolve_catalog_ref(catalog_ref, user.id)
     assert_catalog_readable(cat, user.id)
     filter_user_id = user.id if not user.is_superuser else None
     return await WorkflowService(session).list_all_workflows(
@@ -296,52 +302,58 @@ async def list_catalog_workflows(
     )
 
 
-@router.get("/{slug}", response_model=CatalogDetail)
+@router.get("/{catalog_ref}", response_model=CatalogDetail)
 async def get_catalog(
-    slug: str,
+    catalog_ref: str,
     user: User = Depends(current_active_user_with_token),
     svc: CatalogService = Depends(get_catalog_svc),
 ):
-    """Get catalog detail and full file list."""
-    return await svc.get_catalog(slug, user_id=user.id)
+    """Get catalog detail and full file list.
+
+    ``catalog_ref`` is the catalog UUID (recommended) or a slug scoped to your account
+    (see also 409 when multiple visible catalogs share a slug).
+    """
+    return await svc.get_catalog(catalog_ref, user_id=user.id)
 
 
-@router.patch("/{slug}", response_model=CatalogSummary)
+@router.patch("/{catalog_ref}", response_model=CatalogSummary)
 async def update_catalog(
-    slug: str,
+    catalog_ref: str,
     request: CatalogUpdateRequest,
     user: User = Depends(current_active_user_with_token),
     svc: CatalogService = Depends(get_catalog_svc),
 ):
     """Update catalog metadata."""
     data = request.model_dump(exclude_none=True)
-    return await svc.update_metadata(slug, data, user_id=user.id)
+    return await svc.update_metadata(catalog_ref, data, user_id=user.id)
 
 
-@router.delete("/{slug}")
+@router.delete("/{catalog_ref}")
 async def delete_catalog(
-    slug: str,
+    catalog_ref: str,
     background_tasks: BackgroundTasks,
     user: User = Depends(current_active_user_with_token),
     svc: CatalogService = Depends(get_catalog_svc),
 ):
     """Delete a catalog and all its files."""
-    await svc.delete_catalog(slug, user_id=user.id, background_tasks=background_tasks)
-    return {"message": f"Catalog '{slug}' deleted"}
+    await svc.delete_catalog(
+        catalog_ref, user_id=user.id, background_tasks=background_tasks
+    )
+    return {"message": "Catalog deleted"}
 
 
 # --- File operations ---
 
 
-@router.get("/{slug}/files/{file_path:path}", response_model=CatalogFileContent)
+@router.get("/{catalog_ref}/files/{file_path:path}", response_model=CatalogFileContent)
 async def read_file(
-    slug: str,
+    catalog_ref: str,
     file_path: str,
     user: User = Depends(current_active_user_with_token),
     svc: CatalogService = Depends(get_catalog_svc),
 ):
     """Read a file from a catalog."""
-    return await svc.read_file(slug, file_path, user_id=user.id)
+    return await svc.read_file(catalog_ref, file_path, user_id=user.id)
 
 
 # 批量导入接口
@@ -361,16 +373,16 @@ class BatchImportRequest(BaseModel):
     delete_paths: list[str] = []
 
 
-@router.post("/{slug}/batch-import")
+@router.post("/{catalog_ref}/batch-import")
 async def batch_import_catalog_files(
-    slug: str,
+    catalog_ref: str,
     request: BatchImportRequest,
     user: User = Depends(current_active_user_with_token),
     svc: CatalogService = Depends(get_catalog_svc),
 ):
     """批量导入文件到 catalog"""
     return await svc.batch_import_files(
-        slug=slug,
+        catalog_ref=catalog_ref,
         mode=request.mode,
         commit_message=request.commit_message,
         files_data=[f.model_dump() for f in request.files],
@@ -383,26 +395,26 @@ async def batch_import_catalog_files(
 # --- Export / Import ---
 
 
-@router.get("/{slug}/download")
+@router.get("/{catalog_ref}/download")
 async def download_catalog(
-    slug: str,
+    catalog_ref: str,
     format: str = "tar.gz",
     user: User = Depends(current_active_user_with_token),
     svc: CatalogService = Depends(get_catalog_svc),
 ):
     """Download a catalog as a compressed archive (zip or tar.gz)."""
     if format == "zip":
-        zip_path = await svc.download_catalog(slug, user_id=user.id)
+        zip_path, disk_slug = await svc.download_catalog(catalog_ref, user_id=user.id)
         return FileResponse(
-            zip_path, media_type="application/zip", filename=f"{slug}.zip"
+            zip_path, media_type="application/zip", filename=f"{disk_slug}.zip"
         )
     else:
         # Default to tar.gz (export)
-        buffer = await svc.export_archive(slug, user_id=user.id)
+        buffer, disk_slug = await svc.export_archive(catalog_ref, user_id=user.id)
         return StreamingResponse(
             buffer,
             media_type="application/gzip",
-            headers={"Content-Disposition": f"attachment; filename={slug}.tar.gz"},
+            headers={"Content-Disposition": f"attachment; filename={disk_slug}.tar.gz"},
         )
 
 
@@ -420,19 +432,19 @@ async def upload_catalog(
     )
 
 
-@router.get("/{slug}/export")
+@router.get("/{catalog_ref}/export")
 async def export_catalog(
-    slug: str,
+    catalog_ref: str,
     user: User = Depends(current_active_user_with_token),
     svc: CatalogService = Depends(get_catalog_svc),
 ):
     """Alias for download_catalog with tar.gz format."""
-    return await download_catalog(slug, format="tar.gz", user=user, svc=svc)
+    return await download_catalog(catalog_ref, format="tar.gz", user=user, svc=svc)
 
 
-@router.post("/{slug}/sync")
+@router.post("/{catalog_ref}/sync")
 async def sync_catalog_zip(
-    slug: str,
+    catalog_ref: str,
     file: UploadFile = File(...),
     user: User = Depends(current_active_user_with_token),
     svc: CatalogService = Depends(get_catalog_svc),
@@ -445,7 +457,7 @@ async def sync_catalog_zip(
         tmp_path = tmp.name
 
     try:
-        return await svc.sync_catalog(slug, tmp_path, user)
+        return await svc.sync_catalog(catalog_ref, tmp_path, user)
     finally:
         if os.path.exists(tmp_path):
             os.remove(tmp_path)
@@ -454,32 +466,36 @@ async def sync_catalog_zip(
 # --- DAG preview ---
 
 
-@router.get("/{slug}/dag")
+@router.get("/{catalog_ref}/dag")
 async def get_catalog_dag(
-    slug: str,
+    catalog_ref: str,
     user: User = Depends(current_active_user_with_token),
     svc: CatalogService = Depends(get_catalog_svc),
 ):
     """Generate DAG preview from the catalog's Snakefile."""
-    return await svc.generate_dag(slug, user_id=user.id)
+    return await svc.generate_dag(catalog_ref, user_id=user.id)
 
 
-@router.get("/{slug}/dag/svg")
+@router.get("/{catalog_ref}/dag/svg")
 async def get_catalog_dag_svg(
-    slug: str,
+    catalog_ref: str,
     user: User = Depends(current_active_user_with_token),
     svc: CatalogService = Depends(get_catalog_svc),
 ):
     """Return cached Snakevision SVG for the catalog rulegraph (on-demand generation via POST)."""
-    owner_id, _ = await svc.catalog_export_paths_for_dag(slug, user.id)
-    svg = dag_svg_path(owner_id, slug)
+    cat = await svc._resolve_catalog_ref(catalog_ref, user.id)
+    assert_catalog_readable(cat, user.id)
+    owner_id = cat.owner_id
+    disk_slug = cat.slug
+    job_key = str(cat.id)
+    svg = dag_svg_path(owner_id, disk_slug)
     if svg.is_file() and svg.stat().st_size > 0:
         return FileResponse(svg, media_type="image/svg+xml", filename="dag.svg")
-    err_file = dag_error_path(owner_id, slug)
+    err_file = dag_error_path(owner_id, disk_slug)
     if err_file.is_file():
         detail = err_file.read_text(encoding="utf-8", errors="replace")[:4000]
         raise HTTPException(status_code=500, detail=detail)
-    if is_generation_in_progress(slug):
+    if is_generation_in_progress(job_key):
         raise HTTPException(
             status_code=404,
             detail="DAG is still generating. Retry shortly.",
@@ -490,22 +506,27 @@ async def get_catalog_dag_svg(
     )
 
 
-@router.post("/{slug}/dag/svg")
+@router.post("/{catalog_ref}/dag/svg")
 async def trigger_catalog_dag_svg(
-    slug: str,
+    catalog_ref: str,
     background_tasks: BackgroundTasks,
     force: bool = False,
     user: User = Depends(current_active_user_with_token),
     svc: CatalogService = Depends(get_catalog_svc),
 ):
     """Queue background Snakevision SVG generation. Idempotent unless force=True."""
-    owner_id, root = await svc.catalog_export_paths_for_dag(slug, user.id)
+    cat = await svc._resolve_catalog_ref(catalog_ref, user.id)
+    assert_catalog_readable(cat, user.id)
+    owner_id = cat.owner_id
+    disk_slug = cat.slug
+    job_key = str(cat.id)
+    root = catalog_data_dir(owner_id, disk_slug)
     if force:
-        clear_cached_dag_artifacts(owner_id, slug)
+        clear_cached_dag_artifacts(owner_id, disk_slug)
 
     if (
-        dag_svg_path(owner_id, slug).is_file()
-        and dag_svg_path(owner_id, slug).stat().st_size > 0
+        dag_svg_path(owner_id, disk_slug).is_file()
+        and dag_svg_path(owner_id, disk_slug).stat().st_size > 0
     ):
         return Response(status_code=204)
 
@@ -520,10 +541,10 @@ async def trigger_catalog_dag_svg(
             detail="Snakefile not found (expected workflow/Snakefile or Snakefile).",
         )
 
-    if not try_begin_generation(slug):
+    if not try_begin_generation(job_key):
         return JSONResponse({"status": "generating"}, status_code=202)
 
-    background_tasks.add_task(_run_dag_svg_job, slug, owner_id)
+    background_tasks.add_task(_run_dag_svg_job, job_key, owner_id, disk_slug)
     return JSONResponse({"status": "queued"}, status_code=202)
 
 

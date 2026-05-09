@@ -13,7 +13,7 @@ import {
   getCatalogOptions,
   readFile2Options,
 } from '@/client/@tanstack/react-query.gen';
-import { Route } from '@/routes/_authenticated.catalog/$catalogSlug';
+import { Route } from '@/routes/_authenticated.catalog/$catalogId';
 
 import './CatalogDetail.css';
 
@@ -27,10 +27,11 @@ import CatalogRunsTable from './detail/CatalogRunsTable';
 import EditCatalogModal from './EditCatalogModal';
 
 interface Props {
-  slug: string;
+  /** Catalog UUID (preferred) or slug from the URL. */
+  catalogRef: string;
 }
 
-const CatalogDetail: React.FC<Props> = ({ slug }) => {
+const CatalogDetail: React.FC<Props> = ({ catalogRef }) => {
   const navigate = useNavigate();
 
   const {
@@ -38,9 +39,11 @@ const CatalogDetail: React.FC<Props> = ({ slug }) => {
     isLoading,
     error,
   } = useQuery({
-    ...getCatalogOptions({ path: { slug } }),
-    enabled: !!slug && slug !== '{slug}',
+    ...getCatalogOptions({ path: { catalog_ref: catalogRef } }),
+    enabled: !!catalogRef,
   });
+
+  const apiRef = catalog?.id ?? catalogRef;
 
   const [editingFiles, setEditingFiles] = useState<string[]>([]);
   const [activeFile, setActiveFile] = useState<string>('');
@@ -85,9 +88,9 @@ const CatalogDetail: React.FC<Props> = ({ slug }) => {
 
   const { data: readmeContentData, isLoading: isReadmeLoading } = useQuery({
     ...readFile2Options({
-      path: { slug, file_path: readmePath || '' },
+      path: { catalog_ref: apiRef, file_path: readmePath || '' },
     }),
-    enabled: !!readmePath && rightPanelMode === 'readme',
+    enabled: !!catalog && !!readmePath && rightPanelMode === 'readme',
   });
 
   if (isLoading) {
@@ -131,7 +134,7 @@ const CatalogDetail: React.FC<Props> = ({ slug }) => {
       <div className="catalog-detail-page-header">
         <CatalogHeader
           catalog={catalog}
-          slug={slug}
+          catalogRef={apiRef}
           onShowDag={() => setRightPanelMode('preview')}
           onEditMetadata={() => setEditModalOpen(true)}
         />
@@ -163,7 +166,7 @@ const CatalogDetail: React.FC<Props> = ({ slug }) => {
               <div className="catalog-file-panel">
                 <CatalogFileTree
                   catalog={catalog}
-                  slug={slug}
+                  catalogRef={apiRef}
                   onOpenFile={openFile}
                 />
               </div>
@@ -220,7 +223,7 @@ const CatalogDetail: React.FC<Props> = ({ slug }) => {
                   <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
                     {rightPanelMode === 'editor' ? (
                       <CatalogEditor
-                        slug={slug}
+                        catalogRef={apiRef}
                         openFiles={editingFiles}
                         activeFile={activeFile}
                         viewMode={editingViewMode}
@@ -250,7 +253,7 @@ const CatalogDetail: React.FC<Props> = ({ slug }) => {
                       />
                     ) : rightPanelMode === 'preview' ? (
                       catalog?.has_snakefile ? (
-                        <CatalogDagSvg slug={slug} />
+                        <CatalogDagSvg catalogRef={apiRef} />
                       ) : (
                         <div
                           style={{
@@ -287,7 +290,7 @@ const CatalogDetail: React.FC<Props> = ({ slug }) => {
             </div>
           ) : (
             <div className="catalog-detail-runs-container flex-1 min-h-0 flex flex-col bg-[#f8fafc]">
-              <CatalogRunsTable slug={slug} />
+              <CatalogRunsTable catalogRef={apiRef} />
             </div>
           )}
         </div>

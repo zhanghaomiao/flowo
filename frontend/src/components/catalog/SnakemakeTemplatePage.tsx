@@ -38,8 +38,10 @@ import CatalogFileTree from './detail/CatalogFileTree';
 
 const { Text, Paragraph } = Typography;
 
-/** Display-only slug for the read-only file tree (no catalog API calls). */
-const TREE_SLUG = '__snake_template__';
+/** Stable fake id for template UI (never sent to user-catalog APIs). */
+const TEMPLATE_CATALOG_ID = '00000000-0000-4000-8000-000000000001';
+/** Display-only ref for the read-only file tree keys (no user-catalog API calls). */
+const TREE_REF = '__snake_template__';
 
 function overviewToCatalog(
   overview: SnakeTemplateOverview,
@@ -55,8 +57,9 @@ function overviewToCatalog(
   }));
   const upstream = overview.upstream?.trim() || '';
   return {
+    id: TEMPLATE_CATALOG_ID,
     name: 'Snakemake workflow template',
-    slug: TREE_SLUG,
+    slug: TREE_REF,
     description: upstream || 'Official Snakemake workflow template checkout',
     source_url: upstream.startsWith('http') ? upstream : null,
     files,
@@ -217,7 +220,7 @@ const SnakemakeTemplatePage: React.FC = () => {
           ) : (
             <CatalogFileTree
               catalog={syntheticCatalog}
-              slug={TREE_SLUG}
+              catalogRef={TREE_REF}
               onOpenFile={openFile}
             />
           )}
@@ -265,7 +268,7 @@ const SnakemakeTemplatePage: React.FC = () => {
             <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
               {rightPanelMode === 'editor' ? (
                 <CatalogEditor
-                  slug={TREE_SLUG}
+                  catalogRef={TREE_REF}
                   fileSource="snake-template"
                   openFiles={editingFiles}
                   activeFile={activeFile}

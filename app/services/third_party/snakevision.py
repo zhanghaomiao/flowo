@@ -16,9 +16,9 @@ from app.services.catalog.utils import catalog_data_dir, catalog_export_dir
 
 logger = logging.getLogger(__name__)
 
-# Prevent duplicate concurrent generation for the same slug
+# Prevent duplicate concurrent generation for the same logical job (catalog id, template key, …)
 _gen_registry_lock = threading.Lock()
-_generating_slugs: set[str] = set()
+_generating_job_keys: set[str] = set()
 
 
 def catalog_export_root(owner_id: uuid.UUID | None, slug: str) -> Path:
@@ -56,23 +56,23 @@ def find_test_workdir(catalog_path: Path) -> Path | None:
     return None
 
 
-def try_begin_generation(slug: str) -> bool:
+def try_begin_generation(job_key: str) -> bool:
     """Return True if this call should start generation; False if already running."""
     with _gen_registry_lock:
-        if slug in _generating_slugs:
+        if job_key in _generating_job_keys:
             return False
-        _generating_slugs.add(slug)
+        _generating_job_keys.add(job_key)
         return True
 
 
-def end_generation(slug: str) -> None:
+def end_generation(job_key: str) -> None:
     with _gen_registry_lock:
-        _generating_slugs.discard(slug)
+        _generating_job_keys.discard(job_key)
 
 
-def is_generation_in_progress(slug: str) -> bool:
+def is_generation_in_progress(job_key: str) -> bool:
     with _gen_registry_lock:
-        return slug in _generating_slugs
+        return job_key in _generating_job_keys
 
 
 def clear_dag_artifact_files(out_svg: Path, err_path: Path) -> None:

@@ -8,12 +8,12 @@ const catalogSearchSchema = z.object({
   edit: z.boolean().optional(),
 });
 
-export const Route = createFileRoute('/_authenticated/catalog/$catalogSlug')({
+export const Route = createFileRoute('/_authenticated/catalog/$catalogId')({
   validateSearch: catalogSearchSchema,
   component: CatalogDetailPage,
 });
 
 function CatalogDetailPage() {
-  const { catalogSlug } = Route.useParams();
-  return <CatalogDetail slug={catalogSlug} />;
+  const { catalogId } = Route.useParams();
+  return <CatalogDetail catalogRef={catalogId} />;
 }

@@ -34,7 +34,11 @@ export const AdministrationSection: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <SectionHeader icon={Shield} title="System Policies" />
+      <SectionHeader
+        icon={Shield}
+        title="System Policies"
+        subtitle="Security and access"
+      />
       <SettingsCard>
         <div className="space-y-4">
           <div className="flex items-center justify-between p-4 rounded-xl bg-slate-50/50 border border-slate-100">

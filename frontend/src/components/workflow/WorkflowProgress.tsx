@@ -81,7 +81,7 @@ const WorkflowProgress: React.FC<WorkflowProgressProps> = ({ workflowId }) => {
             gap: '4px',
           }}
         >
-          {workflow?.catalog_slug && (
+          {(workflow?.catalog_id || workflow?.catalog_slug) && (
             <div className="flex items-center gap-1.5 text-[10px] uppercase font-bold tracking-widest">
               <Library size={12} strokeWidth={2.5} className="text-slate-300" />
               <Link
@@ -92,11 +92,13 @@ const WorkflowProgress: React.FC<WorkflowProgressProps> = ({ workflowId }) => {
               </Link>
               <span className="text-slate-200">/</span>
               <Link
-                to="/catalog/$catalogSlug"
-                params={{ catalogSlug: workflow.catalog_slug }}
+                to="/catalog/$catalogId"
+                params={{
+                  catalogId: workflow.catalog_id ?? workflow.catalog_slug ?? '',
+                }}
                 className="text-slate-900 hover:text-brand-500 transition-colors border-b border-transparent hover:border-brand-500/30"
               >
-                {workflow.catalog_slug}
+                {workflow.catalog_slug ?? workflow.catalog_id}
               </Link>
             </div>
           )}

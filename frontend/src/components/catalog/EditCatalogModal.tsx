@@ -41,18 +41,18 @@ const EditCatalogModal: React.FC<EditModalProps> = ({
   }, [open, catalog, form]);
 
   const handleOk = async () => {
-    if (!catalog?.slug) return;
+    if (!catalog?.id) return;
     try {
       const values = await form.validateFields();
       await updateMutation.mutateAsync({
-        path: { slug: catalog.slug },
+        path: { catalog_ref: catalog.id },
         body: values,
       });
 
       // Invalidate both list and specific detail queries
       queryClient.invalidateQueries({ queryKey: listCatalogsQueryKey({}) });
       queryClient.invalidateQueries({
-        queryKey: getCatalogQueryKey({ path: { slug: catalog.slug } }),
+        queryKey: getCatalogQueryKey({ path: { catalog_ref: catalog.id } }),
       });
 
       message.success('Catalog metadata updated');

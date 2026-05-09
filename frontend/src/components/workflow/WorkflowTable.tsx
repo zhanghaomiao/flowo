@@ -327,21 +327,24 @@ const WorkflowTable = () => {
       key: 'catalog_slug',
       width: 130,
       ellipsis: true,
-      render: (_: unknown, record: WorkflowResponse) =>
-        record.catalog_slug ? (
+      render: (_: unknown, record: WorkflowResponse) => {
+        const ref = record.catalog_id ?? record.catalog_slug;
+        const label = record.catalog_slug ?? record.catalog_id;
+        return ref && label ? (
           <Tooltip title="View all runs in this catalog">
             <Link
-              to="/catalog/$catalogSlug"
-              params={{ catalogSlug: record.catalog_slug }}
+              to="/catalog/$catalogId"
+              params={{ catalogId: ref }}
               className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-brand-50 text-brand-600 hover:bg-brand-100 hover:text-brand-700 transition-colors text-xs font-bold border border-brand-100"
             >
               <Library size={12} className="shrink-0" />
-              <span className="truncate">{record.catalog_slug}</span>
+              <span className="truncate">{label}</span>
             </Link>
           </Tooltip>
         ) : (
           <span className="text-slate-300">—</span>
-        ),
+        );
+      },
     },
     {
       title: 'Status',

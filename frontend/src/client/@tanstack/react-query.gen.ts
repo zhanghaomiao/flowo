@@ -1336,6 +1336,9 @@ export const getCatalogQueryKey = (options: Options<GetCatalogData>) => createQu
  * Get Catalog
  *
  * Get catalog detail and full file list.
+ *
+ * ``catalog_ref`` is the catalog UUID (recommended) or a slug scoped to your account
+ * (see also 409 when multiple visible catalogs share a slug).
  */
 export const getCatalogOptions = (options: Options<GetCatalogData>) => queryOptions<GetCatalogResponse, GetCatalogError, GetCatalogResponse, ReturnType<typeof getCatalogQueryKey>>({
     queryFn: async ({ queryKey, signal }) => {
@@ -1354,6 +1357,9 @@ export const getCatalogOptions = (options: Options<GetCatalogData>) => queryOpti
  * Get Catalog
  *
  * Get catalog detail and full file list.
+ *
+ * ``catalog_ref`` is the catalog UUID (recommended) or a slug scoped to your account
+ * (see also 409 when multiple visible catalogs share a slug).
  */
 export const useGetCatalogQuery = (options: Options<GetCatalogData>) => useQuery(getCatalogOptions(options));
 
