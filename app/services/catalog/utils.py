@@ -47,6 +47,11 @@ def catalog_data_dir(owner_id: uuid.UUID | None, slug: str) -> Path:
     return Path(settings.CATALOG_DIR) / catalog_owner_segment(owner_id) / slug
 
 
+def catalog_workspace_dir(owner_id: uuid.UUID | None, slug: str) -> Path:
+    """Alias for :func:`catalog_data_dir` — the mutable Snakemake / editor workspace."""
+    return catalog_data_dir(owner_id, slug)
+
+
 def catalog_export_dir(owner_id: uuid.UUID | None, slug: str) -> Path:
     """Read-only export cache for DAG tooling."""
     return Path(settings.CATALOG_EXPORT_DIR) / catalog_owner_segment(owner_id) / slug
@@ -110,6 +115,15 @@ def _read_metadata(catalog_path: Path) -> dict[str, Any]:
         return {}
     with open(meta_file) as f:
         return json.load(f)
+
+
+def _write_metadata(catalog_path: Path, metadata: dict[str, Any]) -> None:
+    """Write .flowo.json metadata for compatibility with catalog utility tests."""
+    meta_file = catalog_path / ".flowo.json"
+    payload = dict(metadata)
+    payload.setdefault("updated_at", datetime.now(UTC).isoformat())
+    with open(meta_file, "w", encoding="utf-8") as f:
+        json.dump(payload, f, ensure_ascii=False, indent=2)
 
 
 # Default directories and patterns to ignore during file collection

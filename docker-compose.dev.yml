@@ -41,6 +41,7 @@ services:
       - sh
       - -c
       - |
+        set -e
         echo '🚀 Starting backend setup...'
         echo 'Running database migrations...'
         export PATH="/app/.venv/bin:$PATH"

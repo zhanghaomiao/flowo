@@ -1,573 +1,310 @@
-# Flowo - 项目技术栈与架构说明
+# Flowo Repository Guide
 
-## 项目概述
+## 这份文件的目的
 
-Flowo 是一个基于 PostgreSQL 的 Snakemake 工作流日志插件和实时监控仪表板。它提供了一个统一的解决方案来收集、存储和监控 Snakemake 工作流的执行情况。
+这不是产品白皮书，而是给 Codex、AI 代理和新协作者使用的仓库导航。
 
-**项目类型**: 工作流监控与管理平台  
-**主要功能**: 实时监控、日志收集、任务跟踪、文件预览、权限管理
+目标：
 
-## 技术栈总览
+- 让代理快速理解项目边界和真实入口
+- 回答问题时优先打开正确文件，而不是在仓库里盲搜
+- 明确哪些文件是事实来源，哪些只是辅助文档
 
-### 后端技术栈
- ∈ **Python 3.12+**
- ∈ **FastAPI** - 现代高性能 Web 框架
- ∈ **SQLAlchemy** - ORM 数据库操作
- ∈ **AsyncPG** - 异步 PostgreSQL 驱动
- ∈ **Pydantic** - 数据验证和设置管理
- ∈ **FastAPI Users** - 用户认证和授权
- ∈ **Alembic** - 数据库迁移管理
- ∈ **SSE-Starlette** - 服务器发送事件实时通信
+## 一句话说明项目
 
-### 前端技术栈
- ∈ **React 19** - 前端框架
- ∈ **TypeScript** - 类型安全
- ∈ **Vite** - 构建工具
- ∈ **TanStack Router** - 路由管理
- ∈ **TanStack Query** - 数据获取和缓存
- ∈ **Ant Design** - UI 组件库
- ∈ **ECharts** - 数据可视化
- ∈ **React Flow** - 流程图可视化
+Flowo 是一个面向 Snakemake 的工作流观测与管理平台：
 
-### 数据库
- ∈ **PostgreSQL 15** - 主数据库
- ∈ **PostgreSQL NOTIFY/LISTEN** - 实时事件通知机制
+- Snakemake 侧通过 `flowo` logger 插件上报 workflow、job、rule 事件
+- FastAPI 后端将事件写入 PostgreSQL
+- PostgreSQL `LISTEN/NOTIFY` 配合 SSE 把实时变化推送给前端
+- React 前端提供 dashboard、workflow 详情、结果预览、catalog/template 管理
 
-### 基础设施
- ∈ **Docker & Docker Compose** - 容器化部署
- ∈ **Caddy** - 反向代理和网关
- ∈ **uv** - Python 包管理器
- ∈ **Nox** - 测试和开发环境管理
+## 首次进入仓库时先读这些
 
-### 插件系统
- ∈ **Snakemake Logger Plugin Interface** - Snakemake 日志插件接口
- ∈ **httpx** - 异步 HTTP 客户端
+推荐按下面顺序阅读：
 
-## 项目架构
+1. `README.md`
+   用来理解产品定位、安装方式、基本使用方式
+2. `pyproject.toml`
+   用来确认 Python 包名、Snakemake entrypoint、CLI entrypoint、server 依赖
+3. `frontend/package.json`
+   用来确认前端技术栈、构建脚本、OpenAPI client 生成脚本
+4. `app/main.py`
+   FastAPI 入口；确认路由挂载和 PostgreSQL listener 生命周期
+5. `app/api/__init__.py`
+   查看后端功能面总表
+6. `app/plugin/client/log_handler.py`
+   看 Snakemake 事件如何进入系统
+7. `frontend/src/routes/`
+   看用户能访问哪些页面
 
-### 系统架构图
-```
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│  Snakemake      │    │  Flowo Plugin   │    │  FastAPI        │
-│  Workflow       │────▶│  (Logger)       │────▶│  Backend        │
-│                 │    │                 │    │                 │
-└─────────────────┘    └─────────────────┘    └─────────┬───────┘
-                                                        │
-                                                        ▼
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│  React          │    │  PostgreSQL     │    │  Real-time      │
-│  Frontend       │◀───▶│  Database       │◀───▶│  SSE Events    │
-│                 │    │                 │    │                 │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
-```
+## 仓库结构
 
-### 核心组件
+### 根目录
 
-#### 1. Snakemake 插件 (`app/plugin/`)
-- **位置**: `app/plugin/`
-- **功能**: 实现 Snakemake 日志接口，捕获工作流执行事件
-- **关键文件**:
-  - `app/plugin/__init__.py` - 插件入口点
-  - `app/plugin/client/cli.py` - CLI 工具
-  - `app/plugin/schemas.py` - 数据模式
+- `README.md`: 对外介绍与快速开始
+- `pyproject.toml`: Python 包定义；`flowo` CLI 和 Snakemake logger entrypoint
+- `frontend/package.json`: 前端依赖与脚本
+- `docker-compose.dev.yml`: 开发环境
+- `docker-compose.yml`: 简化部署
+- `docker/compose.yml`: 单容器部署
+- `docker/compose.multiple.yml`: 多容器部署
+- `env.example`: 主要环境变量模板
+- `tests/`: pytest 测试
 
-#### 2. FastAPI 后端 (`app/`)
-- **位置**: `app/`
-- **功能**: REST API 服务，处理数据存储和实时通知
-- **关键模块**:
-  - `app/main.py` - 应用入口
-  - `app/core/config.py` - 配置管理
-  - `app/core/pg_listener.py` - PostgreSQL 监听器
-  - `app/api/` - API 端点
-  - `app/services/` - 业务逻辑服务
-  - `app/models/` - 数据库模型
-  - `app/schemas/` - Pydantic 模式
+### 后端 `app/`
 
-#### 3. 前端应用 (`frontend/`)
-- **位置**: `frontend/`
-- **功能**: 用户界面，实时监控仪表板
-- **关键目录**:
-  - `frontend/src/routes/` - 页面路由
-  - `frontend/src/components/` - React 组件
-  - `frontend/src/client/` - API 客户端
-  - `frontend/src/hooks/` - 自定义 Hook
+- `app/main.py`: FastAPI 应用入口
+- `app/api/`: HTTP API 路由层
+- `app/core/`: 配置、数据库 session、认证依赖、PostgreSQL listener
+- `app/services/`: 业务逻辑核心；回答“系统实际怎么工作”时优先看这里
+- `app/models/`: SQLAlchemy ORM 模型
+- `app/schemas/`: Pydantic schema
+- `app/plugin/`: Snakemake logger 插件和 CLI
+- `app/alembic/`: 数据库迁移
+- `app/utils/`: 共用工具
 
-#### 4. 数据库模型 (`app/models/`)
-- **核心表结构**:
-  - `user` - 用户信息 (FastAPI Users 集成)
-  - `workflows` - 工作流元数据
-  - `rules` - 规则定义
-  - `jobs` - 任务执行记录
-  - `errors` - 错误日志
-  - `files` - 文件关联
-  - `user_tokens` - API 访问令牌
-  - `catalogs` - 工作流模板目录
-  - `catalog_files` - Catalog 文件内容 (数据库优先存储)
-  - `catalog_file_versions` - 文件版本历史
-  - `system_settings` - 系统设置
-  - `user_settings` - 用户设置
+### 前端 `frontend/src/`
 
-## 数据库设计
+- `routes/`: TanStack Router 路由定义，先看这个理解页面结构
+- `components/`: 页面和业务组件
+- `client/`: 由 OpenAPI 生成的 TS client 和 React Query hooks
+- `hooks/`: 复用逻辑
+- `config/`: 实时更新等前端配置
+- `lib/`, `utils/`: 通用工具
 
-### 核心表关系
-```
-user (1) ────┐
-             │
-             ├── (1:n) ─── workflows (1) ─── (1:n) ─── rules (1) ─── (1:n) ─── jobs
-user_tokens  │                                                      │
-             │                                                      ├── (1:n) ─── files
-             │                                                      └── (1:n) ─── errors
-             │
-             ├── (1:n) ─── catalogs (1) ─── (1:n) ─── catalog_files
-             │                                      │
-             │                                      └── (1:n) ─── catalog_file_versions
-             │
-             └── (1:1) ─── user_settings
-```
+## 关键实现入口
 
-### Catalog 文件存储架构（数据库优先）
+### 1. Snakemake 数据怎么进来
 
-#### 设计原则
-- **单一事实来源**: PostgreSQL 是所有文件内容的唯一来源
-- **自动版本控制**: 每次文件修改自动创建版本记录
-- **只读导出**: 文件系统只是数据库的导出缓存，供 Snakemake 直接读取
+优先阅读：
 
-#### 核心表
-- **catalog_files**: 存储当前最新版本的文件内容
-  - `content`: 文件内容（TEXT 类型，PostgreSQL 自动 TOAST 压缩）
-  - `content_sha256`: 内容哈希，用于去重和校验
-  - `language`: 文件语言类型（python, snakemake, yaml 等）
-  - `current_version`: 当前版本号
+- `app/plugin/client/log_handler.py`
+- `app/plugin/client/parsers.py`
+- `app/api/endpoints/reports.py`
 
-- **catalog_file_versions**: 完整的文件版本历史
-  - `version`: 版本号（自增）
-  - `content`: 历史版本内容
-  - `created_by`: 修改者
-  - `created_at`: 修改时间
+理解重点：
 
-#### 工作流程
-```
-1. 用户在前端编辑文件
-   ↓
-2. 调用 PUT /api/v1/catalog/{slug}/files/{path}
-   ↓
-3. 后端写入 catalog_files 表
-   ↓
-4. 自动创建版本记录到 catalog_file_versions
-   ↓
-5. 异步导出到文件系统（只读缓存）
-   ↓
-6. Snakemake 直接读取导出的文件运行
-```
+- Snakemake logger 捕获 `workflow_started`、`job_started`、`job_finished`、`job_error`、`rulegraph` 等事件
+- 插件通过 HTTP POST 把事件发到后端 `/api/v1/reports/`
+- 插件维护一个 `context`，里面有 `current_workflow_id`、tags、catalog slug、logfile、workdir 等上下文
+- logger `close()` 会向后端补发 workflow close
 
-### Snakemake 官方 workflow 模板（与用户 catalog 分离）
+### 2. 后端主链路
 
-- **目录**: 环境变量 `SNAKEMAKE_WORKFLOW_TEMPLATE_DIR`（默认 `{CONTAINER_MOUNT_PATH}/snakemake-workflow-template`），与 `CATALOG_DIR` 下各用户 slug **分开**；由 `git clone` / `git pull` 维护官方 [snakemake-workflow-template](https://github.com/snakemake-workflows/snakemake-workflow-template)。
-- **API**: `GET|POST|PUT /api/v1/catalog/snake-template...`（[`app/api/endpoints/catalog.py`](app/api/endpoints/catalog.py)）；前端「Snakemake template」→ `/catalog/template`。
-- **CLI**（随 `snakemake-logger-plugin-flowo` 安装，无需把整仓加入 `PYTHONPATH`）: `flowo catalog pull`、`flowo catalog upload`、`flowo catalog new <name> [--output DIR] [--with-git]`（`new` 首次使用时会按需 `git clone` 官方模板到 `SNAKEMAKE_WORKFLOW_TEMPLATE_DIR`）；目录可在 `~/.config/flowo/.env` 覆盖。
-- **依赖**: 运行环境需 `git`。
+优先阅读：
 
-### 实时通知机制
-- **PostgreSQL NOTIFY/LISTEN**: 通过数据库触发器实现实时事件推送
-- **用户级频道**: `user_<user_id>_events` 和 `global_events`
-- **SSE 集成**: 前端通过 Server-Sent Events 接收实时更新
+- `app/main.py`
+- `app/api/__init__.py`
+- `app/api/endpoints/workflows.py`
+- `app/api/endpoints/jobs.py`
+- `app/api/endpoints/summary.py`
+- `app/api/endpoints/catalog.py`
+- `app/api/endpoints/sse.py`
 
-## 开发工作流
+理解重点：
 
-### 1. 环境设置
+- API 基础路径为 `/api/v1`
+- 认证主要由 `fastapi-users` 和 token/JWT 组成
+- workflow/job 读接口面向前端监控页
+- summary 提供 dashboard 聚合统计和系统健康
+- catalog 提供 workflow 模板与文件管理
+- SSE 用 ticket 鉴权，再订阅 PostgreSQL listener 事件流
+
+### 3. 业务逻辑放在哪
+
+优先阅读：
+
+- `app/services/workflow.py`
+- `app/services/job.py`
+- `app/services/summary.py`
+- `app/services/catalog/`
+- `app/services/third_party/`
+
+规则：
+
+- 想知道某个 API 真正返回什么、怎么算的，不要只看 endpoint，优先追到 `services/`
+- `services/third_party/` 包含和 git、snakemake、snakevision 等外部能力的整合
+
+### 4. 前端页面主链路
+
+优先阅读：
+
+- `frontend/src/routes/_authenticated.dashboard.tsx`
+- `frontend/src/components/dashboard/DashboardLayout.tsx`
+- `frontend/src/routes/_authenticated.workflow/$workflowId.tsx`
+- `frontend/src/routes/_authenticated.catalog/$catalogId.tsx`
+- `frontend/src/routes/_authenticated.catalog/template.tsx`
+
+理解重点：
+
+- Dashboard: workflow/job 状态、规则活跃度、错误分布、资源占用、系统健康
+- Workflow detail: DAG、jobs、timeline、Snakefile 或 rule code、结果预览
+- Catalog: workflow 模板浏览、编辑、下载、上传、DAG 预览
+- 前端尽量通过 `frontend/src/client/` 中自动生成的 hooks 调后端
+
+## 目录职责映射
+
+当你在查这类问题时，先看这些文件：
+
+- 认证、注册、登录、token：
+  `app/api/endpoints/auth.py`, `app/api/endpoints/tokens.py`, `app/core/users.py`
+- workflow 列表、详情、进度、rule graph、timeline：
+  `app/api/endpoints/workflows.py`, `app/services/workflow.py`
+- job 列表和 job 级信息：
+  `app/api/endpoints/jobs.py`, `app/services/job.py`
+- dashboard 统计、系统资源、健康检查：
+  `app/api/endpoints/summary.py`, `app/services/summary.py`, `frontend/src/components/dashboard/`
+- 实时更新、事件推送、SSE：
+  `app/api/endpoints/sse.py`, `app/core/pg_listener.py`, `frontend/src/config/`
+- catalog/template 文件浏览、编辑、下载、上传：
+  `app/api/endpoints/catalog.py`, `app/services/catalog/`, `frontend/src/components/catalog/`
+- Snakemake 官方模板同步与 DAG：
+  `app/services/catalog/snake_template.py`, `app/services/third_party/snakevision.py`
+- 输出文件预览：
+  `app/api/endpoints/outputs.py`, `app/api/endpoints/files.py`, `frontend/src/components/features/`
+- 邮件通知、系统设置：
+  `app/services/notification.py`, `app/api/endpoints/settings.py`, `app/models/system_settings.py`
+- 管理员能力：
+  `app/api/endpoints/admin.py`
+
+## 数据流总览
+
+默认把系统理解成这条链：
+
+1. Snakemake 执行 workflow
+2. `flowo` logger 收集事件与上下文
+3. 插件将事件 POST 到后端 `reports` 接口
+4. 后端写入 PostgreSQL 中的 workflow、rule、job、error 等表
+5. 数据库事件通过 `LISTEN/NOTIFY` 进入 `pg_listener`
+6. SSE 将事件流推给前端
+7. 前端收到事件后使 React Query 缓存失效并刷新局部数据
+
+## 数据模型速览
+
+最关键的表：
+
+- `user`: 用户
+- `workflows`: workflow 元数据和整体状态
+- `rules`: 规则定义与代码片段
+- `jobs`: 单个任务执行记录
+- `errors`: workflow 或 job 错误
+- `files`: 输出文件或关联文件
+- `user_tokens`: API token
+- `catalogs`: workflow 模板目录
+- `catalog_files`: 当前文件内容
+- `catalog_file_versions`: 历史版本
+- `system_settings`, `user_settings`: 系统与用户配置
+
+关系上最重要的是：
+
+- 一个 `workflow` 下面有多个 `rules`、`jobs`、`errors`
+- 一个 `catalog` 可以关联多个 workflow
+- catalog 文件内容以数据库为主，文件系统更像导出缓存
+
+## Catalog 相关特别说明
+
+这是本仓库最容易被误解的部分：
+
+- `catalog` 不只是静态文件目录，而是产品能力的一部分
+- 文件内容以数据库表为事实来源，不应默认把磁盘文件当成唯一真相
+- Snakemake 官方 `workflow template` 和用户 catalog 是两套东西
+- 官方模板路径由 `SNAKEMAKE_WORKFLOW_TEMPLATE_DIR` 控制
+- CLI 中 `flowo catalog pull`、`flowo catalog upload`、`flowo catalog new` 是真实用户工作流的一部分
+
+## 前端约定
+
+- 使用 React 19、TypeScript、Vite
+- 路由在 `frontend/src/routes/`
+- API client 通过 `openapi-ts` 生成到 `frontend/src/client/`
+- 优先复用生成的 React Query hooks，不要手写重复 fetch 逻辑
+- 页面问题先看 route，再跳到对应 component
+
+## 后端约定
+
+- FastAPI 路由尽量保持薄，业务逻辑放 `services/`
+- 需要理解返回值结构时，同时看 endpoint、schema、service
+- 需要理解权限时，看 endpoint 里的 `Depends(...)` 和 `app/core/users.py`
+- 需要理解实时事件时，看 `app/core/pg_listener.py` 和 `sse.py`
+
+## 本仓库的事实来源
+
+回答问题时，优先把下面文件视为事实来源：
+
+- 入口和路由：
+  `app/main.py`, `app/api/__init__.py`, `frontend/src/routes/`
+- 包与脚本定义：
+  `pyproject.toml`, `frontend/package.json`
+- 真实业务逻辑：
+  `app/services/`
+- 真实数据结构：
+  `app/models/`, `app/schemas/`
+
+下面这些更适合作为辅助信息，而不是最终事实来源：
+
+- `README.md`
+- `docs/`
+- 历史截图
+- `dist/`, `site/`
+
+## 可先忽略的目录
+
+如果问题和它们无关，默认不要优先读：
+
+- `.git/`
+- `.nox/`
+- `.pytest_cache/`
+- `.mypy_cache/`
+- `.ruff_cache/`
+- `dist/`
+- `site/`
+- `__pycache__/`
+
+## 常用命令
+
+### Python
+
 ```bash
-# 使用 uv 管理依赖
 uv sync
-
-# 使用 nox 运行测试
 nox -s tests
-
-# 开发环境启动
-docker compose -f docker-compose.dev.yml up --build
-```
-
-### 2. 数据库迁移
-```bash
-# 生成迁移
-alembic revision --autogenerate -m "description"
-
-# 应用迁移
-alembic upgrade head
-```
-
-### 3. 代码质量
-```bash
-# 代码格式化
-ruff check --fix
-black .
-
-# 类型检查
-mypy app/
-
-# 运行测试
 pytest tests/
+ruff check .
+black .
 ```
 
-### 4. 构建和部署
-```bash
-# 构建 Python 包
-python -m build
+### 前端
 
-# 单容器部署
-docker compose -f docker/compose.yml up -d
-
-# 多容器部署
-docker compose -f docker/compose.multiple.yml up -d
-```
-
-## 配置管理
-
-### 环境变量配置
-- **主配置文件**: `app/core/config.py` (基于 Pydantic Settings)
-- **环境文件**: `.env` (从 `env.example` 复制)
-- **用户配置**: `~/.config/flowo/.env`
-
-### 关键配置项
-```env
-# 数据库配置
-POSTGRES_DB=flowo_logs
-POSTGRES_USER=flowo
-POSTGRES_PASSWORD=flowo_password
-POSTGRES_HOST=localhost
-POSTGRES_PORT=5432
-
-# 应用配置
-PORT=3100
-DOMAIN=localhost
-PROTOCOL=http
-
-# Flowo 特定配置
-FLOWO_USER_TOKEN=your_token_here
-FLOWO_HOST=http://localhost:3100
-FLOWO_WORKING_PATH=/tmp/flowo_working_dir
-```
-
-## API 设计
-
-### REST API 结构
-- **基础路径**: `/api/v1`
-- **认证**: Bearer Token (JWT)
-- **实时更新**: SSE 端点 `/api/v1/sse`
-
-### 主要端点
-- `GET /api/v1/workflows` - 获取工作流列表
-- `GET /api/v1/workflows/{id}` - 获取工作流详情
-- `GET /api/v1/workflows/{id}/jobs` - 获取任务列表
-- `GET /api/v1/workflows/{id}/timeline` - 获取时间线数据
-- `GET /api/v1/sse` - SSE 实时事件流
-- `POST /api/v1/auth/*` - 认证相关端点
-- `GET /api/v1/catalog/*` - 工作流模板管理
-
-## 前端架构
-
-### 路由结构
-- `/` - 仪表板首页
-- `/workflows` - 工作流列表
-- `/workflows/:id` - 工作流详情
-- `/workflows/:id/jobs` - 任务列表
-- `/workflows/:id/timeline` - 执行时间线
-- `/catalogs` - 模板目录
-- `/settings` - 用户设置
-- `/profile` - 用户资料
-
-### API 客户端自动生成
-
-项目使用 **HeyAPI (openapi-ts)** 从后端 OpenAPI 规范自动生成完整的 TypeScript API 客户端。
-
-#### 配置文件
-```javascript
-// frontend/openapi-ts.config.js
-import { defineConfig } from '@hey-api/openapi-ts';
-
-export default defineConfig({
-  input: 'http://localhost:3100/api/v1/openapi.json',
-  output: 'src/client',
-  plugins: [
-    {
-      baseUrl: false,
-      name: '@hey-api/client-fetch',
-    },
-    {
-      name: '@tanstack/react-query',
-      queryOptions: true,
-      mutationOptions: true,
-      useQuery: true,
-      queryKeys: {
-        tags: true,
-      },
-    },
-  ],
-});
-```
-
-#### 生成命令
 ```bash
 cd frontend
+npm install
+npm run dev
+npm run build
 npm run generate-client
-# 或
-pnpm generate-client
 ```
 
-#### 生成的客户端结构
-```
-frontend/src/client/
-├── @tanstack/react-query.gen.ts  # TanStack Query hooks
-├── client.gen.ts                  # 基础 fetch client
-├── sdk.gen.ts                     # SDK 函数
-├── types.gen.ts                   # TypeScript 类型定义
-├── core/                          # 核心工具
-└── index.ts                       # 入口文件
-```
+### 开发部署
 
-### TanStack Query 集成
-
-自动生成类型安全的 React Query hooks，包括：
-
-#### Query Hooks (GET 请求)
-```typescript
-// 列表查询
-const { data, isLoading } = useListCatalogsQuery({
-  query: { search: 'keyword' },
-});
-
-// 详情查询
-const { data } = useGetCatalogQuery({
-  path: { slug: 'my-workflow' },
-});
-
-// 文件列表
-const { data } = useListFilesQuery({
-  path: { workflowId: 'uuid' },
-});
-```
-
-#### Mutation Hooks (POST/PUT/DELETE 请求)
-```typescript
-import { useMutation } from '@tanstack/react-query';
-import {
-  createCatalogMutation,
-  deleteCatalogMutation,
-  writeFileMutation,
-} from '@/client/@tanstack/react-query.gen';
-
-// 创建 catalog
-const createMutation = useMutation(createCatalogMutation());
-await createMutation.mutateAsync({
-  body: { name: 'New Workflow', description: '...' },
-});
-
-// 删除 catalog
-const deleteMutation = useMutation(deleteCatalogMutation());
-await deleteMutation.mutateAsync({
-  path: { slug: 'my-workflow' },
-});
-
-// 写文件
-const writeMutation = useMutation(writeFileMutation());
-await writeMutation.mutateAsync({
-  path: { slug: 'my-workflow', file_path: 'Snakefile' },
-  body: { content: 'rule all: ...' },
-});
-```
-
-#### Query Keys 管理
-自动生成类型安全的 query keys：
-```typescript
-import {
-  listCatalogsQueryKey,
-  getCatalogQueryKey,
-} from '@/client/@tanstack/react-query.gen';
-
-// 使缓存失效
-queryClient.invalidateQueries({
-  queryKey: listCatalogsQueryKey({}),
-});
-
-// 设置缓存数据
-queryClient.setQueryData(
-  getCatalogQueryKey({ path: { slug: 'my-workflow' } }),
-  newData
-);
-```
-
-### 状态管理
-- **TanStack Query**: 服务器状态管理（数据获取、缓存、重试、乐观更新）
-- **React Context**: 认证状态（用户信息、Token）
-- **本地状态**: React useState/useReducer
-
-### 实时更新
-- **SSE 客户端**: 通过 EventSource 连接 `/api/v1/sse`
-- **自动重连**: 连接断开时自动重试
-- **消息去重**: 避免重复处理相同事件
-- **自动更新**: 收到事件后自动使 TanStack Query 缓存失效
-
-### 典型组件示例
-```tsx
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import {
-  createCatalogMutation,
-  useListCatalogsQuery,
-} from '@/client/@tanstack/react-query.gen';
-
-const CatalogList = () => {
-  const queryClient = useQueryClient();
-  
-  // 查询列表 - 自动处理加载、缓存、重试
-  const { data: catalogs, isLoading } = useListCatalogsQuery({});
-  
-  // 创建 mutation
-  const createMutation = useMutation(createCatalogMutation(), {
-    onSuccess: () => {
-      // 成功后刷新列表
-      queryClient.invalidateQueries({ queryKey: listCatalogsQueryKey({}) });
-    },
-  });
-  
-  return (
-    <div>
-      {catalogs?.map(cat => <div key={cat.id}>{cat.name}</div>)}
-    </div>
-  );
-};
-```
-
-## 插件系统
-
-### Snakemake 集成
-```bash
-# 安装插件
-pip install snakemake-logger-plugin-flowo
-
-# 使用插件
-snakemake --logger flowo \
-    --logger-flowo-name=project_name \
-    --logger-flowo-tags="tag1,tag2"
-```
-
-### CLI 工具
-```bash
-# 生成配置
-flowo generate-config --token YOUR_TOKEN
-
-# 管理模板目录
-flowo catalog pull slug
-flowo catalog upload --path ./catalog
-```
-
-## 部署选项
-
-### 1. 单容器部署 (推荐)
-```bash
-docker compose -f docker/compose.yml up -d
-```
-- 包含: PostgreSQL + Flowo (FastAPI + React + Caddy)
-
-### 2. 多容器部署
-```bash
-docker compose -f docker-compose.multiple.yml up -d
-```
-- 分离: PostgreSQL + FastAPI + React + Caddy
-
-### 3. 开发环境
 ```bash
 docker compose -f docker-compose.dev.yml up --build
 ```
-- 支持热重载和开发工具
 
-## 测试策略
+## 给 Codex/AI 的工作建议
 
-### 测试类型
-1. **单元测试**: 业务逻辑和工具函数
-2. **集成测试**: API 端点和数据库交互
-3. **插件测试**: Snakemake 插件功能
-4. **端到端测试**: 完整工作流测试
+- 先判断问题属于 plugin、backend、frontend、catalog、infra 哪一层
+- 先看 route 或 CLI 入口，再看 service，再看 model 和 schema
+- 不要把 README 文案当成实现真相
+- 遇到 catalog 相关逻辑时，优先确认数据来自数据库还是磁盘导出
+- 遇到实时问题时，优先沿着 `SSE -> pg_listener -> NOTIFY/LISTEN` 追
+- 遇到 workflow 展示问题时，优先沿着 `route -> generated client hook -> endpoint -> service` 追
 
-### 测试工具
-- **pytest**: 主要测试框架
-- **pytest-asyncio**: 异步测试支持
-- **httpx**: HTTP 客户端测试
-- **snakemake**: 插件集成测试
+## 当前匹配性结论
 
-## 监控和日志
+旧版 `AGENTS.md` 与仓库方向基本匹配，但更像项目说明书，不够像 AI 导航，主要问题是：
 
-### 日志记录
-- **结构化日志**: 使用 Python logging 模块
-- **多级别**: DEBUG, INFO, WARNING, ERROR
-- **文件输出**: 工作流执行日志
+- 太偏产品介绍，缺少“先看什么”
+- 缺少问题到文件映射
+- 缺少事实来源优先级
+- 没明确哪些目录可忽略
+- 没体现当前前端真实路由结构和 dashboard、workflow、catalog 入口
 
-### 性能监控
-- **数据库查询优化**: SQLAlchemy 性能调优
-- **实时事件延迟**: SSE 连接监控
-- **内存使用**: 工作流数据处理
-
-## 安全考虑
-
-### 认证和授权
-- **JWT 令牌**: 短期访问令牌
-- **API 令牌**: 长期服务令牌
-- **用户隔离**: 数据访问权限控制
-
-### 数据安全
-- **HTTPS 推荐**: 生产环境必须使用 HTTPS
-- **敏感数据**: 不存储密码明文
-- **文件权限**: 工作目录访问控制
-
-## 扩展和定制
-
-### 自定义插件
-1. 继承 `snakemake_interface_logger_plugins.LoggerPlugin`
-2. 实现事件处理方法
-3. 注册为 Snakemake 日志处理器
-
-### API 扩展
-1. 在 `app/api/endpoints/` 添加新端点
-2. 在 `app/services/` 实现业务逻辑
-3. 在 `app/schemas/` 定义数据模式
-
-### 前端扩展
-1. 在 `frontend/src/routes/` 添加新路由
-2. 在 `frontend/src/components/` 创建新组件
-3. 在 `frontend/src/client/` 添加 API 客户端
-
-## 故障排除
-
-### 常见问题
-1. **数据库连接失败**: 检查 PostgreSQL 配置和网络
-2. **SSE 连接断开**: 检查代理配置和超时设置
-3. **插件配置错误**: 验证令牌和主机 URL
-4. **文件权限问题**: 检查工作目录权限和 UID/GID
-
-### 调试工具
-- **后端日志**: Docker 容器日志
-- **前端开发工具**: React DevTools, TanStack Query DevTools
-- **数据库管理**: pgAdmin 或 psql 客户端
-
-## 贡献指南
-
-### 开发流程
-1. Fork 项目仓库
-2. 创建功能分支
-3. 编写代码和测试
-4. 提交 Pull Request
-5. 代码审查和合并
-
-### 代码规范
-- **Python**: 遵循 PEP 8, 使用 ruff 和 black
-- **TypeScript**: 使用 ESLint 和 Prettier
-- **提交信息**: 使用约定式提交
-
-### 文档要求
-- **API 文档**: OpenAPI/Swagger 自动生成
-- **用户文档**: MkDocs 编写的使用指南
-- **代码注释**: 重要的函数和类需要文档字符串
-
----
-
-*最后更新: 2025-05-07*
-*项目版本: 1.2.0*
-*Python 要求: >=3.12*
+本文件已经按“让 Codex/AI 秒懂架构”的目标重写，后续建议优先维护这里，而不是继续堆长篇背景介绍。

@@ -9,6 +9,21 @@ from app.schemas.util import ServiceStatus
 from app.services.summary import SummaryService
 
 
+class DummyConnection:
+    def __init__(self, fetch_result=1, *, fetch_side_effect=None, closed=False):
+        self._fetch_result = fetch_result
+        self._fetch_side_effect = fetch_side_effect
+        self._closed = closed
+
+    def is_closed(self):
+        return self._closed
+
+    async def fetchval(self, _query):
+        if self._fetch_side_effect is not None:
+            raise self._fetch_side_effect
+        return self._fetch_result
+
+
 @pytest.fixture
 def mock_db_session():
     return AsyncMock()
@@ -161,7 +176,12 @@ async def test_check_database_health_unexpected_error(summary_service, mock_db_s
 
 
 @pytest.mark.asyncio
-async def test_check_sse_health_disconnected(summary_service):
+async def test_check_sse_health_disconnected(summary_service, monkeypatch):
+    monkeypatch.setattr("app.services.summary.pg_listener._connection", None)
+    monkeypatch.setattr(
+        "app.services.summary.pg_listener.refresh_connection_for_health",
+        AsyncMock(return_value=False),
+    )
     status = await summary_service.check_sse_health()
 
     assert status.status == "unhealthy"
@@ -170,8 +190,7 @@ async def test_check_sse_health_disconnected(summary_service):
 
 @pytest.mark.asyncio
 async def test_check_sse_health_healthy(summary_service, monkeypatch):
-    connection = AsyncMock()
-    connection.fetchval.return_value = 1
+    connection = DummyConnection(fetch_result=1, closed=False)
     monkeypatch.setattr("app.services.summary.pg_listener._connection", connection)
     monkeypatch.setattr(
         "app.services.summary.pg_listener._listening_channels", {"a", "b"}
@@ -185,9 +204,14 @@ async def test_check_sse_health_healthy(summary_service, monkeypatch):
 
 @pytest.mark.asyncio
 async def test_check_sse_health_interface_error(summary_service, monkeypatch):
-    connection = AsyncMock()
-    connection.fetchval.side_effect = asyncpg.exceptions.InterfaceError("lost")
+    connection = DummyConnection(
+        fetch_side_effect=asyncpg.exceptions.InterfaceError("lost"), closed=False
+    )
     monkeypatch.setattr("app.services.summary.pg_listener._connection", connection)
+    monkeypatch.setattr(
+        "app.services.summary.pg_listener.refresh_connection_for_health",
+        AsyncMock(return_value=False),
+    )
 
     status = await summary_service.check_sse_health()
 
@@ -197,9 +221,14 @@ async def test_check_sse_health_interface_error(summary_service, monkeypatch):
 
 @pytest.mark.asyncio
 async def test_check_sse_health_connection_error(summary_service, monkeypatch):
-    connection = AsyncMock()
-    connection.fetchval.side_effect = RuntimeError("socket closed")
+    connection = DummyConnection(
+        fetch_side_effect=RuntimeError("socket closed"), closed=False
+    )
     monkeypatch.setattr("app.services.summary.pg_listener._connection", connection)
+    monkeypatch.setattr(
+        "app.services.summary.pg_listener.refresh_connection_for_health",
+        AsyncMock(return_value=False),
+    )
 
     status = await summary_service.check_sse_health()
 
@@ -210,14 +239,21 @@ async def test_check_sse_health_connection_error(summary_service, monkeypatch):
 @pytest.mark.asyncio
 async def test_check_sse_health_outer_error(summary_service, monkeypatch):
     class BrokenConnection:
+        def is_closed(self):
+            return False
+
         async def fetchval(self, _query):
             raise RuntimeError("bad fetch")
 
-    monkeypatch.setattr("app.services.summary.pg_listener", None)
-    monkeypatch.setattr(
-        "app.services.summary.pg_listener",
-        type("BrokenListener", (), {"_connection": BrokenConnection()})(),
-    )
+    class BrokenListener:
+        _connection = BrokenConnection()
+        _listening_channels = set()
+
+        @staticmethod
+        def stats():
+            return {}
+
+    monkeypatch.setattr("app.services.summary.pg_listener", BrokenListener())
 
     status = await summary_service.check_sse_health()
 

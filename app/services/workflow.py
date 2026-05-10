@@ -3,6 +3,7 @@ from collections import Counter, defaultdict
 from datetime import UTC, datetime, timedelta
 from itertools import chain, groupby
 from operator import itemgetter
+from pathlib import Path
 from typing import Any
 
 from fastapi import HTTPException
@@ -233,7 +234,10 @@ class WorkflowService:
         data = []
         for configfile in workflow.configfiles:
             try:
-                content = get_file_content(configfile)
+                target_path = configfile
+                if workflow.directory and not Path(configfile).is_absolute():
+                    target_path = str(Path(workflow.directory) / configfile)
+                content = get_file_content(target_path)
                 content.path = configfile
                 data.append(content)
             except Exception as e:

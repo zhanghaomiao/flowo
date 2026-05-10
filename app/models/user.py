@@ -8,6 +8,7 @@ from .base import Base
 if TYPE_CHECKING:
     from .user_settings import UserSettings
     from .user_token import UserToken
+    from .workflow_event import WorkflowEvent
 
 
 class User(Base, SQLAlchemyBaseUserTableUUID):
@@ -20,4 +21,9 @@ class User(Base, SQLAlchemyBaseUserTableUUID):
         back_populates="user",
         uselist=False,
         cascade="all, delete-orphan",
+    )
+    workflow_events: Mapped[list["WorkflowEvent"]] = relationship(
+        "WorkflowEvent",
+        back_populates="user",
+        passive_deletes=True,
     )

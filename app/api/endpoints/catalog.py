@@ -121,6 +121,11 @@ class CatalogSummary(BaseModel):
     has_snakefile: bool = True
     git_configured: bool = False
     has_dag_preview: bool = False
+    workspace_ready: bool = False
+    workspace_status: str | None = None
+    last_exported_at: str | None = None
+    last_export_error: str | None = None
+    export_revision: int | None = None
 
 
 class CatalogDetail(CatalogSummary):

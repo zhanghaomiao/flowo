@@ -1,16 +1,13 @@
-from datetime import datetime
 from typing import Any
 
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
-from sqlalchemy import exists, select
 from sqlalchemy.orm import Session
 
 from app.api.deps import current_active_user_with_token
 from app.core.session import get_db
-from app.models import Job, Status, User, Workflow
-from app.plugin.server.registry import event_registry
-from app.services.notification import notify_workflow_failure, notify_workflow_success
+from app.models import User
+from app.services.reports import finalize_workflow, ingest_report_event
 
 router = APIRouter()
 
@@ -31,8 +28,13 @@ async def report_event(
     payload.context["flowo_user"] = user.email
     payload.context["flowo_user_id"] = user.id
 
-    # Dispatch event using the new registry
-    event_registry.dispatch(payload.event, payload.record, db, payload.context)
+    ingest_report_event(
+        db,
+        event_name=payload.event,
+        record=payload.record,
+        context=payload.context,
+        user_id=user.id,
+    )
     db.commit()
 
     return {"context": payload.context}
@@ -44,48 +46,4 @@ async def close_workflow(
     user: User = Depends(current_active_user_with_token),
     db: Session = Depends(get_db),
 ):
-    workflow = db.query(Workflow).get(workflow_id)
-    if not workflow:
-        return {"message": "Workflow not found"}
-
-    if workflow.user_id != user.id and not (user.is_superuser):
-        return {"message": "Unauthorized"}
-
-    stmt = select(
-        exists().where(Job.workflow_id == workflow.id, Job.status == Status.ERROR)
-    )
-    has_error = db.scalar(stmt)
-    if has_error:
-        workflow.status = Status.ERROR
-    else:
-        workflow.status = Status.SUCCESS
-
-    workflow.end_time = datetime.now()
-
-    # Auto-pruning: Force update any remaining RUNNING jobs to the workflow terminal status
-    from sqlalchemy import update
-
-    db.execute(
-        update(Job)
-        .where(Job.workflow_id == workflow.id, Job.status == Status.RUNNING)
-        .values(status=workflow.status, end_time=workflow.end_time)
-    )
-
-    db.commit()
-
-    # Send notification based on final status
-    duration = ""
-    if workflow.started_at and workflow.end_time:
-        delta = workflow.end_time - workflow.started_at
-        minutes = int(delta.total_seconds() // 60)
-        seconds = int(delta.total_seconds() % 60)
-        duration = f"{minutes}m {seconds}s"
-
-    if workflow.status == Status.SUCCESS:
-        notify_workflow_success(db, workflow.name or "", user.email, duration)
-    elif workflow.status == Status.ERROR:
-        notify_workflow_failure(
-            db, workflow.name or "", user.email, "Workflow completed with errors"
-        )
-
-    return {"status": workflow.status}
+    return finalize_workflow(db, workflow_id, user)

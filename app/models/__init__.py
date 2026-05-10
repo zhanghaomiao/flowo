@@ -10,11 +10,13 @@ from .user import User
 from .user_settings import UserSettings
 from .user_token import UserToken
 from .workflow import Workflow
+from .workflow_event import WorkflowEvent
 
 __all__ = [
     "Status",
     "FileType",
     "Workflow",
+    "WorkflowEvent",
     "Rule",
     "Job",
     "File",
