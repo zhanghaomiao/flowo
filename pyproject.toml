@@ -64,6 +64,7 @@ server = [
   "passlib[bcrypt]>=1.7.4",
   "snakevision>=1.0.0",
   "pandas>=2.0.0",
+  "fastapi-mcp>=0.4.0",
 ]
 
 # [project.scripts]

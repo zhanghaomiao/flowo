@@ -36,6 +36,19 @@
         }
     }
 
+    # Handle MCP requests
+    handle /mcp* {
+        reverse_proxy {$BACKEND_TARGET:localhost:8000}
+
+        # Apply security headers to MCP routes
+        header {
+            -Server
+            Access-Control-Allow-Origin "*"
+            Access-Control-Allow-Methods "GET, POST, OPTIONS"
+            Access-Control-Allow-Headers "Content-Type, Authorization"
+        }
+    }
+
     # Handle static file serving for work directory
     handle_path /files/* {
         # Handle CORS preflight requests
