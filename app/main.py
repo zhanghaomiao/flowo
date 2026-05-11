@@ -33,9 +33,7 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-mcp = FastApiMCP(
-    app, include_operations=["running_workflows_count", "workflow_progress"]
-)
+mcp = FastApiMCP(app, include_operations=["list_running_workflows"])
 
 mcp.mount_http()
 

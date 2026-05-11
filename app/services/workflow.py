@@ -78,6 +78,22 @@ class WorkflowService:
             catalog_slug=catalog_slug,
         )
 
+    async def _get_progress_data(self, workflow_id: uuid.UUID):
+        result = await self.db_session.execute(
+            select(func.count(Job.id)).where(
+                Job.workflow_id == workflow_id, Job.status == Status.SUCCESS
+            )
+        )
+        success = result.scalar() or 0
+
+        run_info = await self.get_workflow_run_info(workflow_id=workflow_id)
+        if not run_info:
+            return 0, 0, 0
+        total = run_info.get("total", 0)
+        if not total:
+            return 0, success, 0
+        return round((success / total) * 100), success, total
+
     async def list_all_workflows(
         self,
         limit: int | None = None,
@@ -154,8 +170,7 @@ class WorkflowService:
 
         workflow_responses = []
         for workflow in workflows:
-            progress = await self._get_progress(workflow.id)
-            run_info = await self.get_workflow_run_info(workflow_id=workflow.id)
+            progress, success, total = await self._get_progress_data(workflow.id)
             cols = {
                 c.key: getattr(workflow, c.key)
                 for c in inspect(workflow).mapper.column_attrs
@@ -174,7 +189,8 @@ class WorkflowService:
                     configfiles=bool(cols.get("configfiles")),
                     tags=cols.get("tags"),
                     progress=progress,
-                    total_jobs=run_info.get("total", 0),
+                    total_jobs=total,
+                    completed_jobs=success,
                     catalog_id=cols.get("catalog_id"),
                     catalog_slug=catalog_slug,
                 )
@@ -281,21 +297,8 @@ class WorkflowService:
         }
 
     async def _get_progress(self, workflow_id: uuid.UUID):
-        result = await self.db_session.execute(
-            select(func.count(Job.id)).where(
-                Job.workflow_id == workflow_id, Job.status == Status.SUCCESS
-            )
-        )
-        success = result.scalar() or 0
-
-        run_info = await self.get_workflow_run_info(workflow_id=workflow_id)
-        if not run_info:
-            # No DAG job counts yet (``run_info`` event not received).
-            return 0
-        total = run_info.get("total")
-        if not total:
-            return 0
-        return round((success / total) * 100)
+        progress, _, _ = await self._get_progress_data(workflow_id)
+        return progress
 
     async def get_workflow_rule_graph_data(
         self, workflow_id: uuid.UUID

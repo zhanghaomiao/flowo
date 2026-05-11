@@ -19,6 +19,7 @@ class WorkflowResponse(BaseModel):
     tags: list[str] | None = None
     progress: float | None = None
     total_jobs: int
+    completed_jobs: int | None = None
     catalog_id: uuid.UUID | None = None
     catalog_slug: str | None = None
 

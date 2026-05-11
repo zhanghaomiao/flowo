@@ -5,6 +5,7 @@ from typing import Any
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.api.deps import current_active_user_with_token
 from app.core.session import get_async_session
 from app.core.users import current_active_user
 from app.models import Status, User
@@ -193,12 +194,16 @@ async def get_configfiles(
     return await service.get_configfiles(workflow_id=workflow_id)
 
 
-@router.get("/{workflow_id}/progress", response_model=dict[str, float])
+@router.get(
+    "/{workflow_id}/progress",
+    response_model=dict[str, float],
+    operation_id="workflow_progress",
+)
 async def get_progress(
     workflow_id: uuid.UUID,
     return_total_jobs_number: bool = False,
     db: AsyncSession = Depends(get_async_session),
-    user: User = Depends(current_active_user),
+    user: User = Depends(current_active_user_with_token),
 ):
     service = WorkflowService(db)
     wf = await service.get_workflow(workflow_id)
