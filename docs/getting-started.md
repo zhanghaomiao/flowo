@@ -60,7 +60,7 @@ Once set, the "show" command in the user profile and the CLI utility will use th
 
 Start the FlowO web service using our **unified** single image. This is the fastest and most stable way to get started.
 
-You can download the recommended [compose.yml](https://raw.githubusercontent.com/zhanghaomiao/flowo/main/docker/compose.yml) file.
+You can download the recommended [compose.yml](https://raw.githubusercontent.com/zhanghaomiao/flowo/main/compose.yml) file.
 
 ```bash
 # Using pre-built image (Fastest)
@@ -69,7 +69,7 @@ docker compose -f compose.yml up -d
 
 > **Optional: Multiple Containers**
 >
-> If you prefer a microservices-style deployment with separate containers for Backend, Frontend, and Caddy, you can use the [compose.multiple.yml](https://raw.githubusercontent.com/zhanghaomiao/flowo/main/docker/compose.multiple.yml).
+> If you prefer a microservices-style deployment with separate containers for Backend, Frontend, and Caddy, you can use the [compose.multiple.yml](https://raw.githubusercontent.com/zhanghaomiao/flowo/main/compose.multiple.yml).
 >
 > ```bash
 > # Using pre-built images (Advanced)

@@ -1,3 +1,4 @@
+import logging
 import uuid
 from datetime import datetime
 
@@ -25,6 +26,7 @@ from .config import settings
 from .session import get_async_session
 
 SECRET = settings.SECRET_KEY
+logger = logging.getLogger(__name__)
 
 
 class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
@@ -98,7 +100,7 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
         return created_user
 
     async def on_after_register(self, user: User, request: Request | None = None):
-        print(f"User {user.id} has registered.")
+        logger.info("User registered user_id=%s", user.id)
         # Send welcome email
         session = self.user_db.session
         await notify_user_registered(session, user.email)
@@ -106,7 +108,9 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
     async def on_after_forgot_password(
         self, user: User, token: str, request: Request | None = None
     ):
-        print(f"User {user.id} has forgot their password. Reset token: {token}")
+        logger.info(
+            "Password reset requested user_id=%s (token sent via email only)", user.id
+        )
         # Send password reset email
         session = self.user_db.session
         await notify_password_reset(session, user.email, token)
@@ -114,13 +118,16 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
     async def on_after_request_verify(
         self, user: User, token: str, request: Request | None = None
     ):
-        print(f"Verification requested for user {user.id}. Verification token: {token}")
+        logger.info(
+            "Email verification requested user_id=%s (token sent via email only)",
+            user.id,
+        )
         # Send verification email
         session = self.user_db.session
         await notify_verify_email(session, user.email, token)
 
     async def on_after_verify(self, user: User, request: Request | None = None):
-        print(f"User {user.id} has verified their email.")
+        logger.info("User verified email user_id=%s", user.id)
         # Send welcome email now that they are verified
         session = self.user_db.session
         await notify_user_registered(session, user.email)

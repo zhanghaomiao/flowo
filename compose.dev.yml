@@ -26,7 +26,7 @@ services:
       POSTGRES_PORT: 5432
     volumes:
       - ${FLOWO_WORKING_PATH:-.}:${CONTAINER_MOUNT_PATH:-/work_dir}
-      - ./app:/app/app # Mount local app directory for hot-reload
+      - ./app:/app/app
       - ./pyproject.toml:/app/pyproject.toml
       - ./alembic.ini:/app/alembic.ini
     depends_on:
@@ -36,17 +36,15 @@ services:
     ports:
       - "8000:8000"
     restart: unless-stopped
-    # Use uvicorn with --reload for development
     command:
       - sh
       - -c
       - |
         set -e
-        echo '🚀 Starting backend setup...'
+        echo 'Starting backend setup...'
         echo 'Running database migrations...'
-        export PATH="/app/.venv/bin:$PATH"
         /app/.venv/bin/alembic upgrade head
-        echo '✅ Database migrations completed!'
+        echo 'Database migrations completed!'
         echo 'Starting application with reload...'
         exec /app/.venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 
@@ -63,7 +61,6 @@ services:
     restart: unless-stopped
     command: ["sh", "-c", "npm install && npm run dev -- --host 0.0.0.0"]
 
-  # 2. Caddy (作为网关，指向宿主机)
   caddy:
     image: caddy:2-alpine
     container_name: caddy-dev
@@ -72,7 +69,7 @@ services:
     environment:
       BACKEND_TARGET: flowo-backend:8000
       FRONTEND_TARGET: flowo-frontend:5173
-      FRONTEND_PORT: 5173 # Vite dev server port
+      FRONTEND_PORT: 5173
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile
       - ${FLOWO_WORKING_PATH:-.}:${CONTAINER_MOUNT_PATH:-/flowo-data}

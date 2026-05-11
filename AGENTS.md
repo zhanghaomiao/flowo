@@ -45,10 +45,9 @@ Flowo 是一个面向 Snakemake 的工作流观测与管理平台：
 - `README.md`: 对外介绍与快速开始
 - `pyproject.toml`: Python 包定义；`flowo` CLI 和 Snakemake logger entrypoint
 - `frontend/package.json`: 前端依赖与脚本
-- `docker-compose.dev.yml`: 开发环境
-- `docker-compose.yml`: 简化部署
-- `docker/compose.yml`: 单容器部署
-- `docker/compose.multiple.yml`: 多容器部署
+- `compose.yml`: 推荐的单容器部署
+- `compose.multiple.yml`: 可选的多容器部署
+- `compose.dev.yml`: 开发环境
 - `env.example`: 主要环境变量模板
 - `tests/`: pytest 测试
 
@@ -285,7 +284,7 @@ npm run generate-client
 ### 开发部署
 
 ```bash
-docker compose -f docker-compose.dev.yml up --build
+docker compose -f compose.dev.yml up --build
 ```
 
 ## 给 Codex/AI 的工作建议

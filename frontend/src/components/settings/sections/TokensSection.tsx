@@ -28,7 +28,7 @@ import {
   getClientConfigOptions,
   listTokensOptions,
 } from '@/client/@tanstack/react-query.gen';
-import type { UserTokenResponse } from '@/client/types.gen';
+import type { UserTokenSummary } from '@/client/types.gen';
 import { copyTextToClipboard } from '@/utils/clipboard';
 
 import { SectionHeader } from '../shared/SectionHeader';
@@ -90,7 +90,9 @@ export const TokensSection: React.FC = () => {
   };
 
   const getEnvContent = (t: string) => {
-    const tokenLine = t ? `FLOWO_USER_TOKEN=${t}` : '# FLOWO_USER_TOKEN=';
+    const tokenLine = t
+      ? `FLOWO_USER_TOKEN=${t}`
+      : 'FLOWO_USER_TOKEN=<YOUR_TOKEN>';
     return `FLOWO_HOST=${window.location.origin}\n${tokenLine}\nFLOWO_WORKING_PATH=${clientConfig?.FLOWO_WORKING_PATH ?? '<YOUR_WORKING_PATH>'}`;
   };
 
@@ -173,7 +175,7 @@ export const TokensSection: React.FC = () => {
                   </td>
                 </tr>
               ) : (
-                tokens.map((token: UserTokenResponse) => (
+                tokens.map((token: UserTokenSummary) => (
                   <tr key={token.id} className="hover:bg-slate-50">
                     <td className="py-4">
                       <div className="flex items-center gap-3">
@@ -184,8 +186,8 @@ export const TokensSection: React.FC = () => {
                           <div className="font-medium text-slate-800">
                             {token.name || 'Unnamed Token'}
                           </div>
-                          <div className="text-xs text-slate-500 font-mono truncate max-w-[200px]">
-                            {token.id}
+                          <div className="text-xs text-slate-500 font-mono truncate max-w-[240px]">
+                            {token.token_prefix}
                           </div>
                         </div>
                       </div>
@@ -214,7 +216,7 @@ export const TokensSection: React.FC = () => {
                             onClick={() =>
                               setUsageModal({
                                 open: true,
-                                token: token.token || '',
+                                token: '',
                                 name: token.name || 'Unnamed',
                               })
                             }
@@ -380,6 +382,13 @@ export const TokensSection: React.FC = () => {
         width={520}
       >
         <div className="py-4 space-y-6">
+          {!usageModal.token ? (
+            <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+              The full secret is only shown when you create a token. Templates
+              below use <span className="font-mono">&lt;YOUR_TOKEN&gt;</span>.
+              Create a new token if you need the value again.
+            </div>
+          ) : null}
           <Tabs
             items={[
               {

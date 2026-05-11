@@ -1257,7 +1257,33 @@ export type UserTokenList = {
     /**
      * Tokens
      */
-    tokens: Array<UserTokenResponse>;
+    tokens: Array<UserTokenSummary>;
+};
+
+/**
+ * UserTokenSummary
+ */
+export type UserTokenSummary = {
+    /**
+     * Name
+     */
+    name: string;
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * Token Prefix
+     */
+    token_prefix: string;
+    /**
+     * Created At
+     */
+    created_at: string;
+    /**
+     * Expires At
+     */
+    expires_at?: string | null;
 };
 
 /**
@@ -2773,11 +2799,12 @@ export type GetSseTicketResponses = {
 export type StreamEventsData = {
     body?: never;
     path?: never;
-    query: {
+    query?: never;
+    headers: {
         /**
-         * Token
+         * Authorization
          */
-        token: string;
+        Authorization: string;
     };
     url: '/api/v1/sse/events';
 };

@@ -42,12 +42,12 @@ services:
       BACKEND_TARGET: flowo-backend:8000
       FRONTEND_TARGET: flowo-frontend:80
     volumes:
-      - ../Caddyfile:/etc/caddy/Caddyfile
+      - ./Caddyfile:/etc/caddy/Caddyfile
       - ${FLOWO_WORKING_PATH:-.}:${CONTAINER_MOUNT_PATH:-/flowo-data}
       - caddy_data:/data
       - caddy_config:/config
     ports:
-      - "${PORT:-3101}:80"
+      - "${PORT:-3100}:80"
     depends_on:
       - flowo-backend
       - flowo-frontend

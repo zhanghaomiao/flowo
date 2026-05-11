@@ -5,29 +5,41 @@ from datetime import UTC, datetime, timedelta
 from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..models.user_token import UserToken
-from ..schemas.user_token import UserTokenCreate
+from app.core.config import settings
+from app.models.user_token import UserToken
+from app.schemas.user_token import UserTokenCreate
+from app.utils.user_api_token_crypto import (
+    build_token_prefix,
+    hash_user_token,
+)
 
 
 class UserTokenService:
     def __init__(self, db_session: AsyncSession):
         self.db_session = db_session
 
+    def _digest(self, token: str) -> str:
+        return hash_user_token(token, secret=settings.SECRET_KEY)
+
     async def create_token(
         self, user_id: uuid.UUID, data: UserTokenCreate
-    ) -> UserToken:
-        token_str = f"flw_{secrets.token_urlsafe(32)}"
+    ) -> tuple[UserToken, str]:
+        plain = f"flw_{secrets.token_urlsafe(32)}"
         expires_at = None
         if data.ttl_days is not None:
             expires_at = datetime.now(UTC) + timedelta(days=data.ttl_days)
 
         user_token = UserToken(
-            name=data.name, token=token_str, user_id=user_id, expires_at=expires_at
+            name=data.name,
+            token_hash=self._digest(plain),
+            token_prefix=build_token_prefix(plain),
+            user_id=user_id,
+            expires_at=expires_at,
         )
         self.db_session.add(user_token)
         await self.db_session.commit()
         await self.db_session.refresh(user_token)
-        return user_token
+        return user_token, plain
 
     async def list_tokens(self, user_id: uuid.UUID) -> list[UserToken]:
         query = (
@@ -46,7 +58,8 @@ class UserTokenService:
         await self.db_session.commit()
 
     async def verify_token(self, token: str) -> uuid.UUID | None:
-        query = select(UserToken).where(UserToken.token == token)
+        digest = self._digest(token)
+        query = select(UserToken).where(UserToken.token_hash == digest)
         result = await self.db_session.execute(query)
         user_token = result.scalar_one_or_none()
 
@@ -54,7 +67,6 @@ class UserTokenService:
             return None
 
         if user_token.expires_at and user_token.expires_at < datetime.now(UTC):
-            # Token expired
             return None
 
         return user_token.user_id

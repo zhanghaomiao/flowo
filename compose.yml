@@ -27,7 +27,7 @@ services:
     volumes:
       - ${FLOWO_WORKING_PATH:-.}:${CONTAINER_MOUNT_PATH:-/flowo-data}
     ports:
-      - "${PORT:-3101}:80"
+      - "${PORT:-3100}:80"
     depends_on:
       db:
         condition: service_healthy

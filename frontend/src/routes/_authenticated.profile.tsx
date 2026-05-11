@@ -38,7 +38,7 @@ import {
   listTokensQueryKey,
   usersCurrentUserOptions,
 } from '@/client/@tanstack/react-query.gen';
-import { UserTokenResponse } from '@/client/types.gen';
+import type { UserTokenSummary } from '@/client/types.gen';
 import { copyTextToClipboard } from '@/utils/clipboard';
 
 import { useAuth } from '../auth';
@@ -202,7 +202,9 @@ function ProfileComponent() {
 
   const getConfigFileContent = (t: string) => {
     if (!clientConfig) return 'Loading configuration template...';
-    const tokenLine = t ? `FLOWO_USER_TOKEN=${t}` : '# FLOWO_USER_TOKEN=';
+    const tokenLine = t
+      ? `FLOWO_USER_TOKEN=${t}`
+      : 'FLOWO_USER_TOKEN=<YOUR_TOKEN>';
     const host = window.location.origin;
 
     return `FLOWO_HOST=${host}
@@ -239,7 +241,7 @@ FLOWO_WORKING_PATH=${clientConfig.FLOWO_WORKING_PATH}`;
             <>
               <Descriptions layout="vertical" bordered size="small">
                 <Descriptions.Item label="File Content (~/.config/flowo/.env)">
-                  <CodeBlock text={getConfigFileContent(t || '<YOUR_TOKEN>')} />
+                  <CodeBlock text={getConfigFileContent(t)} />
                 </Descriptions.Item>
               </Descriptions>
             </>
@@ -313,18 +315,18 @@ FLOWO_WORKING_PATH=${clientConfig.FLOWO_WORKING_PATH}`;
                   title: 'Action',
                   key: 'action',
                   width: 150,
-                  render: (_: unknown, record: UserTokenResponse) => (
+                  render: (_: unknown, record: UserTokenSummary) => (
                     <Space>
                       <Button
                         size="small"
                         type="link"
                         onClick={() => {
-                          setTargetToken(record.token || '');
+                          setTargetToken('');
                           setTargetTokenName(record.name);
                           setConfigModalVisible(true);
                         }}
                       >
-                        Show
+                        Setup
                       </Button>
                       <Popconfirm
                         title="Delete this token?"
@@ -367,7 +369,16 @@ FLOWO_WORKING_PATH=${clientConfig.FLOWO_WORKING_PATH}`;
             showIcon
             style={{ marginBottom: 16 }}
           />
-          {renderConfigTabs(targetToken || '')}
+          {!targetToken ? (
+            <Alert
+              message="Secret not available from the list"
+              description="The full token is only shown when you create it. Use &lt;YOUR_TOKEN&gt; below, or generate a new token if you lost the secret."
+              type="warning"
+              showIcon
+              style={{ marginBottom: 16 }}
+            />
+          ) : null}
+          {renderConfigTabs(targetToken ?? '')}
         </div>
       </Modal>
 

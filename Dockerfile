@@ -22,6 +22,7 @@ ENV  UV_LINK_MODE=copy \
 COPY --from=caddy-source /usr/bin/caddy /usr/bin/caddy
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
+    git \
     supervisor \
     && rm -rf /var/lib/apt/lists/*
 

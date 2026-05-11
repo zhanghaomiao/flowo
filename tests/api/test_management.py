@@ -1,4 +1,5 @@
 import smtplib
+import uuid
 from datetime import UTC, datetime, timedelta
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -96,11 +97,24 @@ async def test_token_api_lifecycle_and_user_isolation(
     assert user1_create.json()["token"].startswith("flw_")
     assert user1_create.json()["expires_at"] is not None
 
+    stored = (
+        await db.execute(
+            select(UserToken).where(
+                UserToken.id == uuid.UUID(user1_create.json()["id"])
+            )
+        )
+    ).scalar_one()
+    assert len(stored.token_hash) == 64
+    assert stored.token_prefix
+
     list_response = await client.get("/api/v1/tokens/", headers=user1_headers)
     assert list_response.status_code == 200
-    assert [token["name"] for token in list_response.json()["tokens"]] == [
-        "user1-token"
-    ]
+    body = list_response.json()["tokens"]
+    assert [token["name"] for token in body] == ["user1-token"]
+    for row in body:
+        assert "token" not in row
+        assert "token_prefix" in row
+        assert isinstance(row["token_prefix"], str)
 
     other_token_id = user2_create.json()["id"]
     delete_other_response = await client.delete(
