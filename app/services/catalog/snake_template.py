@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 from pathlib import Path
 from typing import Any
 
@@ -13,6 +14,8 @@ from app.plugin.client.template_local import (
     snakemake_template_root,
 )
 from app.services.catalog.utils import _get_file_inventory
+
+logger = logging.getLogger(__name__)
 
 
 def _resolve_safe_path(rel_path: str) -> Path:
@@ -47,6 +50,32 @@ def template_status() -> dict[str, Any]:
         "path": str(root),
         "upstream": SNAKEMAKE_WORKFLOW_TEMPLATE_GIT,
     }
+
+
+def ensure_snakemake_workflow_template_on_startup() -> None:
+    """
+    If the official template checkout is missing or has no ``workflow/`` tree,
+    shallow-clone or ``git pull --ff-only`` once (same semantics as the UI
+    "Pull / update" action). Skips entirely when already valid so restarts do
+    not touch a good checkout. Never raises; logs a warning on failure so the
+    app can still start (e.g. offline or GitHub unreachable).
+    """
+    if template_status()["ready"]:
+        return
+    try:
+        git_pull_or_clone_template()
+    except RuntimeError as exc:
+        logger.warning(
+            "Snakemake workflow template could not be prepared on startup "
+            "(GET /catalog/snake-template may show ready=false; use Pull / update "
+            "or pre-populate SNAKEMAKE_WORKFLOW_TEMPLATE_DIR): %s",
+            exc,
+        )
+    except OSError as exc:
+        logger.warning(
+            "Snakemake workflow template could not be prepared on startup: %s",
+            exc,
+        )
 
 
 def template_inventory() -> list[dict[str, Any]]:

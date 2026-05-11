@@ -1,4 +1,4 @@
-# Flowo Repository Guide
+﻿# Flowo Repository Guide
 
 ## 这份文件的目的
 
@@ -208,8 +208,11 @@ Flowo 是一个面向 Snakemake 的工作流观测与管理平台：
 - `catalog` 不只是静态文件目录，而是产品能力的一部分
 - 文件内容以数据库表为事实来源，不应默认把磁盘文件当成唯一真相
 - Snakemake 官方 `workflow template` 和用户 catalog 是两套东西
-- 官方模板路径由 `SNAKEMAKE_WORKFLOW_TEMPLATE_DIR` 控制
-- CLI 中 `flowo catalog pull`、`flowo catalog upload`、`flowo catalog new` 是真实用户工作流的一部分
+- 官方模板路径由 `SNAKEMAKE_WORKFLOW_TEMPLATE_DIR` 控制（持久化挂载下的缓存目录，不进镜像层）
+- 服务启动时会**尽力**做一次 `ensure`：若目录不存在或缺少 `workflow/`，则与 UI「Pull / update」相同逻辑，浅克隆或 `git pull --ff-only`；若已是完整 checkout，**不会**在每次重启时自动 pull，避免意外改动本地模板。克隆失败不阻塞启动，日志 warning，前端 `catalog/template` 可显示 `ready=false`，用户可再点 Pull 或离线放入模板目录
+- **在线部署**：装好 `git`、能访问 GitHub 时，一般无需手动 pull 即可在首次启动后使用模板页 / 从模板新建
+- **离线部署**：事先把官方仓库内容放到容器内对应路径（默认与 `FLOWO_WORKING_PATH` 挂载一致时，例如宿主机 `${FLOWO_WORKING_PATH}/snakemake-workflow-template` → 容器内 `${CONTAINER_MOUNT_PATH}/snakemake-workflow-template`），保证存在 `workflow/` 目录即可；无需 GitHub
+- CLI 中 `flowo catalog pull`、`flowo catalog upload`、`flowo catalog new` 是真实用户工作流的一部分；`flowo catalog new` 仍可在本机按需 clone，与服务端模板目录互不强制依赖
 
 ## 前端约定
 

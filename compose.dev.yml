@@ -52,6 +52,11 @@ services:
     image: node:22-alpine
     container_name: flowo-frontend-dev
     working_dir: /app
+    env_file:
+      - .env
+    environment:
+      # Comma-separated; passed to Vite (see frontend/vite.config.ts). Set in repo .env, not hardcoded.
+      VITE_DEV_ALLOWED_HOSTS: ${VITE_DEV_ALLOWED_HOSTS:-}
     volumes:
       - ./frontend:/app
     networks:

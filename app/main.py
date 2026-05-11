@@ -1,3 +1,4 @@
+import asyncio
 import logging
 from contextlib import asynccontextmanager
 
@@ -9,6 +10,9 @@ from fastapi.routing import APIRoute
 from .api import api_router
 from .core.config import settings
 from .core.pg_listener import pg_listener
+from .services.catalog.snake_template import (
+    ensure_snakemake_workflow_template_on_startup,
+)
 
 # 配置日志 - 放在所有导入之前
 # 在所有导入之后，配置日志
@@ -29,6 +33,7 @@ def use_route_names_as_operation_ids(app: FastAPI) -> None:
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    await asyncio.to_thread(ensure_snakemake_workflow_template_on_startup)
     await pg_listener.connect()
     yield
     await pg_listener.disconnect()
