@@ -1,24 +1,32 @@
 import os
+import tomllib
 from pathlib import Path
 
 from pydantic import model_validator
 from pydantic_settings import BaseSettings
 
 
+def load_user_toml_defaults() -> None:
+    """Load ~/.config/flowo/config.toml as low-priority environment defaults."""
+    try:
+        config_path = Path.home() / ".config/flowo/config.toml"
+        if not config_path.is_file():
+            return
+        data = tomllib.loads(config_path.read_text(encoding="utf-8"))
+    except (OSError, PermissionError, RuntimeError, tomllib.TOMLDecodeError):
+        return
+
+    for key, value in data.items():
+        if isinstance(value, str):
+            os.environ.setdefault(key, value)
+
+
+load_user_toml_defaults()
+
+
 def get_env_files() -> list[str]:
     """Safely get environment files, avoiding permission errors in containers."""
-    files = []
-    try:
-        # Check for user-level config
-        home_cfg = Path.home() / ".config/flowo/.env"
-        # In Docker, Path.home() might be /root. Check if we have access.
-        if home_cfg.is_file():
-            files.append(str(home_cfg))
-    except (PermissionError, RuntimeError):
-        # Fallback if home directory is restricted
-        pass
-    files.append(".env")
-    return files
+    return [".env"]
 
 
 class Settings(BaseSettings):

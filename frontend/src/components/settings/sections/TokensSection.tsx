@@ -2,6 +2,7 @@ import React from 'react';
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
+  Alert,
   App,
   Button,
   Input,
@@ -10,17 +11,10 @@ import {
   Select,
   Tabs,
   Tooltip,
+  Typography,
 } from 'antd';
 import dayjs from 'dayjs';
-import {
-  Copy,
-  FileText,
-  Fingerprint,
-  Key,
-  Plus,
-  Terminal,
-  Trash2,
-} from 'lucide-react';
+import { Copy, Fingerprint, Key, Plus, Terminal, Trash2 } from 'lucide-react';
 
 import {
   createTokenMutation,
@@ -33,6 +27,14 @@ import { copyTextToClipboard } from '@/utils/clipboard';
 
 import { SectionHeader } from '../shared/SectionHeader';
 import { SettingsCard } from '../shared/SettingsCard';
+
+/** API `ttl_days`: numbers are days; `'never'` omits expiry (discouraged). */
+type TokenTtlChoice = 7 | 30 | 90 | 365 | 'never';
+
+const DEFAULT_TOKEN_TTL: TokenTtlChoice = 90;
+
+const ttlToApi = (c: TokenTtlChoice): number | undefined =>
+  c === 'never' ? undefined : c;
 
 export const TokensSection: React.FC = () => {
   const { message: messageApi } = App.useApp();
@@ -47,24 +49,18 @@ export const TokensSection: React.FC = () => {
   // Creation State
   const [isCreating, setIsCreating] = React.useState(false);
   const [tokenName, setTokenName] = React.useState('');
-  const [tokenTTL, setTokenTTL] = React.useState<number | undefined>(undefined);
+  const [tokenTTL, setTokenTTL] =
+    React.useState<TokenTtlChoice>(DEFAULT_TOKEN_TTL);
   const [generatedToken, setGeneratedToken] = React.useState<string | null>(
     null,
   );
-
-  // Usage Modal State
-  const [usageModal, setUsageModal] = React.useState<{
-    open: boolean;
-    token: string;
-    name: string;
-  }>({ open: false, token: '', name: '' });
 
   const handleCreateToken = async () => {
     try {
       const res = await createTokenMutationHook.mutateAsync({
         body: {
           name: tokenName || `Token-${Date.now()}`,
-          ttl_days: tokenTTL,
+          ttl_days: ttlToApi(tokenTTL),
         },
       });
       queryClient.invalidateQueries({
@@ -89,15 +85,8 @@ export const TokensSection: React.FC = () => {
     }
   };
 
-  const getEnvContent = (t: string) => {
-    const tokenLine = t
-      ? `FLOWO_USER_TOKEN=${t}`
-      : 'FLOWO_USER_TOKEN=<YOUR_TOKEN>';
-    return `FLOWO_HOST=${window.location.origin}\n${tokenLine}\nFLOWO_WORKING_PATH=${clientConfig?.FLOWO_WORKING_PATH ?? '<YOUR_WORKING_PATH>'}`;
-  };
-
-  const getCLICmd = (t: string) =>
-    `flowo generate-config --token ${t || '<YOUR_TOKEN>'} --host ${window.location.origin} --working-path ${clientConfig?.FLOWO_WORKING_PATH ?? '<YOUR_WORKING_PATH>'}`;
+  const getLoginCmd = () =>
+    `flowo login --host ${window.location.origin} --working-path ${clientConfig?.FLOWO_WORKING_PATH ?? '<YOUR_WORKING_PATH>'}`;
 
   const CopyableCode = ({ text }: { text: string }) => (
     <div className="relative group">
@@ -128,7 +117,7 @@ export const TokensSection: React.FC = () => {
         <SectionHeader
           icon={Fingerprint}
           title="API Tokens"
-          subtitle="API Access & Authentication"
+          subtitle="Long-lived secrets for the CLI and Snakemake plugin — shown in full only once when created"
         />
         <Button
           type="primary"
@@ -136,7 +125,7 @@ export const TokensSection: React.FC = () => {
           onClick={() => {
             setGeneratedToken(null);
             setTokenName('');
-            setTokenTTL(undefined);
+            setTokenTTL(DEFAULT_TOKEN_TTL);
             setIsCreating(true);
           }}
           className="h-11 px-6 rounded-xl font-bold bg-sky-600 hover:bg-sky-700 border-none flex items-center gap-2"
@@ -208,24 +197,6 @@ export const TokensSection: React.FC = () => {
                     </td>
                     <td className="py-4 px-4 text-right">
                       <div className="flex items-center justify-end gap-2">
-                        <Tooltip title="Configure">
-                          <Button
-                            type="text"
-                            size="small"
-                            icon={<Terminal size={14} />}
-                            onClick={() =>
-                              setUsageModal({
-                                open: true,
-                                token: '',
-                                name: token.name || 'Unnamed',
-                              })
-                            }
-                            className="text-sky-600"
-                          >
-                            Configure
-                          </Button>
-                        </Tooltip>
-
                         <Popconfirm
                           title="Revoke token?"
                           onConfirm={() => handleDeleteToken(token.id)}
@@ -284,19 +255,28 @@ export const TokensSection: React.FC = () => {
                 <label className="text-sm font-medium text-slate-700 block mb-2">
                   Expiration
                 </label>
-                <Select
+                <Select<TokenTtlChoice>
                   className="w-full"
                   value={tokenTTL}
                   onChange={setTokenTTL}
-                  placeholder="Never expire"
                   options={[
-                    { value: undefined, label: 'Never expire' },
-                    { value: 7, label: '7 Days' },
-                    { value: 30, label: '30 Days' },
-                    { value: 90, label: '90 Days' },
-                    { value: 365, label: '1 Year' },
+                    { value: 90, label: '90 days (recommended)' },
+                    { value: 365, label: '1 year' },
+                    { value: 30, label: '30 days' },
+                    { value: 7, label: '7 days' },
+                    {
+                      value: 'never',
+                      label: 'No expiration (not recommended)',
+                    },
                   ]}
                 />
+                <Typography.Paragraph
+                  type="secondary"
+                  className="!mb-0 mt-2 text-xs"
+                >
+                  Prefer a time limit (for example 90 days or 1 year). You can
+                  rotate tokens anytime from this page.
+                </Typography.Paragraph>
               </div>
             </div>
 
@@ -322,6 +302,20 @@ export const TokensSection: React.FC = () => {
               </div>
             </div>
 
+            <Alert
+              type="warning"
+              showIcon
+              message="This secret is shown only once"
+              description={
+                <span>
+                  Copy it now into a password manager or your cluster secret
+                  store. Flowo cannot display the full value again. For normal
+                  CLI setup, use{' '}
+                  <Typography.Text code>flowo login --host …</Typography.Text>.
+                </span>
+              }
+            />
+
             <CopyableCode text={generatedToken} />
 
             <div className="p-4 bg-slate-50 rounded-lg">
@@ -336,19 +330,7 @@ export const TokensSection: React.FC = () => {
                         <span>CLI Setup</span>
                       </div>
                     ),
-                    children: <CopyableCode text={getCLICmd(generatedToken)} />,
-                  },
-                  {
-                    key: 'env',
-                    label: (
-                      <div className="flex items-center gap-2">
-                        <FileText size={14} />
-                        <span>Environment</span>
-                      </div>
-                    ),
-                    children: (
-                      <CopyableCode text={getEnvContent(generatedToken)} />
-                    ),
+                    children: <CopyableCode text={getLoginCmd()} />,
                   },
                 ]}
               />
@@ -364,67 +346,6 @@ export const TokensSection: React.FC = () => {
             </div>
           </div>
         )}
-      </Modal>
-
-      {/* Usage Modal */}
-      <Modal
-        title={
-          <div className="flex items-center gap-2">
-            <Terminal className="text-sky-500" size={20} />
-            <span className="font-bold text-slate-800">
-              Configure: {usageModal.name}
-            </span>
-          </div>
-        }
-        open={usageModal.open}
-        onCancel={() => setUsageModal({ ...usageModal, open: false })}
-        footer={null}
-        width={520}
-      >
-        <div className="py-4 space-y-6">
-          {!usageModal.token ? (
-            <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
-              The full secret is only shown when you create a token. Templates
-              below use <span className="font-mono">&lt;YOUR_TOKEN&gt;</span>.
-              Create a new token if you need the value again.
-            </div>
-          ) : null}
-          <Tabs
-            items={[
-              {
-                key: 'cli',
-                label: (
-                  <div className="flex items-center gap-2">
-                    <Terminal size={14} />
-                    <span>CLI Command</span>
-                  </div>
-                ),
-                children: <CopyableCode text={getCLICmd(usageModal.token)} />,
-              },
-              {
-                key: 'env',
-                label: (
-                  <div className="flex items-center gap-2">
-                    <FileText size={14} />
-                    <span>.env Template</span>
-                  </div>
-                ),
-                children: (
-                  <CopyableCode text={getEnvContent(usageModal.token)} />
-                ),
-              },
-            ]}
-          />
-
-          <div className="flex justify-end">
-            <Button
-              onClick={() => setUsageModal({ ...usageModal, open: false })}
-              className="rounded-lg"
-            >
-              Close
-            </Button>
-          </div>
-        </div>
       </Modal>
     </div>
   );

@@ -10,13 +10,17 @@ from fastapi import HTTPException
 from sqlalchemy import select
 
 from app.models import Catalog
+from app.services.catalog.catalog_storage import (
+    build_tar_gz_from_db,
+    build_zip_from_db,
+    materialize_catalog_workspace,
+)
 
 from .utils import (
     _read_metadata,
     _slugify,
     assert_catalog_readable,
     assert_catalog_writable,
-    catalog_data_dir,
     collect_catalog_files_for_batch_import,
 )
 
@@ -44,72 +48,9 @@ class CatalogArchiveMixin:
         Returns ``(buffer, disk_slug)`` for attachment filenames (``disk_slug`` is the
         catalog's workspace folder name, not necessarily the same as ``catalog_ref``).
         """
-        import json
-
         cat = await self._resolve_catalog_ref(catalog_ref, user_id)
         assert_catalog_readable(cat, user_id)
-        disk_slug = cat.slug
-
-        catalog_path = catalog_data_dir(cat.owner_id, disk_slug)
-
-        if not catalog_path.exists():
-            raise HTTPException(
-                status_code=404, detail="Catalog filesystem directory not found"
-            )
-
-        # Default .flowoignore content
-        flowoignore_content = "\n".join(
-            [
-                ".snakemake",
-                ".git",
-                "__pycache__",
-                "*.pyc",
-                ".DS_Store",
-                ".ipynb_checkpoints",
-                "node_modules",
-                "results",
-                "logs",
-                "benchmarks",
-                "resources",
-                "output",
-                ".pytest_cache",
-                "flowo_logs",
-            ]
-        )
-
-        buffer = BytesIO()
-        with tarfile.open(fileobj=buffer, mode="w:gz") as tar:
-            tar.add(str(catalog_path), arcname=disk_slug)
-
-            # Inject .flowo.json dynamically (whitelist only portable metadata; no
-            # ``rulegraph_data``, ``dag_preview_*``, or other DB-only / large blobs.)
-            meta = {
-                "id": str(cat.id),
-                "name": cat.name,
-                "slug": disk_slug,
-                "description": cat.description,
-                "version": cat.version,
-                "owner": cat.owner,
-                "tags": cat.tags,
-                "is_public": cat.is_public,
-                "source_url": cat.source_url,
-                "created_at": cat.created_at.isoformat(),
-                "updated_at": cat.updated_at.isoformat(),
-            }
-            meta_json = json.dumps(meta, indent=2, ensure_ascii=False).encode("utf-8")
-            tarinfo_meta = tarfile.TarInfo(name=f"{disk_slug}/.flowo.json")
-            tarinfo_meta.size = len(meta_json)
-            tar.addfile(tarinfo_meta, BytesIO(meta_json))
-
-            # Inject .flowoignore if not exists
-            if not (catalog_path / ".flowoignore").exists():
-                ignore_bytes = flowoignore_content.encode("utf-8")
-                tarinfo_ignore = tarfile.TarInfo(name=f"{disk_slug}/.flowoignore")
-                tarinfo_ignore.size = len(ignore_bytes)
-                tar.addfile(tarinfo_ignore, BytesIO(ignore_bytes))
-
-        buffer.seek(0)
-        return buffer, disk_slug
+        return await build_tar_gz_from_db(self.db_session, cat)
 
     async def import_archive(
         self,
@@ -159,8 +100,6 @@ class CatalogArchiveMixin:
             meta = _read_metadata(extracted)
             slug = meta.get("slug") or _slugify(extracted.name)
 
-            target = catalog_data_dir(owner_id, slug)
-
             if owner_id is not None:
                 dup = (
                     await self.db_session.execute(
@@ -175,14 +114,20 @@ class CatalogArchiveMixin:
                         status_code=409,
                         detail=f"Catalog '{slug}' already exists for this user",
                     )
-
-            if target.exists():
-                raise HTTPException(
-                    status_code=409,
-                    detail=f"Catalog '{slug}' already exists",
-                )
-
-            shutil.move(str(extracted), str(target))
+            else:
+                dup_unowned = (
+                    await self.db_session.execute(
+                        select(Catalog.id).where(
+                            Catalog.slug == slug,
+                            Catalog.owner_id.is_(None),
+                        )
+                    )
+                ).scalar_one_or_none()
+                if dup_unowned:
+                    raise HTTPException(
+                        status_code=409,
+                        detail=f"Catalog '{slug}' already exists",
+                    )
 
             name = meta.get("name") or slug.replace("-", " ").title()
             description = meta.get("description") or ""
@@ -199,14 +144,14 @@ class CatalogArchiveMixin:
                 tags=tags,
                 is_public=bool(meta.get("is_public", False)),
                 source_url=meta.get("source_url"),
+                workspace_status="stale",
             )
             self.db_session.add(new_catalog)
             await self.db_session.commit()
             await self.db_session.refresh(new_catalog)
 
-            files_data = collect_catalog_files_for_batch_import(target)
+            files_data = collect_catalog_files_for_batch_import(extracted)
             if files_data:
-                # result of batch_import_files is returned via self.get_catalog
                 await self.batch_import_files(
                     catalog_ref=str(new_catalog.id),
                     mode="replace",
@@ -217,6 +162,10 @@ class CatalogArchiveMixin:
                     user_id=owner_id,
                 )
 
+            await self.db_session.refresh(new_catalog)
+            await materialize_catalog_workspace(self.db_session, new_catalog)
+            await self.db_session.commit()
+
             return await self.get_catalog(str(new_catalog.id), user_id=owner_id)
 
     async def download_catalog(
@@ -226,67 +175,9 @@ class CatalogArchiveMixin:
 
         Returns ``(zip_path, disk_slug)`` for download filenames.
         """
-        import json
-
         cat = await self._resolve_catalog_ref(catalog_ref, user_id)
         assert_catalog_readable(cat, user_id)
-        disk_slug = cat.slug
-
-        catalog_path = catalog_data_dir(cat.owner_id, disk_slug)
-
-        if not catalog_path.exists():
-            raise HTTPException(
-                status_code=404, detail="Catalog filesystem directory not found"
-            )
-
-        temp_dir = tempfile.mkdtemp()
-        tmp_cat_path = Path(temp_dir) / disk_slug
-        shutil.copytree(catalog_path, tmp_cat_path)
-
-        # Whitelist portable metadata only (no ``dag_preview_*`` / ``rulegraph_data``).
-        meta = {
-            "id": str(cat.id),
-            "name": cat.name,
-            "slug": disk_slug,
-            "description": cat.description,
-            "version": cat.version,
-            "owner": cat.owner,
-            "tags": cat.tags,
-            "is_public": cat.is_public,
-            "source_url": cat.source_url,
-            "created_at": cat.created_at.isoformat(),
-            "updated_at": cat.updated_at.isoformat(),
-        }
-        with open(tmp_cat_path / ".flowo.json", "w") as f:
-            json.dump(meta, f, indent=2, ensure_ascii=False)
-
-        # Inject .flowoignore if missing
-        flowoignore_path = tmp_cat_path / ".flowoignore"
-        if not flowoignore_path.exists():
-            flowoignore_content = "\n".join(
-                [
-                    ".snakemake",
-                    ".git",
-                    "__pycache__",
-                    "*.pyc",
-                    ".DS_Store",
-                    ".ipynb_checkpoints",
-                    "node_modules",
-                    "results",
-                    "logs",
-                    "benchmarks",
-                    "resources",
-                    "output",
-                    ".pytest_cache",
-                    "flowo_logs",
-                ]
-            )
-            flowoignore_path.write_text(flowoignore_content, encoding="utf-8")
-
-        zip_base = Path(temp_dir) / f"catalog_{disk_slug}"
-        zip_path = shutil.make_archive(str(zip_base), "zip", tmp_cat_path)
-
-        return zip_path, disk_slug
+        return await build_zip_from_db(self.db_session, cat)
 
     async def sync_catalog(
         self,
@@ -314,5 +205,8 @@ class CatalogArchiveMixin:
                 author=author,
                 user_id=user.id,
             )
+            cat = await self._resolve_catalog_ref(catalog_ref, user.id)
+            await materialize_catalog_workspace(self.db_session, cat)
+            await self.db_session.commit()
 
         return result

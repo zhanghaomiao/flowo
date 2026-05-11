@@ -25,11 +25,11 @@ from app.core.session import get_async_session
 from app.models.user import User
 from app.schemas import WorkflowListResponse
 from app.services.catalog import CatalogService
-from app.services.catalog.snake_template import (
-    pull_snakemake_workflow_template,
-    read_template_file,
-    template_inventory,
-    template_status,
+from app.services.catalog.snake_template_storage import (
+    materialize_snake_template_workspace,
+    pull_snakemake_workflow_template_async,
+    read_template_file_async,
+    template_overview_async,
 )
 from app.services.catalog.utils import (
     _detect_language,
@@ -167,24 +167,26 @@ class SnakeTemplatePullResponse(BaseModel):
 @router.get("/snake-template", response_model=SnakeTemplateOverview)
 async def get_snake_template_overview(
     user: User = Depends(current_active_user_with_token),  # noqa: ARG001
+    session: AsyncSession = Depends(get_async_session),
 ):
     """Status and file tree for the built-in snakemake-workflow-template checkout."""
-    st = template_status()
-    files = template_inventory() if st["ready"] else []
+    data = await template_overview_async(session)
     return SnakeTemplateOverview(
-        ready=st["ready"],
-        path=st["path"],
-        upstream=st["upstream"],
-        files=files,
+        ready=data["ready"],
+        path=data["path"],
+        upstream=data["upstream"],
+        files=data["files"],
     )
 
 
 @router.post("/snake-template/pull", response_model=SnakeTemplatePullResponse)
 async def pull_snake_template(
     user: User = Depends(current_active_user_with_token),  # noqa: ARG001
+    session: AsyncSession = Depends(get_async_session),
 ):
     """Clone or git-pull the official template into ``SNAKEMAKE_WORKFLOW_TEMPLATE_DIR``."""
-    result = pull_snakemake_workflow_template()
+    result = await pull_snakemake_workflow_template_async(session)
+    await session.commit()
     return SnakeTemplatePullResponse(
         status=result["status"],
         action=result["action"],
@@ -196,9 +198,10 @@ async def pull_snake_template(
 async def read_snake_template_file(
     path: str = Query(..., description="Relative path under template root"),
     user: User = Depends(current_active_user_with_token),  # noqa: ARG001
+    session: AsyncSession = Depends(get_async_session),
 ):
     """Read a single file from the template tree."""
-    data = read_template_file(path)
+    data = await read_template_file_async(session, path)
     return CatalogFileContent(
         path=data["path"],
         name=data["name"],
@@ -212,14 +215,17 @@ async def read_snake_template_file(
 @router.get("/snake-template/dag/svg")
 async def get_snake_template_dag_svg(
     user: User = Depends(current_active_user_with_token),  # noqa: ARG001
+    session: AsyncSession = Depends(get_async_session),
 ):
     """Return cached Snakevision SVG for the official template rulegraph."""
-    st = template_status()
+    st = await template_overview_async(session)
     if not st["ready"]:
         raise HTTPException(
             status_code=404,
-            detail="Template not on disk. Pull the template first.",
+            detail="Template not available. Pull the template first.",
         )
+    await materialize_snake_template_workspace(session)
+    await session.commit()
     svg = snake_template_dag_svg_path()
     if svg.is_file() and svg.stat().st_size > 0:
         return FileResponse(svg, media_type="image/svg+xml", filename="dag.svg")
@@ -242,14 +248,17 @@ async def get_snake_template_dag_svg(
 async def trigger_snake_template_dag_svg(
     background_tasks: BackgroundTasks,
     user: User = Depends(current_active_user_with_token),  # noqa: ARG001
+    session: AsyncSession = Depends(get_async_session),
 ):
     """Queue background Snakevision SVG for the built-in Snakemake workflow template."""
-    st = template_status()
+    st = await template_overview_async(session)
     if not st["ready"]:
         raise HTTPException(
             status_code=404,
-            detail="Template not on disk. Pull the template first.",
+            detail="Template not available. Pull the template first.",
         )
+    await materialize_snake_template_workspace(session)
+    await session.commit()
     root = snake_template_workflow_root()
     if not find_snakefile(root):
         raise HTTPException(
@@ -573,6 +582,7 @@ async def trigger_catalog_dag_svg(
     owner_id = cat.owner_id
     disk_slug = cat.slug
     job_key = str(cat.id)
+    await svc.catalog_export_paths_for_dag(catalog_ref, user.id)
     root = catalog_data_dir(owner_id, disk_slug)
     if force:
         clear_cached_dag_artifacts(owner_id, disk_slug)
@@ -586,7 +596,7 @@ async def trigger_catalog_dag_svg(
     if not root.is_dir():
         raise HTTPException(
             status_code=404,
-            detail="Catalog directory not found. Sync or open the catalog first.",
+            detail="Catalog workspace could not be materialized from the database.",
         )
     if not find_snakefile(root):
         raise HTTPException(

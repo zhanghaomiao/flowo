@@ -13,9 +13,6 @@ exclude = [
 ]
 packages = ["app"]
 
-[tool.hatch.build.targets.wheel.sources]
-"app" = "snakemake_logger_plugin_flowo"
-
 [project]
 authors = [
   {name = "Haomiao Zhang", email = "zhanghm@iregene.com"},
@@ -63,7 +60,27 @@ server = [
   "fastapi-users[sqlalchemy]>=15.0.3",
   "passlib[bcrypt]>=1.7.4",
   "snakevision>=1.0.0",
-  "pandas>=2.0.0",
+  "fastapi-mcp>=0.4.0",
+]
+
+[dependency-groups]
+dev = [
+  "pytest>=7.0.0",
+  "pytest-asyncio>=0.21.0",
+  "black>=23.0.0",
+  "ruff>=0.1.0",
+  "mypy>=1.0.0",
+  "pre-commit>=3.5.0",
+  "psycopg2-binary>=2.9.9",
+  "asyncpg>=0.30.0",
+  "alembic>=1.16.1",
+  "fastapi[standard]>=0.115.12",
+  "anytree>=2.13.0",
+  "psutil>=7.0.0",
+  "sse-starlette>=3.1.2",
+  "fastapi-users[sqlalchemy]>=15.0.3",
+  "passlib[bcrypt]>=1.7.4",
+  "snakevision>=1.0.0",
   "fastapi-mcp>=0.4.0",
 ]
 
@@ -74,10 +91,10 @@ server = [
 # flowo = "app.plugin.LogHandler"
 
 [project.scripts]
-flowo = "snakemake_logger_plugin_flowo.plugin.client.cli:main"
+flowo = "app.plugin.client.cli:main"
 
 [project.entry-points."snakemake.log_handlers"]
-flowo = "snakemake_logger_plugin_flowo.plugin.LogHandler"
+flowo = "app:LogHandler"
 
 [tool.ruff]
 exclude = ["app/alembic/"]

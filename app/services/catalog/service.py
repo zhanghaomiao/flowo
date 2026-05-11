@@ -1,6 +1,5 @@
 import shutil
 import uuid
-from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -9,13 +8,22 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models import Catalog
+from app.services.catalog.catalog_storage import (
+    catalog_db_has_snakefile,
+    catalog_file_stats_for_many,
+    file_inventory_from_db_rows,
+    load_catalog_file_rows,
+    materialize_catalog_workspace,
+    read_catalog_file_from_db,
+    upsert_catalog_files,
+    workspace_flags_for_catalog,
+)
 from app.services.third_party.snakevision import dag_svg_path
 
 from .archive import CatalogArchiveMixin
 from .git_ops import CatalogGitMixin
 from .utils import (
     _get_catalog_dir,
-    _get_file_inventory,
     _is_git_configured,
     _validate_path,
     assert_catalog_readable,
@@ -23,37 +31,12 @@ from .utils import (
     catalog_data_dir,
     catalog_export_dir,
     catalog_readable_by_user,
-    workspace_has_snakefile,
 )
 
 DAG_PREVIEW_MAX_BYTES = 5 * 1024 * 1024
 _DAG_PREVIEW_ALLOWED_MIMES = frozenset(
     {"image/png", "image/jpeg", "image/svg+xml", "image/webp"}
 )
-
-
-def _workspace_flags(cat: Catalog, catalog_path: Path) -> dict[str, Any]:
-    """Derive workspace readiness vs persisted workspace_status (hybrid DB + disk)."""
-    path_exists = catalog_path.exists()
-    snakefile_ok = workspace_has_snakefile(catalog_path) if path_exists else False
-    if cat.workspace_status == "stale":
-        status = "stale"
-    elif not path_exists:
-        status = "missing"
-    elif not snakefile_ok:
-        status = "error"
-    else:
-        status = cat.workspace_status or "fresh"
-    return {
-        "workspace_ready": path_exists and snakefile_ok,
-        "has_snakefile": snakefile_ok,
-        "workspace_status": status,
-        "last_exported_at": cat.last_exported_at.isoformat()
-        if cat.last_exported_at
-        else None,
-        "last_export_error": cat.last_export_error,
-        "export_revision": cat.export_revision,
-    }
 
 
 def _catalog_summary(
@@ -213,12 +196,20 @@ class CatalogService(CatalogArchiveMixin, CatalogGitMixin):
         catalogs = result.scalars().all()
 
         git_configured = await _is_git_configured(self.db_session, user_id)
+        stats = await catalog_file_stats_for_many(
+            self.db_session, [c.id for c in catalogs]
+        )
 
         return [
             _catalog_summary(
                 c,
                 git_configured=git_configured,
-                workspace=_workspace_flags(c, catalog_data_dir(c.owner_id, c.slug)),
+                workspace=workspace_flags_for_catalog(
+                    c,
+                    catalog_data_dir(c.owner_id, c.slug),
+                    db_file_count=stats.get(c.id, (0, False))[0],
+                    db_has_snakefile=stats.get(c.id, (0, False))[1],
+                ),
             )
             for c in catalogs
         ]
@@ -231,15 +222,16 @@ class CatalogService(CatalogArchiveMixin, CatalogGitMixin):
         assert_catalog_readable(cat, user_id)
 
         catalog_path = catalog_data_dir(cat.owner_id, cat.slug)
-        ws = _workspace_flags(cat, catalog_path)
-
-        if catalog_path.exists():
-            inventory = _get_file_inventory(catalog_path)
-        else:
-            inventory = []
-
+        rows = await load_catalog_file_rows(self.db_session, cat.id)
+        inventory = file_inventory_from_db_rows(rows)
         file_count = len([f for f in inventory if not f.get("is_dir")])
-        has_snakefile = ws["has_snakefile"]
+        db_has_snake = await catalog_db_has_snakefile(self.db_session, cat.id)
+        ws = workspace_flags_for_catalog(
+            cat,
+            catalog_path,
+            db_file_count=file_count,
+            db_has_snakefile=db_has_snake,
+        )
 
         git_configured = await _is_git_configured(self.db_session, user_id)
 
@@ -258,7 +250,7 @@ class CatalogService(CatalogArchiveMixin, CatalogGitMixin):
             "rulegraph_data": cat.rulegraph_data,
             "files": inventory,
             "file_count": file_count,
-            "has_snakefile": has_snakefile,
+            "has_snakefile": ws["has_snakefile"],
             "categories": {},
             "git_configured": git_configured,
             "has_dag_preview": bool(cat.dag_preview_mime),
@@ -292,9 +284,16 @@ class CatalogService(CatalogArchiveMixin, CatalogGitMixin):
         await self.db_session.refresh(cat)
 
         catalog_path = catalog_data_dir(cat.owner_id, cat.slug)
-        inventory = _get_file_inventory(catalog_path) if catalog_path.exists() else []
+        rows = await load_catalog_file_rows(self.db_session, cat.id)
+        inventory = file_inventory_from_db_rows(rows)
         file_count = len([f for f in inventory if not f.get("is_dir")])
-        ws = _workspace_flags(cat, catalog_path)
+        db_has_snake = await catalog_db_has_snakefile(self.db_session, cat.id)
+        ws = workspace_flags_for_catalog(
+            cat,
+            catalog_path,
+            db_file_count=file_count,
+            db_has_snakefile=db_has_snake,
+        )
 
         return {
             "id": str(cat.id),
@@ -354,42 +353,14 @@ class CatalogService(CatalogArchiveMixin, CatalogGitMixin):
     async def read_file(
         self, catalog_ref: str, file_path: str, user_id: uuid.UUID | None
     ) -> dict[str, Any]:
-        """Read a file directly from the filesystem."""
+        """Read a catalog file from the database (workspace cache not required)."""
         cat = await self._resolve_catalog_ref(catalog_ref, user_id)
         assert_catalog_readable(cat, user_id)
 
-        root = catalog_data_dir(cat.owner_id, cat.slug)
-        if not root.exists():
-            raise HTTPException(
-                status_code=503,
-                detail=(
-                    "Catalog workspace is missing on disk. "
-                    "Batch-import or sync files before reading paths from the workspace."
-                ),
-            )
-        if not workspace_has_snakefile(root):
-            raise HTTPException(
-                status_code=503,
-                detail=(
-                    "Catalog workspace is not execution-ready (no workflow/Snakefile or Snakefile). "
-                    "Fix the workspace layout before reading files."
-                ),
-            )
-
-        full_path = _validate_path(cat.owner_id, cat.slug, file_path)
-        if full_path.exists() and full_path.is_file():
-            content = full_path.read_text(errors="replace")
-            from .utils import _detect_language
-
-            return {
-                "path": file_path,
-                "name": full_path.name,
-                "content": content,
-                "language": _detect_language(file_path),
-                "lines": content.count("\n") + 1,
-                "size": full_path.stat().st_size,
-            }
-        raise HTTPException(status_code=404, detail="File not found")
+        data = await read_catalog_file_from_db(self.db_session, cat.id, file_path)
+        if data is None:
+            raise HTTPException(status_code=404, detail="File not found")
+        return data
 
     async def batch_import_files(
         self,
@@ -401,85 +372,38 @@ class CatalogService(CatalogArchiveMixin, CatalogGitMixin):
         author: str = "system",
         user_id: uuid.UUID | None = None,
     ) -> dict[str, Any]:
-        """Batch write files directly to the filesystem."""
+        """Upsert catalog text files in the database; on-disk workspace becomes stale until materialized."""
         if delete_paths is None:
             delete_paths = []
 
         cat = await self._resolve_catalog_ref(catalog_ref, user_id)
         assert_catalog_writable(cat, user_id)
 
-        root = catalog_data_dir(cat.owner_id, cat.slug)
-        root.mkdir(parents=True, exist_ok=True)
+        summary = await upsert_catalog_files(
+            self.db_session,
+            cat.id,
+            files_data,
+            mode,
+            delete_paths,
+        )
 
-        added = 0
-        modified = 0
-        deleted = 0
-        skipped = 0
-
-        if mode == "replace":
-            incoming_paths = {f["path"] for f in files_data}
-            existing_files = [
-                str(p.relative_to(root))
-                for p in root.rglob("*")
-                if p.is_file() and not str(p.relative_to(root)).startswith(".git")
-            ]
-            for path in existing_files:
-                if path not in incoming_paths:
-                    file_to_del = root / path
-                    if file_to_del.exists():
-                        file_to_del.unlink()
-                        deleted += 1
-
-        for path in delete_paths:
-            file_to_del = root / path
-            if file_to_del.exists() and file_to_del.is_file():
-                file_to_del.unlink()
-                deleted += 1
-
-        for f in files_data:
-            path = f["path"]
-            content = f["content"]
-            dest = root / path
-            dest.parent.mkdir(parents=True, exist_ok=True)
-
-            is_new = not dest.exists()
-            is_changed = True
-            if not is_new:
-                try:
-                    # Compare content to avoid false 'modified' counts
-                    existing_content = dest.read_text(encoding="utf-8")
-                    if existing_content == content:
-                        is_changed = False
-                except Exception:
-                    pass
-
-            if is_changed:
-                dest.write_text(content, encoding="utf-8")
-                if is_new:
-                    added += 1
-                else:
-                    modified += 1
-            else:
-                skipped += 1
-
-        if workspace_has_snakefile(root):
-            cat.workspace_status = "fresh"
+        if await catalog_db_has_snakefile(self.db_session, cat.id):
+            cat.workspace_status = "stale"
             cat.last_export_error = None
         else:
             cat.workspace_status = "error"
-            cat.last_export_error = "Snakefile missing after batch import"
-        cat.last_exported_at = datetime.now(UTC)
-        cat.export_revision = (cat.export_revision or 0) + 1
+            cat.last_export_error = "Snakefile missing in catalog files (expected workflow/Snakefile or Snakefile)"
+
         await self.db_session.commit()
 
         return {
             "status": "completed",
             "summary": {
-                "added": added,
-                "modified": modified,
-                "deleted": deleted,
-                "skipped": skipped,
-                "conflicts": 0,
+                "added": summary["added"],
+                "modified": summary["modified"],
+                "deleted": summary["deleted"],
+                "skipped": summary["skipped"],
+                "conflicts": summary["conflicts"],
             },
         }
 
@@ -489,9 +413,12 @@ class CatalogService(CatalogArchiveMixin, CatalogGitMixin):
         directory_path: str,
         user_id: uuid.UUID | None,
     ) -> dict[str, str]:
-        """Create a new directory in the catalog filesystem."""
+        """Create a directory on the materialized workspace (empty dirs are not stored in the DB)."""
         cat = await self._resolve_catalog_ref(catalog_ref, user_id)
         assert_catalog_writable(cat, user_id)
+
+        await materialize_catalog_workspace(self.db_session, cat)
+        await self.db_session.commit()
 
         full_path = _validate_path(cat.owner_id, cat.slug, directory_path)
         full_path.mkdir(parents=True, exist_ok=True)
@@ -519,13 +446,11 @@ class CatalogService(CatalogArchiveMixin, CatalogGitMixin):
     async def catalog_export_paths_for_dag(
         self, catalog_ref: str, user_id: uuid.UUID
     ) -> tuple[uuid.UUID | None, Path]:
-        """Owner id and catalog **workspace** path (``catalog_data_dir``) for DAG / Snakefile checks.
-
-        Despite the historical name, this is not ``catalog_export_dir``; DAG generation
-        must read the authoritative tree under ``CATALOG_DIR``.
-        """
+        """Owner id and catalog workspace path after materializing from the database."""
         cat = await self._resolve_catalog_ref(catalog_ref, user_id)
         assert_catalog_readable(cat, user_id)
+        await materialize_catalog_workspace(self.db_session, cat)
+        await self.db_session.commit()
         return cat.owner_id, catalog_data_dir(cat.owner_id, cat.slug)
 
     async def set_dag_preview_image(

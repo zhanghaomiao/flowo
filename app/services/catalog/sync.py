@@ -6,8 +6,9 @@ from pathlib import Path
 from sqlalchemy import select
 
 from ...core.config import settings
-from ...models import UserSettings
+from ...models import Catalog, UserSettings
 from ..third_party.git import git_service
+from .catalog_storage import materialize_catalog_workspace
 from .utils import (
     catalog_owner_workspace_root,
 )
@@ -69,6 +70,13 @@ async def sync_catalog_with_git(
             if user_settings and user_settings.git_remote_url:
                 rid = run_id or str(uuid.uuid4())
                 _set_git_backup_status(user_settings, run_id=rid, status="running")
+                await session.commit()
+
+                res_cats = await session.execute(
+                    select(Catalog).where(Catalog.owner_id == user_id)
+                )
+                for cat in res_cats.scalars().all():
+                    await materialize_catalog_workspace(session, cat)
                 await session.commit()
 
                 # Per-user remote: Git repo root is ``CATALOG_DIR/<user_id>/``

@@ -19,6 +19,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from .base import Base
 
 if TYPE_CHECKING:
+    from .catalog_file import CatalogFile
     from .workflow import Workflow
 
 
@@ -73,4 +74,9 @@ class Catalog(Base):
 
     workflows: Mapped[list["Workflow"]] = relationship(
         "Workflow", back_populates="catalog"
+    )
+    catalog_files: Mapped[list["CatalogFile"]] = relationship(
+        "CatalogFile",
+        back_populates="catalog",
+        cascade="all, delete-orphan",
     )

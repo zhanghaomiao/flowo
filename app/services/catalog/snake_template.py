@@ -9,7 +9,6 @@ from typing import Any
 from fastapi import HTTPException
 
 from app.plugin.client.template_local import (
-    SNAKEMAKE_WORKFLOW_TEMPLATE_GIT,
     git_pull_or_clone_template,
     snakemake_template_root,
 )
@@ -43,13 +42,9 @@ def pull_snakemake_workflow_template_cli() -> dict[str, Any]:
 
 
 def template_status() -> dict[str, Any]:
-    root = snakemake_template_root()
-    ready = root.is_dir() and (root / "workflow").is_dir()
-    return {
-        "ready": ready,
-        "path": str(root),
-        "upstream": SNAKEMAKE_WORKFLOW_TEMPLATE_GIT,
-    }
+    from app.services.catalog.snake_template_storage import template_status_sync
+
+    return template_status_sync()
 
 
 def ensure_snakemake_workflow_template_on_startup() -> None:

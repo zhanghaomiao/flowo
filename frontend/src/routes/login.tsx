@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { useMutation } from '@tanstack/react-query';
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router';
@@ -16,8 +16,16 @@ import { useAuth } from '../auth';
 
 export const Route = createFileRoute('/login')({
   component: LoginComponent,
-  validateSearch: (search: Record<string, unknown>): { redirect?: string } => {
+  validateSearch: (
+    search: Record<string, unknown>,
+  ): {
+    cli_device_code?: string;
+    cli_user_code?: string;
+    redirect?: string;
+  } => {
     return {
+      cli_device_code: (search.cli_device_code as string) || undefined,
+      cli_user_code: (search.cli_user_code as string) || undefined,
       redirect: (search.redirect as string) || undefined,
     };
   },
@@ -25,10 +33,15 @@ export const Route = createFileRoute('/login')({
 
 function LoginComponent() {
   const navigate = useNavigate();
-  const { login, isAuthenticated } = useAuth();
-  const { redirect } = Route.useSearch();
+  const { login, isAuthenticated, token } = useAuth();
+  const {
+    cli_device_code: cliDeviceCode,
+    cli_user_code: cliUserCode,
+    redirect,
+  } = Route.useSearch();
   const loginMutation = useMutation(authJwtLoginMutation());
   const forgotMutation = useMutation(resetForgotPasswordMutation());
+  const cliLoginStarted = useRef(false);
   const [isForgotModalVisible, setIsForgotModalVisible] = useState(false);
   const { data: systemInfo } = useGetSystemInfoQuery();
   const allowPublicRegistration =
@@ -39,13 +52,53 @@ function LoginComponent() {
 
   useEffect(() => {
     if (isAuthenticated) {
+      if (cliDeviceCode && cliUserCode) {
+        if (cliLoginStarted.current) return;
+        const approvedKey = `flowo-cli-login-approved:${cliDeviceCode}`;
+        if (sessionStorage.getItem(approvedKey)) return;
+        cliLoginStarted.current = true;
+        sessionStorage.setItem(approvedKey, '1');
+
+        void (async () => {
+          try {
+            const response = await fetch('/api/v1/tokens/cli/approve', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                ...(token ? { Authorization: `Bearer ${token}` } : {}),
+              },
+              body: JSON.stringify({ device_code: cliDeviceCode }),
+            });
+            if (!response.ok) {
+              throw new Error(await response.text());
+            }
+            message.success(`CLI login approved: ${cliUserCode}`);
+            navigate({ to: '/' });
+          } catch {
+            sessionStorage.removeItem(approvedKey);
+            message.error(
+              'Failed to approve CLI login. Please run flowo login again.',
+            );
+          }
+        })();
+        return;
+      }
+
       if (redirect) {
         navigate({ to: redirect });
       } else {
         navigate({ to: '/' });
       }
     }
-  }, [isAuthenticated, navigate, redirect]);
+  }, [
+    cliDeviceCode,
+    cliUserCode,
+    isAuthenticated,
+    message,
+    navigate,
+    redirect,
+    token,
+  ]);
 
   interface LoginFormValues {
     email: string;

@@ -5,6 +5,7 @@ import {
   GitBranch,
   LucideIcon,
   Mail,
+  Plug2,
   Send,
   Shield,
   User as UserIcon,
@@ -16,6 +17,7 @@ import { useAuth } from '@/auth';
 import { AdministrationSection } from './sections/AdministrationSection';
 import { GitSettingsSection } from './sections/GitSettingsSection';
 import { InvitationsSection } from './sections/InvitationsSection';
+import { McpSection } from './sections/McpSection';
 import { ProfileSection } from './sections/ProfileSection';
 import { SMTPSettingsSection } from './sections/SMTPSettingsSection';
 import { TokensSection } from './sections/TokensSection';
@@ -27,6 +29,7 @@ export const SettingsPage: React.FC = () => {
   type TabId =
     | 'profile'
     | 'tokens'
+    | 'mcp'
     | 'git'
     | 'users'
     | 'invites'
@@ -51,6 +54,11 @@ export const SettingsPage: React.FC = () => {
           id: 'tokens' as TabId,
           label: 'API Tokens',
           icon: Fingerprint,
+        },
+        {
+          id: 'mcp' as TabId,
+          label: 'MCP',
+          icon: Plug2,
         },
         {
           id: 'git' as TabId,
@@ -96,6 +104,8 @@ export const SettingsPage: React.FC = () => {
         return <ProfileSection user={user} logout={logout} />;
       case 'tokens':
         return <TokensSection />;
+      case 'mcp':
+        return <McpSection />;
       case 'git':
         return <GitSettingsSection />;
       case 'users':

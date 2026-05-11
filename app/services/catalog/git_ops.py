@@ -8,6 +8,7 @@ from app.core.config import settings
 from app.models import Catalog
 
 from ..third_party.git import git_service
+from .catalog_storage import materialize_catalog_workspace
 from .sync import sync_catalog_with_git
 from .utils import (
     _get_catalog_dir,
@@ -67,12 +68,21 @@ class CatalogGitMixin:
                 continue
 
             slug = git_service._get_slug(catalog_path, rel, "")
+            cat_row = (
+                await self.db_session.execute(
+                    select(Catalog).where(
+                        Catalog.slug == slug,
+                        Catalog.owner_id == user_id,
+                    )
+                )
+            ).scalar_one_or_none()
+            if cat_row is None:
+                continue
 
             files_data = collect_catalog_files_for_batch_import(catalog_path)
             if files_data:
                 res = await self.batch_import_files(
-                    slug=slug,
-                    # Safer default: detect conflicts instead of overwriting local edits.
+                    catalog_ref=str(cat_row.id),
                     mode="merge",
                     commit_message="Git pull sync",
                     files_data=files_data,
@@ -83,6 +93,9 @@ class CatalogGitMixin:
                 if res.get("status") == "conflicts_found":
                     results["conflicts"][slug] = res.get("conflicts", [])
                 else:
+                    await self.db_session.refresh(cat_row)
+                    await materialize_catalog_workspace(self.db_session, cat_row)
+                    await self.db_session.commit()
                     results["updated"].append(slug)
 
         if results["conflicts"]:
@@ -190,5 +203,8 @@ class CatalogGitMixin:
                     author=owner,
                     user_id=user_id,
                 )
+                await self.db_session.refresh(cat)
+                await materialize_catalog_workspace(self.db_session, cat)
+                await self.db_session.commit()
 
         return {"status": "completed", "imported_slugs": list(imported_slugs)}

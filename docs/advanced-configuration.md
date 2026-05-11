@@ -83,10 +83,18 @@ The official [snakemake-workflow-template](https://github.com/snakemake-workflow
 | `BACKEND_CORS_ORIGINS` | List of allowed origins for CORS.                    | No       | `["*"]` |
 | `SQL_ECHO`             | If set to `True`, logs all SQL queries (very noisy). | No       | `False` |
 
+## CLI Authentication
+
+Run `flowo login --host https://your-flowo-host` to authorize the CLI through the browser. The CLI stores credentials in `~/.config/flowo/config.toml` with mode **0600** where the OS allows it. API tokens remain visible in full only once when explicitly created from Settings → API Tokens.
+
+## MCP (assistants)
+
+Model Context Protocol (MCP) URL, Caddy routing, exposed tools, and security notes are documented on a dedicated page: **[MCP integration](mcp.md)**.
+
 ## Hierarchy of Configuration
 
 FlowO looks for environment variables in the following order:
 
 1. Environment variables set in the shell.
-2. The `.env` file in the project root.
-3. The configuration file at `~/.config/flowo/.env` (primarily for the CLI/Plugin).
+2. The CLI configuration file at `~/.config/flowo/config.toml`.
+3. The `.env` file in the project root.

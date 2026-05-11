@@ -53,7 +53,7 @@ Flowo 是一个面向 Snakemake 的工作流观测与管理平台：
 
 ### 后端 `app/`
 
-- `app/main.py`: FastAPI 应用入口
+- `app/main.py`: FastAPI 应用入口（含 `FastApiMCP` 挂载 `/mcp`；说明见 `docs/mcp.md`）
 - `app/api/`: HTTP API 路由层
 - `app/core/`: 配置、数据库 session、认证依赖、PostgreSQL listener
 - `app/services/`: 业务逻辑核心；回答“系统实际怎么工作”时优先看这里

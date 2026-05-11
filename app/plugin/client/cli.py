@@ -3,9 +3,12 @@ import json
 import os
 import shutil
 import tarfile
+import time
+import webbrowser
 import zipfile
 from fnmatch import fnmatch
 from pathlib import Path
+from urllib.parse import urljoin
 
 import httpx
 from tqdm import tqdm
@@ -14,27 +17,25 @@ from ... import logger
 from ...core.config import settings
 
 
-def generate_config(
-    token: str | None = None, host: str | None = None, working_path: str | None = None
-):
+def _write_config(host: str, token: str, working_path: str) -> Path:
     config_dir = Path.home() / ".config/flowo"
     config_dir.mkdir(parents=True, exist_ok=True)
-    config_path = config_dir / ".env"
+    toml_path = config_dir / "config.toml"
 
-    host = host or settings.FLOWO_HOST
-    token = token or settings.FLOWO_USER_TOKEN
-    working_path = working_path or settings.FLOWO_WORKING_PATH
-
-    # Use current settings as defaults
-    template = f"""
-### FlowO API Reporting (Secure)
-FLOWO_HOST={host}
-FLOWO_USER_TOKEN={token}
-FLOWO_WORKING_PATH={working_path}
+    toml_template = f"""
+FLOWO_HOST = {json.dumps(host)}
+FLOWO_USER_TOKEN = {json.dumps(token)}
+FLOWO_WORKING_PATH = {json.dumps(working_path)}
 """
-    with open(config_path, "w") as f:
-        f.write(template.strip())
-    logger.info(f"✅ Config generated at {config_path}")
+    with open(toml_path, "w") as f:
+        f.write(toml_template.strip())
+
+    try:
+        toml_path.chmod(0o600)
+    except OSError:
+        # e.g. Windows or unusual FS
+        pass
+    return toml_path
 
 
 def pull_catalog(slug: str | None = None, path: str = "."):
@@ -43,9 +44,7 @@ def pull_catalog(slug: str | None = None, path: str = "."):
     token = settings.FLOWO_USER_TOKEN
 
     if not token:
-        logger.error(
-            "❌ No API token found. Run: flowo generate-config --token YOUR_TOKEN"
-        )
+        logger.error("❌ No API token found. Run: flowo login --host <your-flowo-host>")
         return
 
     target_dir = Path(path).resolve()
@@ -274,7 +273,7 @@ def upload_catalog(
     host = host or os.environ.get("FLOWO_HOST") or settings.FLOWO_HOST
 
     if not token:
-        logger.error("❌ Token not found. Set FLOWO_USER_TOKEN env var or use --token.")
+        logger.error("❌ Token not found. Run `flowo login --host <url>` first.")
         return
     if not host:
         logger.error("❌ Host not found. Set FLOWO_HOST env var or use --host.")
@@ -418,20 +417,104 @@ def catalog_new_from_template(name: str, output_parent: Path, with_git: bool) ->
     )
 
 
+def login(
+    host: str | None,
+    working_path: str | None,
+    ttl_days: int | None,
+    timeout_seconds: int = 300,
+) -> None:
+    resolved_host = (host or settings.FLOWO_HOST or "").strip().rstrip("/")
+    if not resolved_host:
+        logger.error(
+            "❌ Host not found. Run: flowo login --host https://your-flowo-host"
+        )
+        return
+
+    resolved_working_path = working_path or settings.FLOWO_WORKING_PATH
+    try:
+        with httpx.Client(timeout=15.0) as client:
+            start = client.post(
+                f"{resolved_host}/api/v1/tokens/cli/start",
+                json={"ttl_days": ttl_days},
+            )
+            start.raise_for_status()
+            payload = start.json()
+            device_code = payload["device_code"]
+            user_code = payload["user_code"]
+            interval = int(payload.get("interval_seconds") or 2)
+            login_url = urljoin(
+                f"{resolved_host}/",
+                payload["verification_uri_complete"].lstrip("/"),
+            )
+
+            logger.info("🔐 FlowO device login code: %s", user_code)
+            logger.info("🌐 Opening browser for FlowO login: %s", login_url)
+            if not webbrowser.open(login_url):
+                logger.info("Open this URL in your browser:\n%s", login_url)
+
+            deadline = time.monotonic() + timeout_seconds
+            while time.monotonic() < deadline:
+                time.sleep(interval)
+                poll = client.get(
+                    f"{resolved_host}/api/v1/tokens/cli/poll/{device_code}"
+                )
+                if poll.status_code == 404:
+                    logger.error("❌ Login request expired. Run `flowo login` again.")
+                    return
+                poll.raise_for_status()
+                result = poll.json()
+                if result.get("status") == "pending":
+                    continue
+                token = result.get("token")
+                if not token:
+                    logger.error("❌ Login was approved but no token was returned.")
+                    return
+                config_path = _write_config(resolved_host, token, resolved_working_path)
+                logger.info(
+                    "✅ Login complete. Credentials written to %s (file mode 0600 where supported)",
+                    config_path,
+                )
+                return
+
+            logger.error("❌ Login timed out. Run `flowo login` again when ready.")
+    except httpx.HTTPError as e:
+        logger.error("❌ Login failed: %s", e)
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Flowo Logger Plugin Utility. Documentation: https://flowo-docs.pages.dev/"
     )
     subparsers = parser.add_subparsers(dest="command", help="Sub-commands")
 
-    # Global options (usable with any subcommand, e.g. ``flowo --token X catalog pull``)
-    parser.add_argument("--token", type=str, help="Optional API token")
+    # Global options (usable with any subcommand, e.g. ``flowo --host URL catalog pull``)
     parser.add_argument("--host", type=str, help="Optional API host")
     parser.add_argument("--working-path", type=str, help="Optional working path")
 
-    subparsers.add_parser(
-        "generate-config",
-        help="Write ~/.config/flowo/.env (FLOWO_HOST, FLOWO_USER_TOKEN, FLOWO_WORKING_PATH)",
+    login_parser = subparsers.add_parser(
+        "login",
+        help="Open browser login and write ~/.config/flowo/config.toml with a user API token",
+    )
+    login_parser.add_argument(
+        "--host",
+        type=str,
+        help="Flowo base URL (e.g. https://flowo.example.com); defaults from FLOWO_HOST",
+    )
+    login_parser.add_argument(
+        "--working-path",
+        type=str,
+        help="Working path to write into ~/.config/flowo/config.toml",
+    )
+    login_parser.add_argument(
+        "--ttl-days",
+        type=int,
+        default=90,
+        help="Token lifetime in days (default: 90)",
+    )
+    login_parser.add_argument(
+        "--no-expiry",
+        action="store_true",
+        help="Create a token without an expiration date",
     )
 
     # --- Catalog commands ---
@@ -476,15 +559,19 @@ def main():
 
     args = parser.parse_args()
 
-    if args.command == "generate-config":
-        generate_config(args.token, args.host, args.working_path)
+    if args.command == "login":
+        login(
+            getattr(args, "host", None),
+            args.working_path,
+            None if getattr(args, "no_expiry", False) else args.ttl_days,
+        )
     elif args.command == "catalog":
         if args.cat_cmd == "pull":
             pull_catalog(args.slug, path=getattr(args, "path", "."))
         elif args.cat_cmd == "upload":
             upload_catalog(
                 args.path,
-                token=args.token,
+                token=None,
                 host=args.host,
                 exclude=args.exclude,
             )
