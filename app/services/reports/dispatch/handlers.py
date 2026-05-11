@@ -5,11 +5,12 @@ from typing import Any
 
 from sqlalchemy.orm import Session
 
-from ...core.config import settings
-from ...models import Catalog, Error, File, Job, Rule, Workflow
-from ...models.enums import FileType, Status
-from ...services.notification import notify_workflow_failure, notify_workflow_submitted
-from ..schemas import (
+from app.core.config import settings
+from app.models import Catalog, Error, File, Job, Rule, Workflow
+from app.models.enums import FileType, Status
+from app.services.notification import notify_workflow_failure, notify_workflow_submitted
+from app.services.reports.dispatch.base import BaseEventHandler
+from flowo_common.schemas import (
     ErrorSchema,
     GroupErrorSchema,
     GroupInfoSchema,
@@ -21,7 +22,6 @@ from ..schemas import (
     RunInfoSchema,
     WorkflowStartedSchema,
 )
-from .base import BaseEventHandler
 
 logger = logging.getLogger("snakemake.flowo")
 

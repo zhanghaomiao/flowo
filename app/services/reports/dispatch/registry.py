@@ -2,20 +2,8 @@ from typing import Any
 
 from sqlalchemy.orm import Session
 
-from ..schemas import (
-    ErrorSchema,
-    GroupErrorSchema,
-    GroupInfoSchema,
-    JobErrorSchema,
-    JobFinishedSchema,
-    JobInfoSchema,
-    JobStartedSchema,
-    RuleGraphSchema,
-    RunInfoSchema,
-    WorkflowStartedSchema,
-)
-from .constants import EventName
-from .handlers import (
+from app.services.reports.dispatch.constants import EventName
+from app.services.reports.dispatch.handlers import (
     ErrorHandler,
     GroupErrorHandler,
     GroupInfoHandler,
@@ -26,6 +14,18 @@ from .handlers import (
     RuleGraphHandler,
     RunInfoHandler,
     WorkflowStartedHandler,
+)
+from flowo_common.schemas import (
+    ErrorSchema,
+    GroupErrorSchema,
+    GroupInfoSchema,
+    JobErrorSchema,
+    JobFinishedSchema,
+    JobInfoSchema,
+    JobStartedSchema,
+    RuleGraphSchema,
+    RunInfoSchema,
+    WorkflowStartedSchema,
 )
 
 

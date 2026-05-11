@@ -11,7 +11,7 @@ from fastapi.encoders import jsonable_encoder
 from sqlalchemy.orm import Session
 
 from app.models import Workflow, WorkflowEvent
-from app.plugin.server.registry import event_registry
+from app.services.reports.dispatch.registry import event_registry
 
 
 def _resolve_workflow_id(

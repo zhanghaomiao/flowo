@@ -7,7 +7,6 @@ from sqlalchemy import and_, desc, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models import Catalog, CatalogFile, Status, User, Workflow
-from app.services.catalog import CatalogService
 from app.services.catalog.catalog_storage import (
     catalog_db_has_snakefile,
     count_catalog_files,
@@ -15,6 +14,7 @@ from app.services.catalog.catalog_storage import (
     materialize_catalog_workspace,
     workspace_flags_for_catalog,
 )
+from app.services.catalog.service import CatalogService
 from app.services.catalog.utils import catalog_data_dir
 from app.services.mcp.workflows import duration_seconds, status_value
 from app.services.workflow import WorkflowService

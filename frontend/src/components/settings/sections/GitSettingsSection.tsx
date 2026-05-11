@@ -60,7 +60,7 @@ export const GitSettingsSection: React.FC = () => {
       <SectionHeader
         icon={GitBranch}
         title="Git Repository"
-        subtitle="Manage your workflow synchronization"
+        subtitle="Sync catalog workflows with your Git remote"
       />
       <SettingsCard>
         <Form

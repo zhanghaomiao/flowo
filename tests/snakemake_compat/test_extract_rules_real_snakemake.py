@@ -4,7 +4,7 @@ from pathlib import Path
 import pytest
 from snakemake.api import OutputSettings, ResourceSettings, SnakemakeApi
 
-from app.plugin.client.parsers import _extract_rules
+from snakemake_logger_plugin_flowo.plugin.client.parsers import _extract_rules
 
 pytestmark = pytest.mark.snakemake_compat
 

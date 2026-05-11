@@ -103,7 +103,7 @@ const WorkflowSearch: React.FC<WorkflowSearchProps> = ({
       <div className="flex-1 min-w-[150px] h-full flex items-center px-4 hover:bg-slate-50/50 transition-colors">
         <Search size={16} className="text-slate-400 mr-3 flex-shrink-0" />
         <Input
-          placeholder="Search by name"
+          placeholder="Search runs by name"
           allowClear
           value={localName}
           onChange={handleNameChange}

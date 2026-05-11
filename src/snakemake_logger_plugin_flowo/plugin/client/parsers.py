@@ -2,7 +2,7 @@ import logging
 from logging import LogRecord
 from typing import Any
 
-from ..schemas import (
+from flowo_common.schemas import (
     ErrorSchema,
     GroupErrorSchema,
     GroupInfoSchema,

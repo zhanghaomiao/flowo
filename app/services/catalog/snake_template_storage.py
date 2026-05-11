@@ -14,16 +14,16 @@ from sqlalchemy import delete, func, inspect, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.snake_template import SnakeTemplateFile, SnakeTemplateState
-from app.plugin.client.template_local import (
-    SNAKEMAKE_WORKFLOW_TEMPLATE_GIT,
-    git_pull_or_clone_template,
-    snakemake_template_root,
-)
 from app.services.catalog.catalog_storage import (
     file_inventory_from_stored_rows,
     normalize_text_file_payload,
 )
+from app.services.catalog.snake_template import git_pull_or_clone_template
+from app.services.catalog.snake_template_paths import snakemake_template_root
 from app.services.catalog.utils import collect_catalog_files_for_batch_import
+from snakemake_logger_plugin_flowo.plugin.client.template_local import (
+    SNAKEMAKE_WORKFLOW_TEMPLATE_GIT,
+)
 
 logger = logging.getLogger(__name__)
 

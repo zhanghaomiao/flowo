@@ -12,8 +12,8 @@ import {
   ChevronRight,
   Command,
   Library,
+  PlayCircle,
   Settings2,
-  Workflow,
 } from 'lucide-react';
 
 import { type AuthContextType } from '../auth';
@@ -39,7 +39,7 @@ function RootComponent() {
   }
 
   const navItems = [
-    { label: 'Workflows', to: '/', icon: Workflow },
+    { label: 'Runs', to: '/', icon: PlayCircle },
     { label: 'Catalog', to: '/catalog', icon: Library },
     {
       label: 'Dashboard',

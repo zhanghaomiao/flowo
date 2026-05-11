@@ -6,6 +6,7 @@ classes have the expected constructor signatures across snakemake versions.
 
 import importlib.util
 import inspect
+import logging
 from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
@@ -75,7 +76,7 @@ def test_create_filter_and_formatter_via_version_compat_helpers():
     """
     from unittest.mock import MagicMock
 
-    from app.plugin.client.log_handler import FlowoLogHandler
+    from snakemake_logger_plugin_flowo.plugin.client.log_handler import FlowoLogHandler
 
     mock_settings = MagicMock()
     mock_settings.quiet = []
@@ -209,7 +210,7 @@ def test_event_names_match_snakemake_log_events():
 
     snakemake_events = {e.value for e in LogEvent}
 
-    # Events we handle (from app/plugin/server/constants.py)
+    # Events we handle (from app/services/reports/dispatch/constants.py)
     our_events = {
         "workflow_started",
         "run_info",
@@ -316,7 +317,9 @@ def test_output_settings_exposes_all_used_attributes():
 
 def test_log_handler_settings_dataclass_instantiation():
     """LogHandlerSettings must be instantiable with default values."""
-    from app.plugin.client.log_handler import LogHandlerSettings
+    from snakemake_logger_plugin_flowo.plugin.client.log_handler import (
+        LogHandlerSettings,
+    )
 
     settings = LogHandlerSettings()
     assert settings is not None
@@ -341,7 +344,7 @@ def test_log_handler_settings_dataclass_instantiation():
 
 def test_log_handler_class_has_required_properties():
     """LogHandler must implement all properties required by LogHandlerBase."""
-    from app.plugin.client.log_handler import LogHandler
+    from snakemake_logger_plugin_flowo.plugin.client.log_handler import LogHandler
 
     required_props = [
         "writes_to_stream",
@@ -364,7 +367,7 @@ def test_flowo_log_handler_close_sends_request_and_closes_client():
     """Verify that close() sends a close report if a workflow ID is present."""
     from unittest.mock import MagicMock, patch
 
-    from app.plugin.client.log_handler import FlowoLogHandler
+    from snakemake_logger_plugin_flowo.plugin.client.log_handler import FlowoLogHandler
 
     mock_settings = MagicMock()
     mock_settings.dryrun = False
@@ -375,15 +378,20 @@ def test_flowo_log_handler_close_sends_request_and_closes_client():
     mock_settings.printshellcmds = False
 
     with (
-        patch("app.plugin.client.log_handler.httpx.Client") as mock_client_cls,
-        patch("app.plugin.client.log_handler.settings") as mock_app_settings,
+        patch(
+            "snakemake_logger_plugin_flowo.plugin.client.log_handler.httpx.Client"
+        ) as mock_client_cls,
+        patch(
+            "snakemake_logger_plugin_flowo.plugin.client.log_handler.get_client_settings"
+        ) as mock_get_cs,
     ):
         mock_client = MagicMock()
         mock_client.is_closed = False
         mock_client_cls.return_value = mock_client
-        mock_app_settings.FLOWO_USER_TOKEN = "test-token"
-        mock_app_settings.FLOWO_HOST = "http://localhost"
-        mock_app_settings.API_V1_STR = "/api/v1"
+        mock_cs = MagicMock()
+        mock_cs.FLOWO_USER_TOKEN = "test-token"
+        mock_cs.FLOWO_HOST = "http://localhost"
+        mock_get_cs.return_value = mock_cs
 
         handler = FlowoLogHandler(mock_settings)
         handler.context["current_workflow_id"] = "test-wf-id"
@@ -411,11 +419,13 @@ def _make_common_settings():
 
 
 def test_emit_ignores_unknown_events_without_reporting():
-    from app.plugin.client.log_handler import FlowoLogHandler
+    from snakemake_logger_plugin_flowo.plugin.client.log_handler import FlowoLogHandler
 
     with (
         patch.object(FlowoLogHandler, "_init_file_handler", return_value=MagicMock()),
-        patch("app.plugin.client.log_handler.httpx.Client") as mock_client_cls,
+        patch(
+            "snakemake_logger_plugin_flowo.plugin.client.log_handler.httpx.Client"
+        ) as mock_client_cls,
     ):
         mock_client_cls.return_value = MagicMock(is_closed=False)
         handler = FlowoLogHandler(_make_common_settings())
@@ -425,11 +435,13 @@ def test_emit_ignores_unknown_events_without_reporting():
 
 
 def test_emit_supports_enum_value_and_string_event_names():
-    from app.plugin.client.log_handler import FlowoLogHandler
+    from snakemake_logger_plugin_flowo.plugin.client.log_handler import FlowoLogHandler
 
     with (
         patch.object(FlowoLogHandler, "_init_file_handler", return_value=MagicMock()),
-        patch("app.plugin.client.log_handler.httpx.Client") as mock_client_cls,
+        patch(
+            "snakemake_logger_plugin_flowo.plugin.client.log_handler.httpx.Client"
+        ) as mock_client_cls,
     ):
         mock_client_cls.return_value = MagicMock(is_closed=False)
         handler = FlowoLogHandler(_make_common_settings())
@@ -455,11 +467,13 @@ def test_emit_supports_enum_value_and_string_event_names():
 
 
 def test_emit_workflow_started_collects_configfiles_before_reporting():
-    from app.plugin.client.log_handler import FlowoLogHandler
+    from snakemake_logger_plugin_flowo.plugin.client.log_handler import FlowoLogHandler
 
     with (
         patch.object(FlowoLogHandler, "_init_file_handler", return_value=MagicMock()),
-        patch("app.plugin.client.log_handler.httpx.Client") as mock_client_cls,
+        patch(
+            "snakemake_logger_plugin_flowo.plugin.client.log_handler.httpx.Client"
+        ) as mock_client_cls,
     ):
         mock_client_cls.return_value = MagicMock(is_closed=False)
         handler = FlowoLogHandler(_make_common_settings())
@@ -491,18 +505,23 @@ def test_emit_workflow_started_collects_configfiles_before_reporting():
 
 
 def test_send_to_api_skips_requests_when_token_is_missing():
-    from app.plugin.client.log_handler import FlowoLogHandler
+    from snakemake_logger_plugin_flowo.plugin.client.log_handler import FlowoLogHandler
 
     with (
         patch.object(FlowoLogHandler, "_init_file_handler", return_value=MagicMock()),
-        patch("app.plugin.client.log_handler.httpx.Client") as mock_client_cls,
-        patch("app.plugin.client.log_handler.settings") as mock_app_settings,
+        patch(
+            "snakemake_logger_plugin_flowo.plugin.client.log_handler.httpx.Client"
+        ) as mock_client_cls,
+        patch(
+            "snakemake_logger_plugin_flowo.plugin.client.log_handler.get_client_settings"
+        ) as mock_get_cs,
     ):
         mock_client = MagicMock(is_closed=False)
         mock_client_cls.return_value = mock_client
-        mock_app_settings.FLOWO_USER_TOKEN = ""
-        mock_app_settings.FLOWO_HOST = "http://localhost"
-        mock_app_settings.API_V1_STR = "/api/v1"
+        mock_cs = MagicMock()
+        mock_cs.FLOWO_USER_TOKEN = ""
+        mock_cs.FLOWO_HOST = "http://localhost"
+        mock_get_cs.return_value = mock_cs
         handler = FlowoLogHandler(_make_common_settings())
         handler._send_to_api("run_info", {"stats": {"total": 1}})
 
@@ -510,13 +529,14 @@ def test_send_to_api_skips_requests_when_token_is_missing():
 
 
 def test_log_handler_post_init_initializes_base_handler_and_validates_path():
-    from app.plugin.client.log_handler import (
+    from snakemake_logger_plugin_flowo.plugin.client.log_handler import (
         FlowoLogHandler,
         LogHandler,
         LogHandlerSettings,
     )
 
     handler = LogHandler.__new__(LogHandler)
+    logging.Handler.__init__(handler)
     handler.common_settings = _make_common_settings()
     handler.settings = LogHandlerSettings(name="compat", tags="alpha,beta")
 
@@ -533,17 +553,22 @@ def test_log_handler_post_init_initializes_base_handler_and_validates_path():
         handler.common_settings,
         flowo_project_name="compat",
         flowo_tags="alpha,beta",
+        flowo_catalog_slug=None,
     )
     validate_path.assert_called_once_with(handler)
+    # Avoid logging shutdown calling FlowoLogHandler.close on this partial instance.
+    handler.close = lambda: None  # type: ignore[method-assign]
 
 
 def test_emit_forwards_group_and_error_events_with_valid_payloads():
-    from app.plugin.client.log_handler import FlowoLogHandler
-    from app.plugin.schemas import ErrorSchema, GroupErrorSchema, GroupInfoSchema
+    from flowo_common.schemas import ErrorSchema, GroupErrorSchema, GroupInfoSchema
+    from snakemake_logger_plugin_flowo.plugin.client.log_handler import FlowoLogHandler
 
     with (
         patch.object(FlowoLogHandler, "_init_file_handler", return_value=MagicMock()),
-        patch("app.plugin.client.log_handler.httpx.Client") as mock_client_cls,
+        patch(
+            "snakemake_logger_plugin_flowo.plugin.client.log_handler.httpx.Client"
+        ) as mock_client_cls,
     ):
         mock_client_cls.return_value = MagicMock(is_closed=False)
         handler = FlowoLogHandler(_make_common_settings())

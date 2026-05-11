@@ -1,12 +1,16 @@
 import React, { useMemo, useState } from 'react';
 
-import { App, Segmented, Typography } from 'antd';
+import { App, Input, Segmented, Typography } from 'antd';
 import {
   Bot,
   Code2,
   Copy,
   Globe2,
+  Library,
+  LucideIcon,
+  PlayCircle,
   Plug2,
+  Search,
   Terminal,
   Wrench,
 } from 'lucide-react';
@@ -18,39 +22,168 @@ import { SettingsCard } from '../shared/SettingsCard';
 
 type ClientKey = 'claude' | 'codex' | 'gemini' | 'opencode' | 'cursor';
 
-const MCP_TOOL_GROUPS = [
+type McpToolItem = {
+  /** MCP operation id (matches backend; shown for copy/debug). */
+  name: string;
+  /** Human-readable name in the UI (runs vs catalog workflows). */
+  label: string;
+  description: string;
+};
+
+type McpToolGroup = {
+  id: string;
+  title: string;
+  subtitle?: string;
+  icon: LucideIcon;
+  tools: McpToolItem[];
+};
+
+/** Mirrors `include_operations` in app/main.py — keep in sync when MCP tools change. */
+const MCP_TOOL_GROUPS: McpToolGroup[] = [
   {
-    title: 'Find',
+    id: 'runs',
+    title: 'Runs',
+    subtitle:
+      'Snakemake execution records. Operation ids use "run" wording; REST paths still use /workflows/... and workflow_id.',
+    icon: PlayCircle,
     tools: [
-      'list_workflows',
-      'get_latest_workflow',
-      'list_running_workflows',
-      'list_recent_failed_workflows',
+      {
+        name: 'list_runs',
+        label: 'List runs',
+        description:
+          'Search runs by status, name, catalog workflow, tag, or time window.',
+      },
+      {
+        name: 'get_latest_run',
+        label: 'Get latest run',
+        description:
+          'Resolve the most recent run when you have filters but no run id yet.',
+      },
+      {
+        name: 'list_running_runs',
+        label: 'List running runs',
+        description: 'Runs in progress with progress-oriented context.',
+      },
+      {
+        name: 'list_recent_failed_runs',
+        label: 'List recent failed runs',
+        description: 'Recent failed runs and their latest errors.',
+      },
+      {
+        name: 'summarize_run',
+        label: 'Summarize run',
+        description:
+          'Status, jobs, rules, errors, and file signals for one run id.',
+      },
+      {
+        name: 'summarize_latest_run',
+        label: 'Summarize latest run',
+        description: 'Summarize the latest run matching natural filters.',
+      },
+      {
+        name: 'get_run_timeline',
+        label: 'Run timeline',
+        description: 'Job timeline and slowest steps for one run.',
+      },
+      {
+        name: 'diagnose_run_failure',
+        label: 'Diagnose run failure',
+        description: 'Failed jobs, logs, and errors for one run id.',
+      },
+      {
+        name: 'diagnose_latest_failed_run',
+        label: 'Diagnose latest failed run',
+        description:
+          'Latest failed run using name, catalog workflow, or tag filters.',
+      },
+      {
+        name: 'list_run_outputs',
+        label: 'List run outputs',
+        description:
+          'Outputs for one run (optional suffix such as bam or vcf).',
+      },
+      {
+        name: 'trace_run_output',
+        label: 'Trace run output',
+        description:
+          'Trace one output path back to rule, job, inputs, and command.',
+      },
     ],
   },
   {
-    title: 'Inspect',
+    id: 'catalog',
+    title: 'Catalog',
+    subtitle:
+      'Workflows stored in the Flowo catalog (template, Git import, or upload). Operation ids use "catalog_workflow" where relevant.',
+    icon: Library,
     tools: [
-      'summarize_workflow',
-      'summarize_latest_workflow',
-      'get_workflow_timeline',
+      {
+        name: 'list_catalog_workflows',
+        label: 'List workflows',
+        description:
+          'Catalog workflows you can access—filter by name, description, or tags.',
+      },
+      {
+        name: 'get_catalog_workflow_overview',
+        label: 'Workflow overview',
+        description:
+          'Metadata, file tree, and workspace state for one catalog workflow.',
+      },
+      {
+        name: 'read_catalog_workflow_file',
+        label: 'Read workflow file',
+        description:
+          'Read one text file from the stored workflow in the catalog.',
+      },
+      {
+        name: 'search_catalog_workflow_files',
+        label: 'Search workflow files',
+        description: 'Search paths and content inside one catalog workflow.',
+      },
+      {
+        name: 'summarize_catalog_workflow',
+        label: 'Summarize workflow',
+        description:
+          'Structured summary of one catalog workflow without an external LLM.',
+      },
+      {
+        name: 'list_runs_for_catalog_workflow',
+        label: 'List runs for a workflow',
+        description: 'Runs that were executed from a given catalog workflow.',
+      },
+      {
+        name: 'materialize_catalog_workflow_workspace',
+        label: 'Materialize workflow workspace',
+        description:
+          'Rebuild the on-disk Snakemake workspace from stored files (does not change DB rows).',
+      },
     ],
   },
-  {
-    title: 'Diagnose',
-    tools: ['diagnose_workflow_failure', 'diagnose_latest_failed_workflow'],
-  },
-  {
-    title: 'Outputs',
-    tools: ['list_workflow_outputs', 'trace_output'],
-  },
-] as const;
+];
 
 export const McpSection: React.FC = () => {
   const { message: messageApi } = App.useApp();
   const [selectedClient, setSelectedClient] = useState<ClientKey>('claude');
+  const [toolQuery, setToolQuery] = useState('');
 
   const mcpBaseUrl = useMemo(() => `${window.location.origin}/mcp`, []);
+
+  const filteredGroups = useMemo(() => {
+    const q = toolQuery.trim().toLowerCase();
+    if (!q) return MCP_TOOL_GROUPS;
+
+    return MCP_TOOL_GROUPS.map((group) => ({
+      ...group,
+      tools: group.tools.filter(
+        (t) =>
+          t.name.toLowerCase().includes(q) ||
+          t.label.toLowerCase().includes(q) ||
+          t.description.toLowerCase().includes(q) ||
+          group.title.toLowerCase().includes(q) ||
+          (group.subtitle?.toLowerCase().includes(q) ?? false),
+      ),
+    })).filter((g) => g.tools.length > 0);
+  }, [toolQuery]);
 
   const clientConfigs = useMemo(
     () => [
@@ -286,29 +419,92 @@ export const McpSection: React.FC = () => {
             </div>
           </div>
 
-          <div className="border-t border-slate-100 pt-4">
-            <div className="flex items-center gap-2 mb-3">
-              <Wrench size={16} className="text-sky-600" />
-              <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-                Tools
-              </span>
-            </div>
-            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-              {MCP_TOOL_GROUPS.map((group) => (
-                <div key={group.title} className="space-y-2">
-                  <div className="text-[11px] font-bold text-slate-500">
-                    {group.title}
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    {group.tools.map((tool) => (
-                      <Typography.Text key={tool} code className="text-xs">
-                        {tool}
-                      </Typography.Text>
-                    ))}
-                  </div>
+          <div className="border-t border-slate-100 pt-4 space-y-4">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+              <div className="flex items-center gap-2">
+                <Wrench size={16} className="text-sky-600 shrink-0" />
+                <div>
+                  <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                    Available tools
+                  </span>
+                  <p className="text-sm text-slate-600 m-0 mt-0.5">
+                    Shown name is for humans; the code id is what the MCP client
+                    calls at{' '}
+                    <Typography.Text code className="text-xs">
+                      /mcp
+                    </Typography.Text>
+                    .
+                  </p>
                 </div>
-              ))}
+              </div>
+              <Input
+                allowClear
+                placeholder="Filter by name or description…"
+                prefix={<Search size={14} className="text-slate-400" />}
+                value={toolQuery}
+                onChange={(e) => setToolQuery(e.target.value)}
+                className="max-w-full sm:max-w-xs"
+              />
             </div>
+
+            {filteredGroups.length === 0 ? (
+              <p className="text-sm text-slate-500 m-0 py-6 text-center rounded-xl border border-dashed border-slate-200 bg-slate-50">
+                No tools match that filter.
+              </p>
+            ) : (
+              <div className="space-y-4">
+                {filteredGroups.map((group) => {
+                  const GroupIcon = group.icon;
+                  return (
+                    <div
+                      key={group.id}
+                      className="rounded-xl border border-slate-200 bg-white overflow-hidden shadow-sm"
+                    >
+                      <div className="flex items-start gap-3 border-b border-slate-100 bg-slate-50/80 px-4 py-3">
+                        <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white border border-slate-200 text-sky-700">
+                          <GroupIcon size={16} aria-hidden />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <h4 className="text-sm font-bold text-slate-900 m-0">
+                            {group.title}
+                          </h4>
+                          {group.subtitle ? (
+                            <p className="text-xs text-slate-500 m-0 mt-1 leading-relaxed">
+                              {group.subtitle}
+                            </p>
+                          ) : null}
+                        </div>
+                      </div>
+                      <ul className="divide-y divide-slate-100 m-0 p-0 list-none">
+                        {group.tools.map((tool) => (
+                          <li
+                            key={tool.name}
+                            className="px-4 py-3.5 hover:bg-slate-50/60 transition-colors"
+                          >
+                            <div className="flex flex-col gap-1.5 min-w-0">
+                              <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+                                <span className="text-sm font-bold text-slate-900">
+                                  {tool.label}
+                                </span>
+                                <Typography.Text
+                                  code
+                                  className="text-[11px] text-slate-500"
+                                >
+                                  {tool.name}
+                                </Typography.Text>
+                              </div>
+                              <p className="text-sm text-slate-600 m-0 leading-relaxed">
+                                {tool.description}
+                              </p>
+                            </div>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </div>
       </SettingsCard>

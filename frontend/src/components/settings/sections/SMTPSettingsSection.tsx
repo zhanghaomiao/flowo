@@ -226,11 +226,11 @@ export const SMTPSettingsSection: React.FC = () => {
         <SettingsCard>
           <div className="mb-6 pb-4 border-b border-slate-50">
             <h3 className="text-sm font-bold text-slate-800 m-0">
-              Workflow Event Notifications
+              Run event notifications
             </h3>
             <p className="text-[10px] text-slate-400 font-medium">
-              Choose which workflow lifecycle events should trigger an email to
-              the user.
+              Choose which run lifecycle events should trigger an email to the
+              user.
             </p>
           </div>
 
@@ -238,24 +238,24 @@ export const SMTPSettingsSection: React.FC = () => {
             {[
               {
                 id: 'notify_on_submit',
-                label: 'Workflow Submitted',
-                desc: 'Sent when a user starts a new computational run.',
+                label: 'Run submitted',
+                desc: 'Sent when a user starts a new Snakemake run.',
                 icon: Send,
                 color: 'text-indigo-500',
                 bg: 'bg-indigo-50',
               },
               {
                 id: 'notify_on_success',
-                label: 'Workflow Succeeded',
-                desc: 'Sent when all steps in a workflow complete successfully.',
+                label: 'Run succeeded',
+                desc: 'Sent when all steps in a run complete successfully.',
                 icon: CheckCircle2,
                 color: 'text-emerald-500',
                 bg: 'bg-emerald-50',
               },
               {
                 id: 'notify_on_failure',
-                label: 'Workflow Failed',
-                desc: 'Sent immediately if any step in the workflow encounters an error.',
+                label: 'Run failed',
+                desc: 'Sent immediately if any step in a run encounters an error.',
                 icon: AlertCircle,
                 color: 'text-rose-500',
                 bg: 'bg-rose-50',

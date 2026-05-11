@@ -24,7 +24,7 @@ from app.api.deps import current_active_user_with_token
 from app.core.session import get_async_session
 from app.models.user import User
 from app.schemas import WorkflowListResponse
-from app.services.catalog import CatalogService
+from app.services.catalog.service import CatalogService
 from app.services.catalog.snake_template_storage import (
     materialize_snake_template_workspace,
     pull_snakemake_workflow_template_async,
@@ -39,6 +39,7 @@ from app.services.catalog.utils import (
 from app.services.third_party.snakevision import (
     SNAKE_TEMPLATE_DAG_REGISTRY_KEY,
     clear_cached_dag_artifacts,
+    clear_dag_artifact_files,
     dag_error_path,
     dag_svg_path,
     end_generation,
@@ -268,6 +269,7 @@ async def trigger_snake_template_dag_svg(
     svg = snake_template_dag_svg_path()
     if svg.is_file() and svg.stat().st_size > 0:
         return Response(status_code=204)
+    clear_dag_artifact_files(svg, snake_template_dag_error_path())
     if not try_begin_generation(SNAKE_TEMPLATE_DAG_REGISTRY_KEY):
         return JSONResponse({"status": "generating"}, status_code=202)
     background_tasks.add_task(_run_dag_svg_job_snake_template)
@@ -592,6 +594,7 @@ async def trigger_catalog_dag_svg(
         and dag_svg_path(owner_id, disk_slug).stat().st_size > 0
     ):
         return Response(status_code=204)
+    clear_cached_dag_artifacts(owner_id, disk_slug)
 
     if not root.is_dir():
         raise HTTPException(

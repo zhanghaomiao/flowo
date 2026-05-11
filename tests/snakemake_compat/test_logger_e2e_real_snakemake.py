@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from app.plugin.schemas import (
+from flowo_common.schemas import (
     ErrorSchema,
     JobInfoSchema,
     RuleGraphSchema,

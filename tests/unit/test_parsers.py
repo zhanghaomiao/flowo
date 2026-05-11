@@ -1,8 +1,11 @@
 import uuid
 from unittest.mock import MagicMock, patch
 
-from app.plugin.client.parsers import RecordParser, _extract_rules
-from app.plugin.schemas import RuleInfoSchema
+from flowo_common.schemas import RuleInfoSchema
+from snakemake_logger_plugin_flowo.plugin.client.parsers import (
+    RecordParser,
+    _extract_rules,
+)
 
 
 class MockLogRecord:
@@ -19,7 +22,8 @@ def test_workflow_started_calls_rule_extraction():
 
     extracted_rules = [RuleInfoSchema(name="all", code=None, language=None)]
     with patch(
-        "app.plugin.client.parsers._extract_rules", return_value=extracted_rules
+        "snakemake_logger_plugin_flowo.plugin.client.parsers._extract_rules",
+        return_value=extracted_rules,
     ) as extract_rules:
         result = RecordParser.workflow_started(record)
 
@@ -142,5 +146,7 @@ def test_rulegraph_defaults_to_empty_mapping():
 
 
 def test_extract_rules_returns_empty_when_no_global_workflow_exists():
-    with patch("app.plugin.client.parsers.getattr", return_value=None):
+    with patch(
+        "snakemake_logger_plugin_flowo.plugin.client.parsers.getattr", return_value=None
+    ):
         assert _extract_rules() == []

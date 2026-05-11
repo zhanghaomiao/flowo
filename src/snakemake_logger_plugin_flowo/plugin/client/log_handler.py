@@ -14,8 +14,8 @@ from snakemake_interface_logger_plugins.settings import (
     OutputSettingsLoggerInterface,
 )
 
-from ...core.config import settings
-from .parsers import RecordParser
+from flowo_common.config import DEFAULT_API_V1_STR, get_client_settings
+from snakemake_logger_plugin_flowo.plugin.client.parsers import RecordParser
 
 
 class FlowoFormatter(logging.Formatter):
@@ -170,8 +170,9 @@ class FlowoLogHandler(Handler):
     def _init_http_client(self) -> httpx.Client:
         """Initialize a persistent HTTP client for connection pooling."""
         headers = {}
-        if settings.FLOWO_USER_TOKEN:
-            headers["Authorization"] = f"Bearer {settings.FLOWO_USER_TOKEN}"
+        cs = get_client_settings()
+        if cs.FLOWO_USER_TOKEN:
+            headers["Authorization"] = f"Bearer {cs.FLOWO_USER_TOKEN}"
 
         return httpx.Client(
             headers=headers,
@@ -180,10 +181,15 @@ class FlowoLogHandler(Handler):
         )
 
     def _send_to_api(self, event: str, data: dict) -> None:
-        if not settings.FLOWO_USER_TOKEN:
+        cs = get_client_settings()
+        if not cs.FLOWO_USER_TOKEN:
             return
 
-        url = f"{settings.FLOWO_HOST.rstrip('/')}{settings.API_V1_STR}/reports/"
+        host = (cs.FLOWO_HOST or "").rstrip("/")
+        if not host:
+            return
+
+        url = f"{host}{DEFAULT_API_V1_STR}/reports/"
         payload = {"event": event, "record": data, "context": self.context}
 
         try:
@@ -198,7 +204,7 @@ class FlowoLogHandler(Handler):
             logger.warning(f"Error reporting to API: {e}")
 
     def flowo_path_valid(self):
-        flowo_working_path = settings.FLOWO_WORKING_PATH
+        flowo_working_path = get_client_settings().FLOWO_WORKING_PATH
         workdir = self.context.get("workdir")
 
         if not flowo_working_path:
@@ -242,15 +248,16 @@ class FlowoLogHandler(Handler):
             return
 
         workflow_id = self.context.get("current_workflow_id")
-        if workflow_id and settings.FLOWO_USER_TOKEN:
-            url = (
-                f"{settings.FLOWO_HOST.rstrip('/')}{settings.API_V1_STR}/reports/close"
-            )
-            params = {"workflow_id": str(workflow_id)}
-            try:
-                self._client.post(url, params=params)
-            except Exception as e:
-                logger.warning(f"Error closing workflow: {e}")
+        cs = get_client_settings()
+        if workflow_id and cs.FLOWO_USER_TOKEN:
+            host = (cs.FLOWO_HOST or "").rstrip("/")
+            if host:
+                url = f"{host}{DEFAULT_API_V1_STR}/reports/close"
+                params = {"workflow_id": str(workflow_id)}
+                try:
+                    self._client.post(url, params=params)
+                except Exception as e:
+                    logger.warning(f"Error closing workflow: {e}")
 
         # Close the persistent client
         self._client.close()

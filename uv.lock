@@ -2420,9 +2420,7 @@ dependencies = [
     { name = "httpx" },
     { name = "pydantic" },
     { name = "pydantic-settings" },
-    { name = "snakemake" },
     { name = "snakemake-interface-logger-plugins" },
-    { name = "sqlalchemy" },
     { name = "tqdm" },
 ]
 
@@ -2450,8 +2448,13 @@ server = [
     { name = "passlib", extra = ["bcrypt"] },
     { name = "psutil" },
     { name = "psycopg2-binary" },
+    { name = "snakemake" },
     { name = "snakevision" },
+    { name = "sqlalchemy" },
     { name = "sse-starlette" },
+]
+snakemake = [
+    { name = "snakemake" },
 ]
 
 [package.dev-dependencies]
@@ -2471,7 +2474,9 @@ dev = [
     { name = "pytest" },
     { name = "pytest-asyncio" },
     { name = "ruff" },
+    { name = "snakemake" },
     { name = "snakevision" },
+    { name = "sqlalchemy" },
     { name = "sse-starlette" },
 ]
 
@@ -2498,14 +2503,15 @@ requires-dist = [
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=7.0.0" },
     { name = "pytest-asyncio", marker = "extra == 'dev'", specifier = ">=0.21.0" },
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.1.0" },
-    { name = "snakemake" },
+    { name = "snakemake", marker = "extra == 'server'" },
+    { name = "snakemake", marker = "extra == 'snakemake'" },
     { name = "snakemake-interface-logger-plugins" },
     { name = "snakevision", marker = "extra == 'server'", specifier = ">=1.0.0" },
-    { name = "sqlalchemy", specifier = ">=2.0.41" },
+    { name = "sqlalchemy", marker = "extra == 'server'", specifier = ">=2.0.41" },
     { name = "sse-starlette", marker = "extra == 'server'", specifier = ">=3.1.2" },
     { name = "tqdm", specifier = ">=4.66.0" },
 ]
-provides-extras = ["dev", "docs", "server"]
+provides-extras = ["snakemake", "dev", "docs", "server"]
 
 [package.metadata.requires-dev]
 dev = [
@@ -2524,7 +2530,9 @@ dev = [
     { name = "pytest", specifier = ">=7.0.0" },
     { name = "pytest-asyncio", specifier = ">=0.21.0" },
     { name = "ruff", specifier = ">=0.1.0" },
+    { name = "snakemake" },
     { name = "snakevision", specifier = ">=1.0.0" },
+    { name = "sqlalchemy", specifier = ">=2.0.41" },
     { name = "sse-starlette", specifier = ">=3.1.2" },
 ]
 

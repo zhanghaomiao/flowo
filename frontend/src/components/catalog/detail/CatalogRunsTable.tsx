@@ -73,7 +73,7 @@ function CatalogRunsTable({ catalogRef }: Props) {
 
   const columns: ColumnsType<WorkflowResponse> = [
     {
-      title: 'Workflow Name',
+      title: 'Run name',
       key: 'name',
       render: (_, row) => (
         <div className="flex flex-col py-1">
@@ -82,7 +82,7 @@ function CatalogRunsTable({ catalogRef }: Props) {
             params={{ workflowId: row.id }}
             className="text-sm font-bold text-brand-600 hover:text-brand-700 hover:underline"
           >
-            {row.name || row.directory || 'Untitled Workflow'}
+            {row.name || row.directory || 'Untitled run'}
           </Link>
           <span className="text-[10px] text-slate-400 font-mono mt-0.5">
             ID: {row.id.slice(0, 8)}...

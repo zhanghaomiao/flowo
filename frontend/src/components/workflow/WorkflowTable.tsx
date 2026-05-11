@@ -192,13 +192,13 @@ const WorkflowTable = () => {
       });
       messageApi.open({
         type: 'success',
-        content: `Workflow ${workflowId} deleted successfully!`,
+        content: `Run ${workflowId} deleted successfully!`,
       });
     } catch (error) {
-      console.error('Failed to delete workflow:', error);
+      console.error('Failed to delete run:', error);
       messageApi.open({
         type: 'error',
-        content: `Failed to delete workflow ${workflowId}. Please try again.`,
+        content: `Failed to delete run ${workflowId}. Please try again.`,
       });
     }
   };
@@ -250,7 +250,7 @@ const WorkflowTable = () => {
     });
     messageApi.open({
       type: 'success',
-      content: 'Workflows refreshed successfully!',
+      content: 'Runs list refreshed successfully!',
     });
   }, [queryClient, messageApi, queryParams]);
 
@@ -456,7 +456,7 @@ const WorkflowTable = () => {
           </Tooltip>
 
           {record.started_at && (
-            <Tooltip title="View Workflow Logs">
+            <Tooltip title="View run logs">
               <Button
                 type="text"
                 icon={<FileText size={18} />}
@@ -488,7 +488,7 @@ const WorkflowTable = () => {
           </Tooltip>
 
           <Popconfirm
-            title="Delete Workflow"
+            title="Delete run"
             description={`Delete "${record.name || record.id}"?`}
             onConfirm={() => handleDeleteWorkflow(record.id)}
             okText="Delete"
@@ -518,7 +518,7 @@ const WorkflowTable = () => {
         <div className="flex items-center gap-6">
           <div className="flex flex-col">
             <h3 className="m-0 text-xl font-black text-slate-800 tracking-tight">
-              Workflows
+              Runs
             </h3>
             <div className="text-[10px] uppercase font-black text-slate-400 mt-1 flex items-center gap-2">
               <span>{workflowsData?.total ?? 0} runs detected</span>
@@ -602,7 +602,7 @@ const WorkflowTable = () => {
       {/* Modals */}
       <FileViewerModal
         key={`snakefile-${snakefileModal.workflowId}`}
-        title={`Snakefile - Workflow ${snakefileModal.workflowId}`}
+        title={`Snakefile — run ${snakefileModal.workflowId}`}
         visible={snakefileModal.visible}
         onClose={() => setSnakefileModal({ visible: false, workflowId: '' })}
         fileContent={snakefileData?.content || ''}
@@ -623,7 +623,7 @@ const WorkflowTable = () => {
 
       <FileViewerModal
         key={`log-${logModal.workflowId}`}
-        title={`Log - Workflow ${logModal.workflowId}`}
+        title={`Log — run ${logModal.workflowId}`}
         visible={logModal.visible}
         onClose={() =>
           setLogModal({
@@ -638,7 +638,7 @@ const WorkflowTable = () => {
 
       <FileViewerModal
         key={`detail-${workflowDetailModal.workflowId}`}
-        title={`Detail - Workflow ${workflowDetailModal.workflowId}`}
+        title={`Detail — run ${workflowDetailModal.workflowId}`}
         visible={workflowDetailModal.visible}
         onClose={() =>
           setWorkflowDetailModal({ visible: false, workflowId: '' })

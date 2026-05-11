@@ -24,9 +24,11 @@ services:
     environment:
       POSTGRES_HOST: db
       POSTGRES_PORT: 5432
+      PYTHONPATH: /app/src
     volumes:
       - ${FLOWO_WORKING_PATH:-.}:${CONTAINER_MOUNT_PATH:-/work_dir}
       - ./app:/app/app
+      - ./src:/app/src
       - ./pyproject.toml:/app/pyproject.toml
       - ./alembic.ini:/app/alembic.ini
     depends_on:

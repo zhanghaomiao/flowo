@@ -1,5 +1,6 @@
 import argparse
 import json
+import logging
 import os
 import shutil
 import tarfile
@@ -13,35 +14,18 @@ from urllib.parse import urljoin
 import httpx
 from tqdm import tqdm
 
-from ... import logger
-from ...core.config import settings
+from flowo_common.config import get_client_settings
+from flowo_common.paths import user_snakemake_template_root
+from flowo_common.token_config import write_user_config
 
-
-def _write_config(host: str, token: str, working_path: str) -> Path:
-    config_dir = Path.home() / ".config/flowo"
-    config_dir.mkdir(parents=True, exist_ok=True)
-    toml_path = config_dir / "config.toml"
-
-    toml_template = f"""
-FLOWO_HOST = {json.dumps(host)}
-FLOWO_USER_TOKEN = {json.dumps(token)}
-FLOWO_WORKING_PATH = {json.dumps(working_path)}
-"""
-    with open(toml_path, "w") as f:
-        f.write(toml_template.strip())
-
-    try:
-        toml_path.chmod(0o600)
-    except OSError:
-        # e.g. Windows or unusual FS
-        pass
-    return toml_path
+logger = logging.getLogger("snakemake.flowo")
 
 
 def pull_catalog(slug: str | None = None, path: str = "."):
     """Download catalog ZIP and unpack it. Supports in-place sync if run inside a catalog dir."""
-    host = settings.FLOWO_HOST
-    token = settings.FLOWO_USER_TOKEN
+    cs = get_client_settings()
+    host = cs.FLOWO_HOST
+    token = cs.FLOWO_USER_TOKEN
 
     if not token:
         logger.error("❌ No API token found. Run: flowo login --host <your-flowo-host>")
@@ -269,8 +253,9 @@ def upload_catalog(
         return
 
     # Get credentials from args, env, or config
-    token = token or os.environ.get("FLOWO_USER_TOKEN") or settings.FLOWO_USER_TOKEN
-    host = host or os.environ.get("FLOWO_HOST") or settings.FLOWO_HOST
+    cs = get_client_settings()
+    token = token or os.environ.get("FLOWO_USER_TOKEN") or cs.FLOWO_USER_TOKEN
+    host = host or os.environ.get("FLOWO_HOST") or cs.FLOWO_HOST
 
     if not token:
         logger.error("❌ Token not found. Run `flowo login --host <url>` first.")
@@ -363,14 +348,17 @@ def upload_catalog(
 
 
 def catalog_new_from_template(name: str, output_parent: Path, with_git: bool) -> None:
-    """Copy ``SNAKEMAKE_WORKFLOW_TEMPLATE_DIR`` into ``output_parent / name``."""
-    from .template_local import git_pull_or_clone_template, snakemake_template_root
+    """Clone/pull template into cache, then copy to ``output_parent / name``."""
+    from snakemake_logger_plugin_flowo.plugin.client.template_local import (
+        SNAKEMAKE_WORKFLOW_TEMPLATE_GIT,
+        ensure_template,
+    )
 
-    root = snakemake_template_root()
+    root = user_snakemake_template_root(get_client_settings().FLOWO_WORKING_PATH)
     if not (root / "workflow").is_dir():
         logger.info("📥 Template missing; running pull first…")
         try:
-            git_pull_or_clone_template()
+            ensure_template(root, SNAKEMAKE_WORKFLOW_TEMPLATE_GIT)
         except RuntimeError as e:
             logger.error(f"❌ {e}")
             return
@@ -423,14 +411,14 @@ def login(
     ttl_days: int | None,
     timeout_seconds: int = 300,
 ) -> None:
-    resolved_host = (host or settings.FLOWO_HOST or "").strip().rstrip("/")
+    resolved_host = (host or get_client_settings().FLOWO_HOST or "").strip().rstrip("/")
     if not resolved_host:
         logger.error(
             "❌ Host not found. Run: flowo login --host https://your-flowo-host"
         )
         return
 
-    resolved_working_path = working_path or settings.FLOWO_WORKING_PATH
+    resolved_working_path = working_path or get_client_settings().FLOWO_WORKING_PATH
     try:
         with httpx.Client(timeout=15.0) as client:
             start = client.post(
@@ -469,7 +457,9 @@ def login(
                 if not token:
                     logger.error("❌ Login was approved but no token was returned.")
                     return
-                config_path = _write_config(resolved_host, token, resolved_working_path)
+                config_path = write_user_config(
+                    resolved_host, token, resolved_working_path
+                )
                 logger.info(
                     "✅ Login complete. Credentials written to %s (file mode 0600 where supported)",
                     config_path,

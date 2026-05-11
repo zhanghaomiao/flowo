@@ -1,3 +1,10 @@
+"""MCP tool HTTP handlers under ``/api/v1/mcp-tools``.
+
+Handler names and ``operation_id`` both emphasize *runs* (Snakemake executions) vs
+*catalog workflows* (stored projects). MCP tools are listed in ``app/main.py``
+``include_operations``.
+"""
+
 import uuid
 from typing import Any
 
@@ -21,8 +28,8 @@ def _mcp_service(db: AsyncSession, user: User) -> McpWorkflowService:
     return McpWorkflowService(db, user)
 
 
-@router.get("/workflows", operation_id="list_workflows")
-async def list_workflows(
+@router.get("/workflows", operation_id="list_runs")
+async def list_runs(
     status: str | None = Query(
         None, description="Optional workflow status: RUNNING, SUCCESS, ERROR, WAITING."
     ),
@@ -54,8 +61,8 @@ async def list_workflows(
     )
 
 
-@router.get("/workflows/latest", operation_id="get_latest_workflow")
-async def get_latest_workflow(
+@router.get("/workflows/latest", operation_id="get_latest_run")
+async def get_latest_run(
     status: str | None = Query(None),
     name_query: str | None = Query(None),
     catalog_slug: str | None = Query(None),
@@ -79,8 +86,8 @@ async def get_latest_workflow(
     )
 
 
-@router.get("/workflows/latest/summary", operation_id="summarize_latest_workflow")
-async def summarize_latest_workflow(
+@router.get("/workflows/latest/summary", operation_id="summarize_latest_run")
+async def summarize_latest_run(
     status: str | None = Query(None),
     name_query: str | None = Query(None),
     catalog_slug: str | None = Query(None),
@@ -105,9 +112,9 @@ async def summarize_latest_workflow(
 
 @router.get(
     "/workflows/latest/failure-diagnosis",
-    operation_id="diagnose_latest_failed_workflow",
+    operation_id="diagnose_latest_failed_run",
 )
-async def diagnose_latest_failed_workflow(
+async def diagnose_latest_failed_run(
     name_query: str | None = Query(None),
     catalog_slug: str | None = Query(None),
     tag: str | None = Query(None),
@@ -128,8 +135,8 @@ async def diagnose_latest_failed_workflow(
     )
 
 
-@router.get("/workflows/{workflow_id}/timeline", operation_id="get_workflow_timeline")
-async def get_workflow_timeline(
+@router.get("/workflows/{workflow_id}/timeline", operation_id="get_run_timeline")
+async def get_run_timeline(
     workflow_id: uuid.UUID,
     limit: int = Query(200, ge=1, le=1000),
     db: AsyncSession = Depends(get_async_session),
@@ -146,8 +153,8 @@ async def get_workflow_timeline(
     )
 
 
-@router.get("/workflows/{workflow_id}/outputs", operation_id="list_workflow_outputs")
-async def list_workflow_outputs(
+@router.get("/workflows/{workflow_id}/outputs", operation_id="list_run_outputs")
+async def list_run_outputs(
     workflow_id: uuid.UUID,
     suffix: str | None = Query(
         None, description="Optional suffix such as bam, vcf, tsv, html, or h5ad."
@@ -168,8 +175,8 @@ async def list_workflow_outputs(
     )
 
 
-@router.get("/running-count", operation_id="list_running_workflows")
-async def get_running_workflows(
+@router.get("/running-count", operation_id="list_running_runs")
+async def list_running_runs(
     db: AsyncSession = Depends(get_async_session),
     current_user: User = Depends(current_active_user_with_token),
 ) -> dict[str, Any]:
@@ -190,8 +197,8 @@ async def get_running_workflows(
     return {"running_count": result["total_matches"], "workflows": result["workflows"]}
 
 
-@router.get("/failed-workflows", operation_id="list_recent_failed_workflows")
-async def list_recent_failed_workflows(
+@router.get("/failed-workflows", operation_id="list_recent_failed_runs")
+async def list_recent_failed_runs(
     limit: int = Query(10, ge=1, le=50),
     db: AsyncSession = Depends(get_async_session),
     current_user: User = Depends(current_active_user_with_token),
@@ -209,8 +216,8 @@ async def list_recent_failed_workflows(
     return {"failed_count": result["total_matches"], "workflows": result["workflows"]}
 
 
-@router.get("/workflows/{workflow_id}/summary", operation_id="summarize_workflow")
-async def summarize_workflow(
+@router.get("/workflows/{workflow_id}/summary", operation_id="summarize_run")
+async def summarize_run(
     workflow_id: uuid.UUID,
     db: AsyncSession = Depends(get_async_session),
     current_user: User = Depends(current_active_user_with_token),
@@ -225,9 +232,9 @@ async def summarize_workflow(
 
 @router.get(
     "/workflows/{workflow_id}/failure-diagnosis",
-    operation_id="diagnose_workflow_failure",
+    operation_id="diagnose_run_failure",
 )
-async def diagnose_workflow_failure(
+async def diagnose_run_failure(
     workflow_id: uuid.UUID,
     db: AsyncSession = Depends(get_async_session),
     current_user: User = Depends(current_active_user_with_token),
@@ -241,8 +248,8 @@ async def diagnose_workflow_failure(
     return await _mcp_service(db, current_user).diagnose_workflow_failure(workflow_id)
 
 
-@router.get("/workflows/{workflow_id}/trace-output", operation_id="trace_output")
-async def trace_output(
+@router.get("/workflows/{workflow_id}/trace-output", operation_id="trace_run_output")
+async def trace_run_output(
     workflow_id: uuid.UUID,
     path: str = Query(..., description="Output path to trace, exact or suffix match."),
     db: AsyncSession = Depends(get_async_session),
@@ -254,8 +261,8 @@ async def trace_output(
     return await _mcp_service(db, current_user).trace_output(workflow_id, path)
 
 
-@router.get("/catalogs", operation_id="list_catalogs")
-async def list_catalogs(
+@router.get("/catalogs", operation_id="list_catalog_workflows")
+async def list_workflows_in_catalog(
     search: str | None = Query(None, description="Search catalog name or description."),
     tags: str | None = Query(
         None, description="Comma-separated tags to filter catalogs."
@@ -277,8 +284,10 @@ async def list_catalogs(
     )
 
 
-@router.get("/catalogs/{catalog_ref}/overview", operation_id="get_catalog_overview")
-async def get_catalog_overview(
+@router.get(
+    "/catalogs/{catalog_ref}/overview", operation_id="get_catalog_workflow_overview"
+)
+async def get_catalog_workflow_overview(
     catalog_ref: str,
     file_limit: int = Query(500, ge=1, le=2000),
     db: AsyncSession = Depends(get_async_session),
@@ -296,9 +305,10 @@ async def get_catalog_overview(
 
 
 @router.get(
-    "/catalogs/{catalog_ref}/files/{path:path}", operation_id="read_catalog_file"
+    "/catalogs/{catalog_ref}/files/{path:path}",
+    operation_id="read_catalog_workflow_file",
 )
-async def read_catalog_file(
+async def read_catalog_workflow_file(
     catalog_ref: str,
     path: str,
     db: AsyncSession = Depends(get_async_session),
@@ -316,8 +326,10 @@ async def read_catalog_file(
     )
 
 
-@router.get("/catalogs/{catalog_ref}/search", operation_id="search_catalog_files")
-async def search_catalog_files(
+@router.get(
+    "/catalogs/{catalog_ref}/search", operation_id="search_catalog_workflow_files"
+)
+async def search_catalog_workflow_files(
     catalog_ref: str,
     query: str = Query(..., min_length=1),
     path_prefix: str | None = Query(None),
@@ -339,8 +351,10 @@ async def search_catalog_files(
     )
 
 
-@router.get("/catalogs/{catalog_ref}/summary", operation_id="summarize_catalog")
-async def summarize_catalog(
+@router.get(
+    "/catalogs/{catalog_ref}/summary", operation_id="summarize_catalog_workflow"
+)
+async def summarize_catalog_workflow(
     catalog_ref: str,
     db: AsyncSession = Depends(get_async_session),
     current_user: User = Depends(current_active_user_with_token),
@@ -354,8 +368,11 @@ async def summarize_catalog(
     return await _mcp_catalog_service(db, current_user).summarize_catalog(catalog_ref)
 
 
-@router.get("/catalogs/{catalog_ref}/workflows", operation_id="list_catalog_workflows")
-async def list_catalog_workflows(
+@router.get(
+    "/catalogs/{catalog_ref}/workflows",
+    operation_id="list_runs_for_catalog_workflow",
+)
+async def list_runs_for_catalog_workflow(
     catalog_ref: str,
     status: str | None = Query(
         None, description="Optional workflow status: RUNNING, SUCCESS, ERROR, WAITING."
@@ -382,9 +399,9 @@ async def list_catalog_workflows(
 
 @router.post(
     "/catalogs/{catalog_ref}/materialize",
-    operation_id="materialize_catalog_workspace",
+    operation_id="materialize_catalog_workflow_workspace",
 )
-async def materialize_catalog_workspace(
+async def materialize_catalog_workflow_workspace(
     catalog_ref: str,
     db: AsyncSession = Depends(get_async_session),
     current_user: User = Depends(current_active_user_with_token),

@@ -107,7 +107,8 @@ function RegisterComponent() {
                 Create Account
               </h1>
               <p className="text-slate-500 text-lg">
-                Join FlowO for better workflow management
+                Join FlowO to monitor Snakemake runs and manage catalog
+                workflows
               </p>
             </div>
 

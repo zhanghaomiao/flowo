@@ -1,4 +1,4 @@
-"""Clone / pull the official Snakemake workflow template — ships with the logger plugin (no ``app.services``)."""
+"""Shallow-clone / pull the official Snakemake workflow template (no backend settings)."""
 
 from __future__ import annotations
 
@@ -6,7 +6,6 @@ import logging
 import shutil
 import subprocess
 from pathlib import Path
-from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -15,20 +14,14 @@ SNAKEMAKE_WORKFLOW_TEMPLATE_GIT = (
 )
 
 
-def snakemake_template_root() -> Path:
-    """Resolved template checkout directory from plugin settings."""
-    from ...core.config import settings
-
-    return Path(settings.SNAKEMAKE_WORKFLOW_TEMPLATE_DIR).resolve()
-
-
-def git_pull_or_clone_template(root: Path | None = None) -> dict[str, Any]:
+def ensure_template(root: Path, upstream: str) -> Path:
     """
-    Shallow-clone or ``git pull --ff-only`` the official template into ``root``.
+    Shallow-clone or ``git pull --ff-only`` into ``root``.
 
-    Default ``root`` is :func:`snakemake_template_root`. Raises :class:`RuntimeError` on git failure.
+    ``root`` must be the intended checkout directory (not its parent).
+    Returns ``root`` on success. Raises :class:`RuntimeError` on git failure.
     """
-    root = root or snakemake_template_root()
+    root = root.resolve()
     root.parent.mkdir(parents=True, exist_ok=True)
 
     if (root / ".git").exists():
@@ -48,7 +41,7 @@ def git_pull_or_clone_template(root: Path | None = None) -> dict[str, Any]:
                 "clone",
                 "--depth",
                 "1",
-                SNAKEMAKE_WORKFLOW_TEMPLATE_GIT,
+                upstream,
                 str(root),
             ],
             capture_output=True,
@@ -62,8 +55,4 @@ def git_pull_or_clone_template(root: Path | None = None) -> dict[str, Any]:
         logger.error("Snakemake template %s failed: %s", action, err)
         raise RuntimeError(err[:2000])
 
-    return {
-        "status": "ok",
-        "action": action,
-        "path": str(root),
-    }
+    return root

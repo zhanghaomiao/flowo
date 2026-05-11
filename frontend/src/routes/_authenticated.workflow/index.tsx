@@ -37,8 +37,6 @@ function RouteComponent() {
   }
 
   return (
-    <div className="text-lg">
-      Redirecting to workflow id {String(workflowId)}...
-    </div>
+    <div className="text-lg">Redirecting to run {String(workflowId)}...</div>
   );
 }

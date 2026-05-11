@@ -1,25 +1,10 @@
 import os
-import tomllib
 from pathlib import Path
 
 from pydantic import model_validator
 from pydantic_settings import BaseSettings
 
-
-def load_user_toml_defaults() -> None:
-    """Load ~/.config/flowo/config.toml as low-priority environment defaults."""
-    try:
-        config_path = Path.home() / ".config/flowo/config.toml"
-        if not config_path.is_file():
-            return
-        data = tomllib.loads(config_path.read_text(encoding="utf-8"))
-    except (OSError, PermissionError, RuntimeError, tomllib.TOMLDecodeError):
-        return
-
-    for key, value in data.items():
-        if isinstance(value, str):
-            os.environ.setdefault(key, value)
-
+from flowo_common.config import load_user_toml_defaults
 
 load_user_toml_defaults()
 

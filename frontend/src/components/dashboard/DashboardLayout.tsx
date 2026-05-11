@@ -178,7 +178,7 @@ export const DashboardLayout: React.FC = () => {
     try {
       const data = await databasePruning.mutateAsync({});
       messageApi.success(
-        `Pruning complete: Deleted ${data.workflow} workflows and updated ${data.job} jobs.`,
+        `Pruning complete: Deleted ${data.workflow} runs and updated ${data.job} jobs.`,
       );
     } catch {
       messageApi.error('Database pruning failed');
@@ -279,7 +279,7 @@ export const DashboardLayout: React.FC = () => {
             </Button>
             <Popconfirm
               title="System Pruning"
-              description="Clean up dangling workflows? This action is permanent."
+              description="Clean up dangling run records? This action is permanent."
               onConfirm={handleDatabasePruning}
               okText="Prune"
               cancelText="Cancel"
@@ -302,7 +302,7 @@ export const DashboardLayout: React.FC = () => {
         {/* Key Performance Indicators Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
           <StatCard
-            title="Running Workflows"
+            title="Running runs"
             value={runningWorkflows.data?.running || 0}
             icon={Activity}
             colorClass="bg-indigo-500"
@@ -387,7 +387,7 @@ export const DashboardLayout: React.FC = () => {
           <div className="lg:col-span-3 bg-white border border-slate-100 rounded-[16px] p-4 shadow-sm flex flex-col min-h-[240px]">
             <h3 className="text-xs font-black text-slate-800 mb-3 flex items-center gap-2">
               <Activity size={14} className="text-sky-500" />
-              Workflow Status
+              Run status
             </h3>
             <div className="flex-1 flex items-center justify-center">
               <StatusChart

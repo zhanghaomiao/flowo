@@ -648,7 +648,7 @@ export default function CatalogList() {
         <div className="shrink-0">
           <h1 className="text-xl font-bold text-slate-900">Catalog</h1>
           <p className="mt-1 text-sm text-slate-500">
-            {catalogs?.length || 0} workflows available
+            {catalogs?.length || 0} catalog workflows
           </p>
         </div>
         <div className="flex min-w-0 w-full flex-col gap-3 sm:flex-row sm:items-center sm:justify-end sm:gap-3 lg:max-w-3xl lg:flex-1">
@@ -714,7 +714,7 @@ export default function CatalogList() {
               icon={<GitBranch size={14} />}
               onClick={() => setImportGitOpen(true)}
             >
-              Import Workflow
+              Import catalog workflow
             </Button>
           </div>
         </div>
@@ -729,7 +729,9 @@ export default function CatalogList() {
             rowKey="id"
             loading={isLoading}
             pagination={{ pageSize: 20, showSizeChanger: true }}
-            locale={{ emptyText: 'No workflows found. Import your first one!' }}
+            locale={{
+              emptyText: 'No catalog workflows yet. Import your first one!',
+            }}
             className="bg-white"
           />
         ) : (
@@ -740,7 +742,7 @@ export default function CatalogList() {
               </div>
             ) : (catalogs || []).length === 0 ? (
               <Empty
-                description="No workflows found"
+                description="No catalog workflows found"
                 className="my-20"
                 image={Empty.PRESENTED_IMAGE_SIMPLE}
               />
@@ -769,7 +771,7 @@ export default function CatalogList() {
 
       {/* Import from Git Modal */}
       <Modal
-        title="Import Workflow from Git"
+        title="Import catalog workflow from Git"
         open={importGitOpen}
         onOk={handleImportFromGit}
         onCancel={() => {
@@ -865,7 +867,7 @@ export default function CatalogList() {
 
       {/* Delete Confirmation Modal */}
       <Modal
-        title="Delete Workflow"
+        title="Delete catalog workflow"
         open={deleteModalOpen}
         onOk={handleDelete}
         onCancel={() => {
@@ -881,7 +883,8 @@ export default function CatalogList() {
           <strong>{deletingCatalog?.name}</strong>?
         </p>
         <p className="text-slate-500 text-sm mt-2">
-          This will permanently delete the workflow and all its files.
+          This will permanently delete this catalog workflow and all its stored
+          files.
         </p>
       </Modal>
 

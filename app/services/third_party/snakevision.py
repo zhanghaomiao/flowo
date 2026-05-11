@@ -3,8 +3,11 @@
 from __future__ import annotations
 
 import logging
+import os
 import re
+import shutil
 import subprocess
+import sys
 import tempfile
 import threading
 import uuid
@@ -97,7 +100,7 @@ SNAKE_TEMPLATE_DAG_REGISTRY_KEY = "__flowo_snake_template_dag__"
 
 
 def snake_template_workflow_root() -> Path:
-    from app.services.catalog.snake_template import snakemake_template_root
+    from app.services.catalog.snake_template_paths import snakemake_template_root
 
     return snakemake_template_root()
 
@@ -127,6 +130,7 @@ def _run_snakevision_rulegraph_to_svg(
     try:
 
         def run_rulegraph() -> subprocess.CompletedProcess:
+            env = _dag_subprocess_env()
             test_workdir = find_test_workdir(root)
             if test_workdir:
                 return subprocess.run(
@@ -145,6 +149,7 @@ def _run_snakevision_rulegraph_to_svg(
                     text=True,
                     timeout=120,
                     cwd=str(root),
+                    env=env,
                 )
 
             return subprocess.run(
@@ -163,6 +168,7 @@ def _run_snakevision_rulegraph_to_svg(
                 text=True,
                 timeout=120,
                 cwd=str(root),
+                env=env,
             )
 
         rg = run_rulegraph()
@@ -185,20 +191,7 @@ def _run_snakevision_rulegraph_to_svg(
             missing = _parse_missing_module(combined_err)
             if missing:
                 try:
-                    subprocess.run(
-                        [
-                            str(dag_py),
-                            "-m",
-                            "pip",
-                            "install",
-                            "--no-input",
-                            "--disable-pip-version-check",
-                            missing,
-                        ],
-                        capture_output=True,
-                        text=True,
-                        timeout=600,
-                    )
+                    _install_missing_import(dag_py, missing)
                     rg = run_rulegraph()
                 except Exception as e:
                     err_path.write_text(
@@ -341,6 +334,59 @@ def _dag_venv_dir() -> Path:
     return Path(settings.DAG_VENV_DIR)
 
 
+def _dag_imports_dir() -> Path:
+    return _dag_venv_dir() / "imports"
+
+
+def _dag_subprocess_env() -> dict[str, str]:
+    env = os.environ.copy()
+    imports_dir = _dag_imports_dir()
+    if imports_dir.is_dir():
+        existing = env.get("PYTHONPATH")
+        env["PYTHONPATH"] = (
+            f"{imports_dir}{os.pathsep}{existing}" if existing else str(imports_dir)
+        )
+    return env
+
+
+def _install_missing_import(py: Path, package: str) -> None:
+    imports_dir = _dag_imports_dir()
+    imports_dir.mkdir(parents=True, exist_ok=True)
+    uv = shutil.which("uv")
+    if uv:
+        cmd = [
+            uv,
+            "pip",
+            "install",
+            "--python",
+            str(py),
+            "--target",
+            str(imports_dir),
+            package,
+        ]
+    else:
+        cmd = [
+            str(py),
+            "-m",
+            "pip",
+            "install",
+            "--no-input",
+            "--disable-pip-version-check",
+            "--target",
+            str(imports_dir),
+            package,
+        ]
+    result = subprocess.run(
+        cmd,
+        capture_output=True,
+        text=True,
+        timeout=600,
+    )
+    if result.returncode != 0:
+        err = (result.stderr or result.stdout or "").strip()
+        raise RuntimeError(err[:4000] or f"pip install failed for {package}")
+
+
 def _venv_bin(venv_dir: Path, exe: str) -> Path:
     return venv_dir / "bin" / exe
 
@@ -351,6 +397,22 @@ def _ensure_dag_venv() -> tuple[Path, Path, Path]:
 
     Returns (python, snakemake, snakevision) executable paths inside that venv.
     """
+    # Prefer the already-installed backend environment. Docker images install the
+    # server extra at build time, which is much more reliable than downloading
+    # Snakemake/Snakevision from inside a request-time background task. When
+    # DAG_AUTO_INSTALL_IMPORTS is enabled, missing workflow imports are installed
+    # into this same environment so the rulegraph process can see them.
+    current_bin = Path(sys.executable).parent
+    smk_path = current_bin / "snakemake"
+    sv_path = current_bin / "snakevision"
+    if smk_path.exists() and sv_path.exists():
+        return Path(sys.executable), smk_path, sv_path
+
+    smk = shutil.which("snakemake")
+    sv = shutil.which("snakevision")
+    if smk and sv:
+        return Path(sys.executable), Path(smk), Path(sv)
+
     venv_dir = _dag_venv_dir()
     py = _venv_bin(venv_dir, "python")
     smk = _venv_bin(venv_dir, "snakemake")

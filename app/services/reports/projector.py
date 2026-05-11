@@ -2,5 +2,5 @@
 
 from __future__ import annotations
 
-# Intentionally thin: handlers live under app.plugin.server.handlers and may be
+# Intentionally thin: handlers live under app.services.reports.dispatch.handlers and may be
 # renamed to *Projector incrementally without changing the ingest transaction shape.

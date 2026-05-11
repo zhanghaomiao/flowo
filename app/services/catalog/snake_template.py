@@ -8,13 +8,21 @@ from typing import Any
 
 from fastapi import HTTPException
 
-from app.plugin.client.template_local import (
-    git_pull_or_clone_template,
-    snakemake_template_root,
-)
+from app.services.catalog.snake_template_paths import snakemake_template_root
 from app.services.catalog.utils import _get_file_inventory
+from snakemake_logger_plugin_flowo.plugin.client.template_local import (
+    SNAKEMAKE_WORKFLOW_TEMPLATE_GIT,
+    ensure_template,
+)
 
 logger = logging.getLogger(__name__)
+
+
+def git_pull_or_clone_template(root: Path | None = None) -> dict[str, Any]:
+    """Shallow-clone or ``git pull`` the official template into ``root`` (default: configured dir)."""
+    r = (root or snakemake_template_root()).resolve()
+    ensure_template(r, SNAKEMAKE_WORKFLOW_TEMPLATE_GIT)
+    return {"status": "ok", "action": "synced", "path": str(r)}
 
 
 def _resolve_safe_path(rel_path: str) -> Path:

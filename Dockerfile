@@ -32,6 +32,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --frozen --no-install-project --extra server
 
 COPY --chown=flowo:flowo app /app/app
+COPY --chown=flowo:flowo src /app/src
 COPY --chown=flowo:flowo README.md alembic.ini ./
 
 RUN --mount=type=cache,target=/root/.cache/uv \

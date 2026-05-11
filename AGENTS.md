@@ -10,6 +10,24 @@
 - 回答问题时优先打开正确文件，而不是在仓库里盲搜
 - 明确哪些文件是事实来源，哪些只是辅助文档
 
+## 产品用语 vs 技术标识（Runs / Catalog / catalog entry）
+
+### Run（运行）
+
+对用户与文档：**Run** 指一次被 logger 上报、在 `workflows` 表中占一行的 **Snakemake 执行实例**（等价于「跑一遍 workflow」的那次执行）。UI 若写 **Runs**，即此概念。
+
+### Catalog（统称）
+
+**Catalog** 与 Snakemake 社区的 **Workflow Catalog** 用法一致：指「收录、展示可复用 workflow」的**总称 / 体系**（参见 [Snakemake Workflow Catalog](https://snakemake.github.io/snakemake-workflow-catalog/)）。Flowo 的 **Catalog** 页面与 `/catalog/...` 路由表示进入这一体系。
+
+### Catalog 里的 workflow
+
+**不要**用「一个 Catalog」指数据库里的**单行**记录。当前实现里 **`catalogs` 表一行 = 收录在册的一个 Snakemake workflow**（官方模板、Git 导入、本地上传等均可）。技术外键仍为 `catalog_id` 等。
+
+### MCP operation id（与 REST 参数）
+
+MCP 工具名（`operation_id`）已按 **run** vs **catalog workflow** 区分，例如 `list_runs`、`list_catalog_workflows`、`list_runs_for_catalog_workflow`；见 `app/main.py` 的 `include_operations` 与 `app/api/endpoints/mcp.py`。REST 路径仍为 `/mcp-tools/workflows/...`，路径与查询参数里的 **`workflow_id` 表示一次执行（run）**，与 Snakemake 上报字段一致，未改名。
+
 ## 一句话说明项目
 
 Flowo 是一个面向 Snakemake 的工作流观测与管理平台：
@@ -17,7 +35,7 @@ Flowo 是一个面向 Snakemake 的工作流观测与管理平台：
 - Snakemake 侧通过 `flowo` logger 插件上报 workflow、job、rule 事件
 - FastAPI 后端将事件写入 PostgreSQL
 - PostgreSQL `LISTEN/NOTIFY` 配合 SSE 把实时变化推送给前端
-- React 前端提供 dashboard、workflow 详情、结果预览、catalog/template 管理
+- React 前端提供 dashboard、Runs 列表与单次 run 详情、结果预览、catalog（册内 workflow）与 template 管理
 
 ## 首次进入仓库时先读这些
 
@@ -33,8 +51,8 @@ Flowo 是一个面向 Snakemake 的工作流观测与管理平台：
    FastAPI 入口；确认路由挂载和 PostgreSQL listener 生命周期
 5. `app/api/__init__.py`
    查看后端功能面总表
-6. `app/plugin/client/log_handler.py`
-   看 Snakemake 事件如何进入系统
+6. `src/snakemake_logger_plugin_flowo/plugin/client/log_handler.py`
+   看 Snakemake 事件如何进入系统（PyPI 包；共享 schema 在 `src/flowo_common/schemas.py`）
 7. `frontend/src/routes/`
    看用户能访问哪些页面
 
@@ -51,6 +69,11 @@ Flowo 是一个面向 Snakemake 的工作流观测与管理平台：
 - `env.example`: 主要环境变量模板
 - `tests/`: pytest 测试
 
+### PyPI 插件与共享代码 `src/`
+
+- `src/flowo_common/`: CLI/logger 与后端共用的轻量配置（TOML、client env）与 ingest 协议 Pydantic schema
+- `src/snakemake_logger_plugin_flowo/`: Snakemake logger 插件、`flowo` CLI（不依赖 `app`）
+
 ### 后端 `app/`
 
 - `app/main.py`: FastAPI 应用入口（含 `FastApiMCP` 挂载 `/mcp`；说明见 `docs/mcp.md`）
@@ -59,7 +82,6 @@ Flowo 是一个面向 Snakemake 的工作流观测与管理平台：
 - `app/services/`: 业务逻辑核心；回答“系统实际怎么工作”时优先看这里
 - `app/models/`: SQLAlchemy ORM 模型
 - `app/schemas/`: Pydantic schema
-- `app/plugin/`: Snakemake logger 插件和 CLI
 - `app/alembic/`: 数据库迁移
 - `app/utils/`: 共用工具
 
@@ -78,9 +100,10 @@ Flowo 是一个面向 Snakemake 的工作流观测与管理平台：
 
 优先阅读：
 
-- `app/plugin/client/log_handler.py`
-- `app/plugin/client/parsers.py`
+- `src/snakemake_logger_plugin_flowo/plugin/client/log_handler.py`
+- `src/snakemake_logger_plugin_flowo/plugin/client/parsers.py`
 - `app/api/endpoints/reports.py`
+- `app/services/reports/dispatch/`（report 事件校验与落库）
 
 理解重点：
 

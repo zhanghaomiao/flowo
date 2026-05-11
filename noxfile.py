@@ -49,8 +49,7 @@ def tests(session: nox.Session, snakemake: str) -> None:
         "PYTHONPATH": _repo_root(),
         **os.environ,
     }
-    session.install(*TEST_DEPENDENCIES, f"snakemake=={snakemake}")
-    session.install(".")
+    session.install(*TEST_DEPENDENCIES, f"snakemake=={snakemake}", ".[server]")
     session.run("pytest", "--noconftest", *TEST_PATHS, env=env)
 
 

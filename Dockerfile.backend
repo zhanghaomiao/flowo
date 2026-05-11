@@ -32,6 +32,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --frozen --no-install-project --extra server
 
 COPY --chown=nonroot:nonroot app  /app/app
+COPY --chown=nonroot:nonroot src  /app/src
 COPY --chown=nonroot:nonroot README.md /app
 COPY --chown=nonroot:nonroot alembic.ini /app/alembic.ini
 RUN --mount=type=cache,target=/root/.cache/uv \
