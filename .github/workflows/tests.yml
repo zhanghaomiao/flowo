@@ -1,8 +1,8 @@
 name: Tests
 
+# 仅在 PR 上跑完整 lint + 兼容矩阵，避免每次 push 与 PR 同步各跑一套
 on:
   pull_request:
-  push:
 
 jobs:
   lint-and-compat:
