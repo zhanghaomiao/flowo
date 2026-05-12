@@ -9,16 +9,32 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as VerifyRouteImport } from './routes/verify'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as RegisterRouteImport } from './routes/register'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated.index'
+import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated.settings'
 import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticated.profile'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated.dashboard'
+import { Route as AuthenticatedCatalogRouteImport } from './routes/_authenticated.catalog'
 import { Route as AuthenticatedWorkflowIndexRouteImport } from './routes/_authenticated.workflow/index'
-import { Route as AuthenticatedDashboardIndexRouteImport } from './routes/_authenticated.Dashboard/index'
+import { Route as AuthenticatedCatalogIndexRouteImport } from './routes/_authenticated.catalog/index'
 import { Route as AuthenticatedWorkflowWorkflowIdRouteImport } from './routes/_authenticated.workflow/$workflowId'
+import { Route as AuthenticatedCatalogTemplateRouteImport } from './routes/_authenticated.catalog/template'
+import { Route as AuthenticatedCatalogCatalogIdRouteImport } from './routes/_authenticated.catalog/$catalogId'
 
+const VerifyRoute = VerifyRouteImport.update({
+  id: '/verify',
+  path: '/verify',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const RegisterRoute = RegisterRouteImport.update({
   id: '/register',
   path: '/register',
@@ -38,6 +54,11 @@ const AuthenticatedIndexRoute = AuthenticatedIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 const AuthenticatedProfileRoute = AuthenticatedProfileRouteImport.update({
   id: '/profile',
   path: '/profile',
@@ -48,17 +69,22 @@ const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedCatalogRoute = AuthenticatedCatalogRouteImport.update({
+  id: '/catalog',
+  path: '/catalog',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 const AuthenticatedWorkflowIndexRoute =
   AuthenticatedWorkflowIndexRouteImport.update({
     id: '/workflow/',
     path: '/workflow/',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
-const AuthenticatedDashboardIndexRoute =
-  AuthenticatedDashboardIndexRouteImport.update({
-    id: '/Dashboard/',
-    path: '/Dashboard/',
-    getParentRoute: () => AuthenticatedRoute,
+const AuthenticatedCatalogIndexRoute =
+  AuthenticatedCatalogIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedCatalogRoute,
   } as any)
 const AuthenticatedWorkflowWorkflowIdRoute =
   AuthenticatedWorkflowWorkflowIdRouteImport.update({
@@ -66,25 +92,48 @@ const AuthenticatedWorkflowWorkflowIdRoute =
     path: '/workflow/$workflowId',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedCatalogTemplateRoute =
+  AuthenticatedCatalogTemplateRouteImport.update({
+    id: '/template',
+    path: '/template',
+    getParentRoute: () => AuthenticatedCatalogRoute,
+  } as any)
+const AuthenticatedCatalogCatalogIdRoute =
+  AuthenticatedCatalogCatalogIdRouteImport.update({
+    id: '/$catalogId',
+    path: '/$catalogId',
+    getParentRoute: () => AuthenticatedCatalogRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof AuthenticatedIndexRoute
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
+  '/reset-password': typeof ResetPasswordRoute
+  '/verify': typeof VerifyRoute
+  '/catalog': typeof AuthenticatedCatalogRouteWithChildren
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/profile': typeof AuthenticatedProfileRoute
+  '/settings': typeof AuthenticatedSettingsRoute
+  '/catalog/$catalogId': typeof AuthenticatedCatalogCatalogIdRoute
+  '/catalog/template': typeof AuthenticatedCatalogTemplateRoute
   '/workflow/$workflowId': typeof AuthenticatedWorkflowWorkflowIdRoute
-  '/Dashboard/': typeof AuthenticatedDashboardIndexRoute
+  '/catalog/': typeof AuthenticatedCatalogIndexRoute
   '/workflow/': typeof AuthenticatedWorkflowIndexRoute
 }
 export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
+  '/reset-password': typeof ResetPasswordRoute
+  '/verify': typeof VerifyRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/profile': typeof AuthenticatedProfileRoute
+  '/settings': typeof AuthenticatedSettingsRoute
   '/': typeof AuthenticatedIndexRoute
+  '/catalog/$catalogId': typeof AuthenticatedCatalogCatalogIdRoute
+  '/catalog/template': typeof AuthenticatedCatalogTemplateRoute
   '/workflow/$workflowId': typeof AuthenticatedWorkflowWorkflowIdRoute
-  '/Dashboard': typeof AuthenticatedDashboardIndexRoute
+  '/catalog': typeof AuthenticatedCatalogIndexRoute
   '/workflow': typeof AuthenticatedWorkflowIndexRoute
 }
 export interface FileRoutesById {
@@ -92,11 +141,17 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
+  '/reset-password': typeof ResetPasswordRoute
+  '/verify': typeof VerifyRoute
+  '/_authenticated/catalog': typeof AuthenticatedCatalogRouteWithChildren
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/profile': typeof AuthenticatedProfileRoute
+  '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
+  '/_authenticated/catalog/$catalogId': typeof AuthenticatedCatalogCatalogIdRoute
+  '/_authenticated/catalog/template': typeof AuthenticatedCatalogTemplateRoute
   '/_authenticated/workflow/$workflowId': typeof AuthenticatedWorkflowWorkflowIdRoute
-  '/_authenticated/Dashboard/': typeof AuthenticatedDashboardIndexRoute
+  '/_authenticated/catalog/': typeof AuthenticatedCatalogIndexRoute
   '/_authenticated/workflow/': typeof AuthenticatedWorkflowIndexRoute
 }
 export interface FileRouteTypes {
@@ -105,31 +160,48 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/register'
+    | '/reset-password'
+    | '/verify'
+    | '/catalog'
     | '/dashboard'
     | '/profile'
+    | '/settings'
+    | '/catalog/$catalogId'
+    | '/catalog/template'
     | '/workflow/$workflowId'
-    | '/Dashboard/'
+    | '/catalog/'
     | '/workflow/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/login'
     | '/register'
+    | '/reset-password'
+    | '/verify'
     | '/dashboard'
     | '/profile'
+    | '/settings'
     | '/'
+    | '/catalog/$catalogId'
+    | '/catalog/template'
     | '/workflow/$workflowId'
-    | '/Dashboard'
+    | '/catalog'
     | '/workflow'
   id:
     | '__root__'
     | '/_authenticated'
     | '/login'
     | '/register'
+    | '/reset-password'
+    | '/verify'
+    | '/_authenticated/catalog'
     | '/_authenticated/dashboard'
     | '/_authenticated/profile'
+    | '/_authenticated/settings'
     | '/_authenticated/'
+    | '/_authenticated/catalog/$catalogId'
+    | '/_authenticated/catalog/template'
     | '/_authenticated/workflow/$workflowId'
-    | '/_authenticated/Dashboard/'
+    | '/_authenticated/catalog/'
     | '/_authenticated/workflow/'
   fileRoutesById: FileRoutesById
 }
@@ -137,10 +209,26 @@ export interface RootRouteChildren {
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
   LoginRoute: typeof LoginRoute
   RegisterRoute: typeof RegisterRoute
+  ResetPasswordRoute: typeof ResetPasswordRoute
+  VerifyRoute: typeof VerifyRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/verify': {
+      id: '/verify'
+      path: '/verify'
+      fullPath: '/verify'
+      preLoaderRoute: typeof VerifyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/register': {
       id: '/register'
       path: '/register'
@@ -169,6 +257,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedIndexRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/settings': {
+      id: '/_authenticated/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof AuthenticatedSettingsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/profile': {
       id: '/_authenticated/profile'
       path: '/profile'
@@ -183,6 +278,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/catalog': {
+      id: '/_authenticated/catalog'
+      path: '/catalog'
+      fullPath: '/catalog'
+      preLoaderRoute: typeof AuthenticatedCatalogRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/workflow/': {
       id: '/_authenticated/workflow/'
       path: '/workflow'
@@ -190,12 +292,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedWorkflowIndexRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
-    '/_authenticated/Dashboard/': {
-      id: '/_authenticated/Dashboard/'
-      path: '/Dashboard'
-      fullPath: '/Dashboard/'
-      preLoaderRoute: typeof AuthenticatedDashboardIndexRouteImport
-      parentRoute: typeof AuthenticatedRoute
+    '/_authenticated/catalog/': {
+      id: '/_authenticated/catalog/'
+      path: '/'
+      fullPath: '/catalog/'
+      preLoaderRoute: typeof AuthenticatedCatalogIndexRouteImport
+      parentRoute: typeof AuthenticatedCatalogRoute
     }
     '/_authenticated/workflow/$workflowId': {
       id: '/_authenticated/workflow/$workflowId'
@@ -204,24 +306,55 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedWorkflowWorkflowIdRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/catalog/template': {
+      id: '/_authenticated/catalog/template'
+      path: '/template'
+      fullPath: '/catalog/template'
+      preLoaderRoute: typeof AuthenticatedCatalogTemplateRouteImport
+      parentRoute: typeof AuthenticatedCatalogRoute
+    }
+    '/_authenticated/catalog/$catalogId': {
+      id: '/_authenticated/catalog/$catalogId'
+      path: '/$catalogId'
+      fullPath: '/catalog/$catalogId'
+      preLoaderRoute: typeof AuthenticatedCatalogCatalogIdRouteImport
+      parentRoute: typeof AuthenticatedCatalogRoute
+    }
   }
 }
 
+interface AuthenticatedCatalogRouteChildren {
+  AuthenticatedCatalogCatalogIdRoute: typeof AuthenticatedCatalogCatalogIdRoute
+  AuthenticatedCatalogTemplateRoute: typeof AuthenticatedCatalogTemplateRoute
+  AuthenticatedCatalogIndexRoute: typeof AuthenticatedCatalogIndexRoute
+}
+
+const AuthenticatedCatalogRouteChildren: AuthenticatedCatalogRouteChildren = {
+  AuthenticatedCatalogCatalogIdRoute: AuthenticatedCatalogCatalogIdRoute,
+  AuthenticatedCatalogTemplateRoute: AuthenticatedCatalogTemplateRoute,
+  AuthenticatedCatalogIndexRoute: AuthenticatedCatalogIndexRoute,
+}
+
+const AuthenticatedCatalogRouteWithChildren =
+  AuthenticatedCatalogRoute._addFileChildren(AuthenticatedCatalogRouteChildren)
+
 interface AuthenticatedRouteChildren {
+  AuthenticatedCatalogRoute: typeof AuthenticatedCatalogRouteWithChildren
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedProfileRoute: typeof AuthenticatedProfileRoute
+  AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
   AuthenticatedWorkflowWorkflowIdRoute: typeof AuthenticatedWorkflowWorkflowIdRoute
-  AuthenticatedDashboardIndexRoute: typeof AuthenticatedDashboardIndexRoute
   AuthenticatedWorkflowIndexRoute: typeof AuthenticatedWorkflowIndexRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
+  AuthenticatedCatalogRoute: AuthenticatedCatalogRouteWithChildren,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedProfileRoute: AuthenticatedProfileRoute,
+  AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
   AuthenticatedWorkflowWorkflowIdRoute: AuthenticatedWorkflowWorkflowIdRoute,
-  AuthenticatedDashboardIndexRoute: AuthenticatedDashboardIndexRoute,
   AuthenticatedWorkflowIndexRoute: AuthenticatedWorkflowIndexRoute,
 }
 
@@ -233,6 +366,8 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
   LoginRoute: LoginRoute,
   RegisterRoute: RegisterRoute,
+  ResetPasswordRoute: ResetPasswordRoute,
+  VerifyRoute: VerifyRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

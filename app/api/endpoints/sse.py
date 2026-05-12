@@ -2,7 +2,7 @@ import uuid
 from datetime import UTC, datetime, timedelta
 
 import jwt
-from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from fastapi import APIRouter, Depends, HTTPException, Request
 from sse_starlette.sse import EventSourceResponse
 
 from app.core.config import settings
@@ -30,15 +30,31 @@ async def get_sse_ticket(
     return {"ticket": ticket}
 
 
+def _sse_ticket_from_request(request: Request) -> str | None:
+    """Read short-lived SSE JWT from ``Authorization: Bearer`` only (not query: avoids proxy logs)."""
+    auth = request.headers.get("Authorization")
+    if not auth:
+        return None
+    parts = auth.split(None, 1)
+    if len(parts) != 2 or parts[0].lower() != "bearer":
+        return None
+    return parts[1].strip() or None
+
+
 @router.get("/events")
 async def stream_events(
     request: Request,
-    token: str = Query(...),
     user_manager: UserManager = Depends(get_user_manager),
 ):
     user = None
+    raw_token = _sse_ticket_from_request(request)
+    if not raw_token:
+        raise HTTPException(
+            status_code=401,
+            detail="Missing SSE ticket (use Authorization: Bearer <ticket>)",
+        )
     try:
-        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=["HS256"])
+        payload = jwt.decode(raw_token, settings.SECRET_KEY, algorithms=["HS256"])
         if payload.get("type") == "sse_ticket":
             user_id = payload.get("user_id")
             if user_id:

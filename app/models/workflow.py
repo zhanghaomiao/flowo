@@ -10,6 +10,7 @@ from .base import Base
 from .enums import Status
 
 if TYPE_CHECKING:
+    from .catalog import Catalog
     from .error import Error
     from .job import Job
     from .rule import Rule
@@ -41,6 +42,14 @@ class Workflow(Base):
     config: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
     flowo_working_path: Mapped[str | None] = mapped_column(nullable=True)
     run_info: Mapped[dict[str, int] | None] = mapped_column(JSON, nullable=True)
+
+    catalog_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("catalogs.id", ondelete="SET NULL"), nullable=True
+    )
+
+    catalog: Mapped["Catalog | None"] = relationship(
+        "Catalog", back_populates="workflows"
+    )
 
     rules: Mapped[list["Rule"]] = relationship(
         "Rule",

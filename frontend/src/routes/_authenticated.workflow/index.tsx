@@ -67,14 +67,6 @@ function RouteComponent() {
   }
 
   return (
-    <Flex
-      vertical
-      align="center"
-      justify="center"
-      style={{ height: '80vh', width: '100%' }}
-      gap="middle"
-    >
-      <Spin size="large" />
-    </Flex>
+    <div className="text-lg">Redirecting to run {String(workflowId)}...</div>
   );
 }

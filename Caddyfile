@@ -36,6 +36,18 @@
         }
     }
 
+    # Handle MCP requests
+    handle /mcp* {
+        reverse_proxy {$BACKEND_TARGET:localhost:8000}
+
+        # Apply security headers to MCP routes
+        header {
+            -Server
+            X-Content-Type-Options "nosniff"
+            Referrer-Policy "strict-origin-when-cross-origin"
+        }
+    }
+
     # Handle static file serving for work directory
     handle_path /files/* {
         # Handle CORS preflight requests

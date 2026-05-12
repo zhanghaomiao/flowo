@@ -17,6 +17,81 @@ const invalidateByTag = (queryClient: QueryClient, tag: string) => {
   });
 };
 
+/** Parse complete SSE blocks (``\\n\\n``) from a buffer; leave remainder for the next chunk. */
+function drainSseBlocks(buffer: string): { rest: string; blocks: string[] } {
+  const blocks: string[] = [];
+  let working = buffer;
+  let idx: number;
+  while ((idx = working.indexOf('\n\n')) !== -1) {
+    const raw = working.slice(0, idx);
+    working = working.slice(idx + 2);
+    if (raw.trim()) {
+      blocks.push(raw);
+    }
+  }
+  return { rest: working, blocks };
+}
+
+function parseSseBlock(raw: string): { event?: string; data?: string } {
+  let event: string | undefined;
+  const dataLines: string[] = [];
+  for (const line of raw.split('\n')) {
+    if (!line || line.startsWith(':')) {
+      continue;
+    }
+    if (line.startsWith('event:')) {
+      event = line.slice(6).trimStart();
+    } else if (line.startsWith('data:')) {
+      dataLines.push(line.slice(5).trimStart());
+    }
+  }
+  return { event, data: dataLines.length ? dataLines.join('\n') : undefined };
+}
+
+async function consumeSseOverFetch(
+  url: string,
+  ticket: string,
+  signal: AbortSignal,
+  onMessageData: (data: unknown) => void,
+  onOpen?: () => void,
+): Promise<void> {
+  const res = await fetch(url, {
+    method: 'GET',
+    headers: { Authorization: `Bearer ${ticket}` },
+    credentials: 'include',
+    signal,
+  });
+  if (!res.ok) {
+    throw new Error(`SSE HTTP ${res.status}`);
+  }
+  onOpen?.();
+  const reader = res.body?.getReader();
+  if (!reader) {
+    throw new Error('SSE response has no body');
+  }
+  const decoder = new TextDecoder();
+  let buffer = '';
+  while (!signal.aborted) {
+    const { done, value } = await reader.read();
+    if (done) {
+      break;
+    }
+    buffer += decoder.decode(value, { stream: true });
+    const { rest, blocks } = drainSseBlocks(buffer);
+    buffer = rest;
+    for (const block of blocks) {
+      const { event, data } = parseSseBlock(block);
+      if (event === 'message' && data) {
+        try {
+          onMessageData(JSON.parse(data));
+        } catch {
+          /* ignore malformed payloads */
+        }
+      }
+    }
+  }
+}
+
 export const useWorkflowRealtime = (workflows: string[] = []) => {
   const queryClient = useQueryClient();
   const [connectionStatus, setConnectionStatus] = useState<
@@ -46,11 +121,11 @@ export const useWorkflowRealtime = (workflows: string[] = []) => {
   );
 
   useEffect(() => {
-    let eventSource: EventSource | null = null;
-    let isActive = true;
+    const controller = new AbortController();
     let retryTimeout: NodeJS.Timeout | null = null;
+    let isActive = true;
 
-    const connectSSE = async () => {
+    const connectSse = async () => {
       const token = localStorage.getItem('token');
       if (!token) {
         setConnectionStatus('OFF');
@@ -60,7 +135,6 @@ export const useWorkflowRealtime = (workflows: string[] = []) => {
       setConnectionStatus('CONNECTING');
 
       try {
-        // 1. Get short-lived ticket
         const ticketRes = await getSseTicket({
           headers: {
             Authorization: `Bearer ${token}`,
@@ -73,75 +147,90 @@ export const useWorkflowRealtime = (workflows: string[] = []) => {
 
         const { ticket } = ticketRes.data as { ticket: string };
 
-        if (!isActive) return;
+        if (!isActive) {
+          return;
+        }
 
-        // 2. Connect with ticket
-        const url = client.buildUrl({
-          url: '/api/v1/sse/events',
-          query: { token: ticket },
-        });
+        const url = client.buildUrl({ url: '/api/v1/sse/events' });
 
-        eventSource = new EventSource(url);
+        const onData = (data: unknown) => {
+          if (!isActive) {
+            return;
+          }
+          try {
+            const row = data as {
+              operation?: string;
+              new_status?: unknown;
+              table?: string;
+              id?: string;
+              workflow_id?: string;
+            };
+            if (row.operation === 'UPDATE' && !row.new_status) {
+              return;
+            }
+            if (row.operation === 'INSERT' || row.operation === 'DELETE') {
+              debounceSync();
+            }
+            if (row.table === 'workflows') {
+              if (row.id && currentIdsRef.current.has(row.id)) {
+                debounceSync();
+              }
+            } else if (row.table === 'jobs') {
+              if (
+                row.workflow_id &&
+                currentIdsRef.current.has(row.workflow_id)
+              ) {
+                debounceSync();
+              }
+            }
+          } catch (e) {
+            console.error('SSE handler error', e);
+          }
+        };
 
-        eventSource.onopen = () => {
+        const onOpen = () => {
           if (isActive) {
             setConnectionStatus('ONLINE');
             invalidateByTag(queryClient, TAG_WORKFLOWS);
           }
         };
 
-        eventSource.onerror = () => {
-          if (isActive) {
-            setConnectionStatus('CONNECTING');
-            eventSource?.close();
-            // Retry connection after 3 seconds
-            retryTimeout = setTimeout(() => {
-              connectSSE();
-            }, 3000);
-          }
-        };
+        await consumeSseOverFetch(
+          url,
+          ticket,
+          controller.signal,
+          onData,
+          onOpen,
+        );
 
-        eventSource.addEventListener('message', (event) => {
-          if (!isActive) return;
-          try {
-            const data = JSON.parse(event.data);
-            const { table, id, workflow_id } = data;
-
-            if (data.operation === 'UPDATE' && !data.new_status) return;
-            if (data.operation === 'INSERT' || data.operation === 'DELETE') {
-              debounceSync();
-            }
-            if (table === 'workflows') {
-              if (currentIdsRef.current.has(id)) {
-                debounceSync();
-              }
-            } else if (table === 'jobs') {
-              if (currentIdsRef.current.has(workflow_id)) {
-                debounceSync();
-              }
-            }
-          } catch (e) {
-            console.error('SSE Parse Error', e);
-          }
-        });
+        if (isActive && !controller.signal.aborted) {
+          setConnectionStatus('OFF');
+          retryTimeout = setTimeout(() => {
+            void connectSse();
+          }, 3000);
+        }
       } catch (error) {
+        if (controller.signal.aborted) {
+          return;
+        }
         console.error('SSE Connection Error:', error);
         if (isActive) {
           setConnectionStatus('OFF');
-          // Retry connection after 5 seconds on fatal error
           retryTimeout = setTimeout(() => {
-            connectSSE();
+            void connectSse();
           }, 5000);
         }
       }
     };
 
-    connectSSE();
+    void connectSse();
 
     return () => {
       isActive = false;
-      eventSource?.close();
-      if (retryTimeout) clearTimeout(retryTimeout);
+      controller.abort();
+      if (retryTimeout) {
+        clearTimeout(retryTimeout);
+      }
       debounceSync.cancel();
     };
   }, [queryClient, debounceSync]);

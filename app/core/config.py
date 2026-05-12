@@ -1,23 +1,17 @@
+import os
 from pathlib import Path
 
 from pydantic import model_validator
 from pydantic_settings import BaseSettings
 
+from flowo_common.config import load_user_toml_defaults
+
+load_user_toml_defaults()
+
 
 def get_env_files() -> list[str]:
     """Safely get environment files, avoiding permission errors in containers."""
-    files = []
-    try:
-        # Check for user-level config
-        home_cfg = Path.home() / ".config/flowo/.env"
-        # In Docker, Path.home() might be /root. Check if we have access.
-        if home_cfg.is_file():
-            files.append(str(home_cfg))
-    except (PermissionError, RuntimeError):
-        # Fallback if home directory is restricted
-        pass
-    files.append(".env")
-    return files
+    return [".env"]
 
 
 class Settings(BaseSettings):
@@ -48,6 +42,54 @@ class Settings(BaseSettings):
 
     FLOWO_WORKING_PATH: str = "/tmp/flowo_working_dir"
     CONTAINER_MOUNT_PATH: str = "/work_dir"
+
+    # Catalog management
+    CATALOG_DIR: str | None = None  # Defaults to CONTAINER_MOUNT_PATH/catalog
+    # Official Snakemake workflow template (git clone target), NOT under per-user catalog trees.
+    SNAKEMAKE_WORKFLOW_TEMPLATE_DIR: str | None = None
+    # Read-only export cache for DAG generation, etc.
+    # Default under CONTAINER_MOUNT_PATH so it can be persisted/mounted in Docker.
+    CATALOG_EXPORT_DIR: str | None = (
+        None  # Defaults to CONTAINER_MOUNT_PATH/.flowo_exported_catalogs
+    )
+    # DAG tooling runtime
+    DAG_VENV_DIR: str | None = None  # Defaults to CONTAINER_MOUNT_PATH/.flowo_dag_venv
+    DAG_AUTO_INSTALL_IMPORTS: bool = False  # Install missing imports into DAG venv
+    DAG_AUTO_TOUCH_MISSING_INPUTS: bool = (
+        True  # Touch missing inputs for rulegraph-only
+    )
+
+    @model_validator(mode="after")
+    def set_catalog_defaults(self) -> "Settings":
+        if self.CATALOG_DIR is None:
+            # Use CONTAINER_MOUNT_PATH (container-side) for file storage,
+            # FLOWO_WORKING_PATH is the host-side path used for Docker volume mapping
+            self.CATALOG_DIR = str(Path(self.CONTAINER_MOUNT_PATH) / "catalog")
+        if self.CATALOG_EXPORT_DIR is None:
+            self.CATALOG_EXPORT_DIR = str(
+                Path(self.CONTAINER_MOUNT_PATH) / ".flowo_exported_catalogs"
+            )
+        if self.DAG_VENV_DIR is None:
+            self.DAG_VENV_DIR = str(Path(self.CONTAINER_MOUNT_PATH) / ".flowo_dag_venv")
+        if self.SNAKEMAKE_WORKFLOW_TEMPLATE_DIR is None:
+            # Prefer container mount when it exists and is writable (Docker). On a bare
+            # host, ``/work_dir`` etc. often does not exist — fall back to FLOWO_WORKING_PATH
+            # so ``flowo catalog new`` can clone the official template without extra env.
+            container_base = Path(self.CONTAINER_MOUNT_PATH)
+            working_base = Path(self.FLOWO_WORKING_PATH)
+            use_container = container_base.exists() and os.access(
+                container_base,
+                os.W_OK,
+            )
+            base = container_base if use_container else working_base
+            self.SNAKEMAKE_WORKFLOW_TEMPLATE_DIR = str(
+                base / "snakemake-workflow-template"
+            )
+        return self
+
+    # Optional Git sync for catalogs
+    CATALOG_GIT_REMOTE: str | None = None  # e.g. https://github.com/user/workflows
+    CATALOG_GIT_TOKEN: str | None = None  # PAT for private repos
 
     SECRET_KEY: str = "YOUR_SECRET_KEY"  # SHOULD BE CHANGED IN PRODUCTION
     BACKEND_CORS_ORIGINS: list[str] = ["http://localhost", "http://localhost:3100"]

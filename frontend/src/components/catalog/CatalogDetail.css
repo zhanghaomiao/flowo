@@ -1,0 +1,413 @@
+/* CatalogDetail.css - Modern catalog detail page styles */
+
+/* ── Page shell: no outer scroll; only tree + editor body scroll ─── */
+.catalog-detail-page {
+  flex: 1;
+  display: flex;
+  min-height: 0;
+  width: 100%;
+  max-width: 1920px;
+  margin: 0 auto;
+  flex-direction: column;
+  overflow: hidden;
+  box-sizing: border-box;
+  padding: 8px 16px 6px;
+}
+
+.catalog-detail-page-header {
+  flex-shrink: 0;
+}
+
+/* ── Compact toolbar ──────────────────────────────── */
+.catalog-detail-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 0;
+  margin-bottom: 0;
+  border-bottom: none;
+}
+
+.catalog-toolbar-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  flex-wrap: wrap;
+}
+
+.catalog-toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.catalog-toolbar-divider {
+  width: 1px;
+  height: 20px;
+  background-color: #e5e7eb;
+  margin: 0 4px;
+}
+
+.catalog-back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: #9ca3af;
+  cursor: pointer;
+  transition: color 0.2s;
+  font-weight: 500;
+}
+
+.catalog-back-link:hover {
+  color: #4f46e5;
+}
+
+.catalog-toolbar-sep {
+  color: #d1d5db;
+  font-size: 12px;
+}
+
+.catalog-toolbar-name {
+  font-weight: 700;
+  font-size: 14px;
+  color: #111827;
+  cursor: default;
+}
+
+/* ── Main content layout ─────────────────────────── */
+.catalog-detail-content {
+  display: flex;
+  flex: 1;
+  gap: 12px;
+  align-items: stretch;
+  min-height: 0;
+  overflow: hidden;
+  padding-top: 2px;
+}
+
+.catalog-file-panel {
+  flex: 0 0 320px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+/* ── Fold/collapse chevron ───────────────────────── */
+.catalog-category-chevron {
+  font-size: 10px;
+  color: #9ca3af;
+  transition: transform 0.2s ease;
+}
+
+.catalog-category-chevron.expanded {
+  transform: rotate(90deg);
+}
+
+.catalog-editor-panel {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+}
+
+.catalog-editor-card {
+  position: sticky;
+  top: 16px;
+}
+
+/* ── Editor tabs ─────────────────────────────────── */
+.catalog-editor-tabs.ant-tabs {
+  margin-bottom: 0 !important;
+}
+
+.catalog-editor-tabs .ant-tabs-nav {
+  margin-bottom: 0 !important;
+  padding-left: 8px !important;
+}
+
+.catalog-detail-tabs .ant-tabs-content-holder {
+  display: none;
+}
+
+/* ── Main Tab Layout Fix ────────────────────────── */
+.catalog-detail-main-tabs.ant-tabs {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  margin-top: 4px;
+}
+
+.catalog-detail-main-tabs.ant-tabs > .ant-tabs-content-holder {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.catalog-detail-main-tabs.ant-tabs .ant-tabs-content,
+.catalog-detail-main-tabs.ant-tabs .ant-tabs-tabpane {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+}
+
+/* ── Category sections ───────────────────────────── */
+.catalog-category-panel {
+  border: 1px solid #f0f0f0;
+  border-radius: 8px;
+  margin-bottom: 8px;
+  overflow: hidden;
+  transition:
+    box-shadow 0.2s,
+    border-color 0.2s;
+  background: #fff;
+}
+
+.catalog-category-panel:hover {
+  border-color: #d9d9f0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.catalog-category-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 10px;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.15s;
+}
+
+.catalog-category-header:hover {
+  background: #fafbff;
+}
+
+.catalog-category-header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.catalog-category-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  font-size: 12px;
+}
+
+.catalog-category-icon.snakefile {
+  background: #fef3c7;
+  color: #d97706;
+}
+.catalog-category-icon.rules {
+  background: #ede9fe;
+  color: #7c3aed;
+}
+.catalog-category-icon.envs {
+  background: #d1fae5;
+  color: #059669;
+}
+.catalog-category-icon.scripts {
+  background: #dbeafe;
+  color: #2563eb;
+}
+.catalog-category-icon.config {
+  background: #fce7f3;
+  color: #db2777;
+}
+.catalog-category-icon.notebooks {
+  background: #fef9c3;
+  color: #ca8a04;
+}
+.catalog-category-icon.report {
+  background: #ffedd5;
+  color: #ea580c;
+}
+
+.catalog-category-label {
+  font-weight: 600;
+  font-size: 13px;
+  color: #1f2937;
+}
+
+.catalog-category-actions {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.catalog-category-actions .ant-btn {
+  border-radius: 6px;
+}
+
+/* ── File list items ─────────────────────────────── */
+.catalog-file-list {
+  border-top: 1px solid #f5f5f5;
+}
+
+.catalog-file-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 10px 4px 36px;
+  transition: background 0.15s;
+  cursor: pointer;
+  border-bottom: 1px solid #fafafa;
+}
+
+.catalog-file-item:last-child {
+  border-bottom: none;
+}
+
+.catalog-file-item:hover {
+  background: #f8faff;
+}
+
+.catalog-file-item-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+
+.catalog-file-name {
+  font-weight: 500;
+  font-size: 13px;
+  color: #374151;
+  cursor: pointer;
+  transition: color 0.15s;
+}
+
+.catalog-file-name:hover {
+  color: #4f46e5;
+}
+
+.catalog-file-meta {
+  font-size: 11px;
+  color: #9ca3af;
+}
+
+.catalog-file-actions {
+  display: flex;
+  gap: 2px;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.catalog-file-item:hover .catalog-file-actions {
+  opacity: 1;
+}
+
+/* ── Toolbar Button Styling ──────────────────────── */
+.catalog-toolbar-right .ant-btn {
+  font-weight: 500;
+  font-size: 12px;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: #374151;
+  background: transparent;
+  border: 1px solid #e5e7eb;
+  transition: all 0.15s ease;
+  box-shadow: none;
+}
+
+.catalog-toolbar-right .ant-btn:hover {
+  background: #f5f5f5;
+  border-color: #d1d5db;
+  color: #111827;
+}
+
+.catalog-btn-delete {
+  color: #dc2626 !important;
+}
+
+.catalog-btn-delete:hover {
+  background: #fef2f2 !important;
+  border-color: #fca5a5 !important;
+  color: #dc2626 !important;
+}
+
+/* Markdown Source / Preview toggle (toolbar under catalog detail header) */
+.catalog-panel-segmented-host .ant-segmented {
+  background: #f3f4f6;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.catalog-panel-segmented-host .ant-segmented-item-selected {
+  background: #4f46e5;
+  color: #fff !important;
+  border-radius: 4px;
+  font-weight: 600;
+  box-shadow: 0 1px 4px rgba(79, 70, 229, 0.3);
+}
+
+.catalog-panel-segmented-host .ant-segmented-item-selected .anticon,
+.catalog-panel-segmented-host .ant-segmented-item-selected span {
+  color: #fff !important;
+}
+
+/* ── Layout toggle in toolbar (legacy, now in panel) ─ */
+.catalog-layout-toggle.ant-segmented {
+  background-color: #f3f4f6;
+  padding: 2px;
+  border-radius: 6px;
+}
+.catalog-layout-toggle .ant-segmented-item-selected {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* ── Footer metadata ─────────────────────────────── */
+.catalog-detail-footer {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 8px 0 6px;
+  margin-top: 4px;
+  border-top: 1px solid #f0f0f0;
+}
+
+.catalog-footer-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: #9ca3af;
+}
+
+.catalog-footer-item .anticon {
+  font-size: 14px;
+}
+
+.catalog-footer-value {
+  color: #6b7280;
+  font-weight: 500;
+}
+
+/* Responsive adjustments */
+@media (max-width: 1024px) {
+  .catalog-detail-header-top {
+    flex-direction: column;
+  }
+
+  .catalog-actions {
+    flex-wrap: wrap;
+  }
+
+  .catalog-detail-content {
+    flex-direction: column;
+  }
+}

@@ -43,6 +43,12 @@ Welcome to **Flowo** – your real-time Snakemake workflow dashboard!
 pip install snakemake-logger-plugin-flowo
 ```
 
+The PyPI package does not depend on Snakemake itself (it is expected in the environment where you run workflows). If you need Snakemake installed in the same environment—for example a minimal venv used only for the CLI—use:
+
+```sh
+pip install "snakemake-logger-plugin-flowo[snakemake]"
+```
+
 ### 2️⃣ Install the Flowo web server (Single Image)
 
 This method uses pre-built Docker images. For detailed instructions, please refer to the [Quick Start](https://flowo-docs.pages.dev/getting-started/) guide.
@@ -53,8 +59,10 @@ Clone the repo and start the service:
 git clone https://github.com/zhanghaomiao/flowo.git
 cd flowo
 cp env.example .env
-# Edit .env and set FLOWO_WORKING_PATH
-docker compose -f docker/compose.yml up -d
+# Edit .env:
+# - set SECRET_KEY to a long random value and keep it stable
+# - set FLOWO_WORKING_PATH to a host directory for FlowO data
+docker compose up -d
 ```
 
 ![login](docs/assets/images/login.png)
@@ -89,7 +97,7 @@ snakemake \
 If you want to contribute or build from source:
 
 ```bash
-docker compose -f docker-compose.dev.yml up --build
+docker compose -f compose.dev.yml up --build
 ```
 
 - **Gateway**: `http://localhost:3100` (Accesses both Frontend and Backend)

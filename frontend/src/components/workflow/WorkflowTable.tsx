@@ -1,12 +1,5 @@
 import { useCallback, useMemo, useState } from 'react';
 
-import Icon, {
-  DeleteOutlined,
-  FileTextOutlined,
-  InfoCircleOutlined,
-  ReloadOutlined,
-  SettingOutlined,
-} from '@ant-design/icons';
 import {
   Query,
   useMutation,
@@ -15,16 +8,24 @@ import {
 } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
 import {
+  Badge,
   Button,
   message,
   Popconfirm,
   Progress,
-  Space,
   Table,
   Tag,
   Tooltip,
 } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
+import {
+  FileText,
+  Info,
+  Library,
+  RefreshCcw,
+  Settings,
+  Trash2,
+} from 'lucide-react';
 
 import SnakemakeIcon from '@/assets/snakemake.svg?react';
 import {
@@ -44,8 +45,10 @@ import WorkflowTag from '@/components/workflow/WorkflowTag';
 import { useWorkflowRealtime } from '@/config/workflowRealtime';
 import {
   formatDateCompact,
-  getStatusColor,
   getWorkflowProgressStatus,
+  normalizeWorkflowStatus,
+  workflowBadgeAntStatus,
+  workflowStatusLabel,
 } from '@/utils/formatters';
 
 import WorkflowSearch from './WorkflowSearch';
@@ -189,18 +192,17 @@ const WorkflowTable = () => {
       });
       messageApi.open({
         type: 'success',
-        content: `Workflow ${workflowId} deleted successfully!`,
+        content: `Run ${workflowId} deleted successfully!`,
       });
     } catch (error) {
-      console.error('Failed to delete workflow:', error);
+      console.error('Failed to delete run:', error);
       messageApi.open({
         type: 'error',
-        content: `Failed to delete workflow ${workflowId}. Please try again.`,
+        content: `Failed to delete run ${workflowId}. Please try again.`,
       });
     }
   };
 
-  // Handle showing Snakefile
   const handleShowSnakefile = (workflowId: string) => {
     setSnakefileModal({
       visible: true,
@@ -208,7 +210,6 @@ const WorkflowTable = () => {
     });
   };
 
-  // Handle showing logs
   const handleShowLogs = (workflowId: string, workflowStatus: Status) => {
     setLogModal({
       visible: true,
@@ -224,7 +225,6 @@ const WorkflowTable = () => {
     });
   };
 
-  // Search handlers - use useCallback to prevent unnecessary re-renders
   const handleTagsSearch = useCallback((tags: string | null) => {
     setSearchTags(tags);
     setCurrentPage(1);
@@ -250,7 +250,7 @@ const WorkflowTable = () => {
     });
     messageApi.open({
       type: 'success',
-      content: 'Workflows refreshed successfully!',
+      content: 'Runs list refreshed successfully!',
     });
   }, [queryClient, messageApi, queryParams]);
 
@@ -259,109 +259,60 @@ const WorkflowTable = () => {
       title: 'Name',
       dataIndex: 'name',
       key: 'name',
-      width: 220,
-      fixed: 'left',
-      sorter: (a, b) => {
-        const nameA = a.name || '';
-        const nameB = b.name || '';
-        return nameA.localeCompare(nameB);
-      },
+      minWidth: 200,
+      ellipsis: true,
+      sorter: (a, b) => (a.name || '').localeCompare(b.name || ''),
       render: (name: string | null, record: WorkflowResponse) => {
         const tags = record.tags || [];
         const displayTags = tags.slice(0, 5);
         const extraTagsCount = tags.length - 5;
 
         return (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-            {/* Name on first row */}
+          <div className="flex flex-col gap-1.5 py-1">
             <Link
               to="/workflow/$workflowId"
               params={{ workflowId: record.id }}
-              style={{
-                color: '#1890ff',
-                textDecoration: 'none',
-                display: 'block',
-              }}
+              className="text-brand-600 hover:text-brand-700 font-semibold text-sm transition-colors decoration-brand-200/50 hover:underline underline-offset-4"
             >
-              <div
-                style={{
-                  fontWeight: 600,
-                  fontSize: '14px',
-                  color: '#1890ff',
-                  lineHeight: '1.3',
-                  letterSpacing: '-0.01em',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s ease',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.color = '#40a9ff';
-                  e.currentTarget.style.textDecoration = 'underline';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.color = '#1890ff';
-                  e.currentTarget.style.textDecoration = 'none';
-                }}
-              >
-                {name || record.directory} ({record.total_jobs})
-              </div>
+              {name || record.directory}
+              <span className="ml-1.5 text-slate-400 font-normal">
+                ({record.total_jobs})
+              </span>
             </Link>
 
             {tags.length > 0 && (
-              <div
-                style={{
-                  display: 'flex',
-                  flexWrap: 'wrap',
-                  alignItems: 'center',
-                }}
-              >
+              <div className="flex flex-wrap items-center gap-1">
                 {displayTags.map((tag, index) => (
                   <WorkflowTag
                     key={index}
                     tag={tag}
-                    style={{
-                      fontSize: '11px',
-                      marginInlineEnd: 2,
-                    }}
+                    className="!text-[10px] !px-1.5 !py-0 !h-5 border-slate-100"
                     onClick={handleTagsSearch}
                   />
                 ))}
 
-                {/* Show additional tags count with tooltip */}
                 {extraTagsCount > 0 && (
                   <Tooltip
                     title={
-                      <div>
-                        <div
-                          style={{ marginBottom: '4px', fontWeight: 'bold' }}
-                        >
-                          All Tags ({tags.length}):
+                      <div className="p-1">
+                        <div className="mb-2 font-bold text-xs border-b border-white/10 pb-1">
+                          All Tags ({tags.length})
                         </div>
-                        {tags.map((tag, index) => (
-                          <WorkflowTag
-                            key={index}
-                            tag={tag}
-                            style={{ margin: '2px', fontSize: '11px' }}
-                            onClick={handleTagsSearch}
-                          />
-                        ))}
+                        <div className="flex flex-wrap gap-1">
+                          {tags.map((tag, index) => (
+                            <WorkflowTag
+                              key={index}
+                              tag={tag}
+                              className="!text-[10px]"
+                              onClick={handleTagsSearch}
+                            />
+                          ))}
+                        </div>
                       </div>
                     }
                   >
-                    <Tag
-                      color="default"
-                      style={{
-                        margin: 0,
-                        fontSize: '11px',
-                        lineHeight: '16px',
-                        height: '18px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        cursor: 'pointer',
-                        borderStyle: 'dashed',
-                        padding: '0 6px',
-                      }}
-                    >
-                      +{extraTagsCount} more
+                    <Tag className="m-0 text-[10px] px-1.5 h-5 flex items-center cursor-pointer border-dashed bg-slate-50 text-slate-500 border-slate-300 hover:bg-slate-100 transition-colors">
+                      +{extraTagsCount}
                     </Tag>
                   </Tooltip>
                 )}
@@ -372,35 +323,65 @@ const WorkflowTable = () => {
       },
     },
     {
+      title: 'Catalog',
+      key: 'catalog_slug',
+      width: 130,
+      ellipsis: true,
+      render: (_: unknown, record: WorkflowResponse) => {
+        const ref = record.catalog_id ?? record.catalog_slug;
+        const label = record.catalog_slug ?? record.catalog_id;
+        return ref && label ? (
+          <Tooltip title="View all runs in this catalog">
+            <Link
+              to="/catalog/$catalogId"
+              params={{ catalogId: ref }}
+              className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-brand-50 text-brand-600 hover:bg-brand-100 hover:text-brand-700 transition-colors text-xs font-bold border border-brand-100"
+            >
+              <Library size={12} className="shrink-0" />
+              <span className="truncate">{label}</span>
+            </Link>
+          </Tooltip>
+        ) : (
+          <span className="text-slate-300">—</span>
+        );
+      },
+    },
+    {
       title: 'Status',
       dataIndex: 'status',
       key: 'status',
-      width: 30,
-      align: 'right',
-      render: (status: Status) => (
-        <Tag
-          color={getStatusColor(status)}
-          style={{ textTransform: 'uppercase' }}
-        >
-          {status}
-        </Tag>
-      ),
+      width: 128,
+      render: (_: unknown, record: WorkflowResponse) => {
+        const s = normalizeWorkflowStatus(record.status);
+        return (
+          <Badge
+            status={workflowBadgeAntStatus(s)}
+            className="workflow-status-badge [&_.ant-badge-status-text]:text-slate-700 [&_.ant-badge-status-text]:text-sm [&_.ant-badge-status-text]:font-medium"
+            text={workflowStatusLabel(s)}
+          />
+        );
+      },
       filters: [
-        { text: 'Success', value: 'SUCCESS' },
+        { text: 'Succeeded', value: 'SUCCESS' },
         { text: 'Running', value: 'RUNNING' },
-        { text: 'Error', value: 'ERROR' },
+        { text: 'Failed', value: 'ERROR' },
         { text: 'Waiting', value: 'WAITING' },
       ],
       filteredValue: status ? [status] : null,
-      onFilter: (value, record) => record.status === value,
+      onFilter: (value, record) =>
+        normalizeWorkflowStatus(record.status) === value,
     },
     {
-      title: 'Started time',
+      title: 'Start Time',
       dataIndex: 'started_at',
       key: 'started_at',
-      width: 60,
+      width: 132,
       align: 'right',
-      render: (startedAt: string | null) => formatDateCompact(startedAt),
+      render: (startedAt: string | null) => (
+        <span className="text-slate-500 font-medium tabular-nums text-xs">
+          {formatDateCompact(startedAt)}
+        </span>
+      ),
       sorter: (a, b) => {
         const dateA = a.started_at ? new Date(a.started_at).getTime() : 0;
         const dateB = b.started_at ? new Date(b.started_at).getTime() : 0;
@@ -408,270 +389,226 @@ const WorkflowTable = () => {
       },
     },
     {
-      title: 'End Time',
-      dataIndex: 'end_time',
-      key: 'end_time',
-      align: 'right',
-      width: 60,
-      render: (endTime: string | null) => formatDateCompact(endTime),
-      sorter: (a, b) => {
-        const dateA = a.end_time ? new Date(a.end_time).getTime() : 0;
-        const dateB = b.end_time ? new Date(b.end_time).getTime() : 0;
-        return dateA - dateB;
-      },
-    },
-    {
-      title: 'Duration',
+      title: <span className="whitespace-nowrap">Duration</span>,
       dataIndex: 'duration',
       key: 'duration',
-      width: 30,
+      width: 100,
       align: 'right',
-      render: (_, record) => <DurationCell record={record} />,
+      render: (_, record) => (
+        <div className="text-slate-600 font-semibold tabular-nums text-xs">
+          <DurationCell record={record} />
+        </div>
+      ),
     },
     {
-      title: 'Progress',
+      title: <span className="whitespace-nowrap">Progress</span>,
       key: 'progress',
-      width: 30,
-      fixed: 'right',
-      align: 'right',
+      width: 100,
+      align: 'center',
       render: (_, record) => {
-        const progressStatus = getWorkflowProgressStatus(
-          record.status as Status,
-        );
+        const s = normalizeWorkflowStatus(record.status);
+        const progressStatus = getWorkflowProgressStatus(s);
+        const percent =
+          s === 'SUCCESS'
+            ? 100
+            : Math.min(100, Math.max(0, record.progress ?? 0));
         return (
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'flex-end',
-              width: '100%',
-              height: '100%',
-            }}
-          >
+          <div className="flex justify-center py-0.5">
             <Progress
               type="circle"
-              percent={record.progress ?? 0}
+              percent={percent}
               status={progressStatus}
-              size={30}
+              size={26}
+              strokeWidth={8}
             />
           </div>
         );
       },
     },
     {
-      title: 'Files',
+      title: 'Actions',
       key: 'files',
-      fixed: 'right',
-      width: 45,
-      align: 'center',
-      render: (_, record) => {
-        return (
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'flex-end',
-              gap: '2px',
-              width: '100%',
-              height: '100%',
-            }}
-          >
-            <Space size={2}>
-              <Tooltip title="View Snakefile">
-                <Button
-                  type="text"
-                  icon={
-                    <Icon component={SnakemakeIcon} style={{ fontSize: 22 }} />
-                  }
-                  size="small"
-                  onClick={() => handleShowSnakefile(record.id)}
-                />
-              </Tooltip>
-              {record.configfiles ? (
-                <Tooltip title="View Config Files">
-                  <Button
-                    type="text"
-                    icon={<SettingOutlined style={{ fontSize: 22 }} />}
-                    size="small"
-                    onClick={() => handleShowConfig(record.id)}
-                    style={{
-                      color: '#52c41a',
-                      padding: '0px',
-                    }}
-                  />
-                </Tooltip>
-              ) : (
-                <Tooltip title="No Config Files">
-                  <Button
-                    type="text"
-                    icon={<SettingOutlined style={{ fontSize: 22 }} />}
-                    size="small"
-                    style={{
-                      color: '#e8e8e8',
-                      padding: '0px',
-                    }}
-                  />
-                </Tooltip>
-              )}
-              {/* Log file button */}
-              {record.started_at && (
-                <Tooltip title="View Workflow Logs">
-                  <Button
-                    type="text"
-                    icon={<FileTextOutlined style={{ fontSize: 22 }} />}
-                    size="small"
-                    onClick={() =>
-                      handleShowLogs(record.id, record.status as Status)
-                    }
-                    style={{
-                      color: '#fa8c16',
-                      padding: '0px',
-                    }}
-                  />
-                </Tooltip>
-              )}
-              {/* Workflow detail button */}
-              <Tooltip title="View Workflow Detail">
-                <Button
-                  type="text"
-                  icon={<InfoCircleOutlined style={{ fontSize: 22 }} />}
-                  size="small"
-                  onClick={() =>
-                    setWorkflowDetailModal({
-                      visible: true,
-                      workflowId: record.id,
-                    })
-                  }
-                  style={{
-                    color: '#1890ff',
-                    padding: '0px',
-                  }}
-                />
-              </Tooltip>
-            </Space>
-          </div>
-        );
-      },
-    },
-    {
-      title: 'Delete',
-      key: 'delete',
-      width: 20,
-      align: 'center',
-      render: (_, record) => {
-        return (
-          <Popconfirm
-            title="Delete Workflow"
-            description={`Are you sure you want to delete workflow: "${record.name || record.id}"?`}
-            onConfirm={() => handleDeleteWorkflow(record.id)}
-            okText="Yes"
-            cancelText="No"
-            okButtonProps={{
-              danger: true,
-              loading: deleteWorkflow.isPending,
-            }}
-            placement="topLeft"
-            disabled={deleteWorkflow.isPending}
+      width: 168,
+      align: 'right',
+      render: (_, record) => (
+        <div className="flex items-center justify-end gap-0.5">
+          <Tooltip title="View Snakefile">
+            <Button
+              type="text"
+              icon={<SnakemakeIcon style={{ fontSize: '18px' }} />}
+              size="small"
+              className="hover:bg-slate-100 flex items-center justify-center h-8 w-8 min-w-8"
+              onClick={() => handleShowSnakefile(record.id)}
+            />
+          </Tooltip>
+
+          <Tooltip
+            title={record.configfiles ? 'View Config Files' : 'No Config Files'}
           >
             <Button
               type="text"
-              icon={<DeleteOutlined style={{ fontSize: 20 }} />}
+              icon={<Settings size={18} />}
+              size="small"
+              disabled={!record.configfiles}
+              className={`flex items-center justify-center h-8 w-8 min-w-8 ${record.configfiles ? 'text-sky-500 hover:bg-sky-50 hover:text-sky-600' : 'text-slate-200'}`}
+              onClick={() => handleShowConfig(record.id)}
+            />
+          </Tooltip>
+
+          {record.started_at && (
+            <Tooltip title="View run logs">
+              <Button
+                type="text"
+                icon={<FileText size={18} />}
+                size="small"
+                className="text-amber-500 hover:bg-amber-50 hover:text-amber-600 flex items-center justify-center h-8 w-8 min-w-8"
+                onClick={() =>
+                  handleShowLogs(
+                    record.id,
+                    normalizeWorkflowStatus(record.status),
+                  )
+                }
+              />
+            </Tooltip>
+          )}
+
+          <Tooltip title="View Details">
+            <Button
+              type="text"
+              icon={<Info size={18} />}
+              size="small"
+              className="text-brand-500 hover:bg-brand-50 hover:text-brand-600 flex items-center justify-center h-8 w-8 min-w-8"
+              onClick={() =>
+                setWorkflowDetailModal({
+                  visible: true,
+                  workflowId: record.id,
+                })
+              }
+            />
+          </Tooltip>
+
+          <Popconfirm
+            title="Delete run"
+            description={`Delete "${record.name || record.id}"?`}
+            onConfirm={() => handleDeleteWorkflow(record.id)}
+            okText="Delete"
+            cancelText="Cancel"
+            okButtonProps={{ danger: true, loading: deleteWorkflow.isPending }}
+            placement="bottomRight"
+          >
+            <Button
+              type="text"
+              icon={<Trash2 size={18} />}
               size="small"
               danger
-              style={{ padding: '2px' }}
+              className="hover:bg-rose-50 flex items-center justify-center h-8 w-8 min-w-8"
             />
           </Popconfirm>
-        );
-      },
+        </div>
+      ),
     },
   ];
 
   return (
-    <div>
+    <div className="w-full h-full">
       {contextHolder}
-      <div
-        style={{
-          marginBottom: 16,
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <h3 style={{ margin: '4px 0' }}>
-            Workflows ({workflowsData?.total ?? 0} total, showing{' '}
-            {workflows.length})
-          </h3>
+
+      {/* Integrated Header */}
+      <div className="px-8 py-6 border-b border-slate-100 flex justify-between items-center sticky top-0 bg-white/80 backdrop-blur-md z-10 gap-6">
+        <div className="flex items-center gap-6">
+          <div className="flex flex-col">
+            <h3 className="m-0 text-xl font-black text-slate-800 tracking-tight">
+              Runs
+            </h3>
+            <div className="text-[10px] uppercase font-black text-slate-400 mt-1 flex items-center gap-2">
+              <span>{workflowsData?.total ?? 0} runs detected</span>
+              <span className="h-1 w-1 rounded-full bg-slate-200" />
+              <span>{workflows.length} visible</span>
+            </div>
+          </div>
+
+          <div className="h-10 w-px bg-slate-100 hidden md:block" />
+
           <LiveUpdatesIndicator status={connectionStatus} />
+        </div>
+
+        <div className="flex items-center gap-4 flex-1 max-w-6xl justify-end">
           <WorkflowSearch
             onTagsChange={handleTagsSearch}
             onNameChange={handleNameSearch}
             onDateRangeChange={handleDateRangeSearch}
             tags={searchTags}
             name={searchName}
+            className="flex-1"
           />
+          <Button
+            icon={<RefreshCcw size={18} />}
+            onClick={handleRefresh}
+            className="flex items-center gap-2 text-sky-600 border-none bg-sky-100/40 hover:bg-sky-100 transition-all duration-300 font-bold h-12 px-6 rounded-2xl shadow-sm whitespace-nowrap"
+          >
+            Refresh List
+          </Button>
         </div>
-        <Button
-          type="default"
-          icon={<ReloadOutlined />}
-          onClick={handleRefresh}
-          size="small"
-        >
-          Refresh
-        </Button>
       </div>
 
-      <Table
-        columns={columns}
-        dataSource={workflows}
-        rowKey="id"
-        loading={workflowsLoading}
-        onChange={(pagination, filters) => {
-          if (filters.status !== undefined) {
-            const statusFilter = filters.status;
-            setStatus(
-              statusFilter && statusFilter.length > 0
-                ? (statusFilter[0] as Status)
-                : null,
-            );
-          }
-        }}
-        pagination={{
-          current: currentPage,
-          total: workflowsData?.total ?? 0,
-          pageSize: pageSize,
-          showSizeChanger: true,
-          showQuickJumper: true,
-          showTotal: (total, range) => `${range[0]}-${range[1]} of ${total}`,
-          pageSizeOptions: ['10', '20', '50', '100'],
-          position: ['bottomCenter'],
-          onChange: (page, size) => {
-            setCurrentPage(page);
-            if (size !== pageSize) {
-              setPageSize(size);
-              setCurrentPage(1); // Reset to first page when page size changes
+      {/* Main Table Content - Borderless & Seamless */}
+      <div className="px-8 py-2">
+        <Table
+          columns={columns}
+          dataSource={workflows}
+          rowKey="id"
+          loading={workflowsLoading}
+          onChange={(_, filters) => {
+            if (filters.status !== undefined) {
+              const statusFilter = filters.status;
+              setStatus(
+                statusFilter && statusFilter.length > 0
+                  ? (statusFilter[0] as Status)
+                  : null,
+              );
             }
-          },
-          onShowSizeChange: (current, size) => {
-            setPageSize(size);
-            setCurrentPage(1); // Reset to first page when page size changes
-          },
-        }}
-        scroll={{ x: 1200 }}
-        size="small"
-        style={{ backgroundColor: 'white' }}
-        onRow={() => ({
-          style: { cursor: 'pointer' },
-        })}
-      />
+          }}
+          pagination={{
+            current: currentPage,
+            total: workflowsData?.total ?? 0,
+            pageSize: pageSize,
+            showSizeChanger: true,
+            showQuickJumper: true,
+            showTotal: (total: number, range: [number, number]) => (
+              <span className="text-[10px] uppercase font-black text-slate-400 tracking-wider">
+                {range[0]}-{range[1]} of {total} items
+              </span>
+            ),
+            pageSizeOptions: ['10', '20', '50', '100'],
+            position: ['bottomCenter'],
+            className: '!m-0 py-8 border-t border-slate-50',
+            onChange: (page: number, size: number) => {
+              setCurrentPage(page);
+              if (size !== pageSize) {
+                setPageSize(size);
+                setCurrentPage(1);
+              }
+            },
+          }}
+          tableLayout="fixed"
+          size="middle"
+          className="workflow-table-unified seamless-table [&_.ant-table]:!bg-transparent [&_.ant-table-thead_th]:!bg-transparent [&_.ant-table-thead_th]:!border-none [&_.ant-table-thead_th]:text-slate-400 [&_.ant-table-thead_th]:text-[9px] [&_.ant-table-thead_th]:font-black [&_.ant-table-thead_th]:uppercase [&_.ant-table-thead_th]:tracking-widest [&_.ant-table-cell]:align-middle [&_.ant-table-cell]:!border-slate-50/50"
+          onRow={() => ({
+            className: 'hover:bg-slate-50/80 transition-colors group',
+          })}
+        />
+      </div>
+
+      {/* Modals */}
       <FileViewerModal
         key={`snakefile-${snakefileModal.workflowId}`}
-        title={`Snakefile - Workflow ${snakefileModal.workflowId}`}
+        title={`Snakefile — run ${snakefileModal.workflowId}`}
         visible={snakefileModal.visible}
         onClose={() => setSnakefileModal({ visible: false, workflowId: '' })}
         fileContent={snakefileData?.content || ''}
         fileFormat="yaml"
       />
+
       <MultiFileViewer
         key={`config-${configModal.workflowId}`}
         visible={configModal.visible}
@@ -686,7 +623,7 @@ const WorkflowTable = () => {
 
       <FileViewerModal
         key={`log-${logModal.workflowId}`}
-        title={`Log - Workflow ${logModal.workflowId}`}
+        title={`Log — run ${logModal.workflowId}`}
         visible={logModal.visible}
         onClose={() =>
           setLogModal({
@@ -701,7 +638,7 @@ const WorkflowTable = () => {
 
       <FileViewerModal
         key={`detail-${workflowDetailModal.workflowId}`}
-        title={`Detail - Workflow ${workflowDetailModal.workflowId}`}
+        title={`Detail — run ${workflowDetailModal.workflowId}`}
         visible={workflowDetailModal.visible}
         onClose={() =>
           setWorkflowDetailModal({ visible: false, workflowId: '' })

@@ -8,7 +8,7 @@ export const Route = createFileRoute('/_authenticated/')({
 
 function Index() {
   return (
-    <div style={{ width: '96%', margin: '0 auto' }}>
+    <div style={{ width: '100%', margin: '0 auto' }}>
       <WorkflowTable />
     </div>
   );

@@ -22,5 +22,17 @@ class UserTokenResponse(UserTokenBase):
         from_attributes = True
 
 
+class UserTokenSummary(UserTokenBase):
+    """Listed token: prefix only (full secret is returned only on create)."""
+
+    id: uuid.UUID
+    token_prefix: str
+    created_at: datetime
+    expires_at: datetime | None = None
+
+    class Config:
+        from_attributes = True
+
+
 class UserTokenList(BaseModel):
-    tokens: list[UserTokenResponse]
+    tokens: list[UserTokenSummary]

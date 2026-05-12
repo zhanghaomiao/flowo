@@ -1,0 +1,278 @@
+import json
+import re
+import uuid
+from datetime import UTC, datetime
+from pathlib import Path
+from typing import Any
+
+from fastapi import HTTPException
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.core.config import settings
+from app.models import Catalog, UserSettings
+
+# Language detection from file extension
+LANG_MAP: dict[str, str] = {
+    ".py": "python",
+    ".smk": "python",
+    ".R": "r",
+    ".r": "r",
+    ".yaml": "yaml",
+    ".yml": "yaml",
+    ".json": "json",
+    ".sh": "shell",
+    ".rst": "restructuredtext",
+    ".md": "markdown",
+    ".tsv": "plaintext",
+    ".pl": "perl",
+}
+
+
+# --- Path Helpers ---
+
+
+def catalog_owner_segment(owner_id: uuid.UUID | None) -> str:
+    """Top-level directory under CATALOG_*: full owner UUID, or ``_unowned``."""
+    return str(owner_id) if owner_id is not None else "_unowned"
+
+
+def catalog_owner_workspace_root(owner_id: uuid.UUID) -> Path:
+    """Directory holding one user's catalogs: ``CATALOG_DIR/<owner_id>/``."""
+    return Path(settings.CATALOG_DIR) / str(owner_id)
+
+
+def catalog_data_dir(owner_id: uuid.UUID | None, slug: str) -> Path:
+    """On-disk catalog workspace: CATALOG_DIR/<owner_id>/<slug>."""
+    return Path(settings.CATALOG_DIR) / catalog_owner_segment(owner_id) / slug
+
+
+def catalog_workspace_dir(owner_id: uuid.UUID | None, slug: str) -> Path:
+    """Alias for :func:`catalog_data_dir` — the mutable Snakemake / editor workspace."""
+    return catalog_data_dir(owner_id, slug)
+
+
+def catalog_export_dir(owner_id: uuid.UUID | None, slug: str) -> Path:
+    """Read-only export cache for DAG tooling."""
+    return Path(settings.CATALOG_EXPORT_DIR) / catalog_owner_segment(owner_id) / slug
+
+
+def _get_catalog_dir() -> Path:
+    """Get and ensure the root catalog directory exists."""
+    catalog_dir = Path(settings.CATALOG_DIR)
+    catalog_dir.mkdir(parents=True, exist_ok=True)
+    return catalog_dir
+
+
+# --- Access Checks ---
+
+
+def catalog_readable_by_user(cat: Catalog, user_id: uuid.UUID | None) -> bool:
+    """True when the caller may read this catalog (same rules as assert_catalog_readable)."""
+    if cat.is_public:
+        return True
+    if cat.owner_id is None:
+        return True
+    return user_id is not None and cat.owner_id == user_id
+
+
+def assert_catalog_readable(cat: Catalog, user_id: uuid.UUID | None) -> None:
+    """Allow read when catalog is public, has no owner_id, or is owned by the caller."""
+    if catalog_readable_by_user(cat, user_id):
+        return
+    raise HTTPException(status_code=403, detail="Not allowed to access this catalog")
+
+
+def assert_catalog_writable(cat: Catalog, user_id: uuid.UUID | None) -> None:
+    """Allow updates for the owner, or for catalogs with no owner_id (shared)."""
+    if user_id is None:
+        raise HTTPException(
+            status_code=401, detail="Authentication required to modify catalogs"
+        )
+    if cat.owner_id is None:
+        return
+    if cat.owner_id == user_id:
+        return
+    raise HTTPException(status_code=403, detail="Not allowed to modify this catalog")
+
+
+# --- Misc Utils ---
+
+
+def _slugify(name: str) -> str:
+    """Convert a catalog name to a filesystem-safe slug."""
+    slug = name.lower().strip()
+    slug = re.sub(r"[^\w\s-]", "", slug)
+    slug = re.sub(r"[\s_]+", "-", slug)
+    slug = re.sub(r"-+", "-", slug).strip("-")
+    return slug
+
+
+def _read_metadata(catalog_path: Path) -> dict[str, Any]:
+    """Read .flowo.json metadata from a catalog directory."""
+    meta_file = catalog_path / ".flowo.json"
+    if not meta_file.exists():
+        return {}
+    with open(meta_file) as f:
+        return json.load(f)
+
+
+def _write_metadata(catalog_path: Path, metadata: dict[str, Any]) -> None:
+    """Write .flowo.json metadata for compatibility with catalog utility tests."""
+    meta_file = catalog_path / ".flowo.json"
+    payload = dict(metadata)
+    payload.setdefault("updated_at", datetime.now(UTC).isoformat())
+    with open(meta_file, "w", encoding="utf-8") as f:
+        json.dump(payload, f, ensure_ascii=False, indent=2)
+
+
+# Default directories and patterns to ignore during file collection
+DEFAULT_IGNORE_DIRS = {
+    ".snakemake",
+    ".git",
+    "__pycache__",
+    ".pytest_cache",
+    "node_modules",
+    "results",
+    "logs",
+    "benchmarks",
+    "resources",
+    "output",
+}
+
+
+def collect_catalog_files_for_batch_import(catalog_path: Path) -> list[dict[str, Any]]:
+    """Scan a catalog directory and build files_data for batch_import_files."""
+    import hashlib
+    import logging
+
+    log = logging.getLogger(__name__)
+    files_data: list[dict[str, Any]] = []
+    for f in catalog_path.rglob("*"):
+        # Skip directories and their contents if they are in the ignore list
+        if any(p in f.parts for p in DEFAULT_IGNORE_DIRS):
+            continue
+
+        if not f.is_file() or f.name.startswith("."):
+            # We still skip dotfiles by default, but .flowo.json is handled separately by the importer
+            continue
+
+        rel_path = f.relative_to(catalog_path).as_posix()
+        try:
+            content = f.read_text(encoding="utf-8", errors="replace")
+        except UnicodeDecodeError:
+            log.info("Skipping binary file: %s", rel_path)
+            continue
+        content_bytes = content.encode("utf-8")
+        files_data.append(
+            {
+                "path": rel_path,
+                "content": content,
+                "sha256": hashlib.sha256(content_bytes).hexdigest(),
+                "size": len(content_bytes),
+                "lines": content.count("\n") + 1,
+            }
+        )
+    return files_data
+
+
+def _get_file_inventory(
+    catalog_path: Path, *, include_dotfiles: bool = False
+) -> list[dict[str, Any]]:
+    """Build a recursive inventory of all files in the catalog."""
+    files: list[dict[str, Any]] = []
+
+    for f in sorted(catalog_path.rglob("*")):
+        if ".git" in f.parts or ".snakemake" in f.parts:
+            continue
+        if not include_dotfiles and (f.name == ".flowo.json" or f.name.startswith(".")):
+            continue
+
+        rel_path = str(f.relative_to(catalog_path))
+
+        if f.is_dir():
+            files.append(
+                {
+                    "name": f.name,
+                    "path": rel_path,
+                    "is_dir": True,
+                    "lines": 0,
+                    "size": 0,
+                    "modified": datetime.fromtimestamp(
+                        f.stat().st_mtime, tz=UTC
+                    ).isoformat(),
+                    "language": None,
+                }
+            )
+            continue
+
+        if not f.is_file():
+            continue
+
+        stat = f.stat()
+        try:
+            content = f.read_text(errors="replace")
+            line_count = content.count("\n") + 1
+        except Exception:
+            line_count = 0
+
+        files.append(
+            {
+                "name": f.name,
+                "path": rel_path,
+                "is_dir": False,
+                "lines": line_count,
+                "size": stat.st_size,
+                "modified": datetime.fromtimestamp(stat.st_mtime, tz=UTC).isoformat(),
+                "language": _detect_language(rel_path),
+            }
+        )
+
+    return files
+
+
+def workspace_has_snakefile(root: Path) -> bool:
+    """Whether the catalog workspace already has a Snakemake entrypoint on disk."""
+    return (root / "workflow" / "Snakefile").is_file() or (root / "Snakefile").is_file()
+
+
+def _detect_language(file_path: str) -> str:
+    """Detect Monaco language from file extension or name."""
+    p = Path(file_path)
+    if p.name == "Snakefile":
+        return "python"
+    ext = p.suffix
+    return LANG_MAP.get(ext, "plaintext")
+
+
+def _validate_path(
+    owner_id: uuid.UUID | None,
+    slug: str,
+    file_path: str,
+) -> Path:
+    """Validate that the path is within the catalog directory (prevent traversal)."""
+    catalog_path = catalog_data_dir(owner_id, slug)
+
+    if not file_path or file_path == ".":
+        return catalog_path.resolve()
+
+    full_path = (catalog_path / file_path).resolve()
+
+    if not str(full_path).startswith(str(catalog_path.resolve())):
+        raise HTTPException(status_code=400, detail="Invalid path")
+
+    return full_path
+
+
+async def _is_git_configured(session: AsyncSession, user_id: uuid.UUID | None) -> bool:
+    """Check if Git is configured globally or for the specific user."""
+    if settings.CATALOG_GIT_REMOTE:
+        return True
+    if not user_id:
+        return False
+
+    result = await session.execute(
+        select(UserSettings).where(UserSettings.user_id == user_id)
+    )
+    user_settings = result.scalar_one_or_none()
+    return bool(user_settings and user_settings.git_remote_url)

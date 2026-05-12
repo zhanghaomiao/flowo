@@ -8,7 +8,7 @@ class UserRead(schemas.BaseUser[uuid.UUID]):
 
 
 class UserCreate(schemas.BaseUserCreate):
-    pass
+    invitation_code: str | None = None
 
 
 class UserUpdate(schemas.BaseUserUpdate):

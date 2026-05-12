@@ -1,6 +1,8 @@
+import logging
 import uuid
+from datetime import datetime
 
-from fastapi import Depends, Request
+from fastapi import Depends, HTTPException, Request, status
 from fastapi_users import BaseUserManager, FastAPIUsers, UUIDIDMixin
 from fastapi_users.authentication import (
     AuthenticationBackend,
@@ -8,31 +10,127 @@ from fastapi_users.authentication import (
     JWTStrategy,
 )
 from fastapi_users.db import SQLAlchemyUserDatabase
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from ..models.invitation import Invitation
+from ..models.system_settings import SystemSettings
 from ..models.user import User
+from ..schemas.user import UserCreate
+from ..services.notification import (
+    notify_password_reset,
+    notify_user_registered,
+    notify_verify_email,
+)
 from .config import settings
 from .session import get_async_session
 
 SECRET = settings.SECRET_KEY
+logger = logging.getLogger(__name__)
 
 
 class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
     reset_password_token_secret = SECRET
     verification_token_secret = SECRET
 
+    async def create(
+        self,
+        user_create: UserCreate,
+        safe: bool = False,
+        request: Request | None = None,
+    ) -> User:
+        # Check system settings for registration
+        session = self.user_db.session
+        settings_result = await session.execute(select(SystemSettings))
+        system_settings = settings_result.scalar_one_or_none()
+
+        allow_public = (
+            system_settings.allow_public_registration if system_settings else True
+        )
+
+        if not allow_public:
+            invitation_code = getattr(user_create, "invitation_code", None)
+            if not invitation_code:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="Public registration is disabled. An invitation code is required.",
+                )
+
+            invitation_result = await session.execute(
+                select(Invitation).where(
+                    Invitation.token == invitation_code, Invitation.is_used.is_(False)
+                )
+            )
+            invitation = invitation_result.scalar_one_or_none()
+
+            if not invitation:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="Invalid or already used invitation code.",
+                )
+
+            if invitation.expires_at and invitation.expires_at < datetime.utcnow():
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="Invitation code has expired.",
+                )
+
+            # Mark as used
+            invitation.is_used = True
+            session.add(invitation)
+
+        # Remove invitation_code from user_create data before passing to base create logic
+        # We need to handle this manually because super().create doesn't know about invitation_code
+        user_dict = user_create.model_dump(exclude_unset=True)
+        if "invitation_code" in user_dict:
+            del user_dict["invitation_code"]
+
+        # Manually hash password and create user to bypass the schema incompatibility with super().create
+        password = user_dict.pop("password")
+        user_dict["hashed_password"] = self.password_helper.hash(password)
+
+        created_user = await self.user_db.create(user_dict)
+
+        # Force auto-verify for all new registrations (Small team simplification)
+        created_user.is_verified = True
+        session.add(created_user)
+        await session.commit()
+        await self.on_after_register(created_user, request)
+
+        return created_user
+
     async def on_after_register(self, user: User, request: Request | None = None):
-        print(f"User {user.id} has registered.")
+        logger.info("User registered user_id=%s", user.id)
+        # Send welcome email
+        session = self.user_db.session
+        await notify_user_registered(session, user.email)
 
     async def on_after_forgot_password(
         self, user: User, token: str, request: Request | None = None
     ):
-        print(f"User {user.id} has forgot their password. Reset token: {token}")
+        logger.info(
+            "Password reset requested user_id=%s (token sent via email only)", user.id
+        )
+        # Send password reset email
+        session = self.user_db.session
+        await notify_password_reset(session, user.email, token)
 
     async def on_after_request_verify(
         self, user: User, token: str, request: Request | None = None
     ):
-        print(f"Verification requested for user {user.id}. Verification token: {token}")
+        logger.info(
+            "Email verification requested user_id=%s (token sent via email only)",
+            user.id,
+        )
+        # Send verification email
+        session = self.user_db.session
+        await notify_verify_email(session, user.email, token)
+
+    async def on_after_verify(self, user: User, request: Request | None = None):
+        logger.info("User verified email user_id=%s", user.id)
+        # Send welcome email now that they are verified
+        session = self.user_db.session
+        await notify_user_registered(session, user.email)
 
 
 async def get_user_db(session: AsyncSession = Depends(get_async_session)):
@@ -59,3 +157,5 @@ auth_backend = AuthenticationBackend(
 fastapi_users = FastAPIUsers[User, uuid.UUID](get_user_manager, [auth_backend])
 
 current_active_user = fastapi_users.current_user(active=True)
+current_optional_user = fastapi_users.current_user(active=True, optional=True)
+current_superuser = fastapi_users.current_user(active=True, superuser=True)

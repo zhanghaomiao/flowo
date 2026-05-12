@@ -327,51 +327,63 @@ class SummaryService:
 
     async def check_sse_health(self) -> ServiceStatus:
         """检查SSE服务状态"""
+        base_details = {
+            "listeners": len(pg_listener._listening_channels),
+            **pg_listener.stats(),
+        }
         try:
-            # 检查pg_listener是否已经连接
-            if pg_listener._connection is None:
+            if pg_listener._connection is None or pg_listener._connection.is_closed():
+                await pg_listener.refresh_connection_for_health()
+
+            if pg_listener._connection is None or pg_listener._connection.is_closed():
                 return ServiceStatus(
                     name="sse",
                     status="unhealthy",
                     message="SSE listener is not connected to database",
-                    details={"connection": "disconnected"},
+                    details={**base_details, "connection": "disconnected"},
                 )
 
-            # 尝试执行一个简单的监听测试
-            # 这里我们检查连接是否仍然活跃
             try:
-                # 执行一个简单的查询来测试连接
                 result = await pg_listener._connection.fetchval("SELECT 1")
                 if result == 1:
                     return ServiceStatus(
                         name="sse",
                         status="healthy",
                         message="SSE service is healthy and connected",
-                        details={
-                            "connection": "ok",
-                            "listeners": len(pg_listener._listening_channels),
-                        },
+                        details={**base_details, "connection": "ok"},
                     )
-                else:
-                    return ServiceStatus(
-                        name="sse",
-                        status="unhealthy",
-                        message="SSE connection test failed",
-                        details={"connection": "test_failed"},
-                    )
+                return ServiceStatus(
+                    name="sse",
+                    status="unhealthy",
+                    message="SSE connection test failed",
+                    details={**base_details, "connection": "test_failed"},
+                )
             except asyncpg.exceptions.InterfaceError:
+                recovered = await pg_listener.refresh_connection_for_health()
+                if recovered and pg_listener._connection:
+                    try:
+                        result = await pg_listener._connection.fetchval("SELECT 1")
+                        if result == 1:
+                            return ServiceStatus(
+                                name="sse",
+                                status="healthy",
+                                message="SSE service recovered after reconnect",
+                                details={**base_details, "connection": "ok"},
+                            )
+                    except Exception:
+                        pass
                 return ServiceStatus(
                     name="sse",
                     status="unhealthy",
                     message="SSE database connection lost",
-                    details={"connection": "lost"},
+                    details={**base_details, "connection": "lost"},
                 )
             except Exception as e:
                 return ServiceStatus(
                     name="sse",
                     status="unhealthy",
                     message=f"SSE connection error: {str(e)}",
-                    details={"error": str(e)},
+                    details={**base_details, "error": str(e)},
                 )
 
         except Exception as e:
@@ -379,7 +391,7 @@ class SummaryService:
                 name="sse",
                 status="unknown",
                 message=f"SSE check failed: {str(e)}",
-                details={"error": str(e)},
+                details={**base_details, "error": str(e)},
             )
 
     async def get_system_health(self) -> SystemHealthResponse:

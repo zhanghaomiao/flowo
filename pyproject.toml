@@ -3,18 +3,7 @@ build-backend = "hatchling.build"
 requires = ["hatchling"]
 
 [tool.hatch.build.targets.wheel]
-exclude = [
-  "app/api",
-  "app/services",
-  "app/main.py",
-  "app/core/pg_listener.py",
-  "app/alembic",
-  "app/utils",
-]
-packages = ["app"]
-
-[tool.hatch.build.targets.wheel.sources]
-"app" = "snakemake_logger_plugin_flowo"
+packages = ["src/flowo_common", "src/snakemake_logger_plugin_flowo"]
 
 [project]
 authors = [
@@ -31,13 +20,13 @@ version = "1.2.2"
 dependencies = [
   "pydantic>=2.11.5",
   "pydantic-settings>=2.9.1",
-  "snakemake",
   "snakemake-interface-logger-plugins",
   "httpx>=0.28.1",
-  "sqlalchemy>=2.0.41",
+  "tqdm>=4.66.0",
 ]
 
 [project.optional-dependencies]
+snakemake = ["snakemake"]
 dev = [
   "pytest>=7.0.0",
   "pytest-asyncio>=0.21.0",
@@ -52,6 +41,8 @@ docs = [
   "mkdocstrings[python]>=0.25.0",
 ]
 server = [
+  "snakemake",
+  "sqlalchemy>=2.0.41",
   "psycopg2-binary>=2.9.9",
   "asyncpg>=0.30.0",
   "alembic>=1.16.1",
@@ -61,19 +52,43 @@ server = [
   "sse-starlette>=3.1.2",
   "fastapi-users[sqlalchemy]>=15.0.3",
   "passlib[bcrypt]>=1.7.4",
+  "snakevision>=1.0.0",
+  "fastapi-mcp>=0.4.0",
 ]
 
-# [project.scripts]
-# flowo = "app.plugin.__main__:main"
-
-# [project.entry-points."snakemake.log_handlers"]
-# flowo = "app.plugin.LogHandler"
+[dependency-groups]
+dev = [
+  "snakemake",
+  "pytest>=7.0.0",
+  "pytest-asyncio>=0.21.0",
+  "black>=23.0.0",
+  "ruff>=0.1.0",
+  "mypy>=1.0.0",
+  "pre-commit>=3.5.0",
+  "sqlalchemy>=2.0.41",
+  "psycopg2-binary>=2.9.9",
+  "asyncpg>=0.30.0",
+  "alembic>=1.16.1",
+  "fastapi[standard]>=0.115.12",
+  "anytree>=2.13.0",
+  "psutil>=7.0.0",
+  "sse-starlette>=3.1.2",
+  "fastapi-users[sqlalchemy]>=15.0.3",
+  "passlib[bcrypt]>=1.7.4",
+  "snakevision>=1.0.0",
+  "fastapi-mcp>=0.4.0",
+]
 
 [project.scripts]
 flowo = "snakemake_logger_plugin_flowo.plugin.client.cli:main"
 
 [project.entry-points."snakemake.log_handlers"]
-flowo = "snakemake_logger_plugin_flowo.plugin.LogHandler"
+flowo = "snakemake_logger_plugin_flowo:LogHandler"
+
+[tool.pytest.ini_options]
+addopts = "--rootdir=. --import-mode=prepend"
+pythonpath = ["."]
+asyncio_mode = "auto"
 
 [tool.ruff]
 exclude = ["app/alembic/"]
@@ -86,6 +101,7 @@ select = ["E", "W", "F", "I", "B", "C4", "UP"]
 
 [tool.ruff.lint.per-file-ignores]
 "__init__.py" = ["F401"]
+"tests/conftest.py" = ["E402"]
 
 [[tool.uv.index]]
 default = true

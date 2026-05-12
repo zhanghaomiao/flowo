@@ -200,7 +200,7 @@ const JobTable: React.FC<JobTableProps> = ({ workflowId, ruleName }) => {
               {visibleEntries.map(([key, value]) => (
                 <Tag
                   key={key}
-                  color="blue"
+                  color="processing"
                   style={{
                     margin: 0,
                     fontSize: '11px',
@@ -208,6 +208,7 @@ const JobTable: React.FC<JobTableProps> = ({ workflowId, ruleName }) => {
                     overflow: 'hidden',
                     textOverflow: 'ellipsis',
                     whiteSpace: 'nowrap',
+                    borderRadius: '4px',
                   }}
                   title={`${key}: ${value}`}
                 >

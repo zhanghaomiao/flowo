@@ -1,11 +1,13 @@
 import { useMemo } from 'react';
 
+import { useQuery } from '@tanstack/react-query';
 import type { Edge, Node } from '@xyflow/react';
 import { MarkerType, Position } from '@xyflow/react';
 
 import {
-  useGetRuleGraphQuery,
-  useGetRuleStatusQuery,
+  getCatalogDagOptions,
+  getRuleGraphOptions,
+  getRuleStatusOptions,
 } from '@/client/@tanstack/react-query.gen';
 import type { RuleStatusResponse } from '@/client/types.gen';
 import { getLayoutedElements, type LayoutDirection } from '@/utils/graphLayout';
@@ -15,11 +17,11 @@ const NODE_WIDTH = 150;
 const NODE_HEIGHT = 60;
 
 const STATUS_COLORS: Record<string, string> = {
-  unscheduled: '#E0E0E0',
-  SUCCESS: '#C8E6C9',
-  RUNNING: '#BBDEFB',
-  ERROR: '#FFCDD2',
-  WAITING: '#FFECB3',
+  unscheduled: '#f8fafc', // Slate 50
+  SUCCESS: '#e0f2fe', // Sky 100
+  RUNNING: '#e0e7ff', // Indigo 100
+  ERROR: '#ffe4e6', // Rose 100
+  WAITING: '#fef3c7', // Amber 100
 };
 
 // 类型定义 (导出以供组件使用)
@@ -34,7 +36,7 @@ export type NodeStylingData = {
   boxShadow: string;
 };
 
-interface GraphData {
+export interface GraphData {
   nodes: Array<{ rule: string }>;
   links: Array<{
     source: number;
@@ -42,52 +44,86 @@ interface GraphData {
     sourcerule: string;
     targetrule: string;
   }>;
+  error?: string;
 }
 
 interface UseWorkflowGraphProps {
-  workflowId: string;
+  workflowId?: string;
+  /** Catalog id (preferred) or slug for ``getCatalogDag`` when not using a workflow. */
+  catalogRef?: string;
   layoutDirection: LayoutDirection;
   selectedRule?: string | null;
   highlightedRule?: string | null;
   forceLayoutRecalc?: number;
+  initialData?: GraphData | string | null;
 }
 
 export const useWorkflowGraph = ({
   workflowId,
+  catalogRef,
   layoutDirection,
   selectedRule,
   highlightedRule,
   forceLayoutRecalc = 0,
+  initialData,
 }: UseWorkflowGraphProps) => {
+  const isWorkflow = !!workflowId;
+
   // 1. 获取图谱结构 (Layout Data)
   const {
-    data: graphData,
-    isLoading: isGraphLoading,
-    error: graphError,
-  } = useGetRuleGraphQuery({
-    path: { workflow_id: workflowId },
+    data: workflowGraphData,
+    isLoading: isWorkflowGraphLoading,
+    error: workflowGraphError,
+  } = useQuery({
+    ...getRuleGraphOptions({ path: { workflow_id: workflowId ?? '' } }),
+    enabled: isWorkflow,
   });
 
-  // 2. 获取实时状态 (Status Data)
-  // 当 SSE 触发 invalidation 时，这个 hook 会自动重刷
+  const {
+    data: catalogGraphData,
+    isLoading: isCatalogGraphLoading,
+    error: catalogGraphError,
+  } = useQuery({
+    ...getCatalogDagOptions({ path: { catalog_ref: catalogRef ?? '' } }),
+    enabled: !isWorkflow && !!catalogRef,
+    placeholderData: initialData,
+  });
+
+  const graphData = isWorkflow ? workflowGraphData : catalogGraphData;
+  const isGraphLoading = isWorkflow
+    ? isWorkflowGraphLoading
+    : isCatalogGraphLoading;
+  const graphError = isWorkflow ? workflowGraphError : catalogGraphError;
+
+  // 2. 获取实时状态 (Status Data) - Only for workflows
   const {
     data: ruleStatus,
     isLoading: isRuleStatusLoading,
     error: ruleStatusError,
-  } = useGetRuleStatusQuery({
-    path: { workflow_id: workflowId },
+  } = useQuery({
+    ...getRuleStatusOptions({ path: { workflow_id: workflowId ?? '' } }),
+    enabled: isWorkflow,
   });
 
   // 3. 计算基础布局 (Heavy Calculation)
   // 仅在 graphData 结构变化或手动切换布局时执行
   // 移除了 status 依赖，状态变化不应触发重排(Relayout)
-  const { nodes, edges } = useMemo(() => {
-    if (!graphData) return { nodes: [], edges: [] };
+  const {
+    nodes,
+    edges,
+    error: dataError,
+  } = useMemo(() => {
+    if (!graphData) return { nodes: [], edges: [], error: null };
 
-    const parsedData: GraphData =
+    const parsedData: GraphData & { error?: string } =
       typeof graphData === 'string' ? JSON.parse(graphData) : graphData;
 
-    if (!parsedData?.nodes?.length) return { nodes: [], edges: [] };
+    if (parsedData?.error) {
+      return { nodes: [], edges: [], error: parsedData.error };
+    }
+
+    if (!parsedData?.nodes?.length)
+      return { nodes: [], edges: [], error: null };
 
     // 生成基础节点 (仅包含布局信息)
     const rawNodes: Node[] = parsedData.nodes.map((nodeData, index) => ({
@@ -114,9 +150,9 @@ export const useWorkflowGraph = ({
         type: MarkerType.ArrowClosed,
         width: 20,
         height: 20,
-        color: '#1890ff',
+        color: '#0ea5e9',
       },
-      style: { stroke: '#1890ff', strokeWidth: 2 },
+      style: { stroke: '#0ea5e9', strokeWidth: 2 },
     }));
 
     // 执行布局算法
@@ -130,7 +166,7 @@ export const useWorkflowGraph = ({
     // it's used as a trigger for re-layout
     void forceLayoutRecalc;
 
-    return { nodes: layout.nodes, edges: layout.edges };
+    return { nodes: layout.nodes, edges: layout.edges, error: null };
   }, [graphData, layoutDirection, forceLayoutRecalc]);
 
   // 4. 计算样式字典 (Lightweight Calculation)
@@ -147,12 +183,14 @@ export const useWorkflowGraph = ({
 
       const isSelected = selectedRule === ruleName;
       const isHighlighted = highlightedRule === ruleName;
-      const isUnscheduled = !statusInfo;
+      const isUnscheduled = isWorkflow ? !statusInfo : false; // Catalogs don't appear as unscheduled
 
       // 颜色逻辑
-      let backgroundColor = STATUS_COLORS[status] || STATUS_COLORS.unscheduled;
-      let textColor = '#000000';
-      let borderColor = '#1890ff';
+      let backgroundColor = isWorkflow
+        ? STATUS_COLORS[status] || STATUS_COLORS.unscheduled
+        : '#f0f5ff'; // Catalog nodes are blue-ish
+      let textColor = isWorkflow ? '#000000' : '#1d39c4';
+      let borderColor = isWorkflow ? '#1890ff' : '#597ef7';
       let boxShadow = 'none';
 
       if (isSelected) {
@@ -177,7 +215,7 @@ export const useWorkflowGraph = ({
     });
 
     return styling;
-  }, [nodes, ruleStatus, selectedRule, highlightedRule]); // 这里依赖 ruleStatus
+  }, [nodes, ruleStatus, selectedRule, highlightedRule, isWorkflow]);
 
   return {
     nodes,
@@ -185,6 +223,9 @@ export const useWorkflowGraph = ({
     nodeStyling,
     ruleStatus,
     isLoading: isGraphLoading || isRuleStatusLoading,
-    error: graphError || ruleStatusError,
+    error:
+      graphError ||
+      ruleStatusError ||
+      (dataError ? new Error(dataError) : null),
   };
 };

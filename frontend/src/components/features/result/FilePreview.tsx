@@ -7,6 +7,7 @@ import {
   CodeViewer,
   IframeViewer,
   ImageViewer,
+  MarkdownViewer,
   TableViewer,
 } from '@/components/shared/viewers';
 
@@ -58,6 +59,14 @@ const TextFileViewer: React.FC<{
 
   if (isError) {
     return <Result status="error" title="Failed to load file content" />;
+  }
+
+  if (extension === 'md' || extension === 'markdown') {
+    return (
+      <div style={{ height: '100%', overflow: 'hidden' }}>
+        <MarkdownViewer content={data || ''} fileName={src?.split('/').pop()} />
+      </div>
+    );
   }
 
   return (

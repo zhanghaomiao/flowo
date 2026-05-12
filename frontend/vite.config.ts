@@ -5,6 +5,22 @@ import path from 'node:path';
 import { defineConfig } from 'vite';
 import svgr from 'vite-plugin-svgr';
 
+const parseAllowedHosts = () => {
+  const hosts = [
+    process.env.DOMAIN,
+    ...(process.env.VITE_DEV_ALLOWED_HOSTS || '').split(','),
+  ];
+
+  return Array.from(
+    new Set(
+      hosts
+        .filter((host): host is string => Boolean(host))
+        .map((host) => host.trim())
+        .filter((host) => host !== 'localhost'),
+    ),
+  );
+};
+
 // https://vitejs.dev/config/
 export default defineConfig({
   define: {
@@ -32,6 +48,7 @@ export default defineConfig({
     },
   },
   server: {
+    allowedHosts: parseAllowedHosts(),
     proxy: {
       '/api': {
         target: 'http://localhost:8000',

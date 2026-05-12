@@ -100,15 +100,15 @@ function WorkflowDetailContent({ workflowId }: { workflowId: string }) {
     : null;
 
   return (
-    <div style={{ width: '96%', margin: '0 auto' }}>
-      <div style={{ margin: '10px 0' }}>
+    <div className="w-full px-2 mx-auto font-sans">
+      <div className="my-3 flex flex-col gap-2">
         <WorkflowProgress workflowId={workflowId} />
       </div>
 
-      <div style={{ height: 'calc(100vh - 220px)' }}>
+      <div className="h-[calc(100vh-200px)]">
         <Splitter>
           <Splitter.Panel defaultSize="33%" min="20%" max="60%">
-            <div style={{ height: '100%', padding: '0 10px 0 0' }}>
+            <div className="h-full pr-2">
               <WorkflowGraph
                 workflowId={workflowId}
                 onNodeClick={handleNodeClick}
@@ -119,26 +119,10 @@ function WorkflowDetailContent({ workflowId }: { workflowId: string }) {
             </div>
           </Splitter.Panel>
 
-          <Splitter.Panel style={{ height: '100%' }}>
-            <div
-              style={{
-                height: '100%',
-                display: 'flex',
-                flexDirection: 'column',
-                position: 'relative',
-              }}
-            >
+          <Splitter.Panel className="h-full">
+            <div className="h-full flex flex-col relative">
               {/* Fixed Tabs Header */}
-              <div
-                style={{
-                  position: 'sticky',
-                  top: 0,
-                  zIndex: 1000,
-                  backgroundColor: '#fff',
-                  borderBottom: '1px solid #f0f0f0',
-                  flexShrink: 0,
-                }}
-              >
+              <div className="sticky top-0 z-10 bg-white border-b border-slate-100 flex-shrink-0">
                 <Tabs
                   activeKey={activeTab}
                   onChange={setActiveTab}
@@ -150,13 +134,7 @@ function WorkflowDetailContent({ workflowId }: { workflowId: string }) {
                     {
                       key: 'jobs',
                       label: (
-                        <span
-                          style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '4px',
-                          }}
-                        >
+                        <span className="flex items-center gap-1.5 font-bold">
                           <UnorderedListOutlined />
                           Jobs
                         </span>
@@ -165,13 +143,7 @@ function WorkflowDetailContent({ workflowId }: { workflowId: string }) {
                     {
                       key: 'timeline',
                       label: (
-                        <span
-                          style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '4px',
-                          }}
-                        >
+                        <span className="flex items-center gap-1.5 font-bold">
                           <ClockCircleOutlined />
                           Timeline
                         </span>
@@ -180,13 +152,7 @@ function WorkflowDetailContent({ workflowId }: { workflowId: string }) {
                     {
                       key: 'code',
                       label: (
-                        <span
-                          style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '4px',
-                          }}
-                        >
+                        <span className="flex items-center gap-1.5 font-bold">
                           <CodeOutlined />
                           Code
                         </span>
@@ -195,13 +161,7 @@ function WorkflowDetailContent({ workflowId }: { workflowId: string }) {
                     {
                       key: 'result',
                       label: (
-                        <span
-                          style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '4px',
-                          }}
-                        >
+                        <span className="flex items-center gap-1.5 font-bold">
                           <FileOutlined />
                           Result
                         </span>
@@ -211,22 +171,9 @@ function WorkflowDetailContent({ workflowId }: { workflowId: string }) {
                 />
               </div>
 
-              <div
-                style={{
-                  flex: 1,
-                  minHeight: 0, // Allow flex to shrink/grow correctly
-                  overflow: 'hidden',
-                  position: 'relative',
-                }}
-              >
+              <div className="flex-1 min-h-0 overflow-hidden relative">
                 {activeTab === 'jobs' && (
-                  <div
-                    style={{
-                      height: '100%',
-                      padding: '0 0 0 10px',
-                      overflow: 'auto',
-                    }}
-                  >
+                  <div className="h-full pl-2 overflow-auto">
                     <JobTable
                       workflowId={workflowId}
                       workflowStatus={workflowStatus as Status}
@@ -237,15 +184,7 @@ function WorkflowDetailContent({ workflowId }: { workflowId: string }) {
                 )}
 
                 {activeTab === 'timeline' && (
-                  <div
-                    style={{
-                      height: '100%',
-                      width: '100%',
-                      padding: '0 0 0 10px',
-                      overflow: 'hidden',
-                      position: 'relative',
-                    }}
-                  >
+                  <div className="h-full w-full pl-2 overflow-hidden relative">
                     <WorkflowTimeline
                       workflowId={workflowId}
                       selectedRule={selectedRule}
@@ -267,15 +206,7 @@ function WorkflowDetailContent({ workflowId }: { workflowId: string }) {
                   />
                 )}
                 {activeTab === 'result' && (
-                  <div
-                    style={{
-                      height: '100%',
-                      padding: '0 0 0 10px',
-                      overflow: 'hidden',
-                      display: 'flex',
-                      flexDirection: 'column',
-                    }}
-                  >
+                  <div className="h-full pl-2 overflow-hidden flex flex-col">
                     <ResultViewer
                       workflowId={workflowId}
                       selectedRule={selectedRule || undefined}

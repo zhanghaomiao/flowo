@@ -22,6 +22,7 @@ ENV  UV_LINK_MODE=copy \
 COPY --from=caddy-source /usr/bin/caddy /usr/bin/caddy
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
+    git \
     supervisor \
     && rm -rf /var/lib/apt/lists/*
 
@@ -31,6 +32,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --frozen --no-install-project --extra server
 
 COPY --chown=flowo:flowo app /app/app
+COPY --chown=flowo:flowo src /app/src
 COPY --chown=flowo:flowo README.md alembic.ini ./
 
 RUN --mount=type=cache,target=/root/.cache/uv \

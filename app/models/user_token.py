@@ -19,7 +19,10 @@ class UserToken(Base):
         UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
     )
     name: Mapped[str] = mapped_column(String, nullable=False)
-    token: Mapped[str] = mapped_column(String, unique=True, nullable=False, index=True)
+    token_hash: Mapped[str] = mapped_column(
+        String(64), unique=True, nullable=False, index=True
+    )
+    token_prefix: Mapped[str] = mapped_column(String(32), nullable=False)
     user_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("user.id"), nullable=False
     )

@@ -27,6 +27,7 @@ import {
   Tabs,
   Tag,
   Tooltip,
+  Typography,
 } from 'antd';
 import dayjs from 'dayjs';
 
@@ -38,18 +39,30 @@ import {
   listTokensQueryKey,
   usersCurrentUserOptions,
 } from '@/client/@tanstack/react-query.gen';
-import { UserTokenResponse } from '@/client/types.gen';
+import type { UserTokenSummary } from '@/client/types.gen';
+import { copyTextToClipboard } from '@/utils/clipboard';
 
 import { useAuth } from '../auth';
+
+type TokenTtlChoice = 7 | 30 | 90 | 365 | 'never';
+const DEFAULT_TOKEN_TTL: TokenTtlChoice = 90;
+const ttlToApi = (c: TokenTtlChoice): number | undefined =>
+  c === 'never' ? undefined : c;
 
 const CodeBlock = ({ text }: { text: string }) => {
   const [copied, setCopied] = useState(false);
 
   const handleCopy = () => {
-    navigator.clipboard.writeText(text);
-    setCopied(true);
-    message.success('Copied to clipboard');
-    setTimeout(() => setCopied(false), 2000);
+    void (async () => {
+      const ok = await copyTextToClipboard(text);
+      if (ok) {
+        setCopied(true);
+        message.success('Copied to clipboard');
+        setTimeout(() => setCopied(false), 2000);
+      } else {
+        message.error('Could not copy to clipboard');
+      }
+    })();
   };
 
   return (
@@ -98,12 +111,9 @@ function ProfileComponent() {
   const queryClient = useQueryClient();
   const [isTokenModalVisible, setIsTokenModalVisible] = useState(false);
   const [newTokenName, setNewTokenName] = useState('');
-  const [newTokenTTL, setNewTokenTTL] = useState<number | undefined>(undefined);
+  const [newTokenTTL, setNewTokenTTL] =
+    useState<TokenTtlChoice>(DEFAULT_TOKEN_TTL);
   const [generatedToken, setGeneratedToken] = useState<string | null>(null);
-
-  const [configModalVisible, setConfigModalVisible] = useState(false);
-  const [targetToken, setTargetToken] = useState<string | null>(null);
-  const [targetTokenName, setTargetTokenName] = useState<string>('');
 
   useQuery({
     ...usersCurrentUserOptions({
@@ -158,7 +168,7 @@ function ProfileComponent() {
       const result = await createTokenMut.mutateAsync({
         body: {
           name: newTokenName,
-          ttl_days: newTokenTTL,
+          ttl_days: ttlToApi(newTokenTTL),
         },
       });
       setGeneratedToken(result.token);
@@ -168,7 +178,7 @@ function ProfileComponent() {
         }),
       });
       setNewTokenName('');
-      setNewTokenTTL(undefined);
+      setNewTokenTTL(DEFAULT_TOKEN_TTL);
     } catch (err) {
       console.error(err);
       message.error('Failed to create token');
@@ -193,24 +203,14 @@ function ProfileComponent() {
     }
   };
 
-  const getConfigFileContent = (t: string) => {
-    if (!clientConfig) return 'Loading configuration template...';
-    const tokenLine = t ? `FLOWO_USER_TOKEN=${t}` : '# FLOWO_USER_TOKEN=';
-    const host = window.location.origin;
-
-    return `FLOWO_HOST=${host}
-${tokenLine}
-FLOWO_WORKING_PATH=${clientConfig.FLOWO_WORKING_PATH}`;
-  };
-
-  const getGenerateCommand = (t: string) => {
+  const getLoginCommand = () => {
     const host = window.location.origin;
     const workingPath =
       clientConfig?.FLOWO_WORKING_PATH || '<YOUR_WORKING_PATH>';
-    return `flowo --generate-config --token ${t || '<YOUR_TOKEN>'} --host ${host} --working-path ${workingPath}`;
+    return `flowo login --host ${host} --working-path ${workingPath}`;
   };
 
-  const renderConfigTabs = (t: string) => (
+  const renderConfigTabs = () => (
     <Tabs
       defaultActiveKey="cli"
       items={[
@@ -220,22 +220,9 @@ FLOWO_WORKING_PATH=${clientConfig.FLOWO_WORKING_PATH}`;
           children: (
             <Descriptions layout="vertical" bordered size="small">
               <Descriptions.Item label="Run this command in your terminal">
-                <CodeBlock text={getGenerateCommand(t)} />
+                <CodeBlock text={getLoginCommand()} />
               </Descriptions.Item>
             </Descriptions>
-          ),
-        },
-        {
-          key: 'manual',
-          label: 'Manual Configuration',
-          children: (
-            <>
-              <Descriptions layout="vertical" bordered size="small">
-                <Descriptions.Item label="File Content (~/.config/flowo/.env)">
-                  <CodeBlock text={getConfigFileContent(t || '<YOUR_TOKEN>')} />
-                </Descriptions.Item>
-              </Descriptions>
-            </>
           ),
         },
       ]}
@@ -265,7 +252,10 @@ FLOWO_WORKING_PATH=${clientConfig.FLOWO_WORKING_PATH}`;
               <Button
                 type="primary"
                 icon={<PlusOutlined />}
-                onClick={() => setIsTokenModalVisible(true)}
+                onClick={() => {
+                  setNewTokenTTL(DEFAULT_TOKEN_TTL);
+                  setIsTokenModalVisible(true);
+                }}
               >
                 Generate New Token
               </Button>
@@ -305,20 +295,9 @@ FLOWO_WORKING_PATH=${clientConfig.FLOWO_WORKING_PATH}`;
                 {
                   title: 'Action',
                   key: 'action',
-                  width: 150,
-                  render: (_: unknown, record: UserTokenResponse) => (
+                  width: 100,
+                  render: (_: unknown, record: UserTokenSummary) => (
                     <Space>
-                      <Button
-                        size="small"
-                        type="link"
-                        onClick={() => {
-                          setTargetToken(record.token || '');
-                          setTargetTokenName(record.name);
-                          setConfigModalVisible(true);
-                        }}
-                      >
-                        Show
-                      </Button>
                       <Popconfirm
                         title="Delete this token?"
                         onConfirm={() => handleDeleteToken(record.id)}
@@ -342,34 +321,12 @@ FLOWO_WORKING_PATH=${clientConfig.FLOWO_WORKING_PATH}`;
       </Row>
 
       <Modal
-        title={`Configuration for "${targetTokenName || 'Token'}"`}
-        open={configModalVisible}
-        onCancel={() => setConfigModalVisible(false)}
-        width={750}
-        footer={[
-          <Button key="close" onClick={() => setConfigModalVisible(false)}>
-            Close
-          </Button>,
-        ]}
-      >
-        <div style={{ marginTop: 16 }}>
-          <Alert
-            message="Secure API Reporting"
-            description="Use one of the methods below to configure your environment. Do not share your token."
-            type="info"
-            showIcon
-            style={{ marginBottom: 16 }}
-          />
-          {renderConfigTabs(targetToken || '')}
-        </div>
-      </Modal>
-
-      <Modal
         title="Generate New Token"
         open={isTokenModalVisible}
         onCancel={() => {
           setIsTokenModalVisible(false);
           setGeneratedToken(null);
+          setNewTokenTTL(DEFAULT_TOKEN_TTL);
         }}
         footer={null}
         width={750}
@@ -388,17 +345,22 @@ FLOWO_WORKING_PATH=${clientConfig.FLOWO_WORKING_PATH}`;
                 onChange={(e) => setNewTokenName(e.target.value)}
               />
             </Form.Item>
-            <Form.Item label="Expiration">
-              <Select
-                placeholder="Select expiration"
+            <Form.Item
+              label="Expiration"
+              extra='90 days or 1 year is recommended. "No expiration" only if you have a strong rotation process.'
+            >
+              <Select<TokenTtlChoice>
                 value={newTokenTTL}
                 onChange={setNewTokenTTL}
                 options={[
-                  { value: undefined, label: 'Never Expire' },
-                  { value: 7, label: '7 Days' },
-                  { value: 90, label: '30 Days' },
-                  { value: 90, label: '90 Days' },
-                  { value: 365, label: '1 Year' },
+                  { value: 90, label: '90 days (recommended)' },
+                  { value: 365, label: '1 year' },
+                  { value: 30, label: '30 days' },
+                  { value: 7, label: '7 days' },
+                  {
+                    value: 'never',
+                    label: 'No expiration (not recommended)',
+                  },
                 ]}
               />
             </Form.Item>
@@ -423,15 +385,31 @@ FLOWO_WORKING_PATH=${clientConfig.FLOWO_WORKING_PATH}`;
               message="Token Generated Successfully"
               type="success"
               showIcon
+              style={{ marginBottom: 16 }}
+            />
+            <Alert
+              type="warning"
+              showIcon
+              message="This secret is shown only once"
+              description={
+                <span>
+                  Save it to a password manager, cluster secret store, or CI
+                  vault. Flowo will not show the full token again. For normal
+                  CLI setup, use{' '}
+                  <Typography.Text code>flowo login --host …</Typography.Text>{' '}
+                  to avoid manual copy/paste.
+                </span>
+              }
               style={{ marginBottom: 24 }}
             />
-            {renderConfigTabs(generatedToken)}
+            {renderConfigTabs()}
             <div style={{ textAlign: 'right', marginTop: 24 }}>
               <Button
                 type="primary"
                 onClick={() => {
                   setIsTokenModalVisible(false);
                   setGeneratedToken(null);
+                  setNewTokenTTL(DEFAULT_TOKEN_TTL);
                 }}
               >
                 Done

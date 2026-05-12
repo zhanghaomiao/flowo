@@ -1,5 +1,67 @@
 import type { Status } from '@/client/types.gen';
 
+/** Normalize API / ORM status strings (e.g. ``Status.SUCCESS``) to client ``Status``. */
+export function normalizeWorkflowStatus(
+  raw: string | null | undefined,
+): Status {
+  if (!raw) return 'UNKNOWN';
+  const t = raw.trim();
+  if (t.includes('.')) {
+    const last = t.split('.').pop()!.toUpperCase();
+    if (
+      last === 'SUCCESS' ||
+      last === 'RUNNING' ||
+      last === 'ERROR' ||
+      last === 'WAITING' ||
+      last === 'UNKNOWN'
+    ) {
+      return last as Status;
+    }
+  }
+  const u = t.toUpperCase();
+  if (
+    u === 'SUCCESS' ||
+    u === 'RUNNING' ||
+    u === 'ERROR' ||
+    u === 'WAITING' ||
+    u === 'UNKNOWN'
+  ) {
+    return u as Status;
+  }
+  return 'UNKNOWN';
+}
+
+const WORKFLOW_STATUS_LABELS: Record<Status, string> = {
+  SUCCESS: 'Succeeded',
+  RUNNING: 'Running',
+  ERROR: 'Failed',
+  WAITING: 'Waiting',
+  UNKNOWN: 'Unknown',
+};
+
+export function workflowStatusLabel(status: Status): string {
+  return WORKFLOW_STATUS_LABELS[status] ?? status;
+}
+
+/** Ant Design ``Badge`` ``status`` prop for workflow rows. */
+export function workflowBadgeAntStatus(
+  status: Status | string | null | undefined,
+): 'success' | 'processing' | 'error' | 'default' | 'warning' {
+  const s = normalizeWorkflowStatus(status ?? undefined);
+  switch (s) {
+    case 'SUCCESS':
+      return 'success';
+    case 'RUNNING':
+      return 'processing';
+    case 'ERROR':
+      return 'error';
+    case 'WAITING':
+      return 'warning';
+    default:
+      return 'default';
+  }
+}
+
 export const formatDate = (dateString: string | null) => {
   if (!dateString) return '-';
   try {
@@ -48,24 +110,30 @@ export const formatDuration = (duration: number) => {
   return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
 };
 
-// Get status color for workflow Status enum
-export const getStatusColor = (status: Status) => {
-  switch (status) {
+// Tag/dot color for workflow (and job) status — normalizes ORM-style strings.
+export const getStatusColor = (
+  status: Status | string | null | undefined,
+): string => {
+  const s = normalizeWorkflowStatus(status ?? undefined);
+  switch (s) {
     case 'SUCCESS':
-      return 'green';
+      return '#0ea5e9'; // Theme Sky Blue
     case 'RUNNING':
-      return 'blue';
+      return '#6366f1'; // Indigo for contrast
     case 'ERROR':
-      return 'red';
+      return '#f43f5e'; // Rose
     case 'WAITING':
-      return 'orange';
+      return '#f59e0b'; // Amber
     default:
-      return 'default';
+      return '#94a3b8'; // Slate
   }
 };
 
-export const getWorkflowProgressPercent = (status: Status) => {
-  switch (status) {
+export const getWorkflowProgressPercent = (
+  status: Status | string | null | undefined,
+) => {
+  const s = normalizeWorkflowStatus(status ?? undefined);
+  switch (s) {
     case 'SUCCESS':
       return 100;
     case 'RUNNING':
@@ -77,8 +145,11 @@ export const getWorkflowProgressPercent = (status: Status) => {
   }
 };
 
-export const getWorkflowProgressStatus = (status: Status) => {
-  switch (status) {
+export const getWorkflowProgressStatus = (
+  status: Status | string | null | undefined,
+) => {
+  const s = normalizeWorkflowStatus(status ?? undefined);
+  switch (s) {
     case 'SUCCESS':
       return 'success';
     case 'RUNNING':

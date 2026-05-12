@@ -62,3 +62,4 @@ nav:
   - Getting Started: getting-started.md
   - Architecture: architecture.md
   - Advanced Configuration: advanced-configuration.md
+  - MCP integration: mcp.md
