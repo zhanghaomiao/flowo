@@ -52,6 +52,11 @@ class Settings(BaseSettings):
     CATALOG_EXPORT_DIR: str | None = (
         None  # Defaults to CONTAINER_MOUNT_PATH/.flowo_exported_catalogs
     )
+    CATALOG_BLOB_DIR: str | None = (
+        None  # Defaults to CONTAINER_MOUNT_PATH/.flowo_catalog_blobs (binary sidecar)
+    )
+    CATALOG_BLOB_MAX_BYTES: int = 250 * 1024 * 1024
+    CATALOG_IMPORT_MAX_BYTES: int = 1024 * 1024 * 1024
     # DAG tooling runtime
     DAG_VENV_DIR: str | None = None  # Defaults to CONTAINER_MOUNT_PATH/.flowo_dag_venv
     DAG_AUTO_INSTALL_IMPORTS: bool = False  # Install missing imports into DAG venv
@@ -68,6 +73,10 @@ class Settings(BaseSettings):
         if self.CATALOG_EXPORT_DIR is None:
             self.CATALOG_EXPORT_DIR = str(
                 Path(self.CONTAINER_MOUNT_PATH) / ".flowo_exported_catalogs"
+            )
+        if self.CATALOG_BLOB_DIR is None:
+            self.CATALOG_BLOB_DIR = str(
+                Path(self.CONTAINER_MOUNT_PATH) / ".flowo_catalog_blobs"
             )
         if self.DAG_VENV_DIR is None:
             self.DAG_VENV_DIR = str(Path(self.CONTAINER_MOUNT_PATH) / ".flowo_dag_venv")

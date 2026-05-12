@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import base64
 import hashlib
 import json
 import logging
@@ -19,9 +20,12 @@ from sqlalchemy import delete, func, select
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.config import settings
 from app.models import Catalog
+from app.models.catalog_blob import CatalogBlob
 from app.models.catalog_file import CatalogFile
 from app.services.catalog.utils import (
+    CATALOG_BLOB_MAX_BYTES,
     _detect_language,
     _write_metadata,
     catalog_data_dir,
@@ -30,9 +34,69 @@ from app.services.catalog.utils import (
 
 logger = logging.getLogger(__name__)
 
-CATALOG_TEXT_MAX_BYTES = 5 * 1024 * 1024
+CATALOG_TEXT_MAX_BYTES = 50 * 1024 * 1024
 
 SNAKEFILE_DB_PATHS = frozenset({"Snakefile", "workflow/Snakefile"})
+
+
+def _catalog_blob_root(catalog_id: uuid.UUID) -> Path:
+    return Path(settings.CATALOG_BLOB_DIR) / str(catalog_id)
+
+
+def _blob_sidecar_path(catalog_id: uuid.UUID, rel_posix: str) -> Path:
+    base = _catalog_blob_root(catalog_id).resolve()
+    rel = (rel_posix or "").strip().replace("\\", "/").lstrip("/")
+    if not rel or ".." in rel.split("/"):
+        raise ValueError("invalid blob relative path")
+    dest = (base / rel).resolve()
+    if not str(dest).startswith(str(base)):
+        raise ValueError("blob path escapes catalog root")
+    return dest
+
+
+def write_catalog_blob_bytes(catalog_id: uuid.UUID, rel_posix: str, data: bytes) -> str:
+    if len(data) > CATALOG_BLOB_MAX_BYTES:
+        raise ValueError("blob too large")
+    dest = _blob_sidecar_path(catalog_id, rel_posix)
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    dest.write_bytes(data)
+    return hashlib.sha256(data).hexdigest()
+
+
+def unlink_blob_sidecar_path(catalog_id: uuid.UUID, rel_posix: str) -> None:
+    try:
+        p = _blob_sidecar_path(catalog_id, rel_posix)
+    except ValueError:
+        return
+    try:
+        if p.is_file():
+            p.unlink()
+    except OSError:
+        pass
+
+
+def remove_catalog_blob_tree(catalog_id: uuid.UUID) -> None:
+    root = Path(settings.CATALOG_BLOB_DIR) / str(catalog_id)
+    if root.exists():
+        shutil.rmtree(root, ignore_errors=True)
+
+
+def merge_catalog_text_and_blob_inventory(
+    text_rows: list[CatalogFile], blob_rows: list[CatalogBlob]
+) -> list[dict[str, Any]]:
+    from types import SimpleNamespace
+
+    extra = [
+        SimpleNamespace(
+            path=b.path,
+            lines=0,
+            size=int(b.size),
+            updated_at=b.updated_at,
+            language="binary",
+        )
+        for b in blob_rows
+    ]
+    return file_inventory_from_stored_rows(list(text_rows) + extra)
 
 
 def _should_skip_import_path(
@@ -65,6 +129,8 @@ def normalize_text_file_payload(path: str, content: str) -> dict[str, Any] | Non
                 f"File too large (max {CATALOG_TEXT_MAX_BYTES // (1024 * 1024)} MiB): {rel}"
             ),
         )
+    if b"\x00" in raw:
+        return None
     digest = hashlib.sha256(raw).hexdigest()
     return {
         "path": rel,
@@ -125,7 +191,7 @@ def file_inventory_from_db_rows(rows: list[CatalogFile]) -> list[dict[str, Any]]
 async def catalog_file_stats_for_many(
     session: AsyncSession, catalog_ids: list[uuid.UUID]
 ) -> dict[uuid.UUID, tuple[int, bool]]:
-    """For each catalog id: ``(file_count, has_snakefile)``."""
+    """For each catalog id: ``(file_count, has_snakefile)`` — text + blob rows count as files."""
     if not catalog_ids:
         return {}
     counts = await session.execute(
@@ -134,6 +200,13 @@ async def catalog_file_stats_for_many(
         .group_by(CatalogFile.catalog_id)
     )
     count_map = {cid: int(n) for cid, n in counts.all()}
+    bcounts = await session.execute(
+        select(CatalogBlob.catalog_id, func.count(CatalogBlob.id))
+        .where(CatalogBlob.catalog_id.in_(catalog_ids))
+        .group_by(CatalogBlob.catalog_id)
+    )
+    for cid, n in bcounts.all():
+        count_map[cid] = count_map.get(cid, 0) + int(n)
     snake = await session.execute(
         select(CatalogFile.catalog_id)
         .where(
@@ -147,12 +220,17 @@ async def catalog_file_stats_for_many(
 
 
 async def count_catalog_files(session: AsyncSession, catalog_id: uuid.UUID) -> int:
-    r = await session.execute(
+    t = await session.execute(
         select(func.count())
         .select_from(CatalogFile)
         .where(CatalogFile.catalog_id == catalog_id)
     )
-    return int(r.scalar_one())
+    b = await session.execute(
+        select(func.count())
+        .select_from(CatalogBlob)
+        .where(CatalogBlob.catalog_id == catalog_id)
+    )
+    return int(t.scalar_one()) + int(b.scalar_one())
 
 
 async def catalog_db_has_snakefile(
@@ -178,6 +256,15 @@ async def load_catalog_file_rows(
     return list(res.scalars().all())
 
 
+async def load_catalog_blob_rows(
+    session: AsyncSession, catalog_id: uuid.UUID
+) -> list[CatalogBlob]:
+    res = await session.execute(
+        select(CatalogBlob).where(CatalogBlob.catalog_id == catalog_id)
+    )
+    return list(res.scalars().all())
+
+
 async def read_catalog_file_from_db(
     session: AsyncSession, catalog_id: uuid.UUID, file_path: str
 ) -> dict[str, Any] | None:
@@ -191,15 +278,38 @@ async def read_catalog_file_from_db(
         )
     )
     row = r.scalar_one_or_none()
-    if row is None:
+    if row is not None:
+        return {
+            "path": rel,
+            "name": Path(rel).name,
+            "content": row.content,
+            "language": row.language or _detect_language(rel),
+            "lines": row.lines,
+            "size": int(row.size),
+        }
+    br = (
+        await session.execute(
+            select(CatalogBlob).where(
+                CatalogBlob.catalog_id == catalog_id,
+                CatalogBlob.path == rel,
+            )
+        )
+    ).scalar_one_or_none()
+    if br is None:
         return None
+    try:
+        raw = _blob_sidecar_path(catalog_id, rel).read_bytes()
+    except (ValueError, OSError):
+        return None
+    if hashlib.sha256(raw).hexdigest() != br.sha256:
+        logger.warning("Blob sha mismatch for %s catalog=%s", rel, catalog_id)
     return {
         "path": rel,
         "name": Path(rel).name,
-        "content": row.content,
-        "language": row.language or _detect_language(rel),
-        "lines": row.lines,
-        "size": int(row.size),
+        "content": base64.standard_b64encode(raw).decode("ascii"),
+        "language": "base64",
+        "lines": 0,
+        "size": int(br.size),
     }
 
 
@@ -245,6 +355,15 @@ async def upsert_catalog_files(
         rows_in.append(row)
 
     incoming_paths = {r["path"] for r in rows_in}
+    if incoming_paths:
+        for p in incoming_paths:
+            unlink_blob_sidecar_path(catalog_id, p)
+        await session.execute(
+            delete(CatalogBlob).where(
+                CatalogBlob.catalog_id == catalog_id,
+                CatalogBlob.path.in_(incoming_paths),
+            )
+        )
 
     deleted = 0
     if mode == "replace" and incoming_paths:
@@ -315,6 +434,125 @@ async def upsert_catalog_files(
     }
 
 
+async def upsert_catalog_blobs(
+    session: AsyncSession,
+    catalog_id: uuid.UUID,
+    binaries: list[tuple[str, bytes]],
+    mode: str,
+    delete_paths: list[str] | None = None,
+) -> dict[str, int]:
+    """Write binary files to sidecar + ``catalog_blobs``; strip competing text rows at same paths."""
+    if delete_paths is None:
+        delete_paths = []
+    if mode not in {"replace", "merge"}:
+        raise HTTPException(status_code=400, detail='mode must be "replace" or "merge"')
+
+    incoming_paths = {p for p, _ in binaries}
+
+    if mode == "replace":
+        res = await session.execute(
+            select(CatalogBlob.path).where(CatalogBlob.catalog_id == catalog_id)
+        )
+        existing = {row[0] for row in res.all()}
+        to_remove = existing - incoming_paths
+        for p in to_remove:
+            unlink_blob_sidecar_path(catalog_id, p)
+        if to_remove:
+            await session.execute(
+                delete(CatalogBlob).where(
+                    CatalogBlob.catalog_id == catalog_id,
+                    CatalogBlob.path.in_(to_remove),
+                )
+            )
+
+    if delete_paths:
+        blob_del: list[str] = []
+        for p in delete_paths:
+            rel = (p or "").strip().replace("\\", "/").lstrip("/")
+            if rel and ".." not in rel.split("/"):
+                blob_del.append(rel)
+                unlink_blob_sidecar_path(catalog_id, rel)
+        if blob_del:
+            await session.execute(
+                delete(CatalogBlob).where(
+                    CatalogBlob.catalog_id == catalog_id,
+                    CatalogBlob.path.in_(blob_del),
+                )
+            )
+
+    if incoming_paths:
+        await session.execute(
+            delete(CatalogFile).where(
+                CatalogFile.catalog_id == catalog_id,
+                CatalogFile.path.in_(incoming_paths),
+            )
+        )
+
+    existing_h = dict(
+        (
+            await session.execute(
+                select(CatalogBlob.path, CatalogBlob.sha256).where(
+                    CatalogBlob.catalog_id == catalog_id
+                )
+            )
+        ).all()
+    )
+
+    added = 0
+    modified = 0
+    skipped = 0
+    now = datetime.now(UTC)
+
+    for rel, data in binaries:
+        rel = (rel or "").strip().replace("\\", "/").lstrip("/")
+        if not rel or ".." in rel.split("/"):
+            continue
+        if _should_skip_import_path(rel):
+            continue
+        if len(data) > CATALOG_BLOB_MAX_BYTES:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Binary too large (max {CATALOG_BLOB_MAX_BYTES // (1024 * 1024)} MiB): {rel}",
+            )
+        digest = hashlib.sha256(data).hexdigest()
+        prev = existing_h.get(rel)
+        if prev == digest:
+            skipped += 1
+            continue
+        if prev is None:
+            added += 1
+        else:
+            modified += 1
+        write_catalog_blob_bytes(catalog_id, rel, data)
+        stmt = pg_insert(CatalogBlob).values(
+            id=uuid.uuid4(),
+            catalog_id=catalog_id,
+            path=rel,
+            sha256=digest,
+            size=len(data),
+            created_at=now,
+            updated_at=now,
+        )
+        stmt = stmt.on_conflict_do_update(
+            index_elements=[CatalogBlob.catalog_id, CatalogBlob.path],
+            set_={
+                "sha256": stmt.excluded.sha256,
+                "size": stmt.excluded.size,
+                "updated_at": now,
+            },
+        )
+        await session.execute(stmt)
+        existing_h[rel] = digest
+
+    return {
+        "added": added,
+        "modified": modified,
+        "deleted": 0,
+        "skipped": skipped,
+        "conflicts": 0,
+    }
+
+
 def _flowo_json_payload(cat: Catalog, *, disk_slug: str) -> dict[str, Any]:
     return {
         "id": str(cat.id),
@@ -332,7 +570,7 @@ def _flowo_json_payload(cat: Catalog, *, disk_slug: str) -> dict[str, Any]:
 
 
 async def materialize_catalog_workspace(session: AsyncSession, cat: Catalog) -> None:
-    """Rebuild on-disk workspace from ``catalog_files`` rows."""
+    """Rebuild workspace: text from ``catalog_files``, binaries copied from blob sidecar."""
     root = catalog_data_dir(cat.owner_id, cat.slug)
     try:
         if root.exists():
@@ -340,9 +578,12 @@ async def materialize_catalog_workspace(session: AsyncSession, cat: Catalog) -> 
         root.mkdir(parents=True, exist_ok=True)
 
         rows = await load_catalog_file_rows(session, cat.id)
-        if not rows:
+        blob_rows = await load_catalog_blob_rows(session, cat.id)
+        if not rows and not blob_rows:
             cat.workspace_status = "error"
-            cat.last_export_error = "No catalog files in database to materialize"
+            cat.last_export_error = (
+                "No catalog files or blobs in database to materialize"
+            )
             cat.last_exported_at = datetime.now(UTC)
             return
 
@@ -350,6 +591,21 @@ async def materialize_catalog_workspace(session: AsyncSession, cat: Catalog) -> 
             dest = root / cf.path
             dest.parent.mkdir(parents=True, exist_ok=True)
             dest.write_text(cf.content, encoding="utf-8")
+
+        for br in blob_rows:
+            try:
+                src = _blob_sidecar_path(cat.id, br.path)
+            except ValueError:
+                logger.warning("Invalid blob path %s", br.path)
+                continue
+            if not src.is_file():
+                logger.warning(
+                    "Missing blob sidecar for %s (catalog %s)", br.path, cat.id
+                )
+                continue
+            dest = root / br.path
+            dest.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(src, dest)
 
         _write_metadata(root, _flowo_json_payload(cat, disk_slug=cat.slug))
 
@@ -380,9 +636,11 @@ async def build_tar_gz_from_db(
     session: AsyncSession, cat: Catalog
 ) -> tuple[BytesIO, str]:
     rows = await load_catalog_file_rows(session, cat.id)
-    if not rows:
+    blob_rows = await load_catalog_blob_rows(session, cat.id)
+    if not rows and not blob_rows:
         raise HTTPException(
-            status_code=404, detail="No catalog files in database for this catalog"
+            status_code=404,
+            detail="No catalog files or blobs in database for this catalog",
         )
 
     flowoignore_content = "\n".join(
@@ -397,7 +655,6 @@ async def build_tar_gz_from_db(
             "results",
             "logs",
             "benchmarks",
-            "resources",
             "output",
             ".pytest_cache",
             "flowo_logs",
@@ -414,6 +671,17 @@ async def build_tar_gz_from_db(
             ti = tarfile.TarInfo(name=f"{disk_slug}/{cf.path}")
             ti.size = len(data)
             tar.addfile(ti, BytesIO(data))
+
+        for br in blob_rows:
+            if Path(br.path).name.startswith("."):
+                continue
+            try:
+                raw = _blob_sidecar_path(cat.id, br.path).read_bytes()
+            except (ValueError, OSError):
+                continue
+            ti = tarfile.TarInfo(name=f"{disk_slug}/{br.path}")
+            ti.size = len(raw)
+            tar.addfile(ti, BytesIO(raw))
 
         meta_json = json.dumps(
             _flowo_json_payload(cat, disk_slug=disk_slug),
@@ -435,9 +703,11 @@ async def build_tar_gz_from_db(
 
 async def build_zip_from_db(session: AsyncSession, cat: Catalog) -> tuple[str, str]:
     rows = await load_catalog_file_rows(session, cat.id)
-    if not rows:
+    blob_rows = await load_catalog_blob_rows(session, cat.id)
+    if not rows and not blob_rows:
         raise HTTPException(
-            status_code=404, detail="No catalog files in database for this catalog"
+            status_code=404,
+            detail="No catalog files or blobs in database for this catalog",
         )
 
     disk_slug = cat.slug
@@ -451,6 +721,17 @@ async def build_zip_from_db(session: AsyncSession, cat: Catalog) -> tuple[str, s
         dest = tmp_cat_path / cf.path
         dest.parent.mkdir(parents=True, exist_ok=True)
         dest.write_text(cf.content, encoding="utf-8")
+
+    for br in blob_rows:
+        if Path(br.path).name.startswith("."):
+            continue
+        try:
+            raw = _blob_sidecar_path(cat.id, br.path).read_bytes()
+        except (ValueError, OSError):
+            continue
+        dest = tmp_cat_path / br.path
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        dest.write_bytes(raw)
 
     with open(tmp_cat_path / ".flowo.json", "w", encoding="utf-8") as f:
         json.dump(
@@ -475,7 +756,6 @@ async def build_zip_from_db(session: AsyncSession, cat: Catalog) -> tuple[str, s
                     "results",
                     "logs",
                     "benchmarks",
-                    "resources",
                     "output",
                     ".pytest_cache",
                     "flowo_logs",

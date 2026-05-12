@@ -232,8 +232,9 @@ def _run_snakevision_rulegraph_to_svg(
                 if not missing_inputs:
                     break
                 try:
+                    touch_root = find_test_workdir(root, snakefile) or root
                     for rel in missing_inputs:
-                        p = root / rel
+                        p = touch_root / rel
                         p.parent.mkdir(parents=True, exist_ok=True)
                         p.touch(exist_ok=True)
                 except Exception as e:
@@ -489,6 +490,7 @@ def _parse_missing_inputs(err_text: str) -> list[str]:
         return []
     tail = m.group(1)
     paths: list[str] = []
+    seen: set[str] = set()
     for line in tail.splitlines():
         line = line.strip()
         if not line:
@@ -496,10 +498,16 @@ def _parse_missing_inputs(err_text: str) -> list[str]:
         # stop if looks like a new section
         if ":" in line and ("/" not in line):
             break
-        # only accept relative paths
-        if line.startswith(("/", "~")) or ".." in line:
-            continue
-        paths.append(line)
+        for token in re.split(r"\s+", line):
+            path = token.strip().strip(",;")
+            if not path:
+                continue
+            # only accept relative paths
+            if path.startswith(("/", "~")) or ".." in path.split("/"):
+                continue
+            if path not in seen:
+                seen.add(path)
+                paths.append(path)
     return paths
 
 

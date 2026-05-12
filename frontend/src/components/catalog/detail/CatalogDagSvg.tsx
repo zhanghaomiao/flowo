@@ -7,6 +7,8 @@ import { Maximize, RotateCcw, Search, ZoomIn, ZoomOut } from 'lucide-react';
 const { Text, Link } = Typography;
 
 const apiBase = '/api/v1/catalog';
+const dagGenerationHint =
+  'DAG generation is best-effort. Some workflows need real input files, complete config, runtime modules, or external resources before Snakemake can build the rule graph.';
 
 function authHeaders(): HeadersInit {
   const token = localStorage.getItem('token');
@@ -119,60 +121,72 @@ const CatalogDagSvg: React.FC<Props> = ({
     let cancelled = false;
 
     const run = async () => {
-      setPhase('boot');
-      setErrorMessage(null);
-      releaseBlob();
-      attemptsRef.current = 0;
-
-      if (variant === 'catalog' && catalogRef) {
-        const fromPreview = await tryLoadDagPreview();
-        if (cancelled) return;
-        if (fromPreview) return;
-      }
-
-      const postRes = await fetch(dagEndpoint(true), {
-        method: 'POST',
-        headers: authHeaders(),
-      });
-
-      if (cancelled) return;
-
-      if (postRes.status === 204) {
-        const ok = await tryLoadSvg();
-        if (!cancelled && !ok) {
-          setPhase('error');
-          setErrorMessage('SVG was reported ready but could not be loaded.');
-        }
-        return;
-      }
-
-      if (postRes.status === 202) {
-        setPhase('polling');
-        const poll = async () => {
-          if (cancelled) return;
-          attemptsRef.current += 1;
-          if (attemptsRef.current > 90) {
-            setPhase('error');
-            setErrorMessage('Timed out waiting for DAG. Try again.');
-            return;
-          }
-          const done = await tryLoadSvg();
-          if (cancelled || done) return;
-          pollRef.current = window.setTimeout(poll, 2000);
-        };
-        pollRef.current = window.setTimeout(poll, 1500);
-        return;
-      }
-
-      let msg = `Could not start DAG generation (${postRes.status})`;
       try {
-        const body = (await postRes.json()) as { detail?: string };
-        if (body?.detail) msg = body.detail;
-      } catch {
-        /* ignore */
+        setPhase('boot');
+        setErrorMessage(null);
+        releaseBlob();
+        attemptsRef.current = 0;
+
+        if (variant === 'catalog' && catalogRef) {
+          const fromPreview = await tryLoadDagPreview();
+          if (cancelled) return;
+          if (fromPreview) return;
+        }
+
+        const postRes = await fetch(dagEndpoint(true), {
+          method: 'POST',
+          headers: authHeaders(),
+        });
+
+        if (cancelled) return;
+
+        if (postRes.status === 204) {
+          const ok = await tryLoadSvg();
+          if (!cancelled && !ok) {
+            setPhase('error');
+            setErrorMessage('SVG was reported ready but could not be loaded.');
+          }
+          return;
+        }
+
+        if (postRes.status === 202) {
+          setPhase('polling');
+          const poll = async () => {
+            if (cancelled) return;
+            attemptsRef.current += 1;
+            if (attemptsRef.current > 90) {
+              setPhase('error');
+              setErrorMessage('Timed out waiting for DAG. Try again.');
+              return;
+            }
+            try {
+              const done = await tryLoadSvg();
+              if (cancelled || done) return;
+              pollRef.current = window.setTimeout(poll, 2000);
+            } catch (e) {
+              if (cancelled) return;
+              setPhase('error');
+              setErrorMessage(e instanceof Error ? e.message : String(e));
+            }
+          };
+          pollRef.current = window.setTimeout(poll, 1500);
+          return;
+        }
+
+        let msg = `Could not start DAG generation (${postRes.status})`;
+        try {
+          const body = (await postRes.json()) as { detail?: string };
+          if (body?.detail) msg = body.detail;
+        } catch {
+          /* ignore */
+        }
+        setPhase('error');
+        setErrorMessage(msg);
+      } catch (e) {
+        if (cancelled) return;
+        setPhase('error');
+        setErrorMessage(e instanceof Error ? e.message : String(e));
       }
-      setPhase('error');
-      setErrorMessage(msg);
     };
 
     void run();
@@ -199,7 +213,19 @@ const CatalogDagSvg: React.FC<Props> = ({
         <Alert
           type="error"
           message="DAG preview"
-          description={errorMessage}
+          description={
+            <div className="space-y-2">
+              <div>{errorMessage}</div>
+              {variant === 'catalog' ? (
+                <div>
+                  {dagGenerationHint} If automatic generation keeps failing,
+                  upload a DAG image in the catalog settings.
+                </div>
+              ) : (
+                <div>{dagGenerationHint}</div>
+              )}
+            </div>
+          }
           showIcon
         />
         <Button
@@ -331,6 +357,17 @@ const CatalogDagSvg: React.FC<Props> = ({
 
   return (
     <div className="flex h-full min-h-[280px] flex-col items-center justify-center gap-3 p-8">
+      <Alert
+        type="info"
+        showIcon
+        message="Generating DAG preview"
+        description={
+          variant === 'catalog'
+            ? `${dagGenerationHint} If it fails, you can upload a DAG image in the catalog settings.`
+            : dagGenerationHint
+        }
+        className="max-w-2xl text-left"
+      />
       <Spin size="large" />
       <Text type="secondary">
         {phase === 'polling'

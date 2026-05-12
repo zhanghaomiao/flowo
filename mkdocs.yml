@@ -59,7 +59,23 @@ plugins:
 
 nav:
   - Home: index.md
-  - Getting Started: getting-started.md
-  - Architecture: architecture.md
-  - Advanced Configuration: advanced-configuration.md
-  - MCP integration: mcp.md
+  - Quick Start: quickstart.md
+  - User Manual:
+      - Overview: user-manual/overview.md
+      - Installation: user-manual/installation.md
+      - Login and CLI Setup: user-manual/login-cli.md
+      - Run Snakemake with FlowO: user-manual/run-snakemake.md
+      - Dashboard: user-manual/dashboard.md
+      - Runs and Workflow Detail: user-manual/workflow-detail.md
+      - Jobs, Logs, and Errors: user-manual/jobs-logs-errors.md
+      - Results Preview: user-manual/results-preview.md
+      - Catalog and Templates: user-manual/catalog.md
+      - DAG Preview: user-manual/dag-preview.md
+  - Architecture:
+      - Overview: architecture/overview.md
+      - Data Flow: architecture/data-flow.md
+      - Catalog Storage Model: architecture/catalog-storage.md
+  - Advanced Features:
+      - MCP Integration: advanced/mcp.md
+      - Email Notifications: advanced/email-notifications.md
+  - FAQ: faq.md

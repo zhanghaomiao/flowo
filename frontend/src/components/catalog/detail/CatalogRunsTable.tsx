@@ -78,7 +78,7 @@ function CatalogRunsTable({ catalogRef }: Props) {
       render: (_, row) => (
         <div className="flex flex-col py-1">
           <Link
-            to="/workflow/$workflowId"
+            to="/runs/$workflowId"
             params={{ workflowId: row.id }}
             className="text-sm font-bold text-brand-600 hover:text-brand-700 hover:underline"
           >

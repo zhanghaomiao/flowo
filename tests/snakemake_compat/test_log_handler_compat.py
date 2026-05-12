@@ -7,7 +7,9 @@ classes have the expected constructor signatures across snakemake versions.
 import importlib.util
 import inspect
 import logging
-from types import SimpleNamespace
+import sys
+from pathlib import Path
+from types import ModuleType, SimpleNamespace
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -490,7 +492,7 @@ def test_emit_workflow_started_collects_configfiles_before_reporting():
 
         with (
             patch.object(
-                handler, "_get_configfiles", return_value=["config.yaml"]
+                handler, "_get_configfiles", return_value=(["config.yaml"], {})
             ) as get_configfiles,
             patch.object(handler, "_send_to_api") as send_to_api,
         ):
@@ -502,6 +504,127 @@ def test_emit_workflow_started_collects_configfiles_before_reporting():
         "workflow_started",
         {"workflow_id": "wf-1", "snakefile": "Snakefile", "rules": []},
     )
+
+
+def test_emit_workflow_started_preserves_cli_name_tags_when_config_is_empty():
+    from snakemake_logger_plugin_flowo.plugin.client.log_handler import FlowoLogHandler
+
+    with (
+        patch.object(FlowoLogHandler, "_init_file_handler", return_value=MagicMock()),
+        patch(
+            "snakemake_logger_plugin_flowo.plugin.client.log_handler.httpx.Client"
+        ) as mock_client_cls,
+    ):
+        mock_client_cls.return_value = MagicMock(is_closed=False)
+        handler = FlowoLogHandler(
+            _make_common_settings(),
+            flowo_project_name="rna-seq",
+            flowo_tags="rna-seq,demo",
+        )
+        handler.file_handler.emit = MagicMock()
+        handler._parsers = {
+            "workflow_started": lambda record: SimpleNamespace(
+                model_dump=lambda mode="json": {
+                    "workflow_id": "wf-1",
+                    "snakefile": "Snakefile",
+                    "rules": [],
+                }
+            )
+        }
+
+        with (
+            patch.object(handler, "_get_configfiles", return_value=([], {})),
+            patch.object(handler, "_send_to_api"),
+        ):
+            handler.emit(SimpleNamespace(event="workflow_started"))
+
+    assert handler.context["flowo_project_name"] == "rna-seq"
+    assert handler.context["flowo_tags"] == ["rna-seq", "demo"]
+
+
+def test_emit_workflow_started_records_snakemake_effective_workdir(
+    tmp_path, monkeypatch
+):
+    import snakemake
+
+    from snakemake_logger_plugin_flowo.plugin.client.log_handler import FlowoLogHandler
+
+    effective_workdir = tmp_path / ".test"
+    effective_workdir.mkdir()
+    fake_workflow_module = ModuleType("snakemake.workflow")
+    fake_workflow_module.workflow = SimpleNamespace(overwrite_workdir=effective_workdir)
+    monkeypatch.setitem(sys.modules, "snakemake.workflow", fake_workflow_module)
+    monkeypatch.setattr(snakemake, "workflow", fake_workflow_module, raising=False)
+
+    with (
+        patch.object(FlowoLogHandler, "_init_file_handler", return_value=MagicMock()),
+        patch(
+            "snakemake_logger_plugin_flowo.plugin.client.log_handler.httpx.Client"
+        ) as mock_client_cls,
+    ):
+        mock_client_cls.return_value = MagicMock(is_closed=False)
+        handler = FlowoLogHandler(_make_common_settings())
+        handler.file_handler.emit = MagicMock()
+        handler._parsers = {
+            "workflow_started": lambda record: SimpleNamespace(
+                model_dump=lambda mode="json": {
+                    "workflow_id": "wf-1",
+                    "snakefile": "Snakefile",
+                    "rules": [],
+                }
+            )
+        }
+
+        with (
+            patch.object(handler, "_get_configfiles", return_value=([], {})),
+            patch.object(handler, "_send_to_api"),
+        ):
+            handler.emit(SimpleNamespace(event="workflow_started"))
+
+    assert handler.context["workdir"] == str(Path(effective_workdir).resolve())
+
+
+def test_emit_workflow_started_uses_non_empty_config_name_tags():
+    from snakemake_logger_plugin_flowo.plugin.client.log_handler import FlowoLogHandler
+
+    with (
+        patch.object(FlowoLogHandler, "_init_file_handler", return_value=MagicMock()),
+        patch(
+            "snakemake_logger_plugin_flowo.plugin.client.log_handler.httpx.Client"
+        ) as mock_client_cls,
+    ):
+        mock_client_cls.return_value = MagicMock(is_closed=False)
+        handler = FlowoLogHandler(
+            _make_common_settings(),
+            flowo_project_name="from-cli",
+            flowo_tags="cli",
+        )
+        handler.file_handler.emit = MagicMock()
+        handler._parsers = {
+            "workflow_started": lambda record: SimpleNamespace(
+                model_dump=lambda mode="json": {
+                    "workflow_id": "wf-1",
+                    "snakefile": "Snakefile",
+                    "rules": [],
+                }
+            )
+        }
+
+        with (
+            patch.object(
+                handler,
+                "_get_configfiles",
+                return_value=(
+                    [],
+                    {"flowo_project_name": "from-config", "flowo_tags": "alpha,beta"},
+                ),
+            ),
+            patch.object(handler, "_send_to_api"),
+        ):
+            handler.emit(SimpleNamespace(event="workflow_started"))
+
+    assert handler.context["flowo_project_name"] == "from-config"
+    assert handler.context["flowo_tags"] == ["alpha", "beta"]
 
 
 def test_send_to_api_skips_requests_when_token_is_missing():

@@ -270,7 +270,7 @@ const WorkflowTable = () => {
         return (
           <div className="flex flex-col gap-1.5 py-1">
             <Link
-              to="/workflow/$workflowId"
+              to="/runs/$workflowId"
               params={{ workflowId: record.id }}
               className="text-brand-600 hover:text-brand-700 font-semibold text-sm transition-colors decoration-brand-200/50 hover:underline underline-offset-4"
             >
@@ -286,7 +286,7 @@ const WorkflowTable = () => {
                   <WorkflowTag
                     key={index}
                     tag={tag}
-                    className="!text-[10px] !px-1.5 !py-0 !h-5 border-slate-100"
+                    className="!px-2 !py-0"
                     onClick={handleTagsSearch}
                   />
                 ))}
@@ -303,7 +303,7 @@ const WorkflowTable = () => {
                             <WorkflowTag
                               key={index}
                               tag={tag}
-                              className="!text-[10px]"
+                              className="!px-2 !py-0.5"
                               onClick={handleTagsSearch}
                             />
                           ))}
@@ -311,7 +311,7 @@ const WorkflowTable = () => {
                       </div>
                     }
                   >
-                    <Tag className="m-0 text-[10px] px-1.5 h-5 flex items-center cursor-pointer border-dashed bg-slate-50 text-slate-500 border-slate-300 hover:bg-slate-100 transition-colors">
+                    <Tag className="m-0 inline-flex h-5 cursor-pointer items-center rounded-full border border-dashed border-slate-300/90 bg-white px-2 text-[10px] font-medium text-slate-500 shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition-colors hover:border-slate-400 hover:bg-slate-50 hover:text-slate-700 hover:shadow-[0_1px_3px_rgba(15,23,42,0.07)]">
                       +{extraTagsCount}
                     </Tag>
                   </Tooltip>
@@ -325,22 +325,37 @@ const WorkflowTable = () => {
     {
       title: 'Catalog',
       key: 'catalog_slug',
-      width: 130,
-      ellipsis: true,
+      width: 220,
+      ellipsis: { showTitle: false },
       render: (_: unknown, record: WorkflowResponse) => {
         const ref = record.catalog_id ?? record.catalog_slug;
         const label = record.catalog_slug ?? record.catalog_id;
         return ref && label ? (
-          <Tooltip title="View all runs in this catalog">
-            <Link
-              to="/catalog/$catalogId"
-              params={{ catalogId: ref }}
-              className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-brand-50 text-brand-600 hover:bg-brand-100 hover:text-brand-700 transition-colors text-xs font-bold border border-brand-100"
+          <div className="min-w-0 max-w-full overflow-hidden py-0.5">
+            <Tooltip
+              title={
+                <div className="max-w-sm space-y-1">
+                  <div className="break-all font-mono text-xs font-semibold">
+                    {label}
+                  </div>
+                  <div className="text-[10px] opacity-80">
+                    Click to open this workflow
+                  </div>
+                </div>
+              }
             >
-              <Library size={12} className="shrink-0" />
-              <span className="truncate">{label}</span>
-            </Link>
-          </Tooltip>
+              <Link
+                to="/catalog/$catalogId"
+                params={{ catalogId: ref }}
+                className="inline-flex min-w-0 max-w-full items-center gap-1.5 rounded-md border border-brand-100 bg-brand-50 px-2 py-0.5 text-xs font-bold text-brand-600 transition-colors hover:bg-brand-100 hover:text-brand-700"
+              >
+                <Library size={12} className="shrink-0" />
+                <span className="min-w-0 flex-1 truncate text-left">
+                  {label}
+                </span>
+              </Link>
+            </Tooltip>
+          </div>
         ) : (
           <span className="text-slate-300">—</span>
         );
@@ -428,16 +443,16 @@ const WorkflowTable = () => {
     {
       title: 'Actions',
       key: 'files',
-      width: 168,
+      width: 196,
       align: 'right',
       render: (_, record) => (
-        <div className="flex items-center justify-end gap-0.5">
+        <div className="flex items-center justify-end gap-0">
           <Tooltip title="View Snakefile">
             <Button
               type="text"
-              icon={<SnakemakeIcon style={{ fontSize: '18px' }} />}
+              icon={<SnakemakeIcon style={{ fontSize: '20px' }} />}
               size="small"
-              className="hover:bg-slate-100 flex items-center justify-center h-8 w-8 min-w-8"
+              className="flex h-9 min-h-9 min-w-9 w-9 items-center justify-center hover:bg-slate-100"
               onClick={() => handleShowSnakefile(record.id)}
             />
           </Tooltip>
@@ -447,10 +462,10 @@ const WorkflowTable = () => {
           >
             <Button
               type="text"
-              icon={<Settings size={18} />}
+              icon={<Settings size={20} />}
               size="small"
               disabled={!record.configfiles}
-              className={`flex items-center justify-center h-8 w-8 min-w-8 ${record.configfiles ? 'text-sky-500 hover:bg-sky-50 hover:text-sky-600' : 'text-slate-200'}`}
+              className={`flex h-9 min-h-9 min-w-9 w-9 items-center justify-center ${record.configfiles ? 'text-sky-500 hover:bg-sky-50 hover:text-sky-600' : 'text-slate-200'}`}
               onClick={() => handleShowConfig(record.id)}
             />
           </Tooltip>
@@ -459,9 +474,9 @@ const WorkflowTable = () => {
             <Tooltip title="View run logs">
               <Button
                 type="text"
-                icon={<FileText size={18} />}
+                icon={<FileText size={20} />}
                 size="small"
-                className="text-amber-500 hover:bg-amber-50 hover:text-amber-600 flex items-center justify-center h-8 w-8 min-w-8"
+                className="flex h-9 min-h-9 min-w-9 w-9 items-center justify-center text-amber-500 hover:bg-amber-50 hover:text-amber-600"
                 onClick={() =>
                   handleShowLogs(
                     record.id,
@@ -475,9 +490,9 @@ const WorkflowTable = () => {
           <Tooltip title="View Details">
             <Button
               type="text"
-              icon={<Info size={18} />}
+              icon={<Info size={20} />}
               size="small"
-              className="text-brand-500 hover:bg-brand-50 hover:text-brand-600 flex items-center justify-center h-8 w-8 min-w-8"
+              className="flex h-9 min-h-9 min-w-9 w-9 items-center justify-center text-brand-500 hover:bg-brand-50 hover:text-brand-600"
               onClick={() =>
                 setWorkflowDetailModal({
                   visible: true,
@@ -498,10 +513,10 @@ const WorkflowTable = () => {
           >
             <Button
               type="text"
-              icon={<Trash2 size={18} />}
+              icon={<Trash2 size={20} />}
               size="small"
               danger
-              className="hover:bg-rose-50 flex items-center justify-center h-8 w-8 min-w-8"
+              className="flex h-9 min-h-9 min-w-9 w-9 items-center justify-center hover:bg-rose-50"
             />
           </Popconfirm>
         </div>

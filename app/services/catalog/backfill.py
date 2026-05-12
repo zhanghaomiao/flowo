@@ -10,6 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models import Catalog
 from app.services.catalog.catalog_storage import (
     count_catalog_files,
+    upsert_catalog_blobs,
     upsert_catalog_files,
 )
 from app.services.catalog.snake_template_storage import (
@@ -18,7 +19,7 @@ from app.services.catalog.snake_template_storage import (
 )
 from app.services.catalog.utils import (
     catalog_owner_segment,
-    collect_catalog_files_for_batch_import,
+    scan_catalog_for_import,
 )
 
 
@@ -37,12 +38,14 @@ async def backfill_catalogs_from_disk_root(
             continue
         if await count_catalog_files(session, cat.id) > 0:
             continue
-        files_data = collect_catalog_files_for_batch_import(disk)
-        if not files_data:
+        text_files, bin_files = scan_catalog_for_import(disk)
+        if not text_files and not bin_files:
             continue
-        await upsert_catalog_files(session, cat.id, files_data, "replace", [])
+        await upsert_catalog_files(session, cat.id, text_files, "replace", [])
+        if bin_files:
+            await upsert_catalog_blobs(session, cat.id, bin_files, "replace", [])
         updated += 1
-        rows_total += len(files_data)
+        rows_total += len(text_files) + len(bin_files)
     return {"catalogs_backfilled": updated, "files_upserted": rows_total}
 
 

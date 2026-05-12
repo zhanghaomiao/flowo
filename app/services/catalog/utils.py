@@ -136,35 +136,135 @@ DEFAULT_IGNORE_DIRS = {
     "results",
     "logs",
     "benchmarks",
-    "resources",
     "output",
 }
 
+# Treat as binary for catalog DB import (sidecar), not UTF-8 text rows.
+BINARY_FILE_SUFFIXES: frozenset[str] = frozenset(
+    {
+        ".gz",
+        ".bz2",
+        ".xz",
+        ".zip",
+        ".tar",
+        ".tgz",
+        ".7z",
+        ".fq",
+        ".fastq",
+        ".fq.gz",
+        ".fastq.gz",
+        ".bam",
+        ".sam",
+        ".cram",
+        ".bai",
+        ".crai",
+        ".pyc",
+        ".pyo",
+        ".so",
+        ".dylib",
+        ".dll",
+        ".exe",
+        ".bin",
+        ".parquet",
+        ".feather",
+        ".arrow",
+        ".png",
+        ".jpg",
+        ".jpeg",
+        ".gif",
+        ".webp",
+        ".ico",
+        ".pdf",
+        ".h5",
+        ".hdf5",
+        ".npz",
+        ".npy",
+        ".pkl",
+        ".pickle",
+        ".sqlite",
+        ".db",
+    }
+)
 
-def collect_catalog_files_for_batch_import(catalog_path: Path) -> list[dict[str, Any]]:
-    """Scan a catalog directory and build files_data for batch_import_files."""
+CATALOG_BLOB_MAX_BYTES = settings.CATALOG_BLOB_MAX_BYTES
+CATALOG_IMPORT_MAX_BYTES = settings.CATALOG_IMPORT_MAX_BYTES
+
+
+def is_probably_binary_file(path: Path, data: bytes) -> bool:
+    """Heuristic: known suffix, gzip magic, embedded NUL, or non-UTF8."""
+    if not data:
+        return False
+    lowered = path.as_posix().lower()
+    for s in BINARY_FILE_SUFFIXES:
+        if lowered.endswith(s):
+            return True
+    if data[:2] == b"\x1f\x8b":
+        return True
+    sample = data[: min(len(data), 512 * 1024)]
+    if b"\x00" in sample:
+        return True
+    try:
+        sample.decode("utf-8")
+    except UnicodeDecodeError:
+        return True
+    return False
+
+
+def scan_catalog_for_import(
+    catalog_path: Path,
+) -> tuple[list[dict[str, Any]], list[tuple[str, bytes]]]:
+    """Split tree into text rows for ``catalog_files`` and binary ``(path, bytes)`` for sidecar."""
     import hashlib
-    import logging
 
-    log = logging.getLogger(__name__)
-    files_data: list[dict[str, Any]] = []
+    text_files: list[dict[str, Any]] = []
+    binary_files: list[tuple[str, bytes]] = []
+    oversized: list[dict[str, Any]] = []
+    total_size = 0
+
     for f in catalog_path.rglob("*"):
-        # Skip directories and their contents if they are in the ignore list
         if any(p in f.parts for p in DEFAULT_IGNORE_DIRS):
             continue
-
         if not f.is_file() or f.name.startswith("."):
-            # We still skip dotfiles by default, but .flowo.json is handled separately by the importer
             continue
-
         rel_path = f.relative_to(catalog_path).as_posix()
         try:
-            content = f.read_text(encoding="utf-8", errors="replace")
-        except UnicodeDecodeError:
-            log.info("Skipping binary file: %s", rel_path)
+            size = f.stat().st_size
+        except OSError:
             continue
+        if size > CATALOG_BLOB_MAX_BYTES:
+            oversized.append({"path": rel_path, "size": size})
+            continue
+        total_size += size
+        if total_size > CATALOG_IMPORT_MAX_BYTES:
+            raise HTTPException(
+                status_code=400,
+                detail={
+                    "code": "catalog_import_too_large",
+                    "max_bytes": CATALOG_IMPORT_MAX_BYTES,
+                    "max_mib": CATALOG_IMPORT_MAX_BYTES // (1024 * 1024),
+                    "total_bytes": total_size,
+                },
+            )
+        try:
+            raw = f.read_bytes()
+        except OSError:
+            continue
+
+        if is_probably_binary_file(f, raw):
+            binary_files.append((rel_path, raw))
+            continue
+
+        try:
+            content = raw.decode("utf-8")
+        except UnicodeDecodeError:
+            binary_files.append((rel_path, raw))
+            continue
+        if "\x00" in content:
+            binary_files.append((rel_path, raw))
+            continue
+
         content_bytes = content.encode("utf-8")
-        files_data.append(
+        text_files.append(
             {
                 "path": rel_path,
                 "content": content,
@@ -173,7 +273,24 @@ def collect_catalog_files_for_batch_import(catalog_path: Path) -> list[dict[str,
                 "lines": content.count("\n") + 1,
             }
         )
-    return files_data
+    if oversized:
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "code": "catalog_file_too_large",
+                "max_bytes": CATALOG_BLOB_MAX_BYTES,
+                "max_mib": CATALOG_BLOB_MAX_BYTES // (1024 * 1024),
+                "files": oversized[:50],
+                "file_count": len(oversized),
+            },
+        )
+    return text_files, binary_files
+
+
+def collect_catalog_files_for_batch_import(catalog_path: Path) -> list[dict[str, Any]]:
+    """Scan a catalog directory and build files_data for batch_import_files (text only)."""
+    text, _ = scan_catalog_for_import(catalog_path)
+    return text
 
 
 def _get_file_inventory(

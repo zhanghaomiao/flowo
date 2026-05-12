@@ -1,8 +1,6 @@
 import React from 'react';
 
-import { Tag } from 'antd';
-
-import { getTagColor } from '@/utils/tagColors';
+import { Tag as TagIcon } from 'lucide-react';
 
 interface WorkflowTagProps {
   tag: string;
@@ -17,25 +15,25 @@ const WorkflowTag: React.FC<WorkflowTagProps> = ({
   className,
   onClick,
 }) => {
-  const handleClick = () => {
+  const handleClick = (e: React.MouseEvent) => {
     if (onClick) {
+      e.stopPropagation();
       onClick(tag);
     }
   };
 
   return (
-    <Tag
-      color={getTagColor(tag)}
-      className={className}
+    <span
+      className={`m-0 !inline-flex max-w-full !items-center gap-1 whitespace-nowrap rounded-full border border-indigo-100 bg-indigo-50/50 px-2 py-0.5 text-[10px] font-bold tracking-tight text-indigo-600 shadow-sm transition-all duration-200 hover:border-indigo-200 hover:bg-indigo-100 hover:text-indigo-700 ${className ?? ''}`}
       style={{
-        ...style,
-        marginInlineEnd: 2,
+        ...(style as React.CSSProperties),
         cursor: onClick ? 'pointer' : 'default',
       }}
       onClick={handleClick}
     >
-      {tag}
-    </Tag>
+      <TagIcon size={10} strokeWidth={2.5} className="shrink-0 opacity-70" />
+      <span className="truncate">{tag}</span>
+    </span>
   );
 };
 

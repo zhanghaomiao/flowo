@@ -39,7 +39,7 @@ function RootComponent() {
   }
 
   const navItems = [
-    { label: 'Runs', to: '/', icon: PlayCircle },
+    { label: 'Runs', to: '/runs', icon: PlayCircle },
     { label: 'Catalog', to: '/catalog', icon: Library },
     {
       label: 'Dashboard',
@@ -50,7 +50,11 @@ function RootComponent() {
   ];
 
   const getActiveState = (to: string) => {
-    if (to === '/') return location.pathname === '/';
+    if (to === '/runs') {
+      return (
+        location.pathname === '/runs' || location.pathname.startsWith('/runs/')
+      );
+    }
     return location.pathname.startsWith(to);
   };
 
@@ -62,7 +66,7 @@ function RootComponent() {
           {/* Logo Section */}
           <div
             className="flex items-center gap-2.5 cursor-pointer group pr-4 border-r border-slate-100"
-            onClick={() => navigate({ to: '/' })}
+            onClick={() => navigate({ to: '/runs' })}
           >
             <div className="w-9 h-9 bg-slate-900 rounded-xl flex items-center justify-center shadow-lg transition-all duration-300 group-hover:shadow-sky-200 group-hover:scale-105">
               <Command size={20} className="text-white" strokeWidth={2.5} />
@@ -147,7 +151,7 @@ function RootComponent() {
       {/* Global Status Bar / Footer */}
       <footer className="w-full h-10 flex items-center justify-between px-8 bg-white border-t border-slate-100 text-[10px] font-black text-slate-400 uppercase tracking-[0.15em] shrink-0">
         <div className="flex items-center gap-4">
-          <span className="opacity-50">FlowO Engine v1.2</span>
+          <span className="opacity-50">FlowO v{__APP_VERSION__}</span>
           <span className="text-slate-100">|</span>
           <span className="text-sky-500 flex items-center gap-1.5">
             <div className="w-1.5 h-1.5 rounded-full bg-sky-500 animate-pulse shadow-[0_0_8px_rgba(14,165,233,0.5)]" />
@@ -156,7 +160,7 @@ function RootComponent() {
         </div>
         <div className="flex items-center gap-6">
           <a
-            href="/docs"
+            href="https://flowo-docs.pages.dev/"
             target="_blank"
             rel="noreferrer"
             className="hover:text-slate-900 transition-colors flex items-center gap-1 group"

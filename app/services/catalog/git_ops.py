@@ -13,7 +13,7 @@ from .sync import sync_catalog_with_git
 from .utils import (
     _get_catalog_dir,
     catalog_data_dir,
-    collect_catalog_files_for_batch_import,
+    scan_catalog_for_import,
 )
 
 
@@ -79,16 +79,17 @@ class CatalogGitMixin:
             if cat_row is None:
                 continue
 
-            files_data = collect_catalog_files_for_batch_import(catalog_path)
-            if files_data:
+            text_files, bin_files = scan_catalog_for_import(catalog_path)
+            if text_files or bin_files:
                 res = await self.batch_import_files(
                     catalog_ref=str(cat_row.id),
                     mode="merge",
                     commit_message="Git pull sync",
-                    files_data=files_data,
+                    files_data=text_files,
                     delete_paths=[],
                     author="system",
                     user_id=user_id,
+                    binaries=bin_files if bin_files else None,
                 )
                 if res.get("status") == "conflicts_found":
                     results["conflicts"][slug] = res.get("conflicts", [])
@@ -192,16 +193,17 @@ class CatalogGitMixin:
                 await self.db_session.commit()
                 await self.db_session.refresh(cat)
 
-            files_data = collect_catalog_files_for_batch_import(catalog_path)
-            if files_data:
+            text_files, bin_files = scan_catalog_for_import(catalog_path)
+            if text_files or bin_files:
                 await self.batch_import_files(
                     catalog_ref=str(cat.id),
                     mode="replace",
                     commit_message=f"Import from Git: {git_url}",
-                    files_data=files_data,
+                    files_data=text_files,
                     delete_paths=[],
                     author=owner,
                     user_id=user_id,
+                    binaries=bin_files if bin_files else None,
                 )
                 await self.db_session.refresh(cat)
                 await materialize_catalog_workspace(self.db_session, cat)

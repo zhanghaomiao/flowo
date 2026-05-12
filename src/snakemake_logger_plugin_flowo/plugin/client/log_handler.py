@@ -187,8 +187,8 @@ class FlowoLogHandler(Handler):
             if event_name == "workflow_started":
                 configfiles, config = self._get_configfiles()
                 self.context["configfiles"] = configfiles
-                self.context["flowo_project_name"] = config.get("flowo_project_name")
-                self.context["flowo_tags"] = config.get("flowo_tags", "").split(",")
+                self._merge_workflow_config_context(config)
+                self._set_effective_workdir_from_snakemake()
 
             self._send_to_api(event_name, data)
         except Exception as e:
@@ -269,6 +269,41 @@ class FlowoLogHandler(Handler):
             logger.debug(f"Failed to access snakemake workflow configfiles: {e}")
 
         return [], {}
+
+    def _merge_workflow_config_context(self, config: dict) -> None:
+        config_name = config.get("flowo_project_name")
+        if config_name:
+            self.context["flowo_project_name"] = config_name
+
+        config_tags = config.get("flowo_tags")
+        if isinstance(config_tags, str):
+            tags = [t.strip() for t in config_tags.split(",") if t.strip()]
+        elif isinstance(config_tags, list):
+            tags = [str(t).strip() for t in config_tags if str(t).strip()]
+        else:
+            tags = []
+
+        if tags:
+            self.context["flowo_tags"] = tags
+
+    def _set_effective_workdir_from_snakemake(self) -> None:
+        """Use Snakemake's effective workdir, including ``--directory``."""
+        try:
+            import snakemake.workflow
+
+            wf = getattr(snakemake.workflow, "workflow", None)
+            if not wf:
+                return
+
+            workdir = (
+                getattr(wf, "overwrite_workdir", None)
+                or getattr(wf, "workdir_init", None)
+                or getattr(wf, "_workdir_init", None)
+            )
+            if workdir:
+                self.context["workdir"] = str(Path(workdir).resolve())
+        except Exception as e:
+            logger.debug(f"Failed to access snakemake workflow workdir: {e}")
 
     def close(self) -> None:
         self.file_handler.close()

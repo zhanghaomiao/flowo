@@ -20,7 +20,13 @@ from flowo_common.token_config import write_user_config
 
 logger = logging.getLogger("snakemake.flowo")
 if not logger.handlers:
-    logging.basicConfig(level=logging.INFO, format="%(message)s")
+    console_handler = logging.StreamHandler()
+    console_handler.setFormatter(logging.Formatter("%(message)s"))
+    logger.addHandler(console_handler)
+logger.setLevel(logging.INFO)
+logger.propagate = False
+logging.getLogger("httpx").setLevel(logging.WARNING)
+logging.getLogger("httpcore").setLevel(logging.WARNING)
 
 
 def pull_catalog(slug: str | None = None, path: str = "."):
@@ -155,7 +161,6 @@ def create_catalog_zip(
         "results",
         "logs",
         "benchmarks",
-        "resources",
         "output",
         ".pytest_cache",
     ]
@@ -199,7 +204,6 @@ def create_catalog_tar_gz(
         "results",
         "logs",
         "benchmarks",
-        "resources",
         "output",
         ".pytest_cache",
     ]
@@ -423,6 +427,7 @@ def login(
     resolved_working_path = working_path or get_client_settings().FLOWO_WORKING_PATH
     try:
         with httpx.Client(timeout=15.0) as client:
+            logger.info("⏳ Creating FlowO login request…")
             start = client.post(
                 f"{resolved_host}/api/v1/tokens/cli/start",
                 json={"ttl_days": ttl_days},

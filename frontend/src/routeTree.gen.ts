@@ -16,12 +16,13 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated.index'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated.settings'
+import { Route as AuthenticatedRunsRouteImport } from './routes/_authenticated.runs'
 import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticated.profile'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated.dashboard'
 import { Route as AuthenticatedCatalogRouteImport } from './routes/_authenticated.catalog'
-import { Route as AuthenticatedWorkflowIndexRouteImport } from './routes/_authenticated.workflow/index'
+import { Route as AuthenticatedRunsIndexRouteImport } from './routes/_authenticated.runs/index'
 import { Route as AuthenticatedCatalogIndexRouteImport } from './routes/_authenticated.catalog/index'
-import { Route as AuthenticatedWorkflowWorkflowIdRouteImport } from './routes/_authenticated.workflow/$workflowId'
+import { Route as AuthenticatedRunsWorkflowIdRouteImport } from './routes/_authenticated.runs/$workflowId'
 import { Route as AuthenticatedCatalogTemplateRouteImport } from './routes/_authenticated.catalog/template'
 import { Route as AuthenticatedCatalogCatalogIdRouteImport } from './routes/_authenticated.catalog/$catalogId'
 
@@ -59,6 +60,11 @@ const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
   path: '/settings',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedRunsRoute = AuthenticatedRunsRouteImport.update({
+  id: '/runs',
+  path: '/runs',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 const AuthenticatedProfileRoute = AuthenticatedProfileRouteImport.update({
   id: '/profile',
   path: '/profile',
@@ -74,23 +80,22 @@ const AuthenticatedCatalogRoute = AuthenticatedCatalogRouteImport.update({
   path: '/catalog',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
-const AuthenticatedWorkflowIndexRoute =
-  AuthenticatedWorkflowIndexRouteImport.update({
-    id: '/workflow/',
-    path: '/workflow/',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any)
+const AuthenticatedRunsIndexRoute = AuthenticatedRunsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AuthenticatedRunsRoute,
+} as any)
 const AuthenticatedCatalogIndexRoute =
   AuthenticatedCatalogIndexRouteImport.update({
     id: '/',
     path: '/',
     getParentRoute: () => AuthenticatedCatalogRoute,
   } as any)
-const AuthenticatedWorkflowWorkflowIdRoute =
-  AuthenticatedWorkflowWorkflowIdRouteImport.update({
-    id: '/workflow/$workflowId',
-    path: '/workflow/$workflowId',
-    getParentRoute: () => AuthenticatedRoute,
+const AuthenticatedRunsWorkflowIdRoute =
+  AuthenticatedRunsWorkflowIdRouteImport.update({
+    id: '/$workflowId',
+    path: '/$workflowId',
+    getParentRoute: () => AuthenticatedRunsRoute,
   } as any)
 const AuthenticatedCatalogTemplateRoute =
   AuthenticatedCatalogTemplateRouteImport.update({
@@ -114,12 +119,13 @@ export interface FileRoutesByFullPath {
   '/catalog': typeof AuthenticatedCatalogRouteWithChildren
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/profile': typeof AuthenticatedProfileRoute
+  '/runs': typeof AuthenticatedRunsRouteWithChildren
   '/settings': typeof AuthenticatedSettingsRoute
   '/catalog/$catalogId': typeof AuthenticatedCatalogCatalogIdRoute
   '/catalog/template': typeof AuthenticatedCatalogTemplateRoute
-  '/workflow/$workflowId': typeof AuthenticatedWorkflowWorkflowIdRoute
+  '/runs/$workflowId': typeof AuthenticatedRunsWorkflowIdRoute
   '/catalog/': typeof AuthenticatedCatalogIndexRoute
-  '/workflow/': typeof AuthenticatedWorkflowIndexRoute
+  '/runs/': typeof AuthenticatedRunsIndexRoute
 }
 export interface FileRoutesByTo {
   '/login': typeof LoginRoute
@@ -132,9 +138,9 @@ export interface FileRoutesByTo {
   '/': typeof AuthenticatedIndexRoute
   '/catalog/$catalogId': typeof AuthenticatedCatalogCatalogIdRoute
   '/catalog/template': typeof AuthenticatedCatalogTemplateRoute
-  '/workflow/$workflowId': typeof AuthenticatedWorkflowWorkflowIdRoute
+  '/runs/$workflowId': typeof AuthenticatedRunsWorkflowIdRoute
   '/catalog': typeof AuthenticatedCatalogIndexRoute
-  '/workflow': typeof AuthenticatedWorkflowIndexRoute
+  '/runs': typeof AuthenticatedRunsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -146,13 +152,14 @@ export interface FileRoutesById {
   '/_authenticated/catalog': typeof AuthenticatedCatalogRouteWithChildren
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/profile': typeof AuthenticatedProfileRoute
+  '/_authenticated/runs': typeof AuthenticatedRunsRouteWithChildren
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
   '/_authenticated/catalog/$catalogId': typeof AuthenticatedCatalogCatalogIdRoute
   '/_authenticated/catalog/template': typeof AuthenticatedCatalogTemplateRoute
-  '/_authenticated/workflow/$workflowId': typeof AuthenticatedWorkflowWorkflowIdRoute
+  '/_authenticated/runs/$workflowId': typeof AuthenticatedRunsWorkflowIdRoute
   '/_authenticated/catalog/': typeof AuthenticatedCatalogIndexRoute
-  '/_authenticated/workflow/': typeof AuthenticatedWorkflowIndexRoute
+  '/_authenticated/runs/': typeof AuthenticatedRunsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -165,12 +172,13 @@ export interface FileRouteTypes {
     | '/catalog'
     | '/dashboard'
     | '/profile'
+    | '/runs'
     | '/settings'
     | '/catalog/$catalogId'
     | '/catalog/template'
-    | '/workflow/$workflowId'
+    | '/runs/$workflowId'
     | '/catalog/'
-    | '/workflow/'
+    | '/runs/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/login'
@@ -183,9 +191,9 @@ export interface FileRouteTypes {
     | '/'
     | '/catalog/$catalogId'
     | '/catalog/template'
-    | '/workflow/$workflowId'
+    | '/runs/$workflowId'
     | '/catalog'
-    | '/workflow'
+    | '/runs'
   id:
     | '__root__'
     | '/_authenticated'
@@ -196,13 +204,14 @@ export interface FileRouteTypes {
     | '/_authenticated/catalog'
     | '/_authenticated/dashboard'
     | '/_authenticated/profile'
+    | '/_authenticated/runs'
     | '/_authenticated/settings'
     | '/_authenticated/'
     | '/_authenticated/catalog/$catalogId'
     | '/_authenticated/catalog/template'
-    | '/_authenticated/workflow/$workflowId'
+    | '/_authenticated/runs/$workflowId'
     | '/_authenticated/catalog/'
-    | '/_authenticated/workflow/'
+    | '/_authenticated/runs/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -264,6 +273,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSettingsRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/runs': {
+      id: '/_authenticated/runs'
+      path: '/runs'
+      fullPath: '/runs'
+      preLoaderRoute: typeof AuthenticatedRunsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/profile': {
       id: '/_authenticated/profile'
       path: '/profile'
@@ -285,12 +301,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCatalogRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
-    '/_authenticated/workflow/': {
-      id: '/_authenticated/workflow/'
-      path: '/workflow'
-      fullPath: '/workflow/'
-      preLoaderRoute: typeof AuthenticatedWorkflowIndexRouteImport
-      parentRoute: typeof AuthenticatedRoute
+    '/_authenticated/runs/': {
+      id: '/_authenticated/runs/'
+      path: '/'
+      fullPath: '/runs/'
+      preLoaderRoute: typeof AuthenticatedRunsIndexRouteImport
+      parentRoute: typeof AuthenticatedRunsRoute
     }
     '/_authenticated/catalog/': {
       id: '/_authenticated/catalog/'
@@ -299,12 +315,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCatalogIndexRouteImport
       parentRoute: typeof AuthenticatedCatalogRoute
     }
-    '/_authenticated/workflow/$workflowId': {
-      id: '/_authenticated/workflow/$workflowId'
-      path: '/workflow/$workflowId'
-      fullPath: '/workflow/$workflowId'
-      preLoaderRoute: typeof AuthenticatedWorkflowWorkflowIdRouteImport
-      parentRoute: typeof AuthenticatedRoute
+    '/_authenticated/runs/$workflowId': {
+      id: '/_authenticated/runs/$workflowId'
+      path: '/$workflowId'
+      fullPath: '/runs/$workflowId'
+      preLoaderRoute: typeof AuthenticatedRunsWorkflowIdRouteImport
+      parentRoute: typeof AuthenticatedRunsRoute
     }
     '/_authenticated/catalog/template': {
       id: '/_authenticated/catalog/template'
@@ -338,24 +354,35 @@ const AuthenticatedCatalogRouteChildren: AuthenticatedCatalogRouteChildren = {
 const AuthenticatedCatalogRouteWithChildren =
   AuthenticatedCatalogRoute._addFileChildren(AuthenticatedCatalogRouteChildren)
 
+interface AuthenticatedRunsRouteChildren {
+  AuthenticatedRunsWorkflowIdRoute: typeof AuthenticatedRunsWorkflowIdRoute
+  AuthenticatedRunsIndexRoute: typeof AuthenticatedRunsIndexRoute
+}
+
+const AuthenticatedRunsRouteChildren: AuthenticatedRunsRouteChildren = {
+  AuthenticatedRunsWorkflowIdRoute: AuthenticatedRunsWorkflowIdRoute,
+  AuthenticatedRunsIndexRoute: AuthenticatedRunsIndexRoute,
+}
+
+const AuthenticatedRunsRouteWithChildren =
+  AuthenticatedRunsRoute._addFileChildren(AuthenticatedRunsRouteChildren)
+
 interface AuthenticatedRouteChildren {
   AuthenticatedCatalogRoute: typeof AuthenticatedCatalogRouteWithChildren
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedProfileRoute: typeof AuthenticatedProfileRoute
+  AuthenticatedRunsRoute: typeof AuthenticatedRunsRouteWithChildren
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
-  AuthenticatedWorkflowWorkflowIdRoute: typeof AuthenticatedWorkflowWorkflowIdRoute
-  AuthenticatedWorkflowIndexRoute: typeof AuthenticatedWorkflowIndexRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedCatalogRoute: AuthenticatedCatalogRouteWithChildren,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedProfileRoute: AuthenticatedProfileRoute,
+  AuthenticatedRunsRoute: AuthenticatedRunsRouteWithChildren,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
-  AuthenticatedWorkflowWorkflowIdRoute: AuthenticatedWorkflowWorkflowIdRoute,
-  AuthenticatedWorkflowIndexRoute: AuthenticatedWorkflowIndexRoute,
 }
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(

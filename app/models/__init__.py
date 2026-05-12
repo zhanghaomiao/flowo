@@ -1,4 +1,5 @@
 from .catalog import Catalog
+from .catalog_blob import CatalogBlob
 from .catalog_file import CatalogFile
 from .enums import FileType, Status
 from .error import Error
@@ -27,6 +28,7 @@ __all__ = [
     "UserSettings",
     "UserToken",
     "Catalog",
+    "CatalogBlob",
     "CatalogFile",
     "SnakeTemplateFile",
     "SnakeTemplateState",

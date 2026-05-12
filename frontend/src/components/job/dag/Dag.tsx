@@ -378,7 +378,8 @@ const WorkflowGraphInner: React.FC<WorkflowGraphProps> = ({
               </Tooltip>
             </Controls>
             <MiniMap
-              className="rounded-xl border border-slate-100 shadow-lg"
+              className="rounded-lg border border-slate-100 shadow-md !w-[120px] !h-[80px]"
+              style={{ width: 120, height: 80 }}
               zoomable
               pannable
             />

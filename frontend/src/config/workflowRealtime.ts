@@ -17,25 +17,49 @@ const invalidateByTag = (queryClient: QueryClient, tag: string) => {
   });
 };
 
-/** Parse complete SSE blocks (``\\n\\n``) from a buffer; leave remainder for the next chunk. */
-function drainSseBlocks(buffer: string): { rest: string; blocks: string[] } {
+const SSE_BLOCK_SEPARATORS = ['\r\n\r\n', '\n\n', '\r\r'] as const;
+
+type ConnectionStatus = 'OFF' | 'CONNECTING' | 'ONLINE' | 'ERROR';
+
+/** Parse complete SSE blocks from a buffer; leave remainder for the next chunk. */
+export function drainSseBlocks(buffer: string): {
+  rest: string;
+  blocks: string[];
+} {
   const blocks: string[] = [];
   let working = buffer;
-  let idx: number;
-  while ((idx = working.indexOf('\n\n')) !== -1) {
-    const raw = working.slice(0, idx);
-    working = working.slice(idx + 2);
+
+  while (working) {
+    let nextIdx = -1;
+    let nextSeparator = '';
+
+    for (const separator of SSE_BLOCK_SEPARATORS) {
+      const idx = working.indexOf(separator);
+      if (idx !== -1 && (nextIdx === -1 || idx < nextIdx)) {
+        nextIdx = idx;
+        nextSeparator = separator;
+      }
+    }
+
+    if (nextIdx === -1) {
+      break;
+    }
+
+    const raw = working.slice(0, nextIdx);
+    working = working.slice(nextIdx + nextSeparator.length);
     if (raw.trim()) {
       blocks.push(raw);
     }
   }
+
   return { rest: working, blocks };
 }
 
-function parseSseBlock(raw: string): { event?: string; data?: string } {
+export function parseSseBlock(raw: string): { event?: string; data?: string } {
   let event: string | undefined;
   const dataLines: string[] = [];
-  for (const line of raw.split('\n')) {
+  const normalized = raw.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+  for (const line of normalized.split('\n')) {
     if (!line || line.startsWith(':')) {
       continue;
     }
@@ -84,9 +108,21 @@ async function consumeSseOverFetch(
       if (event === 'message' && data) {
         try {
           onMessageData(JSON.parse(data));
-        } catch {
-          /* ignore malformed payloads */
+        } catch (error) {
+          console.warn('Malformed SSE message payload:', error, data);
         }
+      }
+    }
+  }
+
+  buffer += decoder.decode();
+  if (buffer.trim()) {
+    const { event, data } = parseSseBlock(buffer);
+    if (event === 'message' && data) {
+      try {
+        onMessageData(JSON.parse(data));
+      } catch (error) {
+        console.warn('Malformed trailing SSE message payload:', error, data);
       }
     }
   }
@@ -94,9 +130,8 @@ async function consumeSseOverFetch(
 
 export const useWorkflowRealtime = (workflows: string[] = []) => {
   const queryClient = useQueryClient();
-  const [connectionStatus, setConnectionStatus] = useState<
-    'OFF' | 'CONNECTING' | 'ONLINE'
-  >('OFF');
+  const [connectionStatus, setConnectionStatus] =
+    useState<ConnectionStatus>('OFF');
 
   const currentIdsRef = useRef<Set<string>>(new Set());
 
@@ -165,14 +200,16 @@ export const useWorkflowRealtime = (workflows: string[] = []) => {
               id?: string;
               workflow_id?: string;
             };
-            if (row.operation === 'UPDATE' && !row.new_status) {
-              return;
-            }
             if (row.operation === 'INSERT' || row.operation === 'DELETE') {
               debounceSync();
             }
             if (row.table === 'workflows') {
               if (row.id && currentIdsRef.current.has(row.id)) {
+                debounceSync();
+              } else if (
+                row.workflow_id &&
+                currentIdsRef.current.has(row.workflow_id)
+              ) {
                 debounceSync();
               }
             } else if (row.table === 'jobs') {
@@ -204,7 +241,7 @@ export const useWorkflowRealtime = (workflows: string[] = []) => {
         );
 
         if (isActive && !controller.signal.aborted) {
-          setConnectionStatus('OFF');
+          setConnectionStatus('ERROR');
           retryTimeout = setTimeout(() => {
             void connectSse();
           }, 3000);
@@ -215,7 +252,7 @@ export const useWorkflowRealtime = (workflows: string[] = []) => {
         }
         console.error('SSE Connection Error:', error);
         if (isActive) {
-          setConnectionStatus('OFF');
+          setConnectionStatus('ERROR');
           retryTimeout = setTimeout(() => {
             void connectSse();
           }, 5000);

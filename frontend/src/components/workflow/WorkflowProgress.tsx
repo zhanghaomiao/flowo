@@ -57,7 +57,7 @@ const WorkflowProgress: React.FC<WorkflowProgressProps> = ({ workflowId }) => {
     <Card>
       <Row gutter={24} align="middle">
         <Col span={2}>
-          <Link to="/">
+          <Link to="/runs">
             <Button
               type="text"
               icon={<ArrowLeftOutlined />}

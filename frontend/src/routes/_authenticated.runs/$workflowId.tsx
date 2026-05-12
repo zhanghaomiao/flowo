@@ -25,23 +25,22 @@ import WorkflowTimeline from '@/components/workflow/WorkflowTimeline.tsx';
 import { useWorkflowRealtime } from '@/config/workflowRealtime';
 import { useWorkflowState } from '@/hooks/useWorkflowState.ts';
 
-export const Route = createFileRoute('/_authenticated/workflow/$workflowId')({
-  component: WorkflowDetail,
+export const Route = createFileRoute('/_authenticated/runs/$workflowId')({
+  component: RunDetail,
   loader: ({ params }) => params,
 });
 
-function WorkflowDetail() {
+function RunDetail() {
   const { workflowId } = Route.useLoaderData();
 
   if (!workflowId) {
     return null;
   }
 
-  return <WorkflowDetailContent workflowId={workflowId} />;
+  return <RunDetailContent workflowId={workflowId} />;
 }
 
-function WorkflowDetailContent({ workflowId }: { workflowId: string }) {
-  // Use simplified state management
+function RunDetailContent({ workflowId }: { workflowId: string }) {
   const {
     selectedRule,
     highlightedRule,
@@ -71,7 +70,6 @@ function WorkflowDetailContent({ workflowId }: { workflowId: string }) {
       setSelectedRule(null);
     } else {
       setSelectedRule(ruleName);
-      setActiveTab('code');
     }
   };
 
@@ -121,7 +119,6 @@ function WorkflowDetailContent({ workflowId }: { workflowId: string }) {
 
           <Splitter.Panel className="h-full">
             <div className="h-full flex flex-col relative">
-              {/* Fixed Tabs Header */}
               <div className="sticky top-0 z-10 bg-white border-b border-slate-100 flex-shrink-0">
                 <Tabs
                   activeKey={activeTab}

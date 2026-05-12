@@ -1,22 +1,40 @@
 import React, { useEffect, useState } from 'react';
+import { TransformComponent, TransformWrapper } from 'react-zoom-pan-pinch';
 
 import { useNavigate } from '@tanstack/react-router';
-import { Button, Card, Tag, Tooltip, Typography } from 'antd';
+import {
+  Button,
+  Card,
+  message,
+  Modal,
+  Spin,
+  Tag,
+  Tooltip,
+  Typography,
+} from 'antd';
 import dayjs from 'dayjs';
 import {
   Calendar,
+  Download,
+  Eye,
   GitBranch,
   Layers,
   Pencil,
+  Play,
+  RotateCcw,
+  Search,
   Trash2,
   User,
+  ZoomIn,
+  ZoomOut,
 } from 'lucide-react';
 
 import type { CatalogSummary } from '@/client/types.gen';
 import AuthBlobImage from '@/components/shared/AuthBlobImage';
-import CopyIconButton from '@/components/shared/CopyIconButton';
+import WorkflowTag from '@/components/workflow/WorkflowTag';
+import { copyTextToClipboard } from '@/utils/clipboard';
 
-const { Title, Paragraph, Text } = Typography;
+const { Title, Paragraph, Text, Link } = Typography;
 
 interface Props {
   catalog: CatalogSummary;
@@ -35,12 +53,22 @@ const CatalogCard: React.FC<Props> = ({ catalog, onDelete, onEdit }) => {
     'loading',
   );
   const [tagsExpanded, setTagsExpanded] = useState(false);
+  const [svgPreviewOpen, setSvgPreviewOpen] = useState(false);
+  const [previewSrc, setPreviewSrc] = useState<string | null>(null);
+  const [previewPhase, setPreviewPhase] = useState<
+    'idle' | 'loading' | 'ready' | 'error'
+  >('idle');
   const sourceUrl = catalog.source_url?.trim();
   const isGitSource = !!sourceUrl;
   const navigate = useNavigate();
 
   const dagPreviewUrl = `/api/v1/catalog/${encodeURIComponent(catalog.id)}/dag/preview`;
   const dagSvgUrl = `/api/v1/catalog/${encodeURIComponent(catalog.id)}/dag/svg`;
+  const slugTrim = catalog.slug?.trim() ?? '';
+  const pullCommand = slugTrim ? `flowo catalog pull ${slugTrim}` : '';
+  const runCommand = slugTrim
+    ? `snakemake [command] --logger flowo --logger-flowo-catalog ${slugTrim}`
+    : '';
   const tags = catalog.tags || [];
   const hiddenTagCount =
     tags.length > MAX_TAGS_COLLAPSED ? tags.length - MAX_TAGS_COLLAPSED : 0;
@@ -57,175 +85,394 @@ const CatalogCard: React.FC<Props> = ({ catalog, onDelete, onEdit }) => {
     setTagsExpanded(false);
   }, [catalog.id]);
 
+  useEffect(() => {
+    if (!svgPreviewOpen) {
+      setPreviewPhase('idle');
+      setPreviewSrc((prev) => {
+        if (prev) URL.revokeObjectURL(prev);
+        return null;
+      });
+      return;
+    }
+
+    let cancelled = false;
+    const token = localStorage.getItem('token');
+    const headers: HeadersInit = token
+      ? { Authorization: `Bearer ${token}` }
+      : {};
+
+    setPreviewPhase('loading');
+
+    void (async () => {
+      for (const url of [dagPreviewUrl, dagSvgUrl]) {
+        const res = await fetch(url, { headers });
+        if (cancelled) return;
+        if (!res.ok) continue;
+        const blob = await res.blob();
+        if (cancelled) return;
+        const objectUrl = URL.createObjectURL(blob);
+        setPreviewSrc((prev) => {
+          if (prev) URL.revokeObjectURL(prev);
+          return objectUrl;
+        });
+        setPreviewPhase('ready');
+        return;
+      }
+      if (!cancelled) setPreviewPhase('error');
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [svgPreviewOpen, dagPreviewUrl, dagSvgUrl]);
+
+  const openSvgPreview = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setSvgPreviewOpen(true);
+  };
+
+  const copyCatalogCommand = async (
+    e: React.MouseEvent,
+    text: string,
+    kind: 'pull' | 'run',
+  ) => {
+    e.stopPropagation();
+    const trimmed = text.trim();
+    if (!trimmed) {
+      message.warning('Set a catalog slug to copy this command.');
+      return;
+    }
+    const ok = await copyTextToClipboard(trimmed);
+    if (ok) {
+      message.success(
+        kind === 'pull'
+          ? `Copied download command: ${trimmed}`
+          : `Copied run command: ${trimmed}`,
+      );
+    } else {
+      message.error('Could not copy to clipboard');
+    }
+  };
+
   return (
-    <Card
-      hoverable
-      onClick={handleCardClick}
-      className="group flex h-full flex-col overflow-hidden border-slate-200/80 transition-all duration-300 hover:border-indigo-300 hover:shadow-xl"
-      styles={{
-        body: {
-          padding: '20px',
-          flex: 1,
-          display: 'flex',
-          flexDirection: 'column',
-        },
-        cover: {
-          height: '180px',
-          overflow: 'hidden',
-          background: '#fcfdfe',
-          borderBottom: '1px solid #f1f5f9',
-          position: 'relative',
-        },
-      }}
-      cover={
-        <div className="relative flex h-full w-full items-center justify-center p-2">
-          {/* Decorative subtle grid background */}
-          <div className="absolute inset-0 opacity-[0.02] [background-image:linear-gradient(#6366f1_1px,transparent_1px),linear-gradient(90deg,#6366f1_1px,transparent_1px)] [background-size:20px_20px]" />
+    <>
+      <Card
+        hoverable
+        onClick={handleCardClick}
+        className="group flex h-full flex-col overflow-hidden border-slate-200/80 transition-all duration-300 hover:border-indigo-300 hover:shadow-xl"
+        styles={{
+          body: {
+            padding: '20px',
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'column',
+          },
+          cover: {
+            height: '180px',
+            overflow: 'hidden',
+            background: '#fcfdfe',
+            borderBottom: '1px solid #f1f5f9',
+            position: 'relative',
+          },
+        }}
+        cover={
+          <div className="relative flex h-full w-full items-center justify-center p-2">
+            {/* Decorative subtle grid background */}
+            <div className="absolute inset-0 opacity-[0.02] [background-image:linear-gradient(#6366f1_1px,transparent_1px),linear-gradient(90deg,#6366f1_1px,transparent_1px)] [background-size:20px_20px]" />
 
-          <div className="z-10 flex h-full w-full items-center justify-center overflow-hidden">
-            <AuthBlobImage
-              src={dagPreviewUrl}
-              fallbackSrc={dagSvgUrl}
-              alt="DAG Preview"
-              className={`max-h-[105%] max-w-[105%] object-contain transition-all duration-700 ${
-                loadStatus === 'success'
-                  ? 'scale-100 opacity-100 blur-0 group-hover:scale-105'
-                  : 'scale-95 opacity-0 blur-sm'
-              }`}
-              onStatus={setLoadStatus}
-            />
+            <div className="z-10 flex h-full w-full items-center justify-center overflow-hidden">
+              <AuthBlobImage
+                src={dagPreviewUrl}
+                fallbackSrc={dagSvgUrl}
+                alt="DAG Preview"
+                className={`max-h-[105%] max-w-[105%] object-contain transition-all duration-700 ${
+                  loadStatus === 'success'
+                    ? 'scale-100 opacity-100 blur-0 group-hover:scale-105'
+                    : 'scale-95 opacity-0 blur-sm'
+                }`}
+                onStatus={setLoadStatus}
+              />
 
-            {loadStatus !== 'success' && (
-              <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 text-slate-300">
-                <Layers
-                  size={40}
-                  strokeWidth={1}
-                  className="text-slate-200 group-hover:text-indigo-200 transition-colors"
-                />
-                <Text className="text-[10px] font-bold uppercase tracking-widest text-slate-400 opacity-40">
-                  {loadStatus === 'loading' ? 'Loading...' : 'No Preview'}
-                </Text>
+              {loadStatus !== 'success' && (
+                <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 text-slate-300">
+                  <Layers
+                    size={40}
+                    strokeWidth={1}
+                    className="text-slate-200 group-hover:text-indigo-200 transition-colors"
+                  />
+                  <Text className="text-[10px] font-bold uppercase tracking-widest text-slate-400 opacity-40">
+                    {loadStatus === 'loading' ? 'Loading...' : 'No Preview'}
+                  </Text>
+                </div>
+              )}
+            </div>
+
+            {/* Source Badge */}
+            <div className="absolute top-3 left-3 z-20">
+              <div className="flex items-center gap-1.5 rounded-full bg-white/90 px-2 py-0.5 text-[10px] font-bold text-slate-500 shadow-sm border border-slate-100/50 backdrop-blur-sm">
+                {isGitSource ? (
+                  <GitBranch size={11} className="text-indigo-500" />
+                ) : (
+                  <User size={11} className="text-emerald-500" />
+                )}
+                {isGitSource ? 'GIT' : 'LOCAL'}
               </div>
+            </div>
+
+            <div className="absolute top-3 right-3 z-20">
+              <Tooltip title="Preview DAG — scroll to zoom, drag to pan">
+                <Button
+                  type="default"
+                  size="small"
+                  icon={<Eye size={14} />}
+                  onClick={openSvgPreview}
+                  className="border-slate-200/80 bg-white/90 text-slate-600 shadow-sm backdrop-blur-sm hover:border-indigo-200 hover:text-indigo-600"
+                />
+              </Tooltip>
+            </div>
+          </div>
+        }
+      >
+        <div className="mb-2 flex items-start justify-between gap-2">
+          <Title
+            level={5}
+            className="!mb-0 truncate font-bold text-slate-800 transition-colors group-hover:text-indigo-600"
+            style={{ fontSize: '15px' }}
+          >
+            {catalog.name}
+          </Title>
+          <Tag className="m-0 border-none bg-slate-100 px-1.5 py-0 text-[10px] font-bold text-slate-500">
+            v{catalog.version}
+          </Tag>
+        </div>
+
+        <Paragraph
+          className="mb-4 flex-1 text-[12px] leading-relaxed text-slate-500"
+          ellipsis={{ rows: 2 }}
+        >
+          {catalog.description || 'A Snakemake workflow managed by Flowo.'}
+        </Paragraph>
+
+        <div className="mt-auto flex items-center justify-between border-t border-slate-50 pt-3">
+          <div className="flex min-w-0 flex-1 flex-wrap items-center gap-1">
+            {visibleTags.map((tag, i) => (
+              <WorkflowTag
+                key={`${tag}-${i}`}
+                tag={tag}
+                className="!shrink-0"
+                style={{ maxWidth: '100%' }}
+              />
+            ))}
+            {!tagsExpanded && hiddenTagCount > 0 && (
+              <Tooltip title={`${hiddenTagCount} more — click to show all`}>
+                <button
+                  type="button"
+                  className="inline-flex shrink-0 cursor-pointer items-center rounded border-none bg-slate-100 px-1.5 py-0 text-[10px] font-bold text-slate-500 transition-colors hover:bg-indigo-100 hover:text-indigo-600"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setTagsExpanded(true);
+                  }}
+                >
+                  +{hiddenTagCount}
+                </button>
+              </Tooltip>
+            )}
+            {tagsExpanded && tags.length > MAX_TAGS_COLLAPSED && (
+              <button
+                type="button"
+                className="shrink-0 cursor-pointer text-[10px] font-semibold text-indigo-500 hover:text-indigo-700"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setTagsExpanded(false);
+                }}
+              >
+                Show less
+              </button>
             )}
           </div>
 
-          {/* Source Badge */}
-          <div className="absolute top-3 left-3 z-20">
-            <div className="flex items-center gap-1.5 rounded-full bg-white/90 px-2 py-0.5 text-[10px] font-bold text-slate-500 shadow-sm border border-slate-100/50 backdrop-blur-sm">
-              {isGitSource ? (
-                <GitBranch size={11} className="text-indigo-500" />
-              ) : (
-                <User size={11} className="text-emerald-500" />
-              )}
-              {isGitSource ? 'GIT' : 'LOCAL'}
-            </div>
+          <div
+            className="flex items-center gap-1"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <Tooltip title="Edit Metadata">
+              <Button
+                type="text"
+                size="small"
+                icon={<Pencil size={14} />}
+                onClick={onEdit}
+                className="text-slate-400 hover:bg-indigo-50 hover:text-indigo-600"
+              />
+            </Tooltip>
+            <Tooltip
+              overlayStyle={{ maxWidth: 420 }}
+              title={
+                <div className="space-y-1">
+                  <div className="text-[11px] text-slate-300">
+                    Click to copy run command:
+                  </div>
+                  <span className="block whitespace-pre-wrap font-mono text-[11px] leading-snug text-white">
+                    {runCommand ||
+                      'Set a catalog slug to get the Snakemake line with --logger-flowo-catalog.'}
+                  </span>
+                </div>
+              }
+            >
+              <Button
+                type="text"
+                size="small"
+                icon={<Play size={14} />}
+                disabled={!runCommand}
+                className="text-slate-400 hover:bg-indigo-50 hover:text-indigo-600 disabled:text-slate-300"
+                onClick={(e) => void copyCatalogCommand(e, runCommand, 'run')}
+              />
+            </Tooltip>
+            <Tooltip
+              overlayStyle={{ maxWidth: 420 }}
+              title={
+                <div className="space-y-1">
+                  <div className="text-[11px] text-slate-300">
+                    Click to copy download command:
+                  </div>
+                  <span className="block whitespace-pre-wrap font-mono text-[11px] leading-snug text-white">
+                    {pullCommand ||
+                      'Set a catalog slug to get the flowo catalog pull command.'}
+                  </span>
+                </div>
+              }
+            >
+              <Button
+                type="text"
+                size="small"
+                icon={<Download size={14} />}
+                disabled={!pullCommand}
+                className="text-slate-400 hover:bg-slate-50 hover:text-slate-700 disabled:text-slate-300"
+                onClick={(e) => void copyCatalogCommand(e, pullCommand, 'pull')}
+              />
+            </Tooltip>
+            <Tooltip title="Delete">
+              <Button
+                type="text"
+                size="small"
+                danger
+                icon={<Trash2 size={14} />}
+                onClick={onDelete}
+                className="text-slate-300 hover:bg-red-50 hover:text-red-500"
+              />
+            </Tooltip>
           </div>
         </div>
-      }
-    >
-      <div className="mb-2 flex items-start justify-between gap-2">
-        <Title
-          level={5}
-          className="!mb-0 truncate font-bold text-slate-800 transition-colors group-hover:text-indigo-600"
-          style={{ fontSize: '15px' }}
-        >
-          {catalog.name}
-        </Title>
-        <Tag className="m-0 border-none bg-slate-100 px-1.5 py-0 text-[10px] font-bold text-slate-500">
-          v{catalog.version}
-        </Tag>
-      </div>
 
-      <Paragraph
-        className="mb-4 flex-1 text-[12px] leading-relaxed text-slate-500"
-        ellipsis={{ rows: 2 }}
+        <div className="mt-2 flex items-center gap-1 text-[9px] font-medium text-slate-400 opacity-60">
+          <Calendar size={10} />
+          <span>Updated {dayjs(catalog.updated_at).fromNow()}</span>
+        </div>
+      </Card>
+
+      <Modal
+        title="DAG preview"
+        open={svgPreviewOpen}
+        onCancel={() => setSvgPreviewOpen(false)}
+        footer={null}
+        width={920}
+        styles={{ body: { padding: 0 } }}
+        destroyOnClose
       >
-        {catalog.description || 'A Snakemake workflow managed by Flowo.'}
-      </Paragraph>
-
-      <div className="mt-auto flex items-center justify-between border-t border-slate-50 pt-3">
-        <div className="flex min-w-0 flex-1 flex-wrap items-center gap-1">
-          {visibleTags.map((tag, i) => (
-            <Tag
-              key={`${tag}-${i}`}
-              className="m-0 max-w-full shrink-0 border-none bg-indigo-50/50 px-1.5 py-0 text-[10px] font-medium text-indigo-500"
-              title={tag}
-            >
-              <span className="inline-block max-w-[140px] truncate align-bottom">
-                {tag}
-              </span>
-            </Tag>
-          ))}
-          {!tagsExpanded && hiddenTagCount > 0 && (
-            <Tooltip title={`${hiddenTagCount} more — click to show all`}>
-              <button
-                type="button"
-                className="inline-flex shrink-0 cursor-pointer items-center rounded border-none bg-slate-100 px-1.5 py-0 text-[10px] font-bold text-slate-500 transition-colors hover:bg-indigo-100 hover:text-indigo-600"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setTagsExpanded(true);
-                }}
+        {previewPhase === 'loading' && (
+          <div className="flex h-[min(70vh,640px)] items-center justify-center">
+            <Spin />
+          </div>
+        )}
+        {previewPhase === 'error' && (
+          <div className="flex min-h-[280px] flex-col items-center justify-center gap-2 p-8 text-center">
+            <Text type="secondary">No DAG preview available.</Text>
+          </div>
+        )}
+        {previewPhase === 'ready' && previewSrc && (
+          <div className="flex h-[min(70vh,640px)] flex-col overflow-hidden bg-slate-50">
+            <div className="flex shrink-0 items-center justify-between gap-2 border-b border-slate-100 bg-white/90 px-3 py-2">
+              <div className="flex items-center gap-2 text-[11px] text-slate-500">
+                <Search size={12} className="shrink-0" />
+                <span>Scroll to zoom · Drag to pan</span>
+              </div>
+              <Link
+                href={previewSrc}
+                target="_blank"
+                rel="noreferrer"
+                className="text-xs"
               >
-                +{hiddenTagCount}
-              </button>
-            </Tooltip>
-          )}
-          {tagsExpanded && tags.length > MAX_TAGS_COLLAPSED && (
-            <button
-              type="button"
-              className="shrink-0 cursor-pointer text-[10px] font-semibold text-indigo-500 hover:text-indigo-700"
-              onClick={(e) => {
-                e.stopPropagation();
-                setTagsExpanded(false);
-              }}
-            >
-              Show less
-            </button>
-          )}
-        </div>
-
-        <div
-          className="flex items-center gap-1"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <Tooltip title="Edit Metadata">
-            <Button
-              type="text"
-              size="small"
-              icon={<Pencil size={14} />}
-              onClick={onEdit}
-              className="text-slate-400 hover:bg-indigo-50 hover:text-indigo-600"
-            />
-          </Tooltip>
-          <CopyIconButton
-            text={
-              catalog.slug?.trim()
-                ? `flowo catalog pull ${catalog.slug.trim()}`
-                : ''
-            }
-            tooltip={`Copy: flowo catalog pull ${catalog.slug ?? ''}`}
-            disabled={!catalog.slug?.trim()}
-            className="text-slate-400 hover:bg-slate-50 hover:text-slate-700"
-            iconSize={14}
-          />
-          <Tooltip title="Delete">
-            <Button
-              type="text"
-              size="small"
-              danger
-              icon={<Trash2 size={14} />}
-              onClick={onDelete}
-              className="text-slate-300 hover:bg-red-50 hover:text-red-500"
-            />
-          </Tooltip>
-        </div>
-      </div>
-
-      <div className="mt-2 flex items-center gap-1 text-[9px] font-medium text-slate-400 opacity-60">
-        <Calendar size={10} />
-        <span>Updated {dayjs(catalog.updated_at).fromNow()}</span>
-      </div>
-    </Card>
+                Open in new tab
+              </Link>
+            </div>
+            <div className="relative h-full min-h-0 w-full flex-1 overflow-hidden">
+              <TransformWrapper
+                initialScale={1}
+                centerOnInit
+                minScale={0.1}
+                maxScale={8}
+              >
+                {({ zoomIn, zoomOut, resetTransform }) => (
+                  <>
+                    <div className="absolute right-3 top-3 z-10 flex flex-col gap-1 rounded-lg border border-slate-100 bg-white/95 p-1 shadow-sm backdrop-blur-sm">
+                      <Tooltip title="Zoom in" placement="left">
+                        <Button
+                          type="text"
+                          size="small"
+                          icon={<ZoomIn size={14} />}
+                          onClick={() => zoomIn()}
+                          className="text-slate-600 hover:text-indigo-600"
+                        />
+                      </Tooltip>
+                      <Tooltip title="Zoom out" placement="left">
+                        <Button
+                          type="text"
+                          size="small"
+                          icon={<ZoomOut size={14} />}
+                          onClick={() => zoomOut()}
+                          className="text-slate-600 hover:text-indigo-600"
+                        />
+                      </Tooltip>
+                      <Tooltip title="Reset view" placement="left">
+                        <Button
+                          type="text"
+                          size="small"
+                          icon={<RotateCcw size={14} />}
+                          onClick={() => resetTransform()}
+                          className="text-slate-600 hover:text-indigo-600"
+                        />
+                      </Tooltip>
+                    </div>
+                    <TransformComponent
+                      wrapperStyle={{
+                        width: '100%',
+                        height: '100%',
+                        cursor: 'grab',
+                      }}
+                      contentStyle={{
+                        width: '100%',
+                        height: '100%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      <div className="flex h-full w-full items-center justify-center p-4">
+                        <img
+                          src={previewSrc}
+                          alt="DAG preview"
+                          className="max-h-full max-w-full select-none object-contain"
+                          style={{ pointerEvents: 'none' }}
+                        />
+                      </div>
+                    </TransformComponent>
+                  </>
+                )}
+              </TransformWrapper>
+            </div>
+          </div>
+        )}
+      </Modal>
+    </>
   );
 };
 

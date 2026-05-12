@@ -13,6 +13,7 @@ from app.services.catalog.utils import (
     _slugify,
     _validate_path,
     _write_metadata,
+    scan_catalog_for_import,
 )
 
 
@@ -91,6 +92,53 @@ def test_detect_language():
     assert _detect_language("data.yaml") == "yaml"
     assert _detect_language("README.md") == "markdown"
     assert _detect_language("unknown.ext") == "plaintext"
+
+
+def test_scan_catalog_for_import_keeps_resources_directory(tmp_path):
+    catalog = tmp_path / "catalog"
+    resources = catalog / "resources"
+    resources.mkdir(parents=True)
+    (catalog / "workflow").mkdir()
+    (catalog / "workflow" / "Snakefile").write_text("rule all:\n    input: []\n")
+    (resources / "reference.fa").write_text(">chr1\nACGT\n")
+
+    text_files, binary_files = scan_catalog_for_import(catalog)
+
+    assert binary_files == []
+    paths = {row["path"] for row in text_files}
+    assert "workflow/Snakefile" in paths
+    assert "resources/reference.fa" in paths
+
+
+def test_scan_catalog_for_import_rejects_oversized_file(monkeypatch, tmp_path):
+    catalog = tmp_path / "catalog"
+    catalog.mkdir()
+    (catalog / "big.bin").write_bytes(b"x" * 6)
+    monkeypatch.setattr("app.services.catalog.utils.CATALOG_BLOB_MAX_BYTES", 5)
+    monkeypatch.setattr("app.services.catalog.utils.CATALOG_IMPORT_MAX_BYTES", 100)
+
+    with pytest.raises(HTTPException) as excinfo:
+        scan_catalog_for_import(catalog)
+
+    assert excinfo.value.status_code == 400
+    assert excinfo.value.detail["code"] == "catalog_file_too_large"
+    assert excinfo.value.detail["files"] == [{"path": "big.bin", "size": 6}]
+
+
+def test_scan_catalog_for_import_rejects_total_import_size(monkeypatch, tmp_path):
+    catalog = tmp_path / "catalog"
+    catalog.mkdir()
+    (catalog / "a.txt").write_text("abcd")
+    (catalog / "b.txt").write_text("efgh")
+    monkeypatch.setattr("app.services.catalog.utils.CATALOG_BLOB_MAX_BYTES", 100)
+    monkeypatch.setattr("app.services.catalog.utils.CATALOG_IMPORT_MAX_BYTES", 7)
+
+    with pytest.raises(HTTPException) as excinfo:
+        scan_catalog_for_import(catalog)
+
+    assert excinfo.value.status_code == 400
+    assert excinfo.value.detail["code"] == "catalog_import_too_large"
+    assert excinfo.value.detail["total_bytes"] == 8
 
 
 def test_validate_path_valid(monkeypatch, tmp_path):

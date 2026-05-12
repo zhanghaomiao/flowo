@@ -73,7 +73,7 @@ function LoginComponent() {
               throw new Error(await response.text());
             }
             message.success(`CLI login approved: ${cliUserCode}`);
-            navigate({ to: '/' });
+            navigate({ to: '/runs' });
           } catch {
             sessionStorage.removeItem(approvedKey);
             message.error(
@@ -87,7 +87,7 @@ function LoginComponent() {
       if (redirect) {
         navigate({ to: redirect });
       } else {
-        navigate({ to: '/' });
+        navigate({ to: '/runs' });
       }
     }
   }, [

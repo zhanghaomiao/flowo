@@ -21,7 +21,7 @@ from .utils import (
     _slugify,
     assert_catalog_readable,
     assert_catalog_writable,
-    collect_catalog_files_for_batch_import,
+    scan_catalog_for_import,
 )
 
 
@@ -150,16 +150,17 @@ class CatalogArchiveMixin:
             await self.db_session.commit()
             await self.db_session.refresh(new_catalog)
 
-            files_data = collect_catalog_files_for_batch_import(extracted)
-            if files_data:
+            text_files, bin_files = scan_catalog_for_import(extracted)
+            if text_files or bin_files:
                 await self.batch_import_files(
                     catalog_ref=str(new_catalog.id),
                     mode="replace",
                     commit_message=f"Import catalog archive: {slug}",
-                    files_data=files_data,
+                    files_data=text_files,
                     delete_paths=[],
                     author=owner,
                     user_id=owner_id,
+                    binaries=bin_files if bin_files else None,
                 )
 
             await self.db_session.refresh(new_catalog)
@@ -193,17 +194,18 @@ class CatalogArchiveMixin:
             shutil.unpack_archive(zip_file_path, tmp_dir)
             tmp_path = _catalog_root_after_zip_unpack(Path(tmp_dir))
 
-            files_data = collect_catalog_files_for_batch_import(tmp_path)
+            text_files, bin_files = scan_catalog_for_import(tmp_path)
             author = user.email or str(user.id)
 
             result = await self.batch_import_files(
                 catalog_ref=catalog_ref,
                 mode="replace",
                 commit_message="Import from CLI upload",
-                files_data=files_data,
+                files_data=text_files,
                 delete_paths=[],
                 author=author,
                 user_id=user.id,
+                binaries=bin_files if bin_files else None,
             )
             cat = await self._resolve_catalog_ref(catalog_ref, user.id)
             await materialize_catalog_workspace(self.db_session, cat)

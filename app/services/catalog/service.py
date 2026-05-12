@@ -11,10 +11,13 @@ from app.models import Catalog
 from app.services.catalog.catalog_storage import (
     catalog_db_has_snakefile,
     catalog_file_stats_for_many,
-    file_inventory_from_db_rows,
+    load_catalog_blob_rows,
     load_catalog_file_rows,
     materialize_catalog_workspace,
+    merge_catalog_text_and_blob_inventory,
     read_catalog_file_from_db,
+    remove_catalog_blob_tree,
+    upsert_catalog_blobs,
     upsert_catalog_files,
     workspace_flags_for_catalog,
 )
@@ -223,7 +226,8 @@ class CatalogService(CatalogArchiveMixin, CatalogGitMixin):
 
         catalog_path = catalog_data_dir(cat.owner_id, cat.slug)
         rows = await load_catalog_file_rows(self.db_session, cat.id)
-        inventory = file_inventory_from_db_rows(rows)
+        blobs = await load_catalog_blob_rows(self.db_session, cat.id)
+        inventory = merge_catalog_text_and_blob_inventory(rows, blobs)
         file_count = len([f for f in inventory if not f.get("is_dir")])
         db_has_snake = await catalog_db_has_snakefile(self.db_session, cat.id)
         ws = workspace_flags_for_catalog(
@@ -285,7 +289,8 @@ class CatalogService(CatalogArchiveMixin, CatalogGitMixin):
 
         catalog_path = catalog_data_dir(cat.owner_id, cat.slug)
         rows = await load_catalog_file_rows(self.db_session, cat.id)
-        inventory = file_inventory_from_db_rows(rows)
+        blobs = await load_catalog_blob_rows(self.db_session, cat.id)
+        inventory = merge_catalog_text_and_blob_inventory(rows, blobs)
         file_count = len([f for f in inventory if not f.get("is_dir")])
         db_has_snake = await catalog_db_has_snakefile(self.db_session, cat.id)
         ws = workspace_flags_for_catalog(
@@ -324,9 +329,12 @@ class CatalogService(CatalogArchiveMixin, CatalogGitMixin):
         assert_catalog_writable(cat, user_id)
         owner_id = cat.owner_id
         disk_slug = cat.slug
+        catalog_id = cat.id
 
         await self.db_session.delete(cat)
         await self.db_session.commit()
+
+        remove_catalog_blob_tree(catalog_id)
 
         for p in (
             catalog_data_dir(owner_id, disk_slug),
@@ -371,8 +379,9 @@ class CatalogService(CatalogArchiveMixin, CatalogGitMixin):
         commit_message: str = "Batch import",
         author: str = "system",
         user_id: uuid.UUID | None = None,
+        binaries: list[tuple[str, bytes]] | None = None,
     ) -> dict[str, Any]:
-        """Upsert catalog text files in the database; on-disk workspace becomes stale until materialized."""
+        """Upsert catalog text in DB + optional binary sidecar; workspace becomes stale until materialized."""
         if delete_paths is None:
             delete_paths = []
 
@@ -386,6 +395,15 @@ class CatalogService(CatalogArchiveMixin, CatalogGitMixin):
             mode,
             delete_paths,
         )
+        blob_summary: dict[str, int] | None = None
+        if binaries:
+            blob_summary = await upsert_catalog_blobs(
+                self.db_session,
+                cat.id,
+                binaries,
+                mode,
+                delete_paths,
+            )
 
         if await catalog_db_has_snakefile(self.db_session, cat.id):
             cat.workspace_status = "stale"
@@ -396,7 +414,7 @@ class CatalogService(CatalogArchiveMixin, CatalogGitMixin):
 
         await self.db_session.commit()
 
-        return {
+        out: dict[str, Any] = {
             "status": "completed",
             "summary": {
                 "added": summary["added"],
@@ -406,6 +424,9 @@ class CatalogService(CatalogArchiveMixin, CatalogGitMixin):
                 "conflicts": summary["conflicts"],
             },
         }
+        if blob_summary is not None:
+            out["blob_summary"] = blob_summary
+        return out
 
     async def create_directory(
         self,

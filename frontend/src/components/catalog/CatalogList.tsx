@@ -46,6 +46,7 @@ import { getSettings } from '@/client/sdk.gen';
 import type { CatalogSummary, ImportFromGitRequest } from '@/client/types.gen';
 import AuthBlobImage from '@/components/shared/AuthBlobImage';
 import CopyIconButton from '@/components/shared/CopyIconButton';
+import WorkflowTag from '@/components/workflow/WorkflowTag';
 
 import CatalogCard from './CatalogCard';
 import EditCatalogModal from './EditCatalogModal';
@@ -559,11 +560,11 @@ export default function CatalogList() {
         (tags || []).length === 0 ? (
           <span className="text-slate-400">—</span>
         ) : (
-          (tags || []).slice(0, 3).map((tag) => (
-            <Tag key={tag} color="geekblue" className="text-xs">
-              {tag}
-            </Tag>
-          ))
+          <div className="flex flex-wrap gap-1">
+            {(tags || []).slice(0, 3).map((tag) => (
+              <WorkflowTag key={tag} tag={tag} />
+            ))}
+          </div>
         ),
     },
     {

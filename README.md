@@ -1,105 +1,98 @@
-# Flowo 🚀
+# FlowO
 
-Welcome to **Flowo** – your real-time Snakemake workflow dashboard!
+**FlowO** is a **Snakemake observability** and **workflow catalog** platform: run the official logger plugin alongside Snakemake, and the web app records every execution—live **Dashboard** and **Runs**, job-level logs and errors, optional **output preview**, and a **catalog** of versioned Snakemake projects you can browse, edit, and link back to runs.
 
-**Demo page: [flowo online](https://zhanghaomiao.github.io/flowo)**
-
-**Documentation: [flowo docs](https://flowo-docs.pages.dev/)**
+**Full documentation:** [flowo-docs.pages.dev](https://flowo-docs.pages.dev/)
 
 ---
 
-## ✨ Features
+## Why FlowO
 
-- ⚡ **Real-time Monitoring:** Instant workflow updates via SSE.
-- 🔐 **Authentication:** Secure JWT-based registration and login.
-- 🚀 **Efficient:** Smart polling and debouncing for low network overhead.
-- 🔍 **Search & Filter:** Find workflows by name, tags, or user.
-- 🧩 **Rule Focus:** Filter jobs and update execution timeline by rule.
-- 🖼️ **Result Preview:** Preview output files directly in the browser.
-- 📋 **Detailed Logs:** Access comprehensive workflow and job logs.
+| | |
+| --- | --- |
+| **Real-time run monitoring** | PostgreSQL-backed history with **SSE** so the **Dashboard** and **Runs** views update as jobs start, finish, or fail. |
+| **Deep visibility** | Per-run **DAG**, **Jobs**, **Timeline**, captured **code**, and **logs**—plus **result preview** when the server can read the same paths Snakemake used. |
+| **Workflow catalog** | The **Catalog** stores Snakemake templates in the database (with versioning), materializes a workspace for Snakemake/DAG tooling, and ties runs to catalog entries when you report `catalog` metadata from the logger. |
 
 ---
 
-### 🛠️ Workflows
+## Quick start (~5 minutes)
 
-![Workflow](docs/assets/images/workflow.png)
+1. **Run FlowO** (Docker Compose, `.env`, `FLOWO_WORKING_PATH`) — follow **[Quick Start](https://flowo-docs.pages.dev/quickstart/)** in the docs.
+2. **Install the logger plugin** on the machine where Snakemake runs:
 
-### 📊 Dashboard
+   ```bash
+   pip install snakemake-logger-plugin-flowo
+   ```
 
-![Dashboard](docs/assets/images/dashboard.png)
+   Optional: `pip install "snakemake-logger-plugin-flowo[snakemake]"` if you need Snakemake in the same venv.
 
-### 🕹️ Jobs
+3. **Authenticate the CLI** (browser flow; token is written to `~/.config/flowo/config.toml`, mode `0600`):
 
-| ![DAG](docs/assets/images/dag.png) | ![Jobs](docs/assets/images/jobs.png) |
-| ---------------------------------- | ------------------------------------ |
+   ```bash
+   flowo login --host http://localhost:3100
+   ```
 
----
+   Replace the URL with your deployment (HTTPS in production).
 
-## 🚦 Installation
+4. **Run Snakemake** with the FlowO logger and open **Dashboard** / **Runs** in the browser:
 
-### 1️⃣ Install the Snakemake Logger Plugin
+   ```bash
+   cd /path/to/your/workflow
+   snakemake --logger flowo \
+     --logger-flowo-name "my-run" \
+     --logger-flowo-tags "demo,qc"
+   ```
 
-```sh
-pip install snakemake-logger-plugin-flowo
-```
-
-The PyPI package does not depend on Snakemake itself (it is expected in the environment where you run workflows). If you need Snakemake installed in the same environment—for example a minimal venv used only for the CLI—use:
-
-```sh
-pip install "snakemake-logger-plugin-flowo[snakemake]"
-```
-
-### 2️⃣ Install the Flowo web server (Single Image)
-
-This method uses pre-built Docker images. For detailed instructions, please refer to the [Quick Start](https://flowo-docs.pages.dev/getting-started/) guide.
-
-Clone the repo and start the service:
-
-```sh
-git clone https://github.com/zhanghaomiao/flowo.git
-cd flowo
-cp env.example .env
-# Edit .env:
-# - set SECRET_KEY to a long random value and keep it stable
-# - set FLOWO_WORKING_PATH to a host directory for FlowO data
-docker compose up -d
-```
-
-![login](docs/assets/images/login.png)
-Open [http://localhost:3100](http://localhost:3100) to create your account.
-
-![token](docs/assets/images/token.png)
-Generate a token in your profile settings to configure the logger plugin.
-
-![cli](docs/assets/images/cli.png)
-Copy and run the CLI config snippet from the dashboard to finish setup.
+**Headless servers, CI, or MCP:** create a long-lived token under **Settings → API Tokens** only when you cannot use `flowo login`. See **[Login and CLI setup](https://flowo-docs.pages.dev/user-manual/login-cli/)** (manual token section).
 
 ---
 
-## 🚀 Usage
+## Screenshots
 
-```sh
-cd /path/to/flowo_project_dir
-mkdir demo                # Create a demo project folder
-cd demo
-wget https://raw.githubusercontent.com/zhanghaomiao/flowo/refs/heads/main/tests/demos/Snakefile
-# Run snakemake with flowo logger
-snakemake \
-    --logger flowo \
-    --logger-flowo-name=your_project_name \
-    --logger-flowo-tags="tagA,tagB,tagC"
-```
+| ![Dashboard](docs/assets/images/dashboard.png) | ![Run detail](docs/assets/images/workflow-detail.png) |
+| --- | --- |
+| **Dashboard** — fleet status and activity | **Run detail** — DAG, jobs, timeline, code, results |
+
+| ![Catalog](docs/assets/images/catalog-list.png) | ![DAG preview (catalog)](docs/assets/images/dag-preview.png) |
+| --- | --- |
+| **Catalog** — browse stored workflows | **DAG preview** — best-effort rule graph (catalog / template) |
 
 ---
 
-## 👩‍💻 Developer Guide
+## Documentation map
 
-If you want to contribute or build from source:
+| Section | What you will find |
+| --- | --- |
+| **[Quick Start](https://flowo-docs.pages.dev/quickstart/)** | Shortest path: Compose, `flowo login`, first Snakemake run. |
+| **User manual** (same site) | Installation, Runs, catalog, DAG preview, results, jobs & errors. |
+| **Architecture** | Data flow, catalog storage model. |
+| **Advanced features** | **Optional** MCP and email (SMTP); not required for core use. |
+
+---
+
+## Contributing & development
 
 ```bash
+git clone https://github.com/zhanghaomiao/flowo.git
+cd flowo
 docker compose -f compose.dev.yml up --build
 ```
 
-- **Gateway**: `http://localhost:3100` (Accesses both Frontend and Backend)
-- **Backend API**: `http://localhost:8000`
-- **Frontend**: `http://localhost:5173`
+- **Gateway:** `http://localhost:3100` (combined frontend + API in dev compose)
+- **Backend API:** `http://localhost:8000`
+- **Frontend (Vite):** `http://localhost:5173`
+
+Build the docs locally:
+
+```bash
+uv sync --extra docs
+uv run mkdocs build --strict
+```
+
+---
+
+## Live demo
+
+A hosted sandbox may be available at [flowo.iregene-bio.com](https://flowo.iregene-bio.com/).
+For credentials or access policy, see the [Quick Start](https://flowo-docs.pages.dev/quickstart/) or contact the maintainers.

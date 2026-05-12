@@ -1,15 +1,9 @@
-import { createFileRoute } from '@tanstack/react-router';
-
-import WorkflowTable from '@/components/workflow/WorkflowTable';
+import { createFileRoute, Navigate } from '@tanstack/react-router';
 
 export const Route = createFileRoute('/_authenticated/')({
-  component: Index,
+  component: AuthenticatedIndexRedirect,
 });
 
-function Index() {
-  return (
-    <div style={{ width: '100%', margin: '0 auto' }}>
-      <WorkflowTable />
-    </div>
-  );
+function AuthenticatedIndexRedirect() {
+  return <Navigate to="/runs" replace />;
 }
