@@ -19,12 +19,15 @@ import {
   Typography,
 } from 'antd';
 
-import type { CatalogDetail, CatalogFileInfo } from '@/client/types.gen';
+import type {
+  CatalogDetail,
+  CatalogFileInfo,
+  SnakeTemplateOverview,
+} from '@/client/types.gen';
 import {
   fetchSnakeTemplateFile,
   fetchSnakeTemplateOverview,
   pullSnakeTemplate,
-  type SnakeTemplateOverview,
   snakeTemplateQueryKey,
 } from '@/lib/snakeTemplate';
 
@@ -47,14 +50,23 @@ function overviewToCatalog(
   overview: SnakeTemplateOverview,
   dataUpdatedAt: number,
 ): CatalogDetail {
-  const files: CatalogFileInfo[] = (overview.files || []).map((f) => ({
-    path: f.path,
-    name: f.name,
-    is_dir: f.is_dir ?? false,
-    lines: f.lines ?? 0,
-    size: f.size ?? 0,
-    modified: '',
-  }));
+  const files: CatalogFileInfo[] = (overview.files || []).map((f) => {
+    const row = f as {
+      path?: string;
+      name?: string;
+      is_dir?: boolean;
+      lines?: number;
+      size?: number;
+    };
+    return {
+      path: row.path ?? '',
+      name: row.name ?? '',
+      is_dir: row.is_dir ?? false,
+      lines: row.lines ?? 0,
+      size: row.size ?? 0,
+      modified: '',
+    };
+  });
   const upstream = overview.upstream?.trim() || '';
   return {
     id: TEMPLATE_CATALOG_ID,
@@ -83,7 +95,11 @@ const SnakemakeTemplatePage: React.FC = () => {
     'source',
   );
 
-  const overviewQuery = useQuery<SnakeTemplateOverview>({
+  const overviewQuery = useQuery<
+    SnakeTemplateOverview,
+    Error,
+    SnakeTemplateOverview
+  >({
     queryKey: [...snakeTemplateQueryKey, 'overview'],
     queryFn: fetchSnakeTemplateOverview,
   });
