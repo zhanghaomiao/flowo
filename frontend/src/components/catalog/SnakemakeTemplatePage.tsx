@@ -83,7 +83,7 @@ const SnakemakeTemplatePage: React.FC = () => {
     'source',
   );
 
-  const overviewQuery = useQuery({
+  const overviewQuery = useQuery<SnakeTemplateOverview>({
     queryKey: [...snakeTemplateQueryKey, 'overview'],
     queryFn: fetchSnakeTemplateOverview,
   });
@@ -133,6 +133,7 @@ const SnakemakeTemplatePage: React.FC = () => {
   };
 
   const o = overviewQuery.data;
+  const templatePath = o?.path ?? '';
 
   const activeLower = activeFile.toLowerCase();
   const showMarkdownSourceToggle =
@@ -214,7 +215,7 @@ const SnakemakeTemplatePage: React.FC = () => {
                 to clone the official repository into:
               </Paragraph>
               <Text code className="break-all text-xs">
-                {o?.path}
+                {templatePath}
               </Text>
             </div>
           ) : (
