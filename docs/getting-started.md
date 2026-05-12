@@ -106,9 +106,9 @@ After that, copy and run this command in the terminal where snakemake-logger-plu
 
 ## Usage with Snakemake
 
-Once configured, you can trigger Flowo logging in any Snakemake workflow.
+Once configured, you can enable Flowo logging in any Snakemake workflow.
 
-Let's test with a demo project:
+## Quick Start
 
 ```bash
 cd /path/to/flowo_project_dir
@@ -122,7 +122,7 @@ snakemake \
     --logger-flowo-tags="tagA,tagB,tagC"
 ```
 
-### Advanced Usage
+### Logger Options
 
 You can customize how your workflow appears in Flowo using additional logger arguments:
 
@@ -130,3 +130,19 @@ You can customize how your workflow appears in Flowo using additional logger arg
 - `--logger-flowo-tags`: Add comma-separated tags to help with filtering and organization.
 
 Flowo will track your workflow progress and job statuses in real-time based on these settings.
+
+### Alternative: Configure via Snakemake Config
+Flowo can also read its settings directly from the Snakemake config using the following keys:
+```
+snakemake \
+    --config flowo_project_name=my_project \
+             flowo_tags=tagA,tagB
+```
+Alternatively, you can define them inside a `config.yaml`:
+```
+flowo_project_name: my_project
+flowo_tags: tagA,tagB
+
+# your other configs
+```
+This is convenient when you want Flowo metadata to be managed together with your workflow configuration.

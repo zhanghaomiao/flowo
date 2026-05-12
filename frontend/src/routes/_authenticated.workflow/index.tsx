@@ -17,6 +17,7 @@ export const Route = createFileRoute('/_authenticated/workflow/')({
   },
 });
 
+import { Flex, Result, Spin } from 'antd';
 function RouteComponent() {
   const { name } = Route.useSearch();
   const navigate = useNavigate();
@@ -28,12 +29,41 @@ function RouteComponent() {
 
   useEffect(() => {
     if (name && workflowId) {
-      navigate({ to: `/workflow/${workflowId}` });
+      navigate({
+        to: '/workflow/$workflowId',
+        params: { workflowId },
+      });
     }
   }, [name, workflowId, navigate]);
 
   if (isLoading) {
-    return <div>Loading...</div>;
+    return (
+      <Flex
+        vertical
+        align="center"
+        justify="center"
+        style={{ height: '80vh', width: '100%' }}
+      >
+        <Spin size="large" />
+      </Flex>
+    );
+  }
+
+  if (name && !workflowId) {
+    return (
+      <Flex
+        vertical
+        align="center"
+        justify="center"
+        style={{ height: '80vh', width: '100%' }}
+      >
+        <Result
+          status="warning"
+          title="Workflow Not Found"
+          subTitle={`Could not find a workflow named "${name}"`}
+        />
+      </Flex>
+    );
   }
 
   return (
