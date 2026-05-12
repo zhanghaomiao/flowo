@@ -19,6 +19,8 @@ from flowo_common.paths import user_snakemake_template_root
 from flowo_common.token_config import write_user_config
 
 logger = logging.getLogger("snakemake.flowo")
+if not logger.handlers:
+    logging.basicConfig(level=logging.INFO, format="%(message)s")
 
 
 def pull_catalog(slug: str | None = None, path: str = "."):

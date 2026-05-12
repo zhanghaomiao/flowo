@@ -287,14 +287,18 @@ class GitService:
         External imports copy into ``target_dir/<owner_segment>/<slug>/`` when
         ``layout_owner_id`` is set (required for non-monorepo imports).
         """
-        # Only initialize if it's not already a Git repository
-        if not (target_dir / ".git").exists():
-            self.init_repository(target_dir, token, branch)
-
         monorepo_url = settings.CATALOG_GIT_REMOTE
 
         # 1. If we are syncing from our own monorepo (remote_url is None or matches monorepo)
         if not remote_url or (remote_url == monorepo_url):
+            # Only monorepo sync needs target_dir itself to be a Git repository.
+            if not (target_dir / ".git").exists():
+                self.init_repository(
+                    target_dir,
+                    remote_url=remote_url,
+                    token=token,
+                    branch=branch,
+                )
             self._run_git(["fetch", "origin"], cwd=target_dir)
             self._run_git(["reset", "--hard", f"origin/{branch}"], cwd=target_dir)
             return self._scan_catalogs(target_dir)

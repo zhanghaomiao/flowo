@@ -1,3 +1,4 @@
+import shutil
 import subprocess
 from unittest.mock import MagicMock, patch
 
@@ -164,3 +165,42 @@ def test_import_catalogs_from_own_monorepo(git_service, tmp_path, monkeypatch):
 
         assert slugs == ["catalog1", "catalog2"]
         mock_scan.assert_called_once_with(tmp_path)
+
+
+def test_import_catalogs_from_external_repo_does_not_require_monorepo_remote(
+    git_service, tmp_path, monkeypatch
+):
+    monkeypatch.setattr(
+        "app.services.third_party.git.settings.CATALOG_GIT_REMOTE", None
+    )
+
+    owner_id = "00000000-0000-0000-0000-000000000123"
+    source_repo = tmp_path / "source_repo"
+    (source_repo / "workflow").mkdir(parents=True)
+    (source_repo / "workflow" / "Snakefile").write_text("rule all:\n    input: []\n")
+
+    def fake_run_git(args, cwd=None):
+        if args[0] == "clone":
+            shutil.copytree(source_repo, args[-1])
+        return MagicMock()
+
+    with (
+        patch.object(git_service, "init_repository") as mock_init,
+        patch.object(git_service, "_run_git", side_effect=fake_run_git),
+    ):
+        slugs = git_service.import_catalogs(
+            tmp_path / "catalog",
+            remote_url="https://github.com/snakemake-workflows/rna-seq-star-deseq2.git",
+            layout_owner_id=owner_id,
+        )
+
+    assert slugs == ["rna-seq-star-deseq2"]
+    assert (
+        tmp_path
+        / "catalog"
+        / "00000000-0000-0000-0000-000000000123"
+        / "rna-seq-star-deseq2"
+        / "workflow"
+        / "Snakefile"
+    ).exists()
+    mock_init.assert_not_called()

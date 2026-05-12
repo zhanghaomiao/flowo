@@ -51,12 +51,31 @@ def find_snakefile(catalog_path: Path) -> Path | None:
     return None
 
 
-def find_test_workdir(catalog_path: Path) -> Path | None:
-    """Return the standard workflow test workdir when available."""
+def declared_configfile_paths(snakefile: Path) -> list[str]:
+    """Return literal configfile paths declared in a Snakefile."""
+    try:
+        text = snakefile.read_text(encoding="utf-8", errors="replace")
+    except OSError:
+        return []
+    paths: list[str] = []
+    for match in re.finditer(r"^\s*configfile\s*:\s*([\"'])(.+?)\1", text, re.M):
+        path = match.group(2).strip()
+        if path and not Path(path).is_absolute():
+            paths.append(path)
+    return paths
+
+
+def find_test_workdir(catalog_path: Path, snakefile: Path | None = None) -> Path | None:
+    """Return the standard workflow test workdir when its config layout is usable."""
     test_dir = catalog_path / ".test"
-    if test_dir.is_dir():
+    if not test_dir.is_dir():
+        return None
+    if snakefile is None:
         return test_dir
-    return None
+    configfiles = declared_configfile_paths(snakefile)
+    if configfiles and not all((test_dir / p).exists() for p in configfiles):
+        return None
+    return test_dir
 
 
 def try_begin_generation(job_key: str) -> bool:
@@ -131,7 +150,7 @@ def _run_snakevision_rulegraph_to_svg(
 
         def run_rulegraph() -> subprocess.CompletedProcess:
             env = _dag_subprocess_env()
-            test_workdir = find_test_workdir(root)
+            test_workdir = find_test_workdir(root, snakefile)
             if test_workdir:
                 return subprocess.run(
                     [

@@ -7,7 +7,31 @@ from logging import Handler, LogRecord
 from pathlib import Path
 
 import httpx
-from snakemake.logging import DefaultFilter, DefaultFormatter
+
+try:
+    from snakemake.logging import DefaultFilter, DefaultFormatter
+except ModuleNotFoundError:
+
+    class DefaultFormatter(logging.Formatter):
+        def __init__(
+            self,
+            quiet: bool = False,  # noqa: ARG002
+            show_failed_logs: bool = False,  # noqa: ARG002
+            printshellcmds: bool = False,  # noqa: ARG002
+        ):
+            super().__init__("%(message)s")
+
+    class DefaultFilter(logging.Filter):
+        def __init__(
+            self,
+            quiet: bool = False,  # noqa: ARG002
+            debug_dag: bool = False,  # noqa: ARG002
+            dryrun: bool = False,  # noqa: ARG002
+            printshellcmds: bool = False,  # noqa: ARG002
+        ):
+            super().__init__()
+
+
 from snakemake_interface_logger_plugins.base import LogHandlerBase
 from snakemake_interface_logger_plugins.settings import (
     LogHandlerSettingsBase,
