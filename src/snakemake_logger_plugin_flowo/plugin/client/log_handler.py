@@ -188,7 +188,8 @@ class FlowoLogHandler(Handler):
                 configfiles, config = self._get_configfiles()
                 self.context["configfiles"] = configfiles
                 self._merge_workflow_config_context(config)
-                self._set_effective_workdir_from_snakemake()
+            elif event_name == "job_info":
+                self._normalize_job_file_paths(data)
 
             self._send_to_api(event_name, data)
         except Exception as e:
@@ -286,24 +287,41 @@ class FlowoLogHandler(Handler):
         if tags:
             self.context["flowo_tags"] = tags
 
-    def _set_effective_workdir_from_snakemake(self) -> None:
-        """Use Snakemake's effective workdir, including ``--directory``."""
+    def _current_execution_prefix(self) -> Path | None:
+        """Relative cwd prefix for paths emitted from Snakemake's effective workdir."""
         try:
-            import snakemake.workflow
-
-            wf = getattr(snakemake.workflow, "workflow", None)
-            if not wf:
-                return
-
-            workdir = (
-                getattr(wf, "overwrite_workdir", None)
-                or getattr(wf, "workdir_init", None)
-                or getattr(wf, "_workdir_init", None)
-            )
-            if workdir:
-                self.context["workdir"] = str(Path(workdir).resolve())
+            workflow_root = Path(str(self.context.get("workdir") or "")).resolve()
+            current = Path.cwd().resolve()
+            if current == workflow_root:
+                return None
+            return current.relative_to(workflow_root)
+        except ValueError:
+            return None
         except Exception as e:
-            logger.debug(f"Failed to access snakemake workflow workdir: {e}")
+            logger.debug(f"Failed to derive snakemake execution prefix: {e}")
+            return None
+
+    def _normalize_job_file_paths(self, data: dict) -> None:
+        prefix = self._current_execution_prefix()
+        if prefix is None or str(prefix) == ".":
+            return
+
+        def normalize_one(raw: object) -> str:
+            path = Path(str(raw))
+            if path.is_absolute():
+                return str(path)
+            if path.parts[: len(prefix.parts)] == prefix.parts:
+                return path.as_posix()
+            return (prefix / path).as_posix()
+
+        for key in ("input", "output", "log", "benchmark"):
+            value = data.get(key)
+            if value is None:
+                continue
+            if isinstance(value, list):
+                data[key] = [normalize_one(v) for v in value]
+            else:
+                data[key] = [normalize_one(value)]
 
     def close(self) -> None:
         self.file_handler.close()

@@ -7,9 +7,7 @@ classes have the expected constructor signatures across snakemake versions.
 import importlib.util
 import inspect
 import logging
-import sys
-from pathlib import Path
-from types import ModuleType, SimpleNamespace
+from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -542,19 +540,12 @@ def test_emit_workflow_started_preserves_cli_name_tags_when_config_is_empty():
     assert handler.context["flowo_tags"] == ["rna-seq", "demo"]
 
 
-def test_emit_workflow_started_records_snakemake_effective_workdir(
-    tmp_path, monkeypatch
-):
-    import snakemake
-
+def test_emit_job_info_prefixes_paths_from_current_execution_dir(tmp_path, monkeypatch):
     from snakemake_logger_plugin_flowo.plugin.client.log_handler import FlowoLogHandler
 
-    effective_workdir = tmp_path / ".test"
-    effective_workdir.mkdir()
-    fake_workflow_module = ModuleType("snakemake.workflow")
-    fake_workflow_module.workflow = SimpleNamespace(overwrite_workdir=effective_workdir)
-    monkeypatch.setitem(sys.modules, "snakemake.workflow", fake_workflow_module)
-    monkeypatch.setattr(snakemake, "workflow", fake_workflow_module, raising=False)
+    workflow_root = tmp_path / "rna-seq-star-deseq2"
+    execution_dir = workflow_root / ".test"
+    execution_dir.mkdir(parents=True)
 
     with (
         patch.object(FlowoLogHandler, "_init_file_handler", return_value=MagicMock()),
@@ -564,24 +555,42 @@ def test_emit_workflow_started_records_snakemake_effective_workdir(
     ):
         mock_client_cls.return_value = MagicMock(is_closed=False)
         handler = FlowoLogHandler(_make_common_settings())
+        handler.context["workdir"] = str(workflow_root)
         handler.file_handler.emit = MagicMock()
         handler._parsers = {
-            "workflow_started": lambda record: SimpleNamespace(
+            "job_info": lambda record: SimpleNamespace(
                 model_dump=lambda mode="json": {
-                    "workflow_id": "wf-1",
-                    "snakefile": "Snakefile",
-                    "rules": [],
+                    "job_id": 1,
+                    "rule_name": "deseq2",
+                    "threads": 1,
+                    "input": ["data/in.tsv"],
+                    "output": [".test/results/out.tsv"],
+                    "log": ["logs/deseq2/init.log"],
+                    "benchmark": None,
                 }
             )
         }
 
         with (
-            patch.object(handler, "_get_configfiles", return_value=([], {})),
-            patch.object(handler, "_send_to_api"),
+            monkeypatch.context() as m,
+            patch.object(handler, "_send_to_api") as send_to_api,
         ):
-            handler.emit(SimpleNamespace(event="workflow_started"))
+            m.chdir(execution_dir)
+            handler.emit(SimpleNamespace(event="job_info"))
 
-    assert handler.context["workdir"] == str(Path(effective_workdir).resolve())
+    send_to_api.assert_called_once_with(
+        "job_info",
+        {
+            "job_id": 1,
+            "rule_name": "deseq2",
+            "threads": 1,
+            "input": [".test/data/in.tsv"],
+            "output": [".test/results/out.tsv"],
+            "log": [".test/logs/deseq2/init.log"],
+            "benchmark": None,
+        },
+    )
+    assert handler.context["workdir"] == str(workflow_root)
 
 
 def test_emit_workflow_started_uses_non_empty_config_name_tags():
