@@ -14,8 +14,10 @@ Authenticating your workstation lets the Snakemake logger post events **without 
    flowo login --host https://your-flowo-host
    ```
 
+   Optional: **`--working-path /path/on/this/machine`** if that path differs from the value the server would suggest (see below).
+
 3. A browser window opens (or prints a URL). Sign in to FlowO and approve the device.
-4. On success, the CLI writes **`~/.config/flowo/config.toml`** (Linux/macOS; similar paths on Windows) with `0600` permissions.
+4. On success, the CLI writes **`~/.config/flowo/config.toml`** (Linux/macOS; similar paths on Windows) with `0600` permissions, including **`FLOWO_WORKING_PATH`** when the server returns it in the login response (typical Docker: same path you set in the server `.env`).
 
 Example session (wording may vary slightly by CLI version; tokens are **not** echoed):
 
@@ -26,12 +28,15 @@ Waiting for you to approve this device in the browser…
 Login successful. Configuration saved to ~/.config/flowo/config.toml
 ```
 
-The file should look like this (use your real host; keep the token private):
+The file should look like this (use your real host and paths; keep the token private):
 
 ```toml
-host = "https://your-flowo-host"
-token = "<stored-by-flowo-login>"
+FLOWO_HOST = "https://your-flowo-host"
+FLOWO_USER_TOKEN = "<stored-by-flowo-login>"
+FLOWO_WORKING_PATH = "/same/host/path/as/the/server/FLOWO_WORKING_PATH"
 ```
+
+For **`flowo login`**, the server includes **`FLOWO_WORKING_PATH`** in the device-login response so the CLI can persist it automatically when you do **not** pass **`--working-path`**. That keeps same-host Docker setups aligned with the Compose mount. Override with **`--working-path`** when your Snakemake host sees a different absolute path than the server’s configured value.
 
 ## Fallback: API tokens (headless, CI, or MCP)
 

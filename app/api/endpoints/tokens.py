@@ -5,9 +5,10 @@ import uuid
 from datetime import UTC, datetime, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.config import settings
 from app.core.session import get_async_session
 from app.core.users import current_active_user
 from app.models import User, UserToken
@@ -41,6 +42,13 @@ class CliLoginApproveRequest(BaseModel):
 class CliLoginPollResponse(BaseModel):
     status: str
     token: str | None = None
+    flowo_working_path: str | None = Field(
+        default=None,
+        description=(
+            "Server FLOWO_WORKING_PATH so the flowo CLI can persist it when "
+            "--working-path was not passed (same-host deployments)."
+        ),
+    )
 
 
 class _CliLoginSession(BaseModel):
@@ -161,7 +169,11 @@ async def poll_cli_login(device_code: str):
 
     token = session.token
     _CLI_LOGIN_SESSIONS.pop(device_code, None)
-    return CliLoginPollResponse(status="approved", token=token)
+    return CliLoginPollResponse(
+        status="approved",
+        token=token,
+        flowo_working_path=settings.FLOWO_WORKING_PATH,
+    )
 
 
 @router.get("/", response_model=UserTokenList)

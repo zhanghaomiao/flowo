@@ -1,9 +1,14 @@
 import argparse
 import asyncio
+import os
 from pathlib import Path
+
+from sqlalchemy import func, select
+from sqlalchemy.exc import IntegrityError
 
 from app.core.session import AsyncSessionLocal, get_async_session
 from app.core.users import UserManager, get_user_db
+from app.models.user import User
 from app.schemas.user import UserCreate, UserUpdate
 from app.services.catalog.backfill import (
     backfill_catalogs_from_disk_root,
@@ -44,7 +49,7 @@ async def template_backfill(root: str, *, force: bool) -> None:
         print(summary)
 
 
-async def create_admin(email: str, password: str):
+async def create_admin(email: str, password: str, *, quiet: bool = False):
     async for session in get_async_session():
         async for user_db in get_user_db(session):
             user_manager = UserManager(user_db)
@@ -62,8 +67,53 @@ async def create_admin(email: str, password: str):
 
             # FastAPI-users models usually have these fields
             await user_db.create(user_dict)
-            print(f"Successfully created admin user: {email}")
+            if not quiet:
+                print(f"Successfully created admin user: {email}")
             return
+
+
+async def bootstrap_admin_from_env() -> None:
+    """If env vars are set and there is no superuser yet, create one.
+
+    Intended for first-time Docker deployments so operators do not need to run
+    ``docker compose exec … create-admin`` manually. Remove or unset the
+    variables after bootstrap; do not commit real passwords to git.
+    """
+    email = (os.environ.get("FLOWO_BOOTSTRAP_ADMIN_EMAIL") or "").strip()
+    password = os.environ.get("FLOWO_BOOTSTRAP_ADMIN_PASSWORD") or ""
+    if not email or not password:
+        return
+
+    async with AsyncSessionLocal() as session:
+        super_count = await session.scalar(
+            select(func.count()).select_from(User).where(User.is_superuser.is_(True))
+        )
+        if super_count and super_count > 0:
+            print(
+                "FLOWO bootstrap admin: skipped (at least one superuser already exists)."
+            )
+            return
+
+        existing = await session.scalar(select(User).where(User.email == email))
+        if existing is not None:
+            print(
+                f"FLOWO bootstrap admin: skipped (user {email!r} already exists). "
+                "Use create-admin for another account or reset-password."
+            )
+            return
+
+    try:
+        await create_admin(email, password, quiet=True)
+        print(
+            "FLOWO bootstrap admin: created superuser. "
+            "Unset FLOWO_BOOTSTRAP_ADMIN_EMAIL and FLOWO_BOOTSTRAP_ADMIN_PASSWORD "
+            "after first deploy; do not keep bootstrap passwords in .env long term."
+        )
+    except IntegrityError:
+        print(
+            "FLOWO bootstrap admin: skipped (race: user was created concurrently). "
+            "If you still have no superuser, run: python -m app.manage create-admin …"
+        )
 
 
 def main():
@@ -81,6 +131,14 @@ def main():
     admin_parser = subparsers.add_parser("create-admin", help="Create a superuser")
     admin_parser.add_argument("email", help="Admin's email address")
     admin_parser.add_argument("password", help="Admin's password")
+
+    subparsers.add_parser(
+        "bootstrap-admin-from-env",
+        help=(
+            "Create superuser from FLOWO_BOOTSTRAP_ADMIN_EMAIL and "
+            "FLOWO_BOOTSTRAP_ADMIN_PASSWORD when no superuser exists yet"
+        ),
+    )
 
     bf = subparsers.add_parser(
         "catalog-backfill",
@@ -113,6 +171,8 @@ def main():
         asyncio.run(reset_password(args.email, args.password))
     elif args.command == "create-admin":
         asyncio.run(create_admin(args.email, args.password))
+    elif args.command == "bootstrap-admin-from-env":
+        asyncio.run(bootstrap_admin_from_env())
     elif args.command == "catalog-backfill":
         asyncio.run(catalog_backfill(args.root))
     elif args.command == "template-backfill":

@@ -1,18 +1,17 @@
 # Installation guide
 
-For the shortest path—including a **hosted sandbox**—read [Quick Start](../quickstart.md) first. This page expands Docker deployment, environment variables, and client (`pip`) installation.
+For the shortest path—including a **hosted sandbox**—read [Quick Start](../quickstart.md) first.
 
-FlowO is typically deployed using Docker Compose. This ensures all components (Backend, Frontend, PostgreSQL, Caddy) are correctly configured and isolated.
+FlowO is usually deployed with **Docker Compose** (PostgreSQL, app image, Caddy). On the machine that runs Snakemake you only need **Python 3.12+** and the logger plugin (`pip`).
 
 ## Prerequisites
 
-- **Docker** and **Docker Compose** installed.
-- **Python 3.12+** on the machine where Snakemake will run.
+- **Docker** and **Docker Compose**
+- **Python 3.12+** where Snakemake runs
 
-## Server Deployment
+## Deploy the server
 
-### 1. Download Configuration
-Download the core configuration files to your server directory:
+### 1. Download files
 
 ```bash
 curl -O https://raw.githubusercontent.com/zhanghaomiao/flowo/main/compose.yml
@@ -20,79 +19,55 @@ curl -O https://raw.githubusercontent.com/zhanghaomiao/flowo/main/env.example
 cp env.example .env
 ```
 
-### 2. Configure Environment Variables
-Edit the `.env` file to suit your environment:
+### 2. Edit `.env` (minimal)
 
-*   `FLOWO_WORKING_PATH`: **Crucial.** This is the path on the host machine where your Snakemake projects reside. FlowO needs this to access logs and output files.
-*   `UID` & `GID`: Set these to your local user and group IDs (run `id -u` and `id -g`) to avoid permission issues with files created by FlowO.
-*   `FLOWO_HOST`: (Optional) Set this to your external domain or IP (e.g., `https://flowo.example.com`) if you are using a reverse proxy.
+You must set at least:
 
-### 3. Start the Services
-Run the following command to start FlowO in the background:
+- **`FLOWO_WORKING_PATH`** — host directory that contains (or is a parent of) your Snakemake projects, so logs and file previews resolve.
+- **`SECRET_KEY`** — long random string; keep it stable after the first real deploy.
+
+Strongly recommended for anything beyond a quick trial:
+
+- **`POSTGRES_PASSWORD`** (and other `POSTGRES_*` if you are not using defaults).
+- **`UID` / `GID`** — your host user/group (`id -u`, `id -g`) so files on the volume are not owned only by root.
+
+Behind HTTPS or a custom URL, set **`FLOWO_HOST`** (or **`DOMAIN`** / **`PROTOCOL`** as in `env.example`).
+
+**Every variable** is commented in **`env.example`**. Grouped tables and defaults: [Environment variables](../reference/environment-variables.md).
+
+### 3. Start
 
 ```bash
 docker compose up -d
 ```
 
-### 4. Verify the Deployment
-Open `http://localhost:3100` (or your configured domain). You should see the FlowO login page.
+### 4. First login and admin
 
-## Client Installation
+Open `http://localhost:3100` (or your public URL). You should see the login page.
 
-On the machine(s) where you will execute Snakemake:
+**Superuser** (for Settings, users, invitations when signup is closed):
+
+- **Easiest:** set `FLOWO_BOOTSTRAP_ADMIN_EMAIL` and `FLOWO_BOOTSTRAP_ADMIN_PASSWORD` in `.env`, then start or restart the stack once (default **Compose image** entrypoint only). Remove those lines after you can sign in.
+- **Or:** `docker compose exec flowo python -m app.manage create-admin you@example.com 'your-strong-password'`
+
+See [Quick Start](../quickstart.md) for the full “first Snakemake run” path.
+
+## Install the logger (Snakemake machine)
 
 ```bash
 pip install snakemake-logger-plugin-flowo
 ```
 
-If you don't have Snakemake installed yet, you can install the plugin with Snakemake as a dependency:
+With Snakemake in the same environment:
 
 ```bash
 pip install "snakemake-logger-plugin-flowo[snakemake]"
 ```
 
-## Security Best Practices
+## Security notes
 
 !!! warning "HTTPS in production"
-    In production, always run FlowO behind a reverse proxy with SSL (HTTPS). The Caddy service included in the default `compose.yml` can be configured for automatic Let's Encrypt certificates if a valid domain is provided.
+    Use TLS in front of FlowO (reverse proxy or Caddy with a real domain). Set public **`FLOWO_HOST`** so the logger and browser agree on the URL.
 
-!!! danger "Working path alignment"
-    For file previews to work, the `FLOWO_WORKING_PATH` mounted in the Docker container MUST match the relative paths reported by Snakemake. It is usually best to mount the parent directory of all your projects.
-
-## Advanced Configuration
-
-FlowO is configured primarily through environment variables. Below is a breakdown of the most commonly used settings in the `.env` file.
-
-### Core Settings
-
-| Variable | Description | Required | Default |
-| :--- | :--- | :--- | :--- |
-| `SECRET_KEY` | Used for JWT token signing and security. | **Yes** | `your_secret_key` |
-| `PORT` | The host port Caddy listens on. | No | `3100` |
-| `DOMAIN` | Domain name for the application. | No | `localhost` |
-| `FLOWO_HOST` | The external URL used for API reporting. | No | *Calculated* |
-| `UID` & `GID` | User/Group ID for the container process. | No | `0` (root) |
-
-### Database (PostgreSQL)
-
-| Variable | Description | Default |
-| :--- | :--- | :--- |
-| `POSTGRES_HOST` | Database host address. | `db` |
-| `POSTGRES_PORT` | Database port. | `5432` |
-| `POSTGRES_DB` | Database name. | `flowo_logs` |
-| `POSTGRES_USER` | Database username. | `flowo` |
-| `POSTGRES_PASSWORD`| Database password. | `flowo_password` |
-
-### Storage & Paths
-
-| Variable | Description | Required |
-| :--- | :--- | :--- |
-| `FLOWO_WORKING_PATH` | Host path where Snakemake logs and files are stored. | **Yes** |
-| `CONTAINER_MOUNT_PATH`| The destination path inside the Docker container. | No (`/work_dir`) |
-
-## Hierarchy of Configuration
-
-FlowO looks for configuration in the following order of precedence:
-1. Environment variables set in the shell.
-2. The CLI configuration file at `~/.config/flowo/config.toml`.
-3. The `.env` file in the project root.
+!!! danger "Working path"
+    **`FLOWO_WORKING_PATH`** must match the tree Snakemake uses; mount a common parent if you have several projects.

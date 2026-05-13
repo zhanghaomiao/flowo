@@ -424,7 +424,6 @@ def login(
         )
         return
 
-    resolved_working_path = working_path or get_client_settings().FLOWO_WORKING_PATH
     try:
         with httpx.Client(timeout=15.0) as client:
             logger.info("⏳ Creating FlowO login request…")
@@ -464,6 +463,16 @@ def login(
                 if not token:
                     logger.error("❌ Login was approved but no token was returned.")
                     return
+                server_wp = (result.get("flowo_working_path") or "").strip() or None
+                resolved_working_path = (
+                    working_path
+                    or server_wp
+                    or get_client_settings().FLOWO_WORKING_PATH
+                )
+                if server_wp and not working_path:
+                    logger.info(
+                        "📁 FLOWO_WORKING_PATH from server → %s", resolved_working_path
+                    )
                 config_path = write_user_config(
                     resolved_host, token, resolved_working_path
                 )
@@ -500,7 +509,10 @@ def main():
     login_parser.add_argument(
         "--working-path",
         type=str,
-        help="Working path to write into ~/.config/flowo/config.toml",
+        help=(
+            "FLOWO_WORKING_PATH to store in ~/.config/flowo/config.toml "
+            "(overrides the path returned by the server after browser login)"
+        ),
     )
     login_parser.add_argument(
         "--ttl-days",

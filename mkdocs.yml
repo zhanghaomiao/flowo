@@ -63,6 +63,7 @@ nav:
   - User Manual:
       - Overview: user-manual/overview.md
       - Installation: user-manual/installation.md
+      - Environment variables: reference/environment-variables.md
       - Login and CLI Setup: user-manual/login-cli.md
       - Run Snakemake with FlowO: user-manual/run-snakemake.md
       - Dashboard: user-manual/dashboard.md
