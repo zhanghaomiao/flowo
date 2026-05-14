@@ -8,7 +8,6 @@ import {
 } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
 import {
-  Badge,
   Button,
   message,
   Popconfirm,
@@ -39,7 +38,6 @@ import {
 } from '@/client/@tanstack/react-query.gen';
 import type { Status, WorkflowResponse } from '@/client/types.gen';
 import { DurationCell } from '@/components/common/common';
-import LiveUpdatesIndicator from '@/components/LiveUpdatesIndicator';
 import { FileViewerModal, MultiFileViewer } from '@/components/shared/viewers';
 import WorkflowTag from '@/components/workflow/WorkflowTag';
 import { useWorkflowRealtime } from '@/config/workflowRealtime';
@@ -47,7 +45,6 @@ import {
   formatDateCompact,
   getWorkflowProgressStatus,
   normalizeWorkflowStatus,
-  workflowBadgeAntStatus,
   workflowStatusLabel,
 } from '@/utils/formatters';
 
@@ -142,13 +139,13 @@ const WorkflowTable = () => {
     return {
       limit: pageSize,
       offset,
-      orderByStarted: true,
+      order_by_started: true,
       descending: true,
       status,
       tags: searchTags,
       name: searchName,
-      startAt: searchStartAt,
-      endAt: searchEndAt,
+      start_at: searchStartAt,
+      end_at: searchEndAt,
     };
   }, [
     pageSize,
@@ -179,9 +176,7 @@ const WorkflowTable = () => {
   });
 
   const workflows = workflowsData?.workflows ?? [];
-  const connectionStatus = useWorkflowRealtime(
-    workflows.map((workflow) => workflow.id),
-  );
+  useWorkflowRealtime(workflows.map((workflow) => workflow.id));
 
   const handleDeleteWorkflow = async (workflowId: string) => {
     try {
@@ -362,18 +357,30 @@ const WorkflowTable = () => {
       },
     },
     {
-      title: 'Status',
+      title: <span className="whitespace-nowrap">Progress</span>,
       dataIndex: 'status',
       key: 'status',
-      width: 128,
+      width: 100,
+      align: 'center',
       render: (_: unknown, record: WorkflowResponse) => {
         const s = normalizeWorkflowStatus(record.status);
+        const progressStatus = getWorkflowProgressStatus(s);
+        const percent =
+          s === 'SUCCESS'
+            ? 100
+            : Math.min(100, Math.max(0, record.progress ?? 0));
         return (
-          <Badge
-            status={workflowBadgeAntStatus(s)}
-            className="workflow-status-badge [&_.ant-badge-status-text]:text-slate-700 [&_.ant-badge-status-text]:text-sm [&_.ant-badge-status-text]:font-medium"
-            text={workflowStatusLabel(s)}
-          />
+          <div className="flex justify-center py-0.5">
+            <Tooltip title={workflowStatusLabel(s)}>
+              <Progress
+                type="circle"
+                percent={percent}
+                status={progressStatus}
+                size={26}
+                strokeWidth={8}
+              />
+            </Tooltip>
+          </div>
         );
       },
       filters: [
@@ -414,31 +421,6 @@ const WorkflowTable = () => {
           <DurationCell record={record} />
         </div>
       ),
-    },
-    {
-      title: <span className="whitespace-nowrap">Progress</span>,
-      key: 'progress',
-      width: 100,
-      align: 'center',
-      render: (_, record) => {
-        const s = normalizeWorkflowStatus(record.status);
-        const progressStatus = getWorkflowProgressStatus(s);
-        const percent =
-          s === 'SUCCESS'
-            ? 100
-            : Math.min(100, Math.max(0, record.progress ?? 0));
-        return (
-          <div className="flex justify-center py-0.5">
-            <Progress
-              type="circle"
-              percent={percent}
-              status={progressStatus}
-              size={26}
-              strokeWidth={8}
-            />
-          </div>
-        );
-      },
     },
     {
       title: 'Actions',
@@ -535,26 +517,22 @@ const WorkflowTable = () => {
             <h3 className="m-0 text-xl font-black text-slate-800 tracking-tight">
               Runs
             </h3>
-            <div className="text-[10px] uppercase font-black text-slate-400 mt-1 flex items-center gap-2">
-              <span>{workflowsData?.total ?? 0} runs detected</span>
-              <span className="h-1 w-1 rounded-full bg-slate-200" />
-              <span>{workflows.length} visible</span>
-            </div>
+            <p className="text-[10px] uppercase font-black text-slate-400 mt-1 m-0 tracking-wide">
+              {workflowsData?.total ?? 0} total runs
+            </p>
           </div>
-
-          <div className="h-10 w-px bg-slate-100 hidden md:block" />
-
-          <LiveUpdatesIndicator status={connectionStatus} />
         </div>
 
-        <div className="flex items-center gap-4 flex-1 max-w-6xl justify-end">
+        <div className="flex min-w-0 shrink-0 items-center justify-end gap-4">
           <WorkflowSearch
             onTagsChange={handleTagsSearch}
             onNameChange={handleNameSearch}
             onDateRangeChange={handleDateRangeSearch}
             tags={searchTags}
             name={searchName}
-            className="flex-1"
+            startAt={searchStartAt}
+            endAt={searchEndAt}
+            className="min-w-0 shrink"
           />
           <Button
             icon={<RefreshCcw size={18} />}
@@ -567,13 +545,13 @@ const WorkflowTable = () => {
       </div>
 
       {/* Main Table Content - Borderless & Seamless */}
-      <div className="px-8 py-2">
+      <div className="runs-table-zebra px-8 py-2">
         <Table
           columns={columns}
           dataSource={workflows}
           rowKey="id"
           loading={workflowsLoading}
-          onChange={(_, filters) => {
+          onChange={(_, filters, _sorter, extra) => {
             if (filters.status !== undefined) {
               const statusFilter = filters.status;
               setStatus(
@@ -581,6 +559,9 @@ const WorkflowTable = () => {
                   ? (statusFilter[0] as Status)
                   : null,
               );
+              if (extra?.action === 'filter') {
+                setCurrentPage(1);
+              }
             }
           }}
           pagination={{
@@ -596,7 +577,7 @@ const WorkflowTable = () => {
             ),
             pageSizeOptions: ['10', '20', '50', '100'],
             position: ['bottomCenter'],
-            className: '!m-0 py-8 border-t border-slate-50',
+            className: '!m-0 border-t border-slate-50 !pt-8 !pb-8',
             onChange: (page: number, size: number) => {
               setCurrentPage(page);
               if (size !== pageSize) {
@@ -607,10 +588,15 @@ const WorkflowTable = () => {
           }}
           tableLayout="fixed"
           size="middle"
-          className="workflow-table-unified seamless-table [&_.ant-table]:!bg-transparent [&_.ant-table-thead_th]:!bg-transparent [&_.ant-table-thead_th]:!border-none [&_.ant-table-thead_th]:text-slate-400 [&_.ant-table-thead_th]:text-[9px] [&_.ant-table-thead_th]:font-black [&_.ant-table-thead_th]:uppercase [&_.ant-table-thead_th]:tracking-widest [&_.ant-table-cell]:align-middle [&_.ant-table-cell]:!border-slate-50/50"
-          onRow={() => ({
-            className: 'hover:bg-slate-50/80 transition-colors group',
-          })}
+          className="workflow-table-unified seamless-table [&_.ant-table]:!bg-transparent [&_.ant-table-thead_th]:!bg-transparent [&_.ant-table-thead_th]:!border-none [&_.ant-table-thead_th]:text-slate-400 [&_.ant-table-thead_th]:text-[9px] [&_.ant-table-thead_th]:font-black [&_.ant-table-thead_th]:uppercase [&_.ant-table-thead_th]:tracking-widest [&_.ant-table-cell]:align-middle [&_.ant-table-cell]:!border-none"
+          rowClassName={(_, index) =>
+            [
+              'runs-table-body-row',
+              index % 2 === 1
+                ? 'runs-table-body-row--alt'
+                : 'runs-table-body-row--base',
+            ].join(' ')
+          }
         />
       </div>
 

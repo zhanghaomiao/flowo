@@ -626,22 +626,26 @@ export default function CatalogList() {
   ];
 
   return (
-    <div className="flex h-full flex-col">
+    <div className="catalog-list-page flex h-full flex-col">
       <style>{`
-        .ant-segmented .ant-segmented-item-label {
+        .catalog-list-page .ant-segmented .ant-segmented-item-label {
           display: flex;
           align-items: center;
           justify-content: center;
           min-height: 32px;
         }
-        .ant-segmented .ant-segmented-item-icon {
+        .catalog-list-page .ant-segmented .ant-segmented-item-icon {
           display: flex;
           align-items: center;
           justify-content: center;
         }
-        .ant-segmented-item-selected {
-          background-color: #6366f1 !important;
-          color: white !important;
+        .catalog-list-page .ant-segmented-item-selected {
+          background-color: var(--color-brand-500) !important;
+          color: #fff !important;
+          box-shadow: 0 1px 4px color-mix(in srgb, var(--color-brand-500) 38%, transparent);
+        }
+        .catalog-list-page .ant-segmented-item-selected svg {
+          color: #fff !important;
         }
       `}</style>
       {/* Page Header */}

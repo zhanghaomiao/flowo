@@ -29,6 +29,8 @@ const WorkflowSearch: React.FC<WorkflowSearchProps> = ({
   onDateRangeChange,
   name,
   tags,
+  startAt,
+  endAt,
   className,
 }) => {
   // Local state for immediate UI updates
@@ -62,16 +64,27 @@ const WorkflowSearch: React.FC<WorkflowSearchProps> = ({
     dates: [Dayjs | null, Dayjs | null] | null,
   ) => {
     if (dates && dates[0]) {
-      // Start time is provided - use local time format to match DatePicker display
-      const startTime = dates[0].format();
-      // If end time is not provided, default to today (current time)
-      const endTime = dates[1] ? dates[1].format() : dayjs().format();
+      const startTime = dates[0].toDate().toISOString();
+      const endTime = dates[1]
+        ? dates[1].toDate().toISOString()
+        : dayjs().toDate().toISOString();
       onDateRangeChange(startTime, endTime);
     } else {
-      // Clear both when no start time is selected
       onDateRangeChange(null, null);
     }
   };
+
+  const rangePickerValue: [Dayjs, Dayjs] | null = (() => {
+    if (!startAt || !endAt) {
+      return null;
+    }
+    const a = dayjs(startAt);
+    const b = dayjs(endAt);
+    if (!a.isValid() || !b.isValid()) {
+      return null;
+    }
+    return [a, b];
+  })();
 
   const rangePresets: TimeRangePickerProps['presets'] = [
     { label: 'Last 1 Days', value: [dayjs().add(-1, 'd'), dayjs()] },
@@ -82,10 +95,10 @@ const WorkflowSearch: React.FC<WorkflowSearchProps> = ({
 
   return (
     <div
-      className={`flex flex-wrap items-center bg-slate-100/50 border-none rounded-2xl shadow-sm divide-x divide-slate-100/50 overflow-hidden h-12 ${className || ''}`}
+      className={`flex h-12 max-w-7xl flex-wrap items-center overflow-hidden rounded-2xl border border-slate-300 bg-slate-100/50 shadow-[0_1px_2px_rgba(15,23,42,0.05)] ${className || ''}`}
     >
-      <div className="flex-[1.5] min-w-[200px] h-full flex items-center px-4 hover:bg-slate-50/50 transition-colors">
-        <Tag size={16} className="text-slate-400 mr-3 flex-shrink-0" />
+      <div className="flex h-full min-w-0 shrink flex-1 items-center px-3 transition-colors hover:bg-slate-50/50 sm:min-w-[170px] sm:max-w-[270px]">
+        <Tag size={16} className="mr-2 shrink-0 text-slate-400" />
         <Select
           options={allTags?.map((tag) => ({ label: tag, value: tag }))}
           placeholder="Filter by tags"
@@ -100,8 +113,8 @@ const WorkflowSearch: React.FC<WorkflowSearchProps> = ({
         />
       </div>
 
-      <div className="flex-1 min-w-[150px] h-full flex items-center px-4 hover:bg-slate-50/50 transition-colors">
-        <Search size={16} className="text-slate-400 mr-3 flex-shrink-0" />
+      <div className="flex h-full min-w-0 shrink flex-1 items-center px-3 transition-colors hover:bg-slate-50/50 sm:min-w-[190px] sm:max-w-[min(100%,28rem)]">
+        <Search size={16} className="mr-2 shrink-0 text-slate-400" />
         <Input
           placeholder="Search runs by name"
           allowClear
@@ -112,16 +125,17 @@ const WorkflowSearch: React.FC<WorkflowSearchProps> = ({
         />
       </div>
 
-      <div className="flex-[1.5] min-w-[250px] h-full flex items-center px-4 hover:bg-slate-50/50 transition-colors">
-        <Calendar size={16} className="text-slate-400 mr-3 flex-shrink-0" />
+      <div className="flex h-full min-w-[min(100%,20rem)] shrink-0 items-center px-3 transition-colors hover:bg-slate-50/50 sm:min-w-[32.5rem]">
+        <Calendar size={16} className="mr-2 shrink-0 text-slate-400" />
         <RangePicker
           presets={[...rangePresets]}
-          placeholder={['Start At', 'End At']}
+          placeholder={['From', 'To']}
           allowEmpty={[true, true]}
           showTime
           format="YYYY-MM-DD HH:mm"
+          value={rangePickerValue}
           onChange={handleDateRangeChange}
-          className="w-full font-sans border-none shadow-none p-0 m-0 focus:ring-0"
+          className="m-0 w-full flex-1 border-none p-0 font-sans shadow-none focus:ring-0 [&_.ant-picker-input>input]:min-w-[9.5rem] sm:[&_.ant-picker-input>input]:min-w-[10.75rem]"
           allowClear
           variant="borderless"
         />

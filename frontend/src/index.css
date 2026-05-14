@@ -62,3 +62,40 @@ a {
 a:hover {
   color: inherit;
 }
+
+/* Root header nav: TanStack Router sets data-status="active" on active links.
+   Global `a:hover { color: inherit }` otherwise wins over Tailwind text utilities
+   and breaks icon/text contrast; keep active tab clearly readable. */
+nav.flowo-header-nav > a[data-status='active'],
+nav.flowo-header-nav > a[data-status='active']:hover {
+  /* Same as Ant Design colorPrimary / --color-brand-500 (#0ea5e9) in main.tsx */
+  background-color: var(--color-brand-500) !important;
+  color: #ffffff !important;
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, white 18%, transparent),
+    0 4px 16px -4px color-mix(in srgb, var(--color-brand-500) 48%, transparent);
+}
+nav.flowo-header-nav > a[data-status='active'] svg {
+  color: #ffffff !important;
+  stroke: #ffffff !important;
+}
+nav.flowo-header-nav > a[data-status='active'] span {
+  color: #ffffff !important;
+}
+
+/* Runs list: zebra + soft row separation (no hard borders / inset lines) */
+.runs-table-zebra .ant-table-tbody > tr.runs-table-body-row > td {
+  transition: background-color 0.15s ease;
+  border: none !important;
+  /* Diffuse shadow below row; blur hides seams between adjacent cells */
+  box-shadow: 0 5px 14px -8px rgba(15, 23, 42, 0.12);
+}
+.runs-table-zebra .ant-table-tbody > tr.runs-table-body-row--base > td {
+  background-color: #ffffff !important;
+}
+.runs-table-zebra .ant-table-tbody > tr.runs-table-body-row--alt > td {
+  background-color: color-mix(in srgb, var(--color-slate-100, #f1f5f9) 65%, white) !important;
+}
+.runs-table-zebra .ant-table-tbody > tr.runs-table-body-row:hover > td {
+  background-color: var(--color-brand-50) !important;
+}

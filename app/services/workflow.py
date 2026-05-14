@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Any
 
 from fastapi import HTTPException
-from sqlalchemy import and_, case, func, inspect, or_, select
+from sqlalchemy import and_, case, func, inspect, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -130,16 +130,13 @@ class WorkflowService:
         if name:
             filters.append(Workflow.name.ilike(f"%{name}%"))
 
-        if start_at:
-            filters.append(Workflow.started_at >= str(start_at))
-
-        if end_at:
-            filters.append(
-                or_(
-                    Workflow.end_time.is_(None),  # 仍在运行
-                    Workflow.end_time <= str(end_at),  # 已结束，且时间早于end_at
-                )
-            )
+        if start_at and end_at:
+            filters.append(Workflow.started_at >= start_at)
+            filters.append(Workflow.started_at <= end_at)
+        elif start_at:
+            filters.append(Workflow.started_at >= start_at)
+        elif end_at:
+            filters.append(Workflow.started_at <= end_at)
 
         if filters:
             base_query = base_query.where(and_(*filters))

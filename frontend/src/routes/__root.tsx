@@ -47,16 +47,7 @@ function RootComponent() {
       icon: BarChart3,
       search: { target_user_id: undefined },
     },
-  ];
-
-  const getActiveState = (to: string) => {
-    if (to === '/runs') {
-      return (
-        location.pathname === '/runs' || location.pathname.startsWith('/runs/')
-      );
-    }
-    return location.pathname.startsWith(to);
-  };
+  ] as const;
 
   return (
     <div className="h-screen w-full flex flex-col font-sans bg-[#fbfcfd] overflow-hidden">
@@ -68,69 +59,79 @@ function RootComponent() {
             className="flex items-center gap-2.5 cursor-pointer group pr-4 border-r border-slate-100"
             onClick={() => navigate({ to: '/runs' })}
           >
-            <div className="w-9 h-9 bg-slate-900 rounded-xl flex items-center justify-center shadow-lg transition-all duration-300 group-hover:shadow-sky-200 group-hover:scale-105">
+            <div
+              className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-brand-500 to-brand-700 shadow-lg shadow-brand-600/25 transition-all duration-300 group-hover:scale-105 group-hover:shadow-xl group-hover:shadow-brand-500/35"
+              aria-hidden
+            >
               <Command size={20} className="text-white" strokeWidth={2.5} />
             </div>
-            <span className="text-xl font-black tracking-tight text-black">
+            <span className="text-xl font-black tracking-tight text-neutral-950">
               FlowO
             </span>
           </div>
 
           {/* Navigation Menus */}
-          <nav className="flex items-center gap-1.5 flex-1">
-            {navItems.map((item) => {
-              const isActive = getActiveState(item.to);
-              return (
-                <Link
-                  key={item.to}
-                  to={item.to}
-                  search={item.search}
-                  className={`
-                    flex items-center gap-2.5 px-4 py-2 rounded-xl text-sm font-bold transition-all duration-300
-                    ${
-                      isActive
-                        ? 'bg-slate-100 text-black shadow-sm border border-slate-200/50'
-                        : 'text-slate-500 hover:text-black hover:bg-slate-100/50 active:scale-95'
-                    }
-                  `}
-                >
-                  <item.icon
-                    size={18}
-                    strokeWidth={isActive ? 2.5 : 2}
-                    className={isActive ? 'text-black' : 'text-slate-400'}
-                  />
-                  {item.label}
-                </Link>
-              );
-            })}
+          <nav className="flowo-header-nav flex flex-1 items-center gap-1.5">
+            {navItems.map((item) => (
+              <Link
+                key={item.to}
+                to={item.to}
+                search={'search' in item ? item.search : undefined}
+                className="inline-flex items-center gap-2.5 rounded-xl px-4 py-2 text-sm font-bold text-slate-600 transition-colors duration-200 hover:bg-slate-100 hover:text-slate-900 active:scale-[0.98]"
+                activeProps={{
+                  className:
+                    '!bg-brand-500 !text-white shadow-md ring-2 ring-brand-600/30 hover:!bg-brand-600 hover:!text-white',
+                }}
+              >
+                {({ isActive }: { isActive: boolean }) => (
+                  <>
+                    <item.icon
+                      size={18}
+                      strokeWidth={isActive ? 2.75 : 2}
+                      className={
+                        isActive
+                          ? 'shrink-0 text-white'
+                          : 'shrink-0 text-slate-500'
+                      }
+                      aria-hidden
+                    />
+                    <span>{item.label}</span>
+                  </>
+                )}
+              </Link>
+            ))}
           </nav>
 
-          {/* Admin Section */}
+          {/* Settings */}
           <div className="flex items-center gap-2">
             <button
+              type="button"
               onClick={() => navigate({ to: '/settings' })}
               className={`
-                group flex items-center gap-3 pl-4 pr-2 py-1.5 rounded-2xl border transition-all duration-300
+                group flex items-center gap-3 rounded-2xl border py-1.5 pl-4 pr-2 text-sm font-bold transition-all duration-300
                 ${
                   location.pathname === '/settings'
-                    ? 'bg-white border-slate-200 shadow-xl'
-                    : 'bg-slate-50 border-slate-100 hover:bg-white hover:border-slate-200 hover:shadow-lg'
+                    ? 'border-transparent bg-brand-500 text-white shadow-md ring-2 ring-brand-600/30 hover:bg-brand-600'
+                    : 'border-slate-100 bg-slate-50 text-black hover:border-slate-200 hover:bg-white hover:shadow-lg'
                 }
               `}
             >
-              <div className="flex flex-col items-end">
-                <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.1em] leading-none mb-0.5">
-                  Admin
-                </span>
-                <span className="text-sm font-bold text-black">Settings</span>
-              </div>
+              <span
+                className={
+                  location.pathname === '/settings'
+                    ? 'font-bold text-white'
+                    : 'font-bold text-black'
+                }
+              >
+                Settings
+              </span>
               <div
                 className={`
-                  w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-500
+                  flex h-8 w-8 items-center justify-center rounded-lg transition-all duration-500
                   ${
                     location.pathname === '/settings'
-                      ? 'bg-black text-white rotate-90'
-                      : 'bg-white border border-slate-200 text-slate-500 group-hover:text-black group-hover:rotate-45'
+                      ? 'border border-white/25 bg-white/15 text-white'
+                      : 'border border-slate-200 bg-white text-slate-500 group-hover:text-black group-hover:rotate-45'
                   }
                 `}
               >

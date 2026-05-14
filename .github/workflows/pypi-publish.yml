@@ -4,6 +4,12 @@ on:
   push:
     tags:
       - "v*.*.*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Git tag to publish from (e.g. v2.0.4); use for retries. Same version cannot be uploaded twice on PyPI."
+        required: true
+        type: string
 
 jobs:
   pypi-publish:
@@ -15,6 +21,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'workflow_dispatch' && format('refs/tags/{0}', inputs.tag) || github.ref }}
 
       - name: Set up Python
         uses: actions/setup-python@v5

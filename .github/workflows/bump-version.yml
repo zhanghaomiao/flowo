@@ -27,18 +27,29 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          token: ${{ secrets.GH_PAT }} # 显式声明，确保有权限
+          # Use PAT so the pushed tag can trigger downstream publish workflows.
+          token: ${{ secrets.GH_PAT }}
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: "3.12"
 
-      - name: Bump version
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Sync release branch
+        run: |
+          git fetch --tags origin
+          git pull --ff-only origin "${{ github.ref_name }}"
+
+      - name: Calculate next version
         id: bump
         run: |
-          # 1. 读取版本 (兼容双引号和单引号)
-          # grep 找 "version =", cut 取值，tr 去掉引号和空格
           OLD_VERSION=$(grep -m 1 "^version =" pyproject.toml | cut -d '=' -f 2 | tr -d '"' | tr -d "'" | tr -d ' ')
 
           echo "Current Version: $OLD_VERSION"
@@ -52,18 +63,74 @@ jobs:
           esac
 
           NEW_VERSION="$major.$minor.$patch"
+          TAG="v$NEW_VERSION"
+
+          if git rev-parse -q --verify "refs/tags/$TAG" >/dev/null; then
+            echo "Tag $TAG already exists locally."
+            exit 1
+          fi
+
+          if git ls-remote --exit-code --tags origin "refs/tags/$TAG" >/dev/null 2>&1; then
+            echo "Tag $TAG already exists on origin."
+            exit 1
+          fi
+
           echo "NEW_VERSION=$NEW_VERSION" >> $GITHUB_OUTPUT
+          echo "TAG=$TAG" >> $GITHUB_OUTPUT
+          echo "NEW_VERSION=$NEW_VERSION" >> $GITHUB_ENV
           echo "New Version: $NEW_VERSION"
 
-          # 2. 修改文件 (更稳健的 sed)
-          # 只要是 version = "..." 这种格式都能替换，保留原有的引号风格
-          # 解释: s/version = .*/.../ 替换整行
-          sed -i "s/^version = .*/version = \"$NEW_VERSION\"/" pyproject.toml
+      - name: Update version files
+        run: |
+          python - <<'PY'
+          import os
+          import re
+          from pathlib import Path
 
-          # 3. 同时更新 frontend/package.json
-          sed -i "s/\"version\": \".*\"/\"version\": \"$NEW_VERSION\"/" frontend/package.json
+          path = Path("pyproject.toml")
+          text = path.read_text()
+          new_text, count = re.subn(
+              r'(?m)^version = ["\'][^"\']+["\']',
+              f'version = "{os.environ["NEW_VERSION"]}"',
+              text,
+              count=1,
+          )
+          if count != 1:
+              raise SystemExit("Expected exactly one project version in pyproject.toml")
+          path.write_text(new_text)
+          PY
 
-      - name: Commit and push changes
+          npm --prefix frontend version "$NEW_VERSION" --no-git-tag-version
+
+      - name: Verify version files
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          import re
+          from pathlib import Path
+
+          expected = os.environ["NEW_VERSION"]
+          pyproject = Path("pyproject.toml").read_text()
+          match = re.search(r'(?m)^version = ["\']([^"\']+)["\']', pyproject)
+          if not match or match.group(1) != expected:
+              raise SystemExit("pyproject.toml version was not updated correctly")
+
+          package_json = json.loads(Path("frontend/package.json").read_text())
+          package_lock = json.loads(Path("frontend/package-lock.json").read_text())
+          root_lock = package_lock.get("packages", {}).get("", {})
+
+          checks = {
+              "frontend/package.json": package_json.get("version"),
+              "frontend/package-lock.json": package_lock.get("version"),
+              "frontend/package-lock.json packages['']": root_lock.get("version"),
+          }
+          for label, actual in checks.items():
+              if actual != expected:
+                  raise SystemExit(f"{label} is {actual!r}, expected {expected!r}")
+          PY
+
+      - name: Commit and push version tag
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
@@ -73,17 +140,16 @@ jobs:
             DESC="chore: bump version to ${{ steps.bump.outputs.NEW_VERSION }}"
           fi
 
-          git add pyproject.toml frontend/package.json
+          git add pyproject.toml frontend/package.json frontend/package-lock.json
           git commit -m "$DESC"
 
-          # === 关键修改：防冲突保险 ===
-          # 在打 Tag 和推送前，先拉取远程最新代码。
-          # 如果有变动，rebase 会自动把我们的版本修改通过去。
-          git pull --rebase origin ${{ github.ref_name }}
+          git tag -a "${{ steps.bump.outputs.TAG }}" -m "$DESC"
 
-          # 打带描述的附注 Tag
-          git tag -a "v${{ steps.bump.outputs.NEW_VERSION }}" -m "$DESC"
+          # Keep the version commit and tag atomic: either both land, or neither does.
+          git push --atomic origin "${{ github.ref_name }}" "${{ steps.bump.outputs.TAG }}"
 
-          # === 关键修改：原子推送 ===
-          # --atomic 保证代码和 Tag 要么一起成功，要么一起失败，防止出现"代码推了但Tag没推"的情况
-          git push --atomic origin ${{ github.ref_name }} "v${{ steps.bump.outputs.NEW_VERSION }}"
+      - name: Post-release hint
+        run: |
+          echo "Created ${{ steps.bump.outputs.TAG }}."
+          echo "PyPI publish is triggered by the tag."
+          echo "Docs and GHCR images remain independent manual workflows when needed."

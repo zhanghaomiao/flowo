@@ -16,6 +16,25 @@ const PREMIUM_COLORS = [
   '#10b981', // Emerald 500
 ];
 
+/** Brand-only hues for word clouds (matches @theme brand scale). */
+const BRAND_WORDCLOUD_COLORS = [
+  '#0c4a6e',
+  '#075985',
+  '#0369a1',
+  '#0284c7',
+  '#0ea5e9',
+  '#38bdf8',
+  '#7dd3fc',
+];
+
+function hashString(str: string): number {
+  let h = 0;
+  for (let i = 0; i < str.length; i++) {
+    h = Math.imul(31, h) + str.charCodeAt(i);
+  }
+  return Math.abs(h);
+}
+
 export const BarChart = ({
   data,
   maxLabelLength = 20,
@@ -167,8 +186,20 @@ export const BoxPlot = ({
   });
 
   const option = {
-    grid: { left: '15%', right: '5%', top: '5%', bottom: '15%' },
-    xAxis: { type: 'value', axisLabel: { fontSize: 10, color: '#94a3b8' } },
+    grid: { left: '15%', right: '5%', top: '5%', bottom: '22%' },
+    xAxis: {
+      type: 'value',
+      name: 'ln(min + 1)',
+      nameLocation: 'middle',
+      nameGap: 28,
+      nameTextStyle: {
+        fontSize: 11,
+        color: '#64748b',
+        fontFamily: CHART_FONT_FAMILY,
+        fontWeight: 600,
+      },
+      axisLabel: { fontSize: 10, color: '#94a3b8' },
+    },
     yAxis: {
       type: 'category',
       data: categories,
@@ -179,12 +210,27 @@ export const BoxPlot = ({
         type: 'boxplot',
         data: boxPlotData,
         itemStyle: {
-          borderColor: PREMIUM_COLORS[5],
-          color: 'rgba(99, 102, 241, 0.1)',
+          borderColor: '#0284c7',
+          color: 'rgba(14, 165, 233, 0.12)',
         },
       },
     ],
-    tooltip: { trigger: 'item' },
+    tooltip: {
+      trigger: 'item',
+      formatter: (param: { name?: string; data?: number[] }) => {
+        const name = param.name ?? '';
+        const d = param.data;
+        if (!Array.isArray(d) || d.length < 5) {
+          return name;
+        }
+        const [mn, q1, med, q3, mx] = d;
+        return (
+          `<div style="font-size:12px"><strong>${name}</strong><br/>` +
+          `<span style="opacity:.75">ln(min+1) scale</span><br/>` +
+          `min: ${mn}<br/>Q1: ${q1}<br/>median: ${med}<br/>Q3: ${q3}<br/>max: ${mx}</div>`
+        );
+      },
+    },
   };
 
   return (
@@ -205,7 +251,9 @@ export const WordCloud = React.memo(
       value,
       textStyle: {
         color:
-          PREMIUM_COLORS[Math.floor(Math.random() * PREMIUM_COLORS.length)],
+          BRAND_WORDCLOUD_COLORS[
+            hashString(name) % BRAND_WORDCLOUD_COLORS.length
+          ],
       },
     }));
 

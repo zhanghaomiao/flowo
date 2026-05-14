@@ -45,10 +45,12 @@ async def get_workflows(
     tags: str | None = Query(None, description="Filter by tags (comma-separated)"),
     name: str | None = Query(None, description="Filter by workflow name"),
     start_at: datetime | None = Query(
-        None, description="Filter workflows started after this time"
+        None,
+        description="When set with end_at, restrict to workflows whose started_at is in [start_at, end_at]. When alone, started_at >= start_at.",
     ),
     end_at: datetime | None = Query(
-        None, description="Filter workflows ended before this time"
+        None,
+        description="Upper bound on started_at (inclusive) when filtering by start time range; use with start_at.",
     ),
 ):
     # Only show current user's workflows unless superuser

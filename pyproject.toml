@@ -103,6 +103,7 @@ select = ["E", "W", "F", "I", "B", "C4", "UP"]
 "__init__.py" = ["F401"]
 "tests/conftest.py" = ["E402"]
 
+# Official PyPI default; use UV_INDEX_URL for a regional mirror if needed.
 [[tool.uv.index]]
 default = true
-url = "https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple"
+url = "https://pypi.org/simple"

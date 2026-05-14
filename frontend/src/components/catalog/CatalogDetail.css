@@ -347,11 +347,11 @@
 }
 
 .catalog-panel-segmented-host .ant-segmented-item-selected {
-  background: #4f46e5;
+  background: var(--color-brand-500);
   color: #fff !important;
   border-radius: 4px;
   font-weight: 600;
-  box-shadow: 0 1px 4px rgba(79, 70, 229, 0.3);
+  box-shadow: 0 1px 4px color-mix(in srgb, var(--color-brand-500) 38%, transparent);
 }
 
 .catalog-panel-segmented-host .ant-segmented-item-selected .anticon,
@@ -366,7 +366,9 @@
   border-radius: 6px;
 }
 .catalog-layout-toggle .ant-segmented-item-selected {
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  background: var(--color-brand-500) !important;
+  color: #fff !important;
+  box-shadow: 0 1px 4px color-mix(in srgb, var(--color-brand-500) 35%, transparent);
 }
 
 /* ── Footer metadata ─────────────────────────────── */

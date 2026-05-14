@@ -48,7 +48,7 @@ export const StatusChart: React.FC<StatusChartProps> = ({
 
     if (data.running > 0) {
       const endAngle = currentAngle + percentages.running * 3.6;
-      gradientString += `#6366f1 ${currentAngle}deg ${endAngle}deg, `; // Indigo
+      gradientString += `#0284c7 ${currentAngle}deg ${endAngle}deg, `; // brand-600
       currentAngle = endAngle;
     }
 
@@ -93,13 +93,17 @@ export const StatusChart: React.FC<StatusChartProps> = ({
 
       <div className="mt-8 flex flex-wrap justify-center gap-x-6 gap-y-3 max-w-sm">
         {data.success > 0 && (
-          <LegendItem label="Success" count={data.success} color="bg-sky-500" />
+          <LegendItem
+            label="Success"
+            count={data.success}
+            color="bg-brand-500"
+          />
         )}
         {data.running > 0 && (
           <LegendItem
             label="Running"
             count={data.running}
-            color="bg-indigo-500"
+            color="bg-brand-600"
           />
         )}
         {data.error > 0 && (

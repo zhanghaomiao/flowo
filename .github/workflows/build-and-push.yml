@@ -1,9 +1,20 @@
+# Container images + GitHub Release are manual so a version tag can publish to PyPI
+# without building multi-arch Docker (see pypi-publish.yml on tag push).
+# Run this workflow from Actions when you need GHCR images for a given tag.
 name: Build, Push to GHCR and Release
 
 on:
-  push:
-    tags:
-      - "v*.*.*" # 只有推送 v1.0.0 这种 Tag 时才运行
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Existing git tag (e.g. v2.0.4)"
+        required: true
+        type: string
+      mark_latest:
+        description: "Also tag images as latest on GHCR"
+        required: false
+        default: false
+        type: boolean
 
 env:
   REGISTRY: ghcr.io
@@ -33,6 +44,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: refs/tags/${{ inputs.tag }}
 
       - name: Log in to the Container registry
         uses: docker/login-action@v3
@@ -47,8 +60,8 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}${{ matrix.suffix }}
           tags: |
-            type=ref,event=tag
-            type=raw,value=latest,enable={{is_default_branch}}
+            type=raw,value=${{ inputs.tag }},enable=true
+            type=raw,value=latest,enable=${{ inputs.mark_latest }}
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
@@ -75,12 +88,14 @@ jobs:
       contents: write
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: refs/tags/${{ inputs.tag }}
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ github.ref_name }}
-          name: Release ${{ github.ref_name }}
+          tag_name: ${{ inputs.tag }}
+          name: Release ${{ inputs.tag }}
           draft: false
           prerelease: false
           generate_release_notes: true
