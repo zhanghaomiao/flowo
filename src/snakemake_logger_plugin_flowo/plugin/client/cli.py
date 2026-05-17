@@ -3,6 +3,7 @@ import json
 import logging
 import os
 import shutil
+import sys
 import tarfile
 import time
 import webbrowser
@@ -27,6 +28,113 @@ logger.setLevel(logging.INFO)
 logger.propagate = False
 logging.getLogger("httpx").setLevel(logging.WARNING)
 logging.getLogger("httpcore").setLevel(logging.WARNING)
+
+
+def _config_path() -> Path:
+    return Path.home() / ".config/flowo/config.toml"
+
+
+def status(
+    host: str | None = None, token: str | None = None, timeout: float = 10.0
+) -> bool:
+    """Check local config, API auth, and MCP reachability."""
+    cs = get_client_settings()
+    resolved_host = (
+        (host or os.environ.get("FLOWO_HOST") or cs.FLOWO_HOST or "")
+        .strip()
+        .rstrip("/")
+    )
+    resolved_token = token or os.environ.get("FLOWO_USER_TOKEN") or cs.FLOWO_USER_TOKEN
+    working_path = os.environ.get("FLOWO_WORKING_PATH") or cs.FLOWO_WORKING_PATH
+    config_path = _config_path()
+
+    ok = True
+    logger.info("FlowO status")
+    logger.info(
+        "  config: %s %s",
+        config_path,
+        "found" if config_path.is_file() else "not found",
+    )
+
+    if not resolved_host:
+        logger.error(
+            "  host: missing (run `flowo login --host https://your-flowo-host`)"
+        )
+        return False
+    logger.info("  host: %s", resolved_host)
+
+    if not resolved_token:
+        logger.error("  token: missing (run `flowo login`)")
+        ok = False
+    else:
+        logger.info("  token: configured")
+
+    logger.info("  working path: %s", working_path)
+
+    headers = {"Authorization": f"Bearer {resolved_token}"} if resolved_token else {}
+    api_url = f"{resolved_host}/api/v1/utils/info"
+    catalog_url = f"{resolved_host}/api/v1/catalog"
+    mcp_url = f"{resolved_host}/mcp"
+
+    try:
+        with httpx.Client(timeout=timeout, follow_redirects=True) as client:
+            api_response = client.get(api_url, headers=headers)
+            if api_response.status_code == 401:
+                logger.error("  API: authentication failed (run `flowo login` again)")
+                ok = False
+            elif api_response.status_code >= 400:
+                logger.error(
+                    "  API: HTTP %s %s",
+                    api_response.status_code,
+                    api_response.text[:200],
+                )
+                ok = False
+            else:
+                logger.info("  API: reachable")
+
+            if resolved_token:
+                catalog_response = client.get(catalog_url, headers=headers)
+                if catalog_response.status_code == 401:
+                    logger.error("  auth: token rejected")
+                    ok = False
+                elif catalog_response.status_code >= 400:
+                    logger.warning(
+                        "  catalog: HTTP %s %s",
+                        catalog_response.status_code,
+                        catalog_response.text[:200],
+                    )
+                else:
+                    logger.info("  auth: token accepted")
+
+            mcp_response = client.get(
+                mcp_url,
+                headers={"Accept": "application/json, text/event-stream", **headers},
+            )
+            if mcp_response.status_code in {200, 202, 400, 405, 406}:
+                logger.info("  MCP: endpoint reachable (%s)", mcp_response.status_code)
+            elif mcp_response.status_code == 401:
+                logger.error("  MCP: authentication failed")
+                ok = False
+            elif mcp_response.status_code == 404:
+                logger.error(
+                    "  MCP: 404 at /mcp. Check backend version, Caddy /mcp proxy, or clear stale MCP client session."
+                )
+                ok = False
+            else:
+                logger.warning(
+                    "  MCP: HTTP %s %s",
+                    mcp_response.status_code,
+                    mcp_response.text[:200],
+                )
+    except httpx.HTTPError as e:
+        logger.error("  network: could not reach %s: %s", resolved_host, e)
+        return False
+
+    if ok:
+        logger.info("✅ FlowO status looks good.")
+    else:
+        logger.error("❌ FlowO status found problems.")
+    return ok
 
 
 def pull_catalog(slug: str | None = None, path: str = "."):
@@ -115,6 +223,48 @@ def pull_catalog(slug: str | None = None, path: str = "."):
 
     except Exception as e:
         logger.error(f"❌ Error pulling catalog: {str(e)}")
+
+
+def list_catalog(token: str | None = None, host: str | None = None) -> bool:
+    """List catalogs on the server (connectivity / auth check). Returns True on success."""
+    cs = get_client_settings()
+    token = token or os.environ.get("FLOWO_USER_TOKEN") or cs.FLOWO_USER_TOKEN
+    host = host or os.environ.get("FLOWO_HOST") or cs.FLOWO_HOST
+
+    if not token:
+        logger.error("❌ No API token found. Run: flowo login --host <your-flowo-host>")
+        return False
+    if not host:
+        logger.error("❌ Host not found. Set FLOWO_HOST env var or use --host.")
+        return False
+
+    headers = {"Authorization": f"Bearer {token}"}
+    url = f"{host.rstrip('/')}/api/v1/catalog"
+    try:
+        with httpx.Client(timeout=30.0) as client:
+            response = client.get(url, headers=headers)
+    except httpx.HTTPError as e:
+        logger.error("❌ Could not reach Flowo at %s: %s", host, e)
+        return False
+
+    if response.status_code == 401:
+        logger.error("❌ Authentication failed. Run `flowo login` again.")
+        return False
+    if response.status_code >= 400:
+        logger.error("❌ Failed to list catalogs: %s", response.text)
+        return False
+
+    rows = response.json()
+    if not isinstance(rows, list):
+        logger.error("❌ Unexpected response from server.")
+        return False
+
+    for row in rows:
+        slug = row.get("slug") or row.get("id") or "?"
+        name = row.get("name") or slug
+        logger.info("%s\t%s", slug, name)
+
+    return True
 
 
 def _get_ignore_patterns(source_dir: Path) -> list[str]:
@@ -526,11 +676,32 @@ def main():
         help="Create a token without an expiration date",
     )
 
+    status_parser = subparsers.add_parser(
+        "status",
+        help="Check local config, API authentication, and MCP endpoint reachability",
+    )
+    status_parser.add_argument(
+        "--host",
+        type=str,
+        help="Flowo base URL (defaults from FLOWO_HOST or config)",
+    )
+    status_parser.add_argument(
+        "--timeout",
+        type=float,
+        default=10.0,
+        help="HTTP timeout in seconds (default: 10)",
+    )
+
     # --- Catalog commands ---
     cat_parser = subparsers.add_parser(
         "catalog", help="Manage workflow templates (Catalogs)"
     )
     cat_sub = cat_parser.add_subparsers(dest="cat_cmd")
+
+    cat_sub.add_parser(
+        "list",
+        help="List catalogs on the server (verify login and HTTPS reachability)",
+    )
 
     cat_pull = cat_sub.add_parser(
         "pull",
@@ -574,8 +745,19 @@ def main():
             args.working_path,
             None if getattr(args, "no_expiry", False) else args.ttl_days,
         )
+    elif args.command == "status":
+        sys.exit(
+            0
+            if status(
+                getattr(args, "host", None),
+                timeout=getattr(args, "timeout", 10.0),
+            )
+            else 1
+        )
     elif args.command == "catalog":
-        if args.cat_cmd == "pull":
+        if args.cat_cmd == "list":
+            list_catalog(token=None, host=getattr(args, "host", None))
+        elif args.cat_cmd == "pull":
             pull_catalog(args.slug, path=getattr(args, "path", "."))
         elif args.cat_cmd == "upload":
             upload_catalog(
