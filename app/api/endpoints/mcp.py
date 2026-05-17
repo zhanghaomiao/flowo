@@ -261,6 +261,174 @@ async def trace_run_output(
     return await _mcp_service(db, current_user).trace_output(workflow_id, path)
 
 
+@router.get(
+    "/workflows/{workflow_id}/files/preview",
+    operation_id="preview_run_file",
+)
+async def preview_run_file(
+    workflow_id: uuid.UUID,
+    path: str = Query(
+        ...,
+        description="Recorded output/log/benchmark path, exact or suffix match.",
+    ),
+    file_type: list[str] | None = Query(
+        None,
+        description="Optional file type filter: OUTPUT, LOG, or BENCHMARK.",
+    ),
+    head_lines: int = Query(40, ge=0, le=500),
+    tail_lines: int = Query(20, ge=0, le=500),
+    max_bytes: int = Query(1024 * 1024, ge=1024, le=5 * 1024 * 1024),
+    db: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(current_active_user_with_token),
+) -> dict[str, Any]:
+    """
+    Preview a recorded run file from the server-visible filesystem.
+
+    The path must already exist in the run's database-recorded files table.
+    Returns metadata plus head/tail snippets for text-like files.
+    """
+    return await _mcp_service(db, current_user).preview_run_file(
+        workflow_id,
+        path,
+        file_types=file_type,
+        head_lines=head_lines,
+        tail_lines=tail_lines,
+        max_bytes=max_bytes,
+    )
+
+
+@router.get(
+    "/workflows/{workflow_id}/files/read",
+    operation_id="read_run_text_file",
+)
+async def read_run_text_file(
+    workflow_id: uuid.UUID,
+    path: str = Query(
+        ...,
+        description="Recorded output/log/benchmark path, exact or suffix match.",
+    ),
+    file_type: list[str] | None = Query(
+        None,
+        description="Optional file type filter: OUTPUT, LOG, or BENCHMARK.",
+    ),
+    max_bytes: int = Query(256 * 1024, ge=1024, le=1024 * 1024),
+    db: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(current_active_user_with_token),
+) -> dict[str, Any]:
+    """
+    Read a small recorded text output/log/benchmark file.
+
+    Binary files return metadata only. Large text files are truncated.
+    """
+    return await _mcp_service(db, current_user).read_run_text_file(
+        workflow_id,
+        path,
+        file_types=file_type,
+        max_bytes=max_bytes,
+    )
+
+
+@router.get(
+    "/workflows/{workflow_id}/logs/preview",
+    operation_id="preview_job_logs",
+)
+async def preview_job_logs(
+    workflow_id: uuid.UUID,
+    job_id: int | None = Query(None, description="Optional database job id."),
+    rule: str | None = Query(None, description="Optional rule name."),
+    tail_lines: int = Query(120, ge=1, le=1000),
+    max_bytes: int = Query(1024 * 1024, ge=1024, le=5 * 1024 * 1024),
+    db: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(current_active_user_with_token),
+) -> dict[str, Any]:
+    """
+    Preview recorded job log files for failure diagnosis.
+
+    Returns tail snippets because Snakemake and tool errors are usually near the end.
+    """
+    return await _mcp_service(db, current_user).preview_job_logs(
+        workflow_id,
+        job_id=job_id,
+        rule=rule,
+        tail_lines=tail_lines,
+        max_bytes=max_bytes,
+    )
+
+
+@router.get(
+    "/workflows/{workflow_id}/workflow-log/preview",
+    operation_id="preview_workflow_log",
+)
+async def preview_workflow_log(
+    workflow_id: uuid.UUID,
+    head_lines: int = Query(40, ge=0, le=500),
+    tail_lines: int = Query(120, ge=0, le=1000),
+    max_bytes: int = Query(1024 * 1024, ge=1024, le=5 * 1024 * 1024),
+    db: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(current_active_user_with_token),
+) -> dict[str, Any]:
+    """
+    Preview the Snakemake workflow-level log recorded on the run.
+
+    This reads ``workflows.logfile`` only; it does not browse arbitrary paths.
+    """
+    return await _mcp_service(db, current_user).preview_workflow_log(
+        workflow_id,
+        head_lines=head_lines,
+        tail_lines=tail_lines,
+        max_bytes=max_bytes,
+    )
+
+
+@router.get(
+    "/workflows/{workflow_id}/workflow-log/read",
+    operation_id="read_workflow_log_text",
+)
+async def read_workflow_log_text(
+    workflow_id: uuid.UUID,
+    max_bytes: int = Query(256 * 1024, ge=1024, le=1024 * 1024),
+    db: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(current_active_user_with_token),
+) -> dict[str, Any]:
+    """
+    Read the beginning of the Snakemake workflow-level log with byte limits.
+    """
+    return await _mcp_service(db, current_user).read_workflow_log_text(
+        workflow_id,
+        max_bytes=max_bytes,
+    )
+
+
+@router.get(
+    "/workflows/{workflow_id}/files/search",
+    operation_id="search_run_files",
+)
+async def search_run_files(
+    workflow_id: uuid.UUID,
+    query: str = Query(..., min_length=1),
+    file_type: list[str] | None = Query(
+        None,
+        description="Optional file type filters: OUTPUT, LOG, or BENCHMARK.",
+    ),
+    limit: int = Query(20, ge=1, le=100),
+    max_file_bytes: int = Query(1024 * 1024, ge=1024, le=5 * 1024 * 1024),
+    db: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(current_active_user_with_token),
+) -> dict[str, Any]:
+    """
+    Search text-like files recorded for one run.
+
+    Skips missing, binary, and oversized files; returns compact snippets.
+    """
+    return await _mcp_service(db, current_user).search_run_files(
+        workflow_id,
+        query=query,
+        file_types=file_type,
+        limit=limit,
+        max_file_bytes=max_file_bytes,
+    )
+
+
 @router.get("/catalogs", operation_id="list_catalog_workflows")
 async def list_workflows_in_catalog(
     search: str | None = Query(None, description="Search catalog name or description."),

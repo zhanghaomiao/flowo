@@ -28,7 +28,7 @@ The DAG worker uses the backend environment. Install documented optional depende
 
 - Confirm **`FLOWO_HOST`** / public URL matches what you passed to **`--host`** (scheme, hostname, port).
 - Try the same URL from a machine with a desktop browser if you SSH through a jump host.
-- Fall back to **Settings → API Tokens** and configure `~/.config/flowo/config.toml` manually ([Login and CLI](user-manual/login-cli.md)).
+- Fall back to **Settings → API Tokens** and configure `~/.config/flowo/config.toml` manually ([Login and CLI](user-manual/login-cli.md)). This is the recommended path for HPC compute nodes, CI, and other headless environments.
 
 ## Catalog and storage
 
@@ -57,6 +57,8 @@ Terminate TLS at your reverse proxy or use the bundled Caddy pattern from `compo
 ### Where is my token stored? Is it safe?
 
 Interactive login stores tokens in **`~/.config/flowo/config.toml`** with mode **`0600`**. Protect that file like an SSH private key; rotate tokens from **Settings → API Tokens** if exposed.
+
+Avoid passing tokens as command-line arguments. They can be captured by shell history, process listings, scheduler logs, or CI logs.
 
 ## Optional features
 

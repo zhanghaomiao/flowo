@@ -18,6 +18,18 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          ref: ${{ github.ref }}
+
+      - name: Show deployment source
+        run: |
+          echo "event_name=${{ github.event_name }}"
+          echo "github.ref=${{ github.ref }}"
+          echo "github.ref_name=${{ github.ref_name }}"
+          echo "github.sha=${{ github.sha }}"
+          git branch --show-current || true
+          git rev-parse HEAD
+          git log -1 --oneline --decorate
+          git status --short
 
       - name: Install uv
         uses: astral-sh/setup-uv@v5
@@ -35,11 +47,15 @@ jobs:
 
       - name: Build Documentation
         run: |
-          mkdocs build
+          mkdocs build --clean
+          echo "Built docs from:"
+          git log -1 --oneline --decorate
+          echo "Generated site files:"
+          find site -type f | sort | sed -n '1,120p'
 
       - name: Publish to Cloudflare Pages
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy site --project-name=flowo-docs
+          command: pages deploy site --project-name=flowo-docs --branch=${{ github.ref_name }} --commit-dirty=true

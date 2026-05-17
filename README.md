@@ -89,7 +89,7 @@ Use a dedicated admin email; you can still register or invite other users later.
      --logger-flowo-tags "demo,qc"
    ```
 
-**Headless servers, CI, or MCP:** create a long-lived token under **Settings → API Tokens** only when you cannot use `flowo login`. See **[Login and CLI setup](https://flowo-docs.pages.dev/user-manual/login-cli/)** (manual token section).
+**Headless servers, CI, or MCP:** create a long-lived token under **Settings → API Tokens** and write **`~/.config/flowo/config.toml`** with `FLOWO_HOST`, `FLOWO_USER_TOKEN`, and `FLOWO_WORKING_PATH`. Avoid passing tokens on the command line because they can leak through shell history, process listings, scheduler logs, or CI logs. See **[Login and CLI setup](https://flowo-docs.pages.dev/user-manual/login-cli/)**.
 
 ---
 

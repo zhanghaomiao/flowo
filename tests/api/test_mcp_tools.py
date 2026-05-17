@@ -1,5 +1,6 @@
 import uuid
 from datetime import UTC, datetime, timedelta
+from pathlib import Path
 
 import pytest
 from httpx import AsyncClient
@@ -134,6 +135,15 @@ async def test_mcp_diagnose_latest_failed_workflow_without_id(
     headers, user = await _headers_and_user(
         register_user, login_user, db, "mcp-diagnose@example.com"
     )
+    catalog = Catalog(
+        id=uuid.uuid4(),
+        slug="variant-template",
+        name="Variant Template",
+        owner_id=user.id,
+        owner=user.email,
+        tags=["variant"],
+        workspace_status="fresh",
+    )
     workflow = Workflow(
         id=uuid.uuid4(),
         name="variant-calling",
@@ -142,6 +152,7 @@ async def test_mcp_diagnose_latest_failed_workflow_without_id(
         started_at=datetime.now(UTC),
         user_id=user.id,
         user=user.email,
+        catalog_id=catalog.id,
     )
     rule = Rule(name="call_variants", code="shell: bcftools", workflow=workflow)
     job = Job(
@@ -161,7 +172,33 @@ async def test_mcp_diagnose_latest_failed_workflow_without_id(
         file="Snakefile",
         line="42",
     )
-    db.add_all([workflow, rule, job, error])
+    db.add_all(
+        [
+            catalog,
+            CatalogFile(
+                catalog_id=catalog.id,
+                path="workflow/Snakefile",
+                content="include: 'workflow/rules/call.smk'\n",
+                sha256="snake-diagnose",
+                size=34,
+                lines=1,
+                language="python",
+            ),
+            CatalogFile(
+                catalog_id=catalog.id,
+                path="workflow/rules/call.smk",
+                content="rule call_variants:\n    shell: 'bcftools call sample.bam'\n",
+                sha256="rule-diagnose",
+                size=58,
+                lines=2,
+                language="python",
+            ),
+            workflow,
+            rule,
+            job,
+            error,
+        ]
+    )
     await db.commit()
 
     response = await client.get(
@@ -173,6 +210,19 @@ async def test_mcp_diagnose_latest_failed_workflow_without_id(
     assert response.status_code == 200
     diagnosis = response.json()["diagnosis"]
     assert diagnosis["workflow"]["name"] == "variant-calling"
+    assert diagnosis["workflow"]["catalog_slug"] == "variant-template"
+    assert diagnosis["catalog"]["slug"] == "variant-template"
+    assert diagnosis["catalog"]["entrypoints"] == ["workflow/Snakefile"]
+    assert "files" not in diagnosis["catalog"]
+    assert "rules" not in diagnosis["catalog"]
+    relevant_paths = {
+        item["path"] for item in diagnosis["catalog"]["likely_relevant_files"]
+    }
+    assert "workflow/Snakefile" in relevant_paths
+    assert "workflow/rules/call.smk" in relevant_paths
+    assert diagnosis["catalog"]["suggested_mcp_tools"]["read_file"] == (
+        "read_catalog_workflow_file"
+    )
     assert diagnosis["failed_jobs"][0]["rule"] == "call_variants"
     assert diagnosis["errors"][0]["exception"] == "MissingInputException"
 
@@ -230,6 +280,141 @@ async def test_mcp_timeline_and_outputs(
             "job_status": "SUCCESS",
         }
     ]
+
+
+@pytest.mark.asyncio
+async def test_mcp_run_file_tools_only_read_recorded_text_files(
+    client: AsyncClient,
+    db,
+    register_user,
+    login_user,
+    tmp_path,
+):
+    headers, user = await _headers_and_user(
+        register_user, login_user, db, "mcp-run-files@example.com"
+    )
+    (tmp_path / "results").mkdir()
+    (tmp_path / "logs").mkdir()
+    (tmp_path / "inputs").mkdir()
+    (tmp_path / "results" / "counts.tsv").write_text(
+        "gene\tsample\nA\t1\nB\t2\nC\t3\n",
+        encoding="utf-8",
+    )
+    (tmp_path / "logs" / "count.log").write_text(
+        "started\nprocessing\nTraceback: example failure\n",
+        encoding="utf-8",
+    )
+    (tmp_path / ".snakemake").mkdir()
+    (tmp_path / ".snakemake" / "workflow.log").write_text(
+        "snakemake start\nrule count failed\nworkflow shutting down\n",
+        encoding="utf-8",
+    )
+    (tmp_path / "inputs" / "secret.tsv").write_text("private\n", encoding="utf-8")
+    (tmp_path / "unrecorded.txt").write_text("do not read\n", encoding="utf-8")
+
+    workflow = Workflow(
+        id=uuid.uuid4(),
+        name="run file workflow",
+        status=Status.ERROR,
+        dryrun=False,
+        started_at=datetime.now(UTC),
+        directory=str(tmp_path),
+        logfile=str(tmp_path / ".snakemake" / "workflow.log"),
+        user_id=user.id,
+        user=user.email,
+    )
+    rule = Rule(name="count", workflow=workflow)
+    job = Job(
+        snakemake_id=9,
+        workflow=workflow,
+        rule=rule,
+        status=Status.ERROR,
+        shellcmd="python count.py",
+        started_at=datetime.now(UTC),
+    )
+    db.add_all(
+        [
+            workflow,
+            rule,
+            job,
+            File(path="results/counts.tsv", file_type=FileType.OUTPUT, job=job),
+            File(path="logs/count.log", file_type=FileType.LOG, job=job),
+            File(path="inputs/secret.tsv", file_type=FileType.INPUT, job=job),
+        ]
+    )
+    await db.commit()
+
+    preview_response = await client.get(
+        f"/api/v1/mcp-tools/workflows/{workflow.id}/files/preview",
+        params={"path": "counts.tsv", "head_lines": 2, "tail_lines": 1},
+        headers=headers,
+    )
+    assert preview_response.status_code == 200
+    preview = preview_response.json()
+    assert preview["file"]["path"] == "results/counts.tsv"
+    assert preview["producer"]["rule"] == "count"
+    assert preview["preview"]["head"] == ["gene\tsample", "A\t1"]
+    assert preview["preview"]["tail"] == ["C\t3"]
+
+    read_response = await client.get(
+        f"/api/v1/mcp-tools/workflows/{workflow.id}/files/read",
+        params={"path": "results/counts.tsv"},
+        headers=headers,
+    )
+    assert read_response.status_code == 200
+    assert "B\t2" in read_response.json()["content"]
+
+    logs_response = await client.get(
+        f"/api/v1/mcp-tools/workflows/{workflow.id}/logs/preview",
+        params={"job_id": job.id, "tail_lines": 2},
+        headers=headers,
+    )
+    assert logs_response.status_code == 200
+    assert logs_response.json()["logs"][0]["tail"] == [
+        "processing",
+        "Traceback: example failure",
+    ]
+
+    workflow_log_response = await client.get(
+        f"/api/v1/mcp-tools/workflows/{workflow.id}/workflow-log/preview",
+        params={"tail_lines": 2},
+        headers=headers,
+    )
+    assert workflow_log_response.status_code == 200
+    assert workflow_log_response.json()["file"]["file_type"] == "WORKFLOW_LOG"
+    assert workflow_log_response.json()["preview"]["tail"] == [
+        "rule count failed",
+        "workflow shutting down",
+    ]
+
+    workflow_log_read_response = await client.get(
+        f"/api/v1/mcp-tools/workflows/{workflow.id}/workflow-log/read",
+        headers=headers,
+    )
+    assert workflow_log_read_response.status_code == 200
+    assert "snakemake start" in workflow_log_read_response.json()["content"]
+
+    search_response = await client.get(
+        f"/api/v1/mcp-tools/workflows/{workflow.id}/files/search",
+        params={"query": "Traceback", "file_type": "LOG"},
+        headers=headers,
+    )
+    assert search_response.status_code == 200
+    assert search_response.json()["matches"][0]["file"]["path"] == "logs/count.log"
+
+    unrecorded_response = await client.get(
+        f"/api/v1/mcp-tools/workflows/{workflow.id}/files/read",
+        params={"path": str(Path(tmp_path) / "unrecorded.txt")},
+        headers=headers,
+    )
+    assert unrecorded_response.status_code == 404
+
+    input_response = await client.get(
+        f"/api/v1/mcp-tools/workflows/{workflow.id}/files/read",
+        params={"path": "inputs/secret.tsv", "file_type": "INPUT"},
+        headers=headers,
+    )
+    assert input_response.status_code == 422
 
 
 @pytest.mark.asyncio
