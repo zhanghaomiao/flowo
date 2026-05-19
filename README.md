@@ -5,6 +5,13 @@
 **Full documentation:** [flowo-docs.pages.dev](https://flowo-docs.pages.dev/)
 
 ---
+## Live demo
+
+A hosted sandbox may be available at [flowo.iregene-bio.com](https://flowo.iregene-bio.com/). 
+- Email: demo@demo.com
+- Password: demo1234
+
+For credentials or access policy, see the [Quick Start](https://flowo-docs.pages.dev/quickstart/) or contact the maintainers.
 
 ## Why FlowO
 
@@ -139,7 +146,4 @@ uv run mkdocs build --strict
 
 ---
 
-## Live demo
 
-A hosted sandbox may be available at [flowo.iregene-bio.com](https://flowo.iregene-bio.com/).
-For credentials or access policy, see the [Quick Start](https://flowo-docs.pages.dev/quickstart/) or contact the maintainers.
