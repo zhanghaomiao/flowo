@@ -2,8 +2,14 @@ from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.permissions import require_not_viewer
 from app.core.session import get_async_session
-from app.core.users import UserManager, current_optional_user, get_user_manager
+from app.core.users import (
+    UserManager,
+    current_active_user,
+    current_optional_user,
+    get_user_manager,
+)
 from app.models.user import User
 from app.services.user_token import UserTokenService
 
@@ -37,3 +43,17 @@ async def current_active_user_with_token(
         detail="Unauthorized",
         headers={"WWW-Authenticate": "Bearer"},
     )
+
+
+async def current_write_user(
+    user: User = Depends(current_active_user),
+) -> User:
+    require_not_viewer(user)
+    return user
+
+
+async def current_write_user_with_token(
+    user: User = Depends(current_active_user_with_token),
+) -> User:
+    require_not_viewer(user)
+    return user

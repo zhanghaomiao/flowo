@@ -19,6 +19,7 @@ import {
   Typography,
 } from 'antd';
 
+import { useAuth } from '@/auth';
 import type {
   CatalogDetail,
   CatalogFileInfo,
@@ -84,6 +85,8 @@ function overviewToCatalog(
 }
 
 const SnakemakeTemplatePage: React.FC = () => {
+  const { user } = useAuth();
+  const isReadOnlyDemo = (user as { role?: string } | null)?.role === 'viewer';
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const [editingFiles, setEditingFiles] = useState<string[]>([]);
@@ -195,13 +198,15 @@ const SnakemakeTemplatePage: React.FC = () => {
             >
               DAG
             </Button>
-            <Button
-              icon={<ReloadOutlined />}
-              loading={pullMut.isPending}
-              onClick={() => pullMut.mutate()}
-            >
-              Pull / update
-            </Button>
+            {!isReadOnlyDemo && (
+              <Button
+                icon={<ReloadOutlined />}
+                loading={pullMut.isPending}
+                onClick={() => pullMut.mutate()}
+              >
+                Pull / update
+              </Button>
+            )}
           </div>
         </div>
         {o?.upstream ? (

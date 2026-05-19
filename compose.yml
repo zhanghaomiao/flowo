@@ -24,6 +24,7 @@ services:
     environment:
       POSTGRES_HOST: db
       POSTGRES_PORT: 5432
+      CONTAINER_MOUNT_PATH: ${CONTAINER_MOUNT_PATH:-/flowo-data}
     volumes:
       - ${FLOWO_WORKING_PATH:-.}:${CONTAINER_MOUNT_PATH:-/flowo-data}
     ports:

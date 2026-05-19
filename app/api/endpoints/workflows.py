@@ -6,6 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import current_active_user_with_token
+from app.core.permissions import assert_workflow_readable, assert_workflow_writable
 from app.core.session import get_async_session
 from app.core.users import current_active_user
 from app.models import Status, User
@@ -53,16 +54,13 @@ async def get_workflows(
         description="Upper bound on started_at (inclusive) when filtering by start time range; use with start_at.",
     ),
 ):
-    # Only show current user's workflows unless superuser
-    filter_user_id = current_user.id if not current_user.is_superuser else None
-
     return await WorkflowService(db).list_all_workflows(
         limit=limit,
         offset=offset,
         order_by_started=order_by_started,
         descending=descending,
         user=user,
-        user_id=filter_user_id,
+        readable_user=current_user,
         tags=tags,
         status=status,
         name=name,
@@ -87,11 +85,9 @@ async def get_jobs(
     rule_name: str | None = Query(None, description="Filter jobs by rule_name"),
     status: Status | None = Query(None, description="Filter jobs by status"),
 ):
-    # Verify workflow ownership or allow if user is superuser
     service = WorkflowService(db)
     wf = await service.get_workflow(workflow_id)
-    if not wf or (wf.user_id != user.id and not user.is_superuser):
-        raise HTTPException(status_code=404, detail="Workflow not found")
+    assert_workflow_readable(wf, user)
 
     return await JobService(db).get_jobs_by_workflow_id(
         workflow_id=workflow_id,
@@ -112,8 +108,7 @@ async def get_rule_graph(
 ):
     service = WorkflowService(db)
     wf = await service.get_workflow(workflow_id)
-    if not wf or (wf.user_id != user.id and not user.is_superuser):
-        raise HTTPException(status_code=404, detail="Workflow not found")
+    assert_workflow_readable(wf, user)
     return await service.get_workflow_rule_graph_data(workflow_id)
 
 
@@ -125,8 +120,7 @@ async def get_detail(
 ):
     service = WorkflowService(db)
     wf = await service.get_workflow(workflow_id)
-    if not wf or (wf.user_id != user.id and not user.is_superuser):
-        raise HTTPException(status_code=404, detail="Workflow not found")
+    assert_workflow_readable(wf, user)
     return await service.get_detail(workflow_id=workflow_id)
 
 
@@ -138,8 +132,7 @@ async def get_rule_status(
 ):
     service = WorkflowService(db)
     wf = await service.get_workflow(workflow_id)
-    if not wf or (wf.user_id != user.id and not user.is_superuser):
-        raise HTTPException(status_code=404, detail="Workflow not found")
+    assert_workflow_readable(wf, user)
     return await service.get_rule_status(workflow_id=workflow_id)
 
 
@@ -151,8 +144,7 @@ async def get_rules(
 ):
     service = WorkflowService(db)
     wf = await service.get_workflow(workflow_id)
-    if not wf or (wf.user_id != user.id and not user.is_superuser):
-        raise HTTPException(status_code=404, detail="Workflow not found")
+    assert_workflow_readable(wf, user)
     rules = await service.get_rules(workflow_id=workflow_id)
     return RuleListResponse(rules=rules)
 
@@ -165,8 +157,7 @@ async def get_snakefile(
 ):
     service = WorkflowService(db)
     wf = await service.get_workflow(workflow_id)
-    if not wf or (wf.user_id != user.id and not user.is_superuser):
-        raise HTTPException(status_code=404, detail="Workflow not found")
+    assert_workflow_readable(wf, user)
     return await service.get_snakefile(workflow_id)
 
 
@@ -178,8 +169,7 @@ async def get_workflow_log(
 ):
     service = WorkflowService(db)
     wf = await service.get_workflow(workflow_id)
-    if not wf or (wf.user_id != user.id and not user.is_superuser):
-        raise HTTPException(status_code=404, detail="Workflow not found")
+    assert_workflow_readable(wf, user)
     return await service.get_workflow_log(workflow_id)
 
 
@@ -191,8 +181,7 @@ async def get_configfiles(
 ):
     service = WorkflowService(db)
     wf = await service.get_workflow(workflow_id)
-    if not wf or (wf.user_id != user.id and not user.is_superuser):
-        raise HTTPException(status_code=404, detail="Workflow not found")
+    assert_workflow_readable(wf, user)
     return await service.get_configfiles(workflow_id=workflow_id)
 
 
@@ -209,8 +198,7 @@ async def get_progress(
 ):
     service = WorkflowService(db)
     wf = await service.get_workflow(workflow_id)
-    if not wf or (wf.user_id != user.id and not user.is_superuser):
-        raise HTTPException(status_code=404, detail="Workflow not found")
+    assert_workflow_readable(wf, user)
 
     data = await service.get_progress(workflow_id=workflow_id)
     if return_total_jobs_number:
@@ -231,8 +219,7 @@ async def get_timelines(
 ):
     service = WorkflowService(db)
     wf = await service.get_workflow(workflow_id)
-    if not wf or (wf.user_id != user.id and not user.is_superuser):
-        raise HTTPException(status_code=404, detail="Workflow not found")
+    assert_workflow_readable(wf, user)
     return await service.get_timelines_with_id(workflow_id=workflow_id)
 
 
@@ -244,8 +231,7 @@ async def delete_workflow(
 ):
     wf_service = WorkflowService(db)
     wf = await wf_service.get_workflow(workflow_id)
-    if not wf or (wf.user_id != user.id and not user.is_superuser):
-        raise HTTPException(status_code=404, detail="Workflow not found")
+    assert_workflow_writable(wf, user)
 
     try:
         await JobService(db).delete_jobs(workflow_id)

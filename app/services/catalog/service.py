@@ -511,7 +511,7 @@ class CatalogService(CatalogArchiveMixin, CatalogGitMixin):
         await self.db_session.commit()
 
     async def read_dag_visual_bytes(
-        self, catalog_ref: str, user_id: uuid.UUID
+        self, catalog_ref: str, user_id: uuid.UUID | None
     ) -> tuple[bytes, str] | None:
         """User-uploaded image bytes, else generated ``dag.svg`` bytes, else ``None``."""
         cat = await self._resolve_catalog_ref(catalog_ref, user_id)

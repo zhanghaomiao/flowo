@@ -11,6 +11,9 @@ from sqlalchemy import and_, case, func, inspect, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from app.core.permissions import workflow_read_filter
+from app.models import User
+
 from ..models import Error, File, Job, Rule, Status, Workflow
 from ..models.enums import FileType
 from ..schemas import (
@@ -107,6 +110,7 @@ class WorkflowService:
         start_at: datetime | None = None,
         end_at: datetime | None = None,
         user_id: uuid.UUID | None = None,
+        readable_user: User | None = None,
         catalog_id: uuid.UUID | None = None,
     ) -> WorkflowListResponse:
         base_query = select(Workflow).options(selectinload(Workflow.catalog))
@@ -119,6 +123,9 @@ class WorkflowService:
 
         if catalog_id is not None:
             filters.append(Workflow.catalog_id == catalog_id)
+
+        if readable_user is not None:
+            filters.append(workflow_read_filter(readable_user))
 
         if status:
             filters.append(Workflow.status == status)

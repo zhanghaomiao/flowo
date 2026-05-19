@@ -38,8 +38,8 @@ const { Title, Paragraph, Text, Link } = Typography;
 
 interface Props {
   catalog: CatalogSummary;
-  onDelete: () => void;
-  onEdit: () => void;
+  onDelete?: () => void;
+  onEdit?: () => void;
 }
 
 /**
@@ -295,15 +295,17 @@ const CatalogCard: React.FC<Props> = ({ catalog, onDelete, onEdit }) => {
             className="flex items-center gap-1"
             onClick={(e) => e.stopPropagation()}
           >
-            <Tooltip title="Edit Metadata">
-              <Button
-                type="text"
-                size="small"
-                icon={<Pencil size={14} />}
-                onClick={onEdit}
-                className="text-slate-400 hover:bg-indigo-50 hover:text-indigo-600"
-              />
-            </Tooltip>
+            {onEdit && (
+              <Tooltip title="Edit Metadata">
+                <Button
+                  type="text"
+                  size="small"
+                  icon={<Pencil size={14} />}
+                  onClick={onEdit}
+                  className="text-slate-400 hover:bg-indigo-50 hover:text-indigo-600"
+                />
+              </Tooltip>
+            )}
             <Tooltip
               overlayStyle={{ maxWidth: 420 }}
               title={
@@ -350,16 +352,18 @@ const CatalogCard: React.FC<Props> = ({ catalog, onDelete, onEdit }) => {
                 onClick={(e) => void copyCatalogCommand(e, pullCommand, 'pull')}
               />
             </Tooltip>
-            <Tooltip title="Delete">
-              <Button
-                type="text"
-                size="small"
-                danger
-                icon={<Trash2 size={14} />}
-                onClick={onDelete}
-                className="text-slate-300 hover:bg-red-50 hover:text-red-500"
-              />
-            </Tooltip>
+            {onDelete && (
+              <Tooltip title="Delete">
+                <Button
+                  type="text"
+                  size="small"
+                  danger
+                  icon={<Trash2 size={14} />}
+                  onClick={onDelete}
+                  className="text-slate-300 hover:bg-red-50 hover:text-red-500"
+                />
+              </Tooltip>
+            )}
           </div>
         </div>
 

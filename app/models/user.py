@@ -13,6 +13,11 @@ if TYPE_CHECKING:
 
 class User(Base, SQLAlchemyBaseUserTableUUID):
     name: Mapped[str | None] = mapped_column(nullable=True)
+    role: Mapped[str] = mapped_column(
+        nullable=False,
+        default="user",
+        server_default="user",
+    )
     tokens: Mapped[list["UserToken"]] = relationship(
         "UserToken", back_populates="user", cascade="all, delete-orphan"
     )

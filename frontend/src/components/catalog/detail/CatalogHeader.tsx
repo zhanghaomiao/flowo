@@ -13,6 +13,7 @@ import { useNavigate } from '@tanstack/react-router';
 import { Button, Dropdown, message, Space, Tag, Tooltip } from 'antd';
 import { Library } from 'lucide-react';
 
+import { useAuth } from '@/auth';
 import type { CatalogDetail } from '@/client/types.gen';
 import { copyTextToClipboard } from '@/utils/clipboard';
 import { downloadFile } from '@/utils/download';
@@ -31,6 +32,8 @@ const CatalogHeader: React.FC<Props> = ({
   onShowDag,
   onEditMetadata,
 }) => {
+  const { user } = useAuth();
+  const isReadOnlyDemo = (user as { role?: string } | null)?.role === 'viewer';
   const [messageApi, contextHolder] = message.useMessage();
   const navigate = useNavigate();
 
@@ -88,13 +91,15 @@ const CatalogHeader: React.FC<Props> = ({
           >
             <span className="catalog-toolbar-name">{catalog.name}</span>
           </Tooltip>
-          <Button
-            size="small"
-            type="text"
-            icon={<EditOutlined />}
-            onClick={onEditMetadata}
-            title="Edit Metadata"
-          />
+          {!isReadOnlyDemo && (
+            <Button
+              size="small"
+              type="text"
+              icon={<EditOutlined />}
+              onClick={onEditMetadata}
+              title="Edit Metadata"
+            />
+          )}
         </Space>
         <Tag
           color="blue"

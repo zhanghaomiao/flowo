@@ -107,7 +107,8 @@ export const Route = createFileRoute('/_authenticated/profile')({
 });
 
 function ProfileComponent() {
-  const { token } = useAuth();
+  const { token, user } = useAuth();
+  const isReadOnlyDemo = (user as { role?: string } | null)?.role === 'viewer';
   const queryClient = useQueryClient();
   const [isTokenModalVisible, setIsTokenModalVisible] = useState(false);
   const [newTokenName, setNewTokenName] = useState('');
@@ -249,16 +250,20 @@ function ProfileComponent() {
               </Space>
             }
             extra={
-              <Button
-                type="primary"
-                icon={<PlusOutlined />}
-                onClick={() => {
-                  setNewTokenTTL(DEFAULT_TOKEN_TTL);
-                  setIsTokenModalVisible(true);
-                }}
-              >
-                Generate New Token
-              </Button>
+              isReadOnlyDemo ? (
+                <Tag color="blue">Demo read-only</Tag>
+              ) : (
+                <Button
+                  type="primary"
+                  icon={<PlusOutlined />}
+                  onClick={() => {
+                    setNewTokenTTL(DEFAULT_TOKEN_TTL);
+                    setIsTokenModalVisible(true);
+                  }}
+                >
+                  Generate New Token
+                </Button>
+              )
             }
           >
             <Table
@@ -296,23 +301,24 @@ function ProfileComponent() {
                   title: 'Action',
                   key: 'action',
                   width: 100,
-                  render: (_: unknown, record: UserTokenSummary) => (
-                    <Space>
-                      <Popconfirm
-                        title="Delete this token?"
-                        onConfirm={() => handleDeleteToken(record.id)}
-                        okText="Yes"
-                        cancelText="No"
-                      >
-                        <Button
-                          danger
-                          icon={<DeleteOutlined />}
-                          size="small"
-                          type="text"
-                        />
-                      </Popconfirm>
-                    </Space>
-                  ),
+                  render: (_: unknown, record: UserTokenSummary) =>
+                    isReadOnlyDemo ? null : (
+                      <Space>
+                        <Popconfirm
+                          title="Delete this token?"
+                          onConfirm={() => handleDeleteToken(record.id)}
+                          okText="Yes"
+                          cancelText="No"
+                        >
+                          <Button
+                            danger
+                            icon={<DeleteOutlined />}
+                            size="small"
+                            type="text"
+                          />
+                        </Popconfirm>
+                      </Space>
+                    ),
                 },
               ]}
             />

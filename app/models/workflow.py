@@ -42,7 +42,6 @@ class Workflow(Base):
     config: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
     flowo_working_path: Mapped[str | None] = mapped_column(nullable=True)
     run_info: Mapped[dict[str, int] | None] = mapped_column(JSON, nullable=True)
-
     catalog_id: Mapped[uuid.UUID | None] = mapped_column(
         ForeignKey("catalogs.id", ondelete="SET NULL"), nullable=True
     )

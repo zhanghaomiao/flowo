@@ -6,6 +6,11 @@ from fastapi import HTTPException
 from sqlalchemy import and_, desc, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.permissions import (
+    assert_catalog_readable_for_user,
+    is_viewer,
+    workflow_read_filter,
+)
 from app.models import Catalog, CatalogFile, Status, User, Workflow
 from app.services.catalog.catalog_storage import (
     catalog_db_has_snakefile,
@@ -112,9 +117,7 @@ class McpCatalogService:
         self.workflow_service = WorkflowService(db)
 
     def _scope_workflows(self, stmt):
-        if self.user.is_superuser:
-            return stmt
-        return stmt.where(Workflow.user_id == self.user.id)
+        return stmt.where(workflow_read_filter(self.user))
 
     def _parse_status(self, status: str | None) -> Status | None:
         if not status:
@@ -130,9 +133,9 @@ class McpCatalogService:
             ) from exc
 
     async def _readable_catalog(self, catalog_ref: str) -> Catalog:
-        return await self.catalog_service._resolve_catalog_ref(
-            catalog_ref, self.user.id
-        )
+        user_id = None if is_viewer(self.user) else self.user.id
+        cat = await self.catalog_service._resolve_catalog_ref(catalog_ref, user_id)
+        return assert_catalog_readable_for_user(cat, self.user)
 
     async def list_catalogs(
         self,
@@ -144,8 +147,10 @@ class McpCatalogService:
         rows = await self.catalog_service.list_catalogs(
             search=search,
             tags=tags,
-            user_id=self.user.id,
+            user_id=None if is_viewer(self.user) else self.user.id,
         )
+        if is_viewer(self.user):
+            rows = [row for row in rows if row.get("is_public")]
         limited = rows[:limit]
         return {
             "total_matches": len(rows),
@@ -160,7 +165,7 @@ class McpCatalogService:
         file_limit: int = 500,
     ) -> dict[str, Any]:
         detail = await self.catalog_service.get_catalog(
-            catalog_ref, user_id=self.user.id
+            catalog_ref, user_id=None if is_viewer(self.user) else self.user.id
         )
         files = detail.get("files", [])
         limited_files = files[:file_limit]
@@ -189,7 +194,7 @@ class McpCatalogService:
         return await self.catalog_service.read_file(
             catalog_ref,
             path,
-            user_id=self.user.id,
+            user_id=None if is_viewer(self.user) else self.user.id,
         )
 
     async def search_catalog_files(

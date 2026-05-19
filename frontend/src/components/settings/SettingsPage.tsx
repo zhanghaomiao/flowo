@@ -26,6 +26,7 @@ import { UsersSection } from './sections/UsersSection';
 export const SettingsPage: React.FC = () => {
   const { user, logout } = useAuth();
   const isAdmin = user?.is_superuser;
+  const isReadOnlyDemo = (user as { role?: string } | null)?.role === 'viewer';
   type TabId =
     | 'profile'
     | 'tokens'
@@ -65,7 +66,9 @@ export const SettingsPage: React.FC = () => {
           label: 'Git Repository',
           icon: GitBranch,
         },
-      ],
+      ].filter((item) =>
+        isReadOnlyDemo ? !['tokens', 'mcp', 'git'].includes(item.id) : true,
+      ),
     },
     ...(isAdmin
       ? [

@@ -8,6 +8,7 @@ from sqlalchemy.exc import IntegrityError
 
 from app.core.session import AsyncSessionLocal, get_async_session
 from app.core.users import UserManager, get_user_db
+from app.models.catalog import Catalog
 from app.models.user import User
 from app.schemas.user import UserCreate, UserUpdate
 from app.services.catalog.backfill import (
@@ -72,6 +73,43 @@ async def create_admin(email: str, password: str, *, quiet: bool = False):
             return
 
 
+async def set_user_role(email: str, role: str) -> None:
+    allowed = {"viewer", "user", "admin"}
+    if role not in allowed:
+        print(f"Error: role must be one of: {', '.join(sorted(allowed))}")
+        return
+
+    async with AsyncSessionLocal() as session:
+        user = await session.scalar(select(User).where(User.email == email))
+        if user is None:
+            print(f"Error: User with email '{email}' not found.")
+            return
+        user.role = role
+        if role == "admin":
+            user.is_superuser = True
+        elif role == "viewer":
+            user.is_superuser = False
+        await session.commit()
+        print(f"Successfully set role for {email}: {role}")
+
+
+async def catalog_set_public(slug: str, is_public: bool) -> None:
+    async with AsyncSessionLocal() as session:
+        catalogs = (
+            (await session.execute(select(Catalog).where(Catalog.slug == slug)))
+            .scalars()
+            .all()
+        )
+        if not catalogs:
+            print(f"Error: Catalog with slug '{slug}' not found.")
+            return
+        for catalog in catalogs:
+            catalog.is_public = is_public
+        await session.commit()
+        state = "public" if is_public else "private"
+        print(f"Successfully marked {len(catalogs)} catalog(s) named {slug}: {state}")
+
+
 async def bootstrap_admin_from_env() -> None:
     """If env vars are set and there is no superuser yet, create one.
 
@@ -132,6 +170,30 @@ def main():
     admin_parser.add_argument("email", help="Admin's email address")
     admin_parser.add_argument("password", help="Admin's password")
 
+    role_parser = subparsers.add_parser(
+        "user-set-role",
+        help="Set a user's role: viewer, user, or admin",
+    )
+    role_parser.add_argument("--email", required=True, help="User email address")
+    role_parser.add_argument(
+        "--role",
+        required=True,
+        choices=["viewer", "user", "admin"],
+        help="Business role for the user",
+    )
+
+    public_parser = subparsers.add_parser(
+        "catalog-set-public",
+        help="Mark all catalogs with a slug as public or private",
+    )
+    public_parser.add_argument("--slug", required=True, help="Catalog slug")
+    public_parser.add_argument(
+        "--public",
+        required=True,
+        choices=["true", "false"],
+        help="Whether the catalog should be public",
+    )
+
     subparsers.add_parser(
         "bootstrap-admin-from-env",
         help=(
@@ -171,6 +233,10 @@ def main():
         asyncio.run(reset_password(args.email, args.password))
     elif args.command == "create-admin":
         asyncio.run(create_admin(args.email, args.password))
+    elif args.command == "user-set-role":
+        asyncio.run(set_user_role(args.email, args.role))
+    elif args.command == "catalog-set-public":
+        asyncio.run(catalog_set_public(args.slug, args.public == "true"))
     elif args.command == "bootstrap-admin-from-env":
         asyncio.run(bootstrap_admin_from_env())
     elif args.command == "catalog-backfill":

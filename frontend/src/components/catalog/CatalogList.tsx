@@ -34,6 +34,7 @@ import {
   Trash2,
 } from 'lucide-react';
 
+import { useAuth } from '@/auth';
 import {
   deleteCatalogMutation,
   getSettingsOptions,
@@ -229,6 +230,8 @@ function GitSyncStatusBadge({
 }
 
 export default function CatalogList() {
+  const { user } = useAuth();
+  const isReadOnlyDemo = (user as { role?: string } | null)?.role === 'viewer';
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
@@ -584,18 +587,20 @@ export default function CatalogList() {
       align: 'right' as const,
       render: (_: unknown, record: CatalogSummary) => (
         <div className="flex items-center justify-end gap-1">
-          <Tooltip title="Edit Metadata">
-            <Button
-              type="text"
-              size="small"
-              icon={<Pencil size={16} />}
-              onClick={() => {
-                setEditingCatalog(record);
-                setEditModalOpen(true);
-              }}
-              className="!h-8 !w-8 !p-0"
-            />
-          </Tooltip>
+          {!isReadOnlyDemo && (
+            <Tooltip title="Edit Metadata">
+              <Button
+                type="text"
+                size="small"
+                icon={<Pencil size={16} />}
+                onClick={() => {
+                  setEditingCatalog(record);
+                  setEditModalOpen(true);
+                }}
+                className="!h-8 !w-8 !p-0"
+              />
+            </Tooltip>
+          )}
           <CopyIconButton
             text={
               record.slug?.trim()
@@ -607,19 +612,21 @@ export default function CatalogList() {
             className="!h-8 !w-8 !p-0"
             iconSize={16}
           />
-          <Tooltip title="Delete">
-            <Button
-              type="text"
-              size="small"
-              danger
-              icon={<Trash2 size={16} />}
-              onClick={() => {
-                setDeletingCatalog(record);
-                setDeleteModalOpen(true);
-              }}
-              className="!h-8 !w-8 !p-0"
-            />
-          </Tooltip>
+          {!isReadOnlyDemo && (
+            <Tooltip title="Delete">
+              <Button
+                type="text"
+                size="small"
+                danger
+                icon={<Trash2 size={16} />}
+                onClick={() => {
+                  setDeletingCatalog(record);
+                  setDeleteModalOpen(true);
+                }}
+                className="!h-8 !w-8 !p-0"
+              />
+            </Tooltip>
+          )}
         </div>
       ),
     },
@@ -651,7 +658,10 @@ export default function CatalogList() {
       {/* Page Header */}
       <div className="flex shrink-0 flex-col gap-4 border-b border-slate-100 px-6 py-5 lg:flex-row lg:items-center lg:justify-between lg:gap-6">
         <div className="shrink-0">
-          <h1 className="text-xl font-bold text-slate-900">Catalog</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-xl font-bold text-slate-900">Catalog</h1>
+            {isReadOnlyDemo && <Tag color="blue">Demo read-only</Tag>}
+          </div>
           <p className="mt-1 text-sm text-slate-500">
             {catalogs?.length || 0} catalog workflows
           </p>
@@ -680,33 +690,35 @@ export default function CatalogList() {
             >
               Template
             </Button>
-            <Tooltip
-              title={
-                hasGitRemote
-                  ? 'Push all catalogs to your configured Git remote'
-                  : 'Configure Git remote in Settings first'
-              }
-            >
-              <Button
-                icon={<CloudUpload size={14} />}
-                disabled={
-                  !hasGitRemote ||
-                  backupLoading ||
-                  gitPushMut.isPending ||
-                  isGitBackupRunning
+            {!isReadOnlyDemo && (
+              <Tooltip
+                title={
+                  hasGitRemote
+                    ? 'Push all catalogs to your configured Git remote'
+                    : 'Configure Git remote in Settings first'
                 }
-                loading={
-                  backupLoading || gitPushMut.isPending || isGitBackupRunning
-                }
-                onClick={() => {
-                  void handleGitBackup();
-                }}
               >
-                {backupLoading || gitPushMut.isPending || isGitBackupRunning
-                  ? 'Syncing…'
-                  : 'Sync to Git'}
-              </Button>
-            </Tooltip>
+                <Button
+                  icon={<CloudUpload size={14} />}
+                  disabled={
+                    !hasGitRemote ||
+                    backupLoading ||
+                    gitPushMut.isPending ||
+                    isGitBackupRunning
+                  }
+                  loading={
+                    backupLoading || gitPushMut.isPending || isGitBackupRunning
+                  }
+                  onClick={() => {
+                    void handleGitBackup();
+                  }}
+                >
+                  {backupLoading || gitPushMut.isPending || isGitBackupRunning
+                    ? 'Syncing…'
+                    : 'Sync to Git'}
+                </Button>
+              </Tooltip>
+            )}
             {displayBackup && (
               <GitSyncStatusBadge
                 displayBackup={displayBackup}
@@ -714,13 +726,15 @@ export default function CatalogList() {
                 gitRemoteRaw={settings?.git_remote_url}
               />
             )}
-            <Button
-              type="primary"
-              icon={<GitBranch size={14} />}
-              onClick={() => setImportGitOpen(true)}
-            >
-              Import catalog workflow
-            </Button>
+            {!isReadOnlyDemo && (
+              <Button
+                type="primary"
+                icon={<GitBranch size={14} />}
+                onClick={() => setImportGitOpen(true)}
+              >
+                Import catalog workflow
+              </Button>
+            )}
           </div>
         </div>
       </div>
@@ -757,14 +771,22 @@ export default function CatalogList() {
                   <Col key={cat.id} xs={24} sm={12} lg={8} xl={6}>
                     <CatalogCard
                       catalog={cat}
-                      onDelete={() => {
-                        setDeletingCatalog(cat);
-                        setDeleteModalOpen(true);
-                      }}
-                      onEdit={() => {
-                        setEditingCatalog(cat);
-                        setEditModalOpen(true);
-                      }}
+                      onDelete={
+                        isReadOnlyDemo
+                          ? undefined
+                          : () => {
+                              setDeletingCatalog(cat);
+                              setDeleteModalOpen(true);
+                            }
+                      }
+                      onEdit={
+                        isReadOnlyDemo
+                          ? undefined
+                          : () => {
+                              setEditingCatalog(cat);
+                              setEditModalOpen(true);
+                            }
+                      }
                     />
                   </Col>
                 ))}

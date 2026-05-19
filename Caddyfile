@@ -51,7 +51,7 @@
     # Handle static file serving for work directory
     handle_path /files/* {
         # Handle CORS preflight requests
-        uri strip_prefix {$CONTAINER_MOUNT_PATH}
+        uri strip_prefix {$CONTAINER_MOUNT_PATH:/flowo-data}
         @options {
             method OPTIONS
         }
@@ -62,7 +62,7 @@
             Access-Control-Max-Age "86400"
         }
         respond @options 200
-        root * {$CONTAINER_MOUNT_PATH}
+        root * {$CONTAINER_MOUNT_PATH:/flowo-data}
 
         file_server {
             browse

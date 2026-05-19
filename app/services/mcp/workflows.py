@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.core.config import settings
+from app.core.permissions import assert_workflow_readable, workflow_read_filter
 from app.models import (
     Catalog,
     CatalogFile,
@@ -234,9 +235,7 @@ class McpWorkflowService:
         self.workflow_service = WorkflowService(db)
 
     def _scope_workflows(self, stmt):
-        if self.user.is_superuser:
-            return stmt
-        return stmt.where(Workflow.user_id == self.user.id)
+        return stmt.where(workflow_read_filter(self.user))
 
     async def get_readable_workflow(self, workflow_id: uuid.UUID) -> Workflow:
         stmt = (
@@ -244,11 +243,8 @@ class McpWorkflowService:
             .options(selectinload(Workflow.catalog))
             .where(Workflow.id == workflow_id)
         )
-        stmt = self._scope_workflows(stmt)
         workflow = (await self.db.execute(stmt)).scalar_one_or_none()
-        if workflow is None:
-            raise HTTPException(status_code=404, detail="Workflow not found")
-        return workflow
+        return assert_workflow_readable(workflow, self.user)
 
     def _workflow_row(self, workflow: Workflow, progress: dict[str, int] | None = None):
         total_jobs = progress.get("total", 0) if progress else None

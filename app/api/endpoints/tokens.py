@@ -8,6 +8,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.api.deps import current_write_user
 from app.core.config import settings
 from app.core.session import get_async_session
 from app.core.users import current_active_user
@@ -94,7 +95,7 @@ def _user_token_summary(row: UserToken) -> UserTokenSummary:
 async def create_token(
     data: UserTokenCreate,
     db: AsyncSession = Depends(get_async_session),
-    user: User = Depends(current_active_user),
+    user: User = Depends(current_write_user),
 ):
     service = UserTokenService(db)
     row, plain = await service.create_token(user.id, data)
@@ -130,7 +131,7 @@ async def start_cli_login(data: CliLoginStartRequest | None = None):
 async def approve_cli_login(
     data: CliLoginApproveRequest,
     db: AsyncSession = Depends(get_async_session),
-    user: User = Depends(current_active_user),
+    user: User = Depends(current_write_user),
 ):
     async with _CLI_LOGIN_LOCK:
         _cleanup_cli_login_sessions()
@@ -190,7 +191,7 @@ async def list_tokens(
 async def delete_token(
     token_id: uuid.UUID,
     db: AsyncSession = Depends(get_async_session),
-    user: User = Depends(current_active_user),
+    user: User = Depends(current_write_user),
 ):
     service = UserTokenService(db)
     await service.delete_token(user.id, token_id)

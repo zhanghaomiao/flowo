@@ -11,7 +11,7 @@ from typing import Any
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.deps import current_active_user_with_token
+from app.api.deps import current_active_user_with_token, current_write_user_with_token
 from app.core.session import get_async_session
 from app.models import User
 from app.services.mcp.catalogs import McpCatalogService
@@ -572,7 +572,7 @@ async def list_runs_for_catalog_workflow(
 async def materialize_catalog_workflow_workspace(
     catalog_ref: str,
     db: AsyncSession = Depends(get_async_session),
-    current_user: User = Depends(current_active_user_with_token),
+    current_user: User = Depends(current_write_user_with_token),
 ) -> dict[str, Any]:
     """
     Rebuild the local Snakemake workspace from database-backed catalog files.

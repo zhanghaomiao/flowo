@@ -6,7 +6,12 @@ from fastapi import HTTPException
 from fastapi.security import HTTPAuthorizationCredentials
 from starlette.requests import Request
 
-from app.api.deps import current_active_user_with_token
+from app.api.deps import (
+    current_active_user_with_token,
+    current_write_user,
+    current_write_user_with_token,
+)
+from app.core.permissions import DEMO_READ_ONLY_MESSAGE
 from app.models.user import User
 
 
@@ -19,6 +24,7 @@ def make_user(
     user_id: uuid.UUID | None = None,
     email: str = "user@example.com",
     is_active: bool = True,
+    role: str = "user",
 ) -> User:
     return User(
         id=user_id or uuid.uuid4(),
@@ -27,6 +33,7 @@ def make_user(
         is_active=is_active,
         is_superuser=False,
         is_verified=True,
+        role=role,
     )
 
 
@@ -151,3 +158,43 @@ async def test_current_active_user_with_token_rejects_missing_or_inactive_user()
             )
 
         assert excinfo.value.status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_current_write_user_rejects_viewer():
+    viewer = make_user(email="viewer@example.com", role="viewer")
+
+    with pytest.raises(HTTPException) as excinfo:
+        await current_write_user(user=viewer)
+
+    assert excinfo.value.status_code == 403
+    assert excinfo.value.detail == DEMO_READ_ONLY_MESSAGE
+
+
+@pytest.mark.asyncio
+async def test_current_write_user_returns_non_viewer():
+    user = make_user(email="writer@example.com", role="user")
+
+    result = await current_write_user(user=user)
+
+    assert result is user
+
+
+@pytest.mark.asyncio
+async def test_current_write_user_with_token_rejects_viewer():
+    viewer = make_user(email="viewer@example.com", role="viewer")
+
+    with pytest.raises(HTTPException) as excinfo:
+        await current_write_user_with_token(user=viewer)
+
+    assert excinfo.value.status_code == 403
+    assert excinfo.value.detail == DEMO_READ_ONLY_MESSAGE
+
+
+@pytest.mark.asyncio
+async def test_current_write_user_with_token_returns_non_viewer():
+    user = make_user(email="writer@example.com", role="user")
+
+    result = await current_write_user_with_token(user=user)
+
+    assert result is user

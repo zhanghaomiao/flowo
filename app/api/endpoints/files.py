@@ -6,6 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.permissions import assert_workflow_readable
 from app.core.session import get_async_session
 from app.core.users import current_active_user
 from app.models import User
@@ -34,8 +35,7 @@ async def list_files(
 ):
     service = WorkflowService(db)
     wf = await service.get_workflow(workflow_id)
-    if not wf or (wf.user_id != user.id and not user.is_superuser):
-        raise HTTPException(status_code=404, detail="Workflow not found")
+    assert_workflow_readable(wf, user)
 
     flowo_dir = await service.get_flowo_directory(workflow_id)
     root_dir = Path(flowo_dir)

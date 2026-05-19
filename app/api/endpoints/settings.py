@@ -10,6 +10,7 @@ from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.api.deps import current_write_user
 from app.core.session import get_async_session
 from app.core.users import current_active_user
 from app.models.user import User
@@ -88,7 +89,7 @@ async def get_settings(
 @router.put("", response_model=UserSettingsRead)
 async def update_settings(
     body: UserSettingsUpdate,
-    user: User = Depends(current_active_user),
+    user: User = Depends(current_write_user),
     session: AsyncSession = Depends(get_async_session),
 ) -> UserSettingsRead:
     """Upsert user settings."""
@@ -110,7 +111,7 @@ async def update_settings(
 @router.post("/test/git", response_model=ConnectionTestResult)
 async def test_git_connection(
     body: TestGitRequest,
-    user: User = Depends(current_active_user),
+    user: User = Depends(current_write_user),
 ) -> ConnectionTestResult:
     """Test Git connectivity via GitService."""
     success, message = git_service.test_connection(body.git_remote_url, body.git_token)

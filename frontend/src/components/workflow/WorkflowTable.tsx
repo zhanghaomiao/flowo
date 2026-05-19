@@ -27,6 +27,7 @@ import {
 } from 'lucide-react';
 
 import SnakemakeIcon from '@/assets/snakemake.svg?react';
+import { useAuth } from '@/auth';
 import {
   deleteWorkflowMutation,
   getConfigfilesOptions,
@@ -51,6 +52,8 @@ import {
 import WorkflowSearch from './WorkflowSearch';
 
 const WorkflowTable = () => {
+  const { user } = useAuth();
+  const isReadOnlyDemo = (user as { role?: string } | null)?.role === 'viewer';
   const queryClient = useQueryClient();
   const [snakefileModal, setSnakefileModal] = useState<{
     visible: boolean;
@@ -484,23 +487,28 @@ const WorkflowTable = () => {
             />
           </Tooltip>
 
-          <Popconfirm
-            title="Delete run"
-            description={`Delete "${record.name || record.id}"?`}
-            onConfirm={() => handleDeleteWorkflow(record.id)}
-            okText="Delete"
-            cancelText="Cancel"
-            okButtonProps={{ danger: true, loading: deleteWorkflow.isPending }}
-            placement="bottomRight"
-          >
-            <Button
-              type="text"
-              icon={<Trash2 size={20} />}
-              size="small"
-              danger
-              className="flex h-9 min-h-9 min-w-9 w-9 items-center justify-center hover:bg-rose-50"
-            />
-          </Popconfirm>
+          {!isReadOnlyDemo && (
+            <Popconfirm
+              title="Delete run"
+              description={`Delete "${record.name || record.id}"?`}
+              onConfirm={() => handleDeleteWorkflow(record.id)}
+              okText="Delete"
+              cancelText="Cancel"
+              okButtonProps={{
+                danger: true,
+                loading: deleteWorkflow.isPending,
+              }}
+              placement="bottomRight"
+            >
+              <Button
+                type="text"
+                icon={<Trash2 size={20} />}
+                size="small"
+                danger
+                className="flex h-9 min-h-9 min-w-9 w-9 items-center justify-center hover:bg-rose-50"
+              />
+            </Popconfirm>
+          )}
         </div>
       ),
     },
@@ -514,9 +522,16 @@ const WorkflowTable = () => {
       <div className="px-8 py-6 border-b border-slate-100 flex justify-between items-center sticky top-0 bg-white/80 backdrop-blur-md z-10 gap-6">
         <div className="flex items-center gap-6">
           <div className="flex flex-col">
-            <h3 className="m-0 text-xl font-black text-slate-800 tracking-tight">
-              Runs
-            </h3>
+            <div className="flex items-center gap-2">
+              <h3 className="m-0 text-xl font-black text-slate-800 tracking-tight">
+                Runs
+              </h3>
+              {isReadOnlyDemo && (
+                <Tag color="blue" className="m-0">
+                  Demo read-only
+                </Tag>
+              )}
+            </div>
             <p className="text-[10px] uppercase font-black text-slate-400 mt-1 m-0 tracking-wide">
               {workflowsData?.total ?? 0} total runs
             </p>

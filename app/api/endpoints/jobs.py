@@ -1,6 +1,7 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.permissions import assert_workflow_readable
 from app.core.session import get_async_session
 from app.core.users import current_active_user
 from app.models import User
@@ -24,8 +25,7 @@ async def get_job(
     query = await service.get_job_details_with_id(job_id)
     wf_service = WorkflowService(db)
     wf = await wf_service.get_workflow(query.workflow_id)
-    if not wf or (wf.user_id != user.id and not user.is_superuser):
-        raise HTTPException(status_code=404, detail="Job not found")
+    assert_workflow_readable(wf, user)
 
     return query
 
@@ -41,7 +41,6 @@ async def get_logs(
     query = await service.get_job_details_with_id(job_id)
     wf_service = WorkflowService(db)
     wf = await wf_service.get_workflow(query.workflow_id)
-    if not wf or (wf.user_id != user.id and not user.is_superuser):
-        raise HTTPException(status_code=404, detail="Job not found")
+    assert_workflow_readable(wf, user)
 
     return await service.get_job_logs_with_id(job_id=job_id)
